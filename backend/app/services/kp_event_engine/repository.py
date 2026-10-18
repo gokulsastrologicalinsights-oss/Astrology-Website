@@ -62,7 +62,6 @@ def save_kp_event_analysis(
         "results": analysis_data.get("periods", []),
         "created_at": now_iso,
         "updated_at": now_iso,
-        "persistence_status": "database",
     }
 
     if supabase:

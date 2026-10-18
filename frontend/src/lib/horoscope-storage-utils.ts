@@ -3,7 +3,7 @@
  * Versioned, compact calculation snapshot serialization and display formatting.
  */
 
-import type { FullHoroscopeResult } from "./types.ts";
+import type { FullHoroscopeResult } from "./types";
 
 /**
  * Prunes the deep Vimshottari Dasa tree to a manageable depth (default 3 levels:

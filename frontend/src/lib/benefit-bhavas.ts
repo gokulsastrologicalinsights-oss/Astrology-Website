@@ -14,7 +14,7 @@
  * - Only the applicable category is omitted; remaining values are NOT shifted.
  */
 
-import type { PlanetInfo, HouseInfo, AscendantInfo, DasaPeriodNode } from "./types.ts";
+import type { PlanetInfo, HouseInfo, AscendantInfo, DasaPeriodNode } from "./types";
 
 export const VIMSHOTTARI_LORDS: string[] = [
   "Ketu",
