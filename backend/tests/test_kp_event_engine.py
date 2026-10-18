@@ -990,5 +990,220 @@ def test_30_list_user_kp_event_analyses_auth_and_isolation():
     app.dependency_overrides.clear()
 
 
+# ---------------------------------------------------------------------------
+# Test 31: POST /from-saved/{id} ownership, admin, non-owner, malformed UUID, unauth
+# ---------------------------------------------------------------------------
+def test_31_from_saved_authorization_and_validation():
+    from app.services.auth_service import get_current_user
+
+    # 1. Unauthenticated request must return 401
+    app.dependency_overrides.clear()
+    unauth_client = TestClient(app)
+    unauth_res = unauth_client.post("/api/v1/horoscope/kp-events/from-saved/ba9bb522-a79d-43e8-8493-ac8d53d4d39b")
+    assert unauth_res.status_code == 401
+
+    # 2. Malformed UUID must return 400 Bad Request
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "username": "gokul_murugan",
+        "role": "admin",
+    }
+    client = TestClient(app)
+    malformed_res = client.post("/api/v1/horoscope/kp-events/from-saved/not-a-uuid")
+    assert malformed_res.status_code == 400
+    assert "invalid saved horoscope uuid format" in malformed_res.json()["detail"].lower()
+
+    malformed_num = client.post("/api/v1/horoscope/kp-events/from-saved/12345")
+    assert malformed_num.status_code == 400
+
+    # 3. Non-existent UUID must return 404
+    non_existent_res = client.post("/api/v1/horoscope/kp-events/from-saved/00000000-0000-0000-0000-000000000000")
+    assert non_existent_res.status_code == 404
+    assert "not found or unauthorized" in non_existent_res.json()["detail"].lower()
+
+    # 4. Valid horoscope by owner succeeds with 200
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "username": "gokul_murugan",
+        "role": "user",  # normal user role as owner
+    }
+    owner_client = TestClient(app)
+    owner_res = owner_client.post("/api/v1/horoscope/kp-events/from-saved/ba9bb522-a79d-43e8-8493-ac8d53d4d39b")
+    assert owner_res.status_code == 200
+    assert "periods" in owner_res.json()
+
+    # 5. Non-owner user receives 404 (never sees other user's horoscope)
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "attacker-user-uuid-9999",
+        "username": "attacker",
+        "role": "user",
+    }
+    non_owner_client = TestClient(app)
+    non_owner_res = non_owner_client.post("/api/v1/horoscope/kp-events/from-saved/ba9bb522-a79d-43e8-8493-ac8d53d4d39b")
+    assert non_owner_res.status_code == 404
+    assert "not found or unauthorized" in non_owner_res.json()["detail"].lower()
+
+    # 6. Admin user can access saved horoscope
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "different-admin-uuid-001",
+        "username": "admin_two",
+        "role": "admin",
+    }
+    admin_client = TestClient(app)
+    admin_res = admin_client.post("/api/v1/horoscope/kp-events/from-saved/ba9bb522-a79d-43e8-8493-ac8d53d4d39b")
+    assert admin_res.status_code == 200
+
+    app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# Test 32: POST /analyze with save_horoscope_id validation and error handling
+# ---------------------------------------------------------------------------
+def test_32_analyze_save_horoscope_id_validation():
+    from app.services.auth_service import get_current_user
+
+    base_payload = {
+        "lagna": "Aries",
+        "periods": [
+            {
+                "mahadasha_lord": "Jupiter",
+                "bhukti_lord": "Sun",
+                "start_date": "2026-01-01",
+                "end_date": "2027-01-01",
+            }
+        ],
+        "significations": {
+            "Jupiter": {2: "L1", 11: "L2"},
+            "Sun": {10: "L1"},
+        },
+    }
+
+    from app.routers.kp_events import get_optional_current_user
+
+    user_fixture = {
+        "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "username": "owner_user",
+        "role": "user",
+    }
+    app.dependency_overrides[get_current_user] = lambda: user_fixture
+    app.dependency_overrides[get_optional_current_user] = lambda: user_fixture
+    client = TestClient(app)
+
+    # 1. Malformed UUID in save_horoscope_id returns 400
+    p_malformed = dict(base_payload)
+    p_malformed["save_horoscope_id"] = "not-a-valid-uuid"
+    res_malformed = client.post("/api/v1/horoscope/kp-events/analyze", json=p_malformed)
+    assert res_malformed.status_code == 400
+    assert "invalid saved horoscope uuid format" in res_malformed.json()["detail"].lower()
+
+    # 2. Non-existent UUID in save_horoscope_id returns 404
+    p_nonexistent = dict(base_payload)
+    p_nonexistent["save_horoscope_id"] = "11111111-2222-3333-4444-555555555555"
+    res_nonexistent = client.post("/api/v1/horoscope/kp-events/analyze", json=p_nonexistent)
+    assert res_nonexistent.status_code == 404
+    assert "not found or unauthorized" in res_nonexistent.json()["detail"].lower()
+
+    # 3. Valid owner save_horoscope_id succeeds with 200
+    p_valid = dict(base_payload)
+    p_valid["save_horoscope_id"] = "ba9bb522-a79d-43e8-8493-ac8d53d4d39b"
+    res_valid = client.post("/api/v1/horoscope/kp-events/analyze", json=p_valid)
+    assert res_valid.status_code == 200
+
+    app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# Test 33: GET /analyses/{id} authorization and UUID validation
+# ---------------------------------------------------------------------------
+def test_33_get_analyses_authorization_and_validation():
+    from app.services.auth_service import get_current_user
+
+    # 1. Unauthenticated returns 401
+    app.dependency_overrides.clear()
+    unauth_client = TestClient(app)
+    assert unauth_client.get("/api/v1/horoscope/kp-events/analyses/ba9bb522-a79d-43e8-8493-ac8d53d4d39b").status_code == 401
+
+    # 2. Malformed UUID returns 400
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "username": "owner_user",
+        "role": "user",
+    }
+    client = TestClient(app)
+    assert client.get("/api/v1/horoscope/kp-events/analyses/bad-uuid").status_code == 400
+
+    # 3. Non-owner returns 404
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "attacker-user-007",
+        "username": "attacker",
+        "role": "user",
+    }
+    attacker_client = TestClient(app)
+    res_non_owner = attacker_client.get("/api/v1/horoscope/kp-events/analyses/ba9bb522-a79d-43e8-8493-ac8d53d4d39b")
+    assert res_non_owner.status_code == 404
+
+    app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# Test 34: POST /analyze accepts list-based significations from frontend
+# ---------------------------------------------------------------------------
+def test_34_analyze_accepts_list_significations():
+    from app.services.auth_service import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "username": "test_user",
+        "role": "user",
+    }
+    client = TestClient(app)
+
+    # List-based house significators as produced by KpResponse.house_significators
+    list_payload = {
+        "lagna": "Aries",
+        "periods": [
+            {
+                "mahadasha_lord": "Jupiter",
+                "bhukti_lord": "Sun",
+                "start_date": "2026-01-01",
+                "end_date": "2027-01-01",
+            }
+        ],
+        "significations": [
+            {
+                "house": 2,
+                "sign_lord": "Venus",
+                "star_lord": "Sun",
+                "sub_lord": "Jupiter",
+                "level_a": ["Jupiter"],
+                "level_b": ["Sun"],
+                "level_c": ["Venus"],
+                "level_d": ["Mercury"],
+                "all_significators": ["Jupiter", "Sun", "Venus", "Mercury"],
+            },
+            {
+                "house": 7,
+                "sign_lord": "Venus",
+                "star_lord": "Mars",
+                "sub_lord": "Rahu",
+                "level_a": [],
+                "level_b": ["Jupiter"],
+                "level_c": ["Venus"],
+                "level_d": ["Mars"],
+                "all_significators": ["Jupiter", "Venus", "Mars"],
+            },
+        ],
+    }
+
+    resp = client.post("/api/v1/horoscope/kp-events/analyze", json=list_payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "periods" in data
+    assert len(data["periods"]) > 0
+
+    app.dependency_overrides.clear()
+
+
+
 
 

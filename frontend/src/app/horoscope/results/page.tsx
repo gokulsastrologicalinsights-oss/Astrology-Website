@@ -149,6 +149,7 @@ function HoroscopeResultsContent() {
     if (idParam) {
       setIsLoadingSaved(true);
       setLoadError(null);
+      setResult(null);
       fetch(`/api/horoscopes/${idParam}`)
         .then(async (res) => {
           if (!res.ok) {

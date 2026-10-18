@@ -5,6 +5,33 @@ from typing import List
 from pydantic import BaseModel
 
 
+def _load_env_files():
+    """Safely loads key-value pairs from .env and backend/.env without external dependencies."""
+    base_dirs = [
+        os.path.dirname(os.path.abspath(__file__)),
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    ]
+    for bdir in base_dirs:
+        for fname in [".env", "backend/.env", "frontend/.env.local"]:
+            fpath = os.path.join(bdir, fname)
+            if os.path.isfile(fpath):
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith("#") and "=" in line:
+                                k, v = line.split("=", 1)
+                                k, v = k.strip(), v.strip().strip("'\"")
+                                if k and k not in os.environ:
+                                    os.environ[k] = v
+                except Exception:
+                    pass
+
+
+_load_env_files()
+
+
 class Settings(BaseModel):
     app_name: str = "Gokul's Astrological Insights API"
     app_version: str = "1.0.0"

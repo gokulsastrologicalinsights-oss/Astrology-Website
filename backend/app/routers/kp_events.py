@@ -4,9 +4,22 @@ Exposes endpoints for calculating rule-based KP event predictions across
 Dasha-Bhukti periods, analyzing saved horoscopes, and retrieving event definitions.
 """
 
+import uuid
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+
+def _validate_uuid(val: Any) -> str:
+    """Validates that a string is a well-formed UUID and returns its canonical string."""
+    try:
+        parsed = uuid.UUID(str(val).strip())
+        return str(parsed)
+    except (ValueError, AttributeError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid saved horoscope UUID format.",
+        )
 
 from app.schemas.kp_events import (
     KpEventAnalysisRequest,
@@ -81,25 +94,39 @@ def analyze_kp_events(
 
         # If user is authenticated and save_horoscope_id is provided, persist analysis
         if current_user and request.save_horoscope_id:
+            clean_save_id = _validate_uuid(request.save_horoscope_id)
             supabase = get_supabase_client()
-            if supabase:
-                is_admin = current_user.get("role") == "admin"
-                chk = supabase.table("saved_horoscopes").select("id").eq("id", request.save_horoscope_id)
-                if not is_admin:
-                    chk = chk.eq("user_id", current_user["id"])
+            if not supabase:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database service unavailable. Database configuration missing.",
+                )
+            is_admin = current_user.get("role") == "admin"
+            try:
+                chk = supabase.table("saved_horoscopes").select("id, user_id").eq("id", clean_save_id)
                 chk_res = chk.execute()
-                if not chk_res.data:
+                if not chk_res.data or (not is_admin and str(chk_res.data[0].get("user_id")) != str(current_user["id"])):
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Saved horoscope not found or unauthorized.",
                     )
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"Error checking horoscope ownership for save {clean_save_id}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Saved horoscope not found or unauthorized.",
+                )
             save_kp_event_analysis(
                 user_id=current_user["id"],
-                horoscope_id=request.save_horoscope_id,
+                horoscope_id=clean_save_id,
                 analysis_data=res,
             )
 
         return KpEventAnalysisResponse(**res)
+    except HTTPException:
+        raise
     except ValueError as val_err:
         raise HTTPException(status_code=422, detail=str(val_err))
     except Exception as exc:
@@ -117,21 +144,26 @@ def analyze_saved_horoscope(
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> KpEventAnalysisResponse:
     """Retrieves saved horoscope, computes KP significations & Dasha schedule, and calculates event predictions."""
+    clean_id = _validate_uuid(saved_horoscope_id)
     user_id = current_user["id"]
     is_admin = current_user.get("role") == "admin"
     supabase = get_supabase_client()
 
+    if not supabase:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service unavailable. Database configuration missing.",
+        )
+
     horoscope_row: Optional[Dict[str, Any]] = None
-    if supabase:
-        try:
-            q = supabase.table("saved_horoscopes").select("*").eq("id", saved_horoscope_id)
-            if not is_admin:
-                q = q.eq("user_id", user_id)
-            resp = q.execute()
-            if resp.data and len(resp.data) > 0:
-                horoscope_row = resp.data[0]
-        except Exception as err:
-            raise HTTPException(status_code=500, detail=f"Database query error: {str(err)}")
+    try:
+        resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+        if resp.data and len(resp.data) > 0:
+            row = resp.data[0]
+            if is_admin or str(row.get("user_id")) == str(user_id):
+                horoscope_row = row
+    except Exception as err:
+        logger.warning(f"Database query error when fetching saved horoscope {clean_id}: {err}")
 
     if not horoscope_row:
         raise HTTPException(
@@ -141,7 +173,7 @@ def analyze_saved_horoscope(
 
     # Check if analysis was previously calculated and user did not request regeneration
     if not filter_params.regenerate:
-        existing = get_kp_event_analysis(user_id, saved_horoscope_id, is_admin=is_admin)
+        existing = get_kp_event_analysis(user_id, clean_id, is_admin=is_admin)
         if existing and existing.get("results"):
             # Invalidation Check 1: Invalidate if rule-set version changed
             version_match = (existing.get("rule_set_version") == RULE_SET_VERSION)
@@ -299,28 +331,34 @@ def get_saved_analysis(
     saved_horoscope_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> KpEventAnalysisResponse:
-    """Retrieves saved analysis record if previously calculated."""
+    clean_id = _validate_uuid(saved_horoscope_id)
     user_id = current_user["id"]
     is_admin = current_user.get("role") == "admin"
     supabase = get_supabase_client()
 
-    if supabase:
-        try:
-            q = supabase.table("saved_horoscopes").select("id, user_id").eq("id", saved_horoscope_id)
-            if not is_admin:
-                q = q.eq("user_id", user_id)
-            res = q.execute()
-            if not res.data:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Saved horoscope not found or unauthorized.",
-                )
-        except HTTPException:
-            raise
-        except Exception:
-            pass
+    if not supabase:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service unavailable. Database configuration missing.",
+        )
 
-    record = get_kp_event_analysis(user_id, saved_horoscope_id, is_admin=is_admin)
+    try:
+        res = supabase.table("saved_horoscopes").select("id, user_id").eq("id", clean_id).execute()
+        if not res.data or (not is_admin and str(res.data[0].get("user_id")) != str(user_id)):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Saved horoscope not found or unauthorized.",
+            )
+    except HTTPException:
+        raise
+    except Exception as err:
+        logger.warning(f"Database query error checking ownership of analysis {clean_id}: {err}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Saved horoscope not found or unauthorized.",
+        )
+
+    record = get_kp_event_analysis(user_id, clean_id, is_admin=is_admin)
 
     if not record or not record.get("results"):
         raise HTTPException(

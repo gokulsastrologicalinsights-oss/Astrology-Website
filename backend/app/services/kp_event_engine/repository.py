@@ -136,13 +136,13 @@ def get_kp_event_analysis(
     if supabase:
         try:
             query = supabase.table("kp_event_analyses").select("*").eq("horoscope_id", horoscope_id)
-            if not is_admin:
-                query = query.eq("user_id", user_id)
             res = query.order("created_at", desc=True).limit(1).execute()
             if res.data and len(res.data) > 0:
-                out = dict(res.data[0])
-                out["persistence_status"] = "database"
-                return out
+                row = res.data[0]
+                if is_admin or str(row.get("user_id")) == str(user_id):
+                    out = dict(row)
+                    out["persistence_status"] = "database"
+                    return out
         except Exception:
             pass
 

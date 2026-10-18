@@ -18,9 +18,9 @@ class KpEventPeriodInput(BaseModel):
 class KpEventAnalysisRequest(BaseModel):
     lagna: Optional[str] = Field(None, description="Horoscope ascendant sign (e.g. Aries)")
     periods: List[KpEventPeriodInput] = Field(..., description="Chronological periods to analyze")
-    significations: Dict[str, Any] = Field(
+    significations: Any = Field(
         ...,
-        description="Significations mapping: planet -> list of {house, level} or house -> levels",
+        description="Significations mapping: planet -> list of {house, level} or house -> levels or list of house significators",
     )
     csl_significations: Optional[Dict[str, str]] = Field(
         None,

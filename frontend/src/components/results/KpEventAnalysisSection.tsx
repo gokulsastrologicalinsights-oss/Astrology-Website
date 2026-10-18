@@ -54,7 +54,7 @@ export function KpEventAnalysisSection({
   onSelectSavedHoroscope,
 }: KpEventAnalysisSectionProps) {
   const { language, t } = useLanguage();
-  const { session, isAuthenticated } = useAuth();
+  const { session, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Calculation state
   const [analysisResult, setAnalysisResult] = useState<KpEventAnalysisResponse | null>(null);
@@ -65,6 +65,14 @@ export function KpEventAnalysisSection({
   const [savedList, setSavedList] = useState<SavedHoroscopeItem[]>([]);
   const [selectedSavedId, setSelectedSavedId] = useState<string>(savedHoroscopeId || "");
   const [isLoadingSavedList, setIsLoadingSavedList] = useState<boolean>(false);
+
+  // Keep selectedSavedId in sync when savedHoroscopeId prop updates
+  useEffect(() => {
+    if (savedHoroscopeId) {
+      setSelectedSavedId(savedHoroscopeId);
+      setErrorMsg(null);
+    }
+  }, [savedHoroscopeId]);
 
   // Filters
   const [periodFilter, setPeriodFilter] = useState<"all" | "running">("all");
@@ -181,6 +189,12 @@ export function KpEventAnalysisSection({
       }
 
       const token = session?.access_token;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validSaveId =
+        savedHoroscopeId && uuidRegex.test(savedHoroscopeId) && token
+          ? savedHoroscopeId
+          : undefined;
+
       const res = await analyzeKpEvents(
         {
           lagna: lagnaName,
@@ -189,7 +203,7 @@ export function KpEventAnalysisSection({
           csl_significations: cslMap,
           retrograde_status: retroMap,
           timezone: horoscope?.metadata?.local_timezone || "Asia/Kolkata",
-          save_horoscope_id: savedHoroscopeId,
+          save_horoscope_id: validSaveId,
         },
         token
       );
@@ -206,7 +220,14 @@ export function KpEventAnalysisSection({
   // Workflow A: Run analysis for a selected saved horoscope
   const runSavedAnalysis = useCallback(
     async (id: string, forceRegen = false) => {
-      if (!id || !session?.access_token) return;
+      if (!id) return;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(id)) {
+        setErrorMsg("Invalid saved horoscope identifier.");
+        return;
+      }
+      if (!session?.access_token) return;
+
       setIsLoading(true);
       setErrorMsg(null);
 
@@ -228,21 +249,32 @@ export function KpEventAnalysisSection({
     [session, onSelectSavedHoroscope]
   );
 
-  // Trigger analysis when inputs are ready
+  // Trigger analysis when inputs and authentication state are ready
   useEffect(() => {
-    if (selectedSavedId && session?.access_token) {
-      runSavedAnalysis(selectedSavedId);
+    // If auth state is resolving, hold off to prevent race conditions or unauthenticated requests
+    if (authLoading) return;
+
+    if (selectedSavedId) {
+      if (session?.access_token) {
+        runSavedAnalysis(selectedSavedId);
+      } else if (!isAuthenticated) {
+        setIsLoading(false);
+        setErrorMsg("Please sign in to view saved horoscope event predictions.");
+      }
     } else if (kp && (dasa || kp.dasa_hierarchy)) {
       runDirectAnalysis();
     }
-  }, [selectedSavedId, kp, dasa, session?.access_token, runSavedAnalysis, runDirectAnalysis]);
+  }, [selectedSavedId, kp, dasa, session?.access_token, isAuthenticated, authLoading, runSavedAnalysis, runDirectAnalysis]);
 
   // Handle saved horoscope dropdown selection
   const handleSavedSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = e.target.value;
     setSelectedSavedId(newId);
+    setErrorMsg(null);
     if (newId) {
       runSavedAnalysis(newId);
+    } else if (kp && (dasa || kp.dasa_hierarchy)) {
+      runDirectAnalysis();
     }
   };
 
