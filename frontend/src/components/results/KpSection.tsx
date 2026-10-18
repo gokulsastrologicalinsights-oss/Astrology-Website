@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { KpResponse, DasaResponse, HoroscopeResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaName, getRasiName, getLordName } from "@/lib/translations";
@@ -149,6 +150,13 @@ export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionPr
           <span>✨</span>
           <span>{language === "ta" ? "KP நிகழ்வு பகுப்பாய்வு" : "KP Event Analysis"}</span>
         </button>
+        <Link
+          href={`/remedies${savedHoroscopeId ? `?horoscope_id=${encodeURIComponent(savedHoroscopeId)}` : ""}`}
+          className="ml-auto px-3 py-1.5 text-xs sm:text-sm font-bold rounded-md border border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100 transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-2xs"
+        >
+          <span>🛡️</span>
+          <span>{language === "ta" ? "KP பரிகாரங்கள்" : "KP Remedies"}</span>
+        </Link>
       </div>
 
       {/* 1. Planetary Sub Lords */}

@@ -225,6 +225,27 @@ export function PersonalizedRemedySection({
   // Check if Yogakaraka protection is active
   const hasYogakarakaWarning = analysis.recommendations.some((r) => r.yogakaraka_warning);
 
+  const yogakaraka =
+    (analysis.chart_context as any)?.yogakaraka_graha ||
+    (analysis.chart_context?.yogakaraka_planets && analysis.chart_context.yogakaraka_planets.length > 0
+      ? analysis.chart_context.yogakaraka_planets[0]
+      : null);
+
+  const afflictedGrahas: string[] =
+    (analysis.chart_context as any)?.afflicted_grahas ||
+    [
+      ...(analysis.chart_context?.debilitated_planets || []),
+      ...(analysis.chart_context?.combust_planets || []),
+    ];
+
+  const kujaStatus =
+    analysis.chart_context?.kuja_dosha_status ||
+    ((analysis.chart_context as any)?.kuja_dosha_present
+      ? (analysis.chart_context as any)?.kuja_dosha_cancelled
+        ? "cancelled"
+        : "present"
+      : "none");
+
   return (
     <div className="space-y-6">
       {/* 1. Header Banner & Chart Context Card */}
@@ -240,13 +261,13 @@ export function PersonalizedRemedySection({
                     : "Personalized Chart-Based Remedies"}
                 </span>
               </span>
-              {analysis.chart_context.yogakaraka_graha && (
+              {yogakaraka && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300">
                   <Flame className="w-3.5 h-3.5 text-amber-600" />
                   <span>
                     {language === "ta"
-                      ? `யோககாரகன்: ${analysis.chart_context.yogakaraka_graha.toUpperCase()}`
-                      : `Yogakaraka: ${analysis.chart_context.yogakaraka_graha.toUpperCase()}`}
+                      ? `யோககாரகன்: ${String(yogakaraka).toUpperCase()}`
+                      : `Yogakaraka: ${String(yogakaraka).toUpperCase()}`}
                   </span>
                 </span>
               )}
@@ -356,8 +377,8 @@ export function PersonalizedRemedySection({
               {language === "ta" ? "பாதிக்கப்பட்ட கிரகங்கள்" : "Afflicted Grahas"}
             </span>
             <div className="flex flex-wrap gap-1 mt-0.5">
-              {analysis.chart_context.afflicted_grahas.length > 0 ? (
-                analysis.chart_context.afflicted_grahas.map((g) => (
+              {afflictedGrahas.length > 0 ? (
+                afflictedGrahas.map((g) => (
                   <span
                     key={g}
                     className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-bold text-[11px] uppercase"
@@ -377,21 +398,21 @@ export function PersonalizedRemedySection({
             </span>
             <span
               className={`font-bold text-xs inline-block mt-0.5 ${
-                analysis.chart_context.kuja_dosha_present
-                  ? analysis.chart_context.kuja_dosha_cancelled
-                    ? "text-emerald-700"
-                    : "text-rose-700"
+                kujaStatus === "present"
+                  ? "text-rose-700"
+                  : kujaStatus === "cancelled"
+                  ? "text-amber-700"
                   : "text-emerald-700"
               }`}
             >
-              {analysis.chart_context.kuja_dosha_present
-                ? analysis.chart_context.kuja_dosha_cancelled
-                  ? language === "ta"
-                    ? "தோஷ நிவர்த்தி உண்டு (Cancelled)"
-                    : "Present (Cancelled by BPHS Rule)"
-                  : language === "ta"
+              {kujaStatus === "present"
+                ? language === "ta"
                   ? "தோஷம் உள்ளது (Active)"
                   : "Active Kuja Dosha"
+                : kujaStatus === "cancelled"
+                ? language === "ta"
+                  ? "தோஷ நிவர்த்தி உண்டு (Cancelled)"
+                  : "Present (Cancelled by BPHS Rule)"
                 : language === "ta"
                 ? "தோஷம் இல்லை (Absent)"
                 : "No Kuja Dosha"}

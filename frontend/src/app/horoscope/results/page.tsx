@@ -46,6 +46,7 @@ import {
   RefreshCw,
   Info,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 
 function HoroscopeResultsContent() {
@@ -454,6 +455,13 @@ function HoroscopeResultsContent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/remedies${result.savedId || idParam ? `?horoscope_id=${encodeURIComponent(result.savedId || idParam || "")}` : ""}`}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-purple-300 bg-purple-50/80 text-xs font-bold text-purple-900 hover:bg-purple-100 shadow-2xs"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+            <span>{language === "ta" ? "பரிகாரங்கள்" : "View Remedies"}</span>
+          </Link>
           <button
             type="button"
             onClick={() => setActiveTab("destiny-card")}

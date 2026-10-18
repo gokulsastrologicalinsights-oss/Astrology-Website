@@ -426,6 +426,23 @@ async def list_reports_for_horoscope(
     is_admin = current_user.get("role") == "admin"
     user_id = str(current_user["id"])
 
+    # Verify target horoscope exists and belongs to current user (or user is admin)
+    supabase = get_supabase_client()
+    if supabase and not is_admin:
+        try:
+            resp = supabase.table("saved_horoscopes").select("user_id").eq("id", clean_id).execute()
+            if resp.data and len(resp.data) > 0:
+                horo_owner = str(resp.data[0].get("user_id"))
+                if horo_owner != user_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Saved horoscope not found or unauthorized.",
+                    )
+        except HTTPException:
+            raise
+        except Exception as err:
+            logger.warning(f"Error checking horoscope ownership in list_reports: {err}")
+
     reports = await remedy_repository.list_reports(user_id=user_id, horoscope_id=clean_id, is_admin=is_admin)
     return SavedRemedyReportsListResponse(
         total_count=len(reports),
