@@ -1531,6 +1531,33 @@ export interface RemedyEligibilityResponse {
   is_functional_malefic: boolean;
   restriction_reason?: string;
   safe_alternative_recommendation?: string;
+  requires_manual_astrologer_review?: boolean;
+  is_review_gated?: boolean;
+}
+
+export interface NeechaBhangaAssessment {
+  graha: string;
+  d1_sign: string;
+  d1_house?: number | null;
+  is_d1_debilitated: boolean;
+  d9_data_status: "verified" | "unavailable" | "insufficient_data" | string;
+  d9_sign?: string | null;
+  d9_house?: number | null;
+  is_d9_exalted: boolean;
+  is_d9_own_sign: boolean;
+  is_vargottama: boolean;
+  cancellation_status: "none" | "cancellation_indicator_present" | "complete_nbry_qualifying" | "nbry_neutralized_by_combustion" | "insufficient_data" | string;
+  has_cancellation_indicator: boolean;
+  is_complete_nbry: boolean;
+  is_combust: boolean;
+  qualifying_criteria: string[];
+  rule_identifiers: string[];
+  severity: "mild" | "moderate" | "high" | string;
+  reason_en: string;
+  reason_ta: string;
+  supporting_placements: Record<string, any>;
+  confidence_status: "high" | "medium" | "conditional" | "unresolved" | string;
+  unresolved_interpretation?: string | null;
 }
 
 
@@ -1609,6 +1636,269 @@ export interface VargaD1D9Request {
   house_system?: number;
 }
 
+// ==========================================
+// KP Events & Prediction Types
+// ==========================================
+
+export interface SupportedKpEventItem {
+  name: string;
+  category: string;
+  primary_cusp: number;
+  supporting_houses: number[];
+  denying_houses: number[];
+  is_gain_type: boolean;
+  description: string;
+}
+
+export interface KpPredictionScanRequest {
+  horoscope_id?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  place_name?: string;
+  customer_name?: string;
+  event_name: string;
+  start_date?: string;
+  end_date?: string;
+  scan_resolution_minutes?: number;
+  max_candidates?: number;
+  include_ruling_planets?: boolean;
+  judgement_datetime?: string;
+  judgement_latitude?: number;
+  judgement_longitude?: number;
+  judgement_timezone?: string;
+  scan_mode?: "standard" | "deep";
+  deep_refinement_target?: "sub_lord" | "sub_sub_lord";
+  deep_max_intervals_to_refine?: number;
+}
+
+export interface KpEventPromiseResult {
+  event_name: string;
+  category: string;
+  primary_cusp: number;
+  cusp_degree: number;
+  cusp_sign: string;
+  cusp_star_lord: string;
+  cusp_sub_lord: string;
+  csl_significations: number[];
+  supporting_houses: number[];
+  denying_houses: number[];
+  promise_status: string; // "Promised" | "Delayed / Mixed" | "Denied / Weak"
+  is_csl_retrograde: boolean;
+  is_star_lord_retrograde: boolean;
+  supporting_hits: number[];
+  denying_hits: number[];
+  rule_explanation: string;
+}
+
+export interface KpDashaPeriodResult {
+  level: number;
+  mahadasha_lord: string;
+  bhukti_lord?: string;
+  antara_lord?: string;
+  start_date: string;
+  end_date: string;
+  is_running: boolean;
+  signified_houses: number[];
+  support_status: string;
+  scoring_explanation: string;
+}
+
+export interface RulingPlanetsInfo {
+  judgement_time: string;
+  judgement_place: string;
+  ascendant_sign_lord: string;
+  ascendant_star_lord: string;
+  moon_sign_lord: string;
+  moon_star_lord: string;
+  day_lord: string;
+  active_ruling_planets: string[];
+  rejected_ruling_planets: Array<{ planet: string; role: string; reason: string }>;
+}
+
+export interface KpCandidateTimeWindow {
+  id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  timezone: string;
+  evidence_grade: "A" | "B" | "C";
+  composite_score: number;
+  dasha_chain: string;
+  dasha_favorable: boolean;
+  moon_transit: {
+    sign: string;
+    sign_lord: string;
+    star: string;
+    star_lord: string;
+    sub_lord: string;
+    sub_sub_lord: string;
+  };
+  lagna_transit: {
+    sign: string;
+    sign_lord: string;
+    star: string;
+    star_lord: string;
+    sub_lord: string;
+    sub_sub_lord: string;
+  };
+  ruling_planets_matched: string[];
+  supporting_houses_activated: number[];
+  explanation: string;
+  scan_mode?: "standard" | "deep";
+  refinement_resolution?: string;
+  precision_seconds?: number;
+  transit_transitions?: {
+    refinement_level?: string;
+    astronomical_precision_seconds?: number;
+    lagna_ingress_time?: string;
+    lagna_egress_time?: string;
+    lagna_ingress_degree?: number;
+    lagna_egress_degree?: number;
+    lagna_sub_lord?: string;
+    lagna_sub_sub_lord?: string;
+    moon_sub_lord_ingress_in_window?: boolean;
+    moon_crossing_time?: string | null;
+    moon_from_sub_lord?: string | null;
+    moon_to_sub_lord?: string | null;
+    dasha_transition_in_window?: boolean;
+    dasha_chain_at_midpoint?: string;
+    disclaimer?: string;
+  };
+}
+
+export interface KpPredictionResponse {
+  horoscope_id?: string;
+  customer_name?: string;
+  birth_details: {
+    birth_date: string;
+    birth_time: string;
+    timezone: string;
+    latitude: number;
+    longitude: number;
+    birth_place: string;
+  };
+  calculation_convention: string;
+  birth_time_accuracy_warning: string;
+  event_promise: KpEventPromiseResult;
+  ruling_planets?: RulingPlanetsInfo;
+  candidate_dasha_periods: KpDashaPeriodResult[];
+  candidate_windows: KpCandidateTimeWindow[];
+  total_windows_found: number;
+  scan_parameters: {
+    start_date: string;
+    end_date: string;
+    scan_resolution_minutes: number;
+    max_candidates: number;
+    scan_mode?: string;
+    deep_refinement_target?: string;
+    deep_max_intervals_to_refine?: number;
+    benchmark_metrics?: Record<string, any>;
+  };
+  limitations_disclaimer: string;
+  report_markdown: string;
+}
 
 
+export interface ChartFactorExplanation {
+  factor_type: string;
+  graha: string;
+  house?: number | null;
+  title_en: string;
+  title_ta: string;
+  description_en: string;
+  description_ta: string;
+  rule_reference: string;
+  is_confirmed: boolean;
+  severity: string;
+  neecha_bhanga?: NeechaBhangaAssessment | null;
+}
 
+export interface RecommendedRemedy {
+  remedy: RemedyItem;
+  relevance_score: number;
+  priority_tier: "essential" | "recommended" | "optional" | string;
+  reason_en: string;
+  reason_ta: string;
+  matching_factors: string[];
+  yogakaraka_warning?: string | null;
+  temple?: NavagrahaTempleItem | null;
+}
+
+export interface ChartContextSummary {
+  lagna_sign: string;
+  lagna_lord?: string | null;
+  running_mahadasha?: string | null;
+  running_bhukti?: string | null;
+  running_pratyantardasha?: string | null;
+  yogakaraka_graha?: string | null;
+  functional_benefics: string[];
+  functional_malefics: string[];
+  afflicted_grahas: string[];
+  afflicted_bhavas: number[];
+  kuja_dosha_present: boolean;
+  kuja_dosha_cancelled: boolean;
+  kuja_dosha_cancellation_reason?: string | null;
+  d9_data_status?: string;
+  d9_planetary_signs?: Record<string, string>;
+  vargottama_planets?: string[];
+  neecha_bhanga_assessments?: NeechaBhangaAssessment[];
+}
+
+export interface RemedyAnalysisResponse {
+  horoscope_id?: string | null;
+  person_name?: string | null;
+  birth_date?: string | null;
+  birth_time?: string | null;
+  chart_context: ChartContextSummary;
+  diagnosed_factors: ChartFactorExplanation[];
+  recommendations: RecommendedRemedy[];
+  total_recommendations: number;
+  input_fingerprint: string;
+  classical_disclaimer_en: string;
+  classical_disclaimer_ta: string;
+  status: string;
+}
+
+export interface LiveRemedyAnalysisRequest {
+  birth_date?: string | null;
+  birth_time?: string | null;
+  timezone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  ayanamsa?: number | null;
+  chart_snapshot?: Record<string, any> | null;
+}
+
+export interface SaveRemedyReportRequest {
+  horoscope_id: string;
+  input_data_fingerprint: string;
+  person_name?: string | null;
+  review_status: "draft" | "reviewed" | "approved";
+  astrologer_notes?: string | null;
+  selected_remedy_codes: string[];
+  language: "en" | "ta";
+  analysis_snapshot: RemedyAnalysisResponse;
+}
+
+export interface SavedRemedyReportResponse {
+  id: string;
+  horoscope_id: string;
+  user_id: string;
+  person_name?: string | null;
+  input_data_fingerprint: string;
+  review_status: "draft" | "reviewed" | "approved";
+  astrologer_notes?: string | null;
+  selected_remedy_codes: string[];
+  language: "en" | "ta";
+  analysis_snapshot: RemedyAnalysisResponse;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedRemedyReportsListResponse {
+  total_count: number;
+  reports: SavedRemedyReportResponse[];
+}
