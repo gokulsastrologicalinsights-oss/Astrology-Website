@@ -114,3 +114,31 @@ class SavedHoroscopeAnalysisRequest(BaseModel):
     filter_event: Optional[str] = None
     running_only: Optional[bool] = False
     regenerate: Optional[bool] = False
+
+
+class UserKpAnalysisSummary(BaseModel):
+    id: str
+    user_id: str
+    horoscope_id: Optional[str] = None
+    rule_set_version: str = "1.0.0"
+    calculation_timestamp: str
+    created_at: str
+    updated_at: str
+    running_period: Optional[str] = None
+    total_periods: int = 0
+    green_count: int = 0
+    orange_count: int = 0
+    red_count: int = 0
+    persistence_status: str = "database"
+    person_name: Optional[str] = None
+    birth_date: Optional[str] = None
+    display_number: Optional[int] = None
+    lagna: Optional[str] = None
+
+
+class UserKpAnalysisListResponse(BaseModel):
+    total_count: int
+    limit: int
+    offset: int
+    items: List[UserKpAnalysisSummary]
+

@@ -10,7 +10,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 
 from app.services.auth_service import get_supabase_client
 from .event_rules import RULE_SET_VERSION
@@ -183,3 +183,127 @@ def delete_kp_event_analysis(
             del _LOCAL_KP_EVENT_ANALYSES[analysis_id]
             return True
     return False
+
+
+def list_kp_event_analyses(
+    user_id: str,
+    is_admin: bool = False,
+    limit: int = 10,
+    offset: int = 0,
+) -> Tuple[List[Dict[str, Any]], int]:
+    """Retrieves a paginated list of analysis records for the user (or all if admin)
+    with related horoscope metadata safely attached.
+    """
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
+    supabase = get_supabase_client()
+
+    if supabase:
+        try:
+            # Query kp_event_analyses with exact total count
+            query = supabase.table("kp_event_analyses").select("*", count="exact")
+            if not is_admin:
+                query = query.eq("user_id", user_id)
+            res = (
+                query.order("updated_at", desc=True)
+                .order("created_at", desc=True)
+                .range(offset, offset + limit - 1)
+                .execute()
+            )
+
+            total_count = res.count if res.count is not None else len(res.data or [])
+            rows = res.data or []
+
+            # Collect horoscope_ids to safely enrich with horoscope metadata
+            horoscope_ids = [r["horoscope_id"] for r in rows if r.get("horoscope_id")]
+            horo_meta_map: Dict[str, Dict[str, Any]] = {}
+
+            if horoscope_ids:
+                try:
+                    # Enforce application-level user authorization on horoscope metadata
+                    h_query = (
+                        supabase.table("saved_horoscopes")
+                        .select("id, user_id, person_name, birth_date, display_number, calculation_result")
+                        .in_("id", list(set(horoscope_ids)))
+                    )
+                    if not is_admin:
+                        h_query = h_query.eq("user_id", user_id)
+                    h_res = h_query.execute()
+                    for h in (h_res.data or []):
+                        asc_sign = None
+                        calc = h.get("calculation_result") or {}
+                        if isinstance(calc, dict):
+                            asc_sign = calc.get("horoscope", {}).get("ascendant", {}).get("sign_name")
+                        horo_meta_map[str(h["id"])] = {
+                            "person_name": h.get("person_name"),
+                            "birth_date": str(h.get("birth_date")),
+                            "display_number": h.get("display_number"),
+                            "lagna": asc_sign,
+                        }
+                except Exception as meta_exc:
+                    logger.warning("Could not fetch related horoscope metadata: %s", meta_exc)
+
+            summaries = []
+            for r in rows:
+                summary = r.get("summary") or {}
+                hid = str(r.get("horoscope_id")) if r.get("horoscope_id") else None
+                meta = horo_meta_map.get(hid, {}) if hid else {}
+
+                summaries.append({
+                    "id": str(r["id"]),
+                    "user_id": str(r["user_id"]),
+                    "horoscope_id": hid,
+                    "rule_set_version": r.get("rule_set_version", "1.0.0"),
+                    "calculation_timestamp": str(r.get("calculation_timestamp") or r.get("created_at")),
+                    "created_at": str(r.get("created_at")),
+                    "updated_at": str(r.get("updated_at")),
+                    "running_period": summary.get("running_period"),
+                    "total_periods": summary.get("total_periods", 0),
+                    "green_count": summary.get("green_count", 0),
+                    "orange_count": summary.get("orange_count", 0),
+                    "red_count": summary.get("red_count", 0),
+                    "persistence_status": "database",
+                    "person_name": meta.get("person_name"),
+                    "birth_date": meta.get("birth_date"),
+                    "display_number": meta.get("display_number"),
+                    "lagna": meta.get("lagna"),
+                })
+
+            return summaries, total_count
+        except Exception as exc:
+            logger.warning("Database list_kp_event_analyses failed (%s); checking local cache.", exc)
+
+    # Fallback to local cache for offline/testing modes
+    filtered = [
+        rec for rec in _LOCAL_KP_EVENT_ANALYSES.values()
+        if is_admin or rec.get("user_id") == user_id
+    ]
+    # Sort deterministically by updated_at desc, created_at desc
+    filtered.sort(key=lambda x: (x.get("updated_at", ""), x.get("created_at", "")), reverse=True)
+    total_count = len(filtered)
+    paged = filtered[offset: offset + limit]
+
+    summaries = []
+    for r in paged:
+        summary = r.get("summary") or {}
+        summaries.append({
+            "id": str(r.get("id")),
+            "user_id": str(r.get("user_id")),
+            "horoscope_id": str(r.get("horoscope_id")) if r.get("horoscope_id") else None,
+            "rule_set_version": r.get("rule_set_version", "1.0.0"),
+            "calculation_timestamp": str(r.get("calculation_timestamp") or r.get("created_at")),
+            "created_at": str(r.get("created_at")),
+            "updated_at": str(r.get("updated_at")),
+            "running_period": summary.get("running_period"),
+            "total_periods": summary.get("total_periods", 0),
+            "green_count": summary.get("green_count", 0),
+            "orange_count": summary.get("orange_count", 0),
+            "red_count": summary.get("red_count", 0),
+            "persistence_status": "in_memory_ephemeral",
+            "person_name": None,
+            "birth_date": None,
+            "display_number": None,
+            "lagna": None,
+        })
+    return summaries, total_count
+

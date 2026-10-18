@@ -924,4 +924,71 @@ def test_29_analyze_endpoint_save_horoscope_ownership_enforcement():
     assert "not found or unauthorized" in resp.json()["detail"].lower()
 
 
+# ---------------------------------------------------------------------------
+# Test 30: GET /user-analyses endpoint with pagination, validation & isolation
+# ---------------------------------------------------------------------------
+def test_30_list_user_kp_event_analyses_auth_and_isolation():
+    from app.services.auth_service import get_current_user
+
+    # 1. Unauthenticated request must return 401
+    app.dependency_overrides.clear()
+    unauth_client = TestClient(app)
+    unauth_res = unauth_client.get("/api/v1/horoscope/kp-events/user-analyses")
+    assert unauth_res.status_code == 401
+
+    # 2. Validation: limit < 1, limit > 100, offset < 0 must return 422
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "username": "owner_user",
+        "role": "user",
+    }
+    owner_client = TestClient(app)
+    assert owner_client.get("/api/v1/horoscope/kp-events/user-analyses?limit=0").status_code == 422
+    assert owner_client.get("/api/v1/horoscope/kp-events/user-analyses?limit=101").status_code == 422
+    assert owner_client.get("/api/v1/horoscope/kp-events/user-analyses?offset=-1").status_code == 422
+
+    # 3. Owner request succeeds and includes metadata
+    res = owner_client.get("/api/v1/horoscope/kp-events/user-analyses?limit=10&offset=0")
+    assert res.status_code == 200
+    data = res.json()
+    assert "total_count" in data
+    assert "items" in data
+    assert data["limit"] == 10
+    assert data["offset"] == 0
+
+    if data["items"]:
+        item = data["items"][0]
+        assert "id" in item
+        assert "user_id" in item
+        assert "green_count" in item
+        assert "running_period" in item
+        assert "persistence_status" in item
+
+    # 4. Attacker user isolation: user with no records receives total_count=0, empty items
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "attacker-user-uuid-8888",
+        "username": "attacker",
+        "role": "user",
+    }
+    attacker_client = TestClient(app)
+    res_attacker = attacker_client.get("/api/v1/horoscope/kp-events/user-analyses")
+    assert res_attacker.status_code == 200
+    attacker_data = res_attacker.json()
+    assert attacker_data["total_count"] == 0
+    assert len(attacker_data["items"]) == 0
+
+    # 5. Admin sees records
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "admin-uuid-001",
+        "username": "admin",
+        "role": "admin",
+    }
+    admin_client = TestClient(app)
+    res_admin = admin_client.get("/api/v1/horoscope/kp-events/user-analyses")
+    assert res_admin.status_code == 200
+
+    app.dependency_overrides.clear()
+
+
+
 

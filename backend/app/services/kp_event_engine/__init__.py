@@ -40,6 +40,7 @@ from .repository import (
     save_kp_event_analysis,
     get_kp_event_analysis,
     delete_kp_event_analysis,
+    list_kp_event_analyses,
 )
 from .orchestrator import (
     run_kp_event_analysis,
@@ -72,6 +73,7 @@ __all__ = [
     "save_kp_event_analysis",
     "get_kp_event_analysis",
     "delete_kp_event_analysis",
+    "list_kp_event_analyses",
     "run_kp_event_analysis",
     "extract_periods_from_dasa_response",
 ]

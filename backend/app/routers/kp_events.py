@@ -12,6 +12,8 @@ from app.schemas.kp_events import (
     KpEventAnalysisRequest,
     KpEventAnalysisResponse,
     SavedHoroscopeAnalysisRequest,
+    UserKpAnalysisSummary,
+    UserKpAnalysisListResponse,
 )
 from app.schemas.common import BirthInput
 from app.schemas.horoscope import HoroscopeRequest
@@ -30,6 +32,7 @@ from app.services.kp_event_engine import (
     save_kp_event_analysis,
     get_kp_event_analysis,
     delete_kp_event_analysis,
+    list_kp_event_analyses,
     derive_cusp_sub_lords_from_chart,
     extract_retrograde_status_from_chart,
     derive_planet_house_significations,
@@ -373,3 +376,36 @@ def get_event_registry() -> Dict[str, Any]:
             for e in events
         ],
     }
+
+
+# 5. List Authenticated User's KP Event Analyses
+@router.get(
+    "/user-analyses",
+    response_model=UserKpAnalysisListResponse,
+    summary="List stored KP event analyses for authenticated user",
+)
+def list_user_kp_event_analyses(
+    limit: int = Query(10, ge=1, le=100, description="Max records to return (1-100)"),
+    offset: int = Query(0, ge=0, description="Pagination offset (>= 0)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> UserKpAnalysisListResponse:
+    """Retrieves paginated list of KP event analyses belonging to the current user (or all if admin)
+    enriched with linked horoscope metadata.
+    """
+    user_id = current_user["id"]
+    is_admin = current_user.get("role") == "admin"
+
+    items, total_count = list_kp_event_analyses(
+        user_id=user_id,
+        is_admin=is_admin,
+        limit=limit,
+        offset=offset,
+    )
+
+    return UserKpAnalysisListResponse(
+        total_count=total_count,
+        limit=limit,
+        offset=offset,
+        items=[UserKpAnalysisSummary(**item) for item in items],
+    )
+
