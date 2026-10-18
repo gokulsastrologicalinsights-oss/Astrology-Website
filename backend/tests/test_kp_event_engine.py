@@ -880,3 +880,48 @@ def test_28_end_to_end_real_saved_chart_trace():
     assert "Indicative KP hint, confirm with CSL and transit before decisions." in res["human_readable_report"]
 
 
+# ---------------------------------------------------------------------------
+# Test 29: /analyze endpoint rejects save_horoscope_id belonging to another user
+# ---------------------------------------------------------------------------
+def test_29_analyze_endpoint_save_horoscope_ownership_enforcement():
+    from app.routers.kp_events import get_optional_current_user
+    from app.services.auth_service import get_supabase_client
+
+    supabase = get_supabase_client()
+    if not supabase:
+        return
+
+    # Attacker tries to attach analysis to someone else's saved horoscope
+    app.dependency_overrides[get_optional_current_user] = lambda: {
+        "id": "attacker-user-uuid-9999",
+        "username": "attacker",
+        "role": "user",
+    }
+    test_client = TestClient(app)
+
+    payload = {
+        "lagna": "Aries",
+        "periods": [
+            {
+                "mahadasha_lord": "Jupiter",
+                "bhukti_lord": "Sun",
+                "start_date": "2026-01-01",
+                "end_date": "2027-01-01",
+            }
+        ],
+        "significations": {
+            "Jupiter": {2: "L1", 11: "L2"},
+            "Sun": {10: "L1"},
+        },
+        "save_horoscope_id": "ba9bb522-a79d-43e8-8493-ac8d53d4d39b",  # belongs to owner
+    }
+
+    resp = test_client.post("/api/v1/horoscope/kp-events/analyze", json=payload)
+    app.dependency_overrides.clear()
+
+    # Must be rejected with 404
+    assert resp.status_code == 404
+    assert "not found or unauthorized" in resp.json()["detail"].lower()
+
+
+

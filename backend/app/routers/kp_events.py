@@ -78,6 +78,18 @@ def analyze_kp_events(
 
         # If user is authenticated and save_horoscope_id is provided, persist analysis
         if current_user and request.save_horoscope_id:
+            supabase = get_supabase_client()
+            if supabase:
+                is_admin = current_user.get("role") == "admin"
+                chk = supabase.table("saved_horoscopes").select("id").eq("id", request.save_horoscope_id)
+                if not is_admin:
+                    chk = chk.eq("user_id", current_user["id"])
+                chk_res = chk.execute()
+                if not chk_res.data:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Saved horoscope not found or unauthorized.",
+                    )
             save_kp_event_analysis(
                 user_id=current_user["id"],
                 horoscope_id=request.save_horoscope_id,
