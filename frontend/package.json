@@ -11,8 +11,9 @@
     "bootstrap:admin": "node --env-file=.env.local scripts/bootstrap-admin.mjs",
     "test:auth": "node scripts/test-auth-integration.mjs && node --env-file=.env.local scripts/test-live-supabase.mjs",
     "test:scenarios": "node --env-file=.env.local scripts/test-login-and-access-scenarios.mjs",
+    "test:destiny-card": "node --experimental-strip-types scripts/test-destiny-card.mjs",
     "test:saved": "node --experimental-strip-types --env-file=.env.local scripts/test-saved-horoscopes.mjs",
-    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types --env-file=.env.local scripts/test-saved-horoscopes.mjs"
+    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -23,6 +23,7 @@ from app.routers import (
     muhurta,
     vedic_extensions,
     kp_events,
+    vastu,
 )
 
 
@@ -139,5 +140,6 @@ app.include_router(numerology.router)
 app.include_router(muhurta.router)
 app.include_router(vedic_extensions.router)
 app.include_router(kp_events.router)
+app.include_router(vastu.router)
 
 

@@ -25,6 +25,7 @@ import { PanchangCard } from "@/components/results/PanchangCard";
 import { VedicYogaSection } from "@/components/results/VedicYogaSection";
 import { NabhashaSection } from "@/components/results/NabhashaSection";
 import { AshtakavargaSection } from "@/components/results/AshtakavargaSection";
+import { DestinyCard } from "@/components/results/DestinyCard";
 import { calculateNabhasha, calculateAshtakavarga, calculateVedicYogas } from "@/lib/api";
 import { buildPlanetContexts, enrichDasaTreeWithBenefitBhavas } from "@/lib/benefit-bhavas";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -44,6 +45,7 @@ import {
   Database,
   RefreshCw,
   Info,
+  Sparkles,
 } from "lucide-react";
 
 function HoroscopeResultsContent() {
@@ -66,9 +68,9 @@ function HoroscopeResultsContent() {
 
   const [chartMode, setChartMode] = useState<"south" | "north">("south");
   const [activeTab, setActiveTab] = useState<
-    "chart" | "planets" | "houses" | "dasa" | "kp" | "panchang" | "vedic-yogas" | "nabhasha" | "ashtakavarga"
+    "chart" | "planets" | "houses" | "dasa" | "kp" | "panchang" | "vedic-yogas" | "nabhasha" | "ashtakavarga" | "destiny-card"
   >(() => {
-    const validTabs = ["chart", "planets", "houses", "dasa", "kp", "panchang", "vedic-yogas", "nabhasha", "ashtakavarga"];
+    const validTabs = ["chart", "planets", "houses", "dasa", "kp", "panchang", "vedic-yogas", "nabhasha", "ashtakavarga", "destiny-card"];
     if (tabParam && validTabs.includes(tabParam)) {
       return tabParam as any;
     }
@@ -79,7 +81,7 @@ function HoroscopeResultsContent() {
   });
 
   useEffect(() => {
-    const validTabs = ["chart", "planets", "houses", "dasa", "kp", "panchang", "vedic-yogas", "nabhasha", "ashtakavarga"];
+    const validTabs = ["chart", "planets", "houses", "dasa", "kp", "panchang", "vedic-yogas", "nabhasha", "ashtakavarga", "destiny-card"];
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam as any);
     } else if (typeof window !== "undefined" && window.location.hash === "#kp-events") {
@@ -449,7 +451,19 @@ function HoroscopeResultsContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("destiny-card")}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+              activeTab === "destiny-card"
+                ? "bg-amber-600 text-white"
+                : "border border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>{t.tabDestinyCard || "Destiny Card"}</span>
+          </button>
           <button
             type="button"
             onClick={() => window.print()}
@@ -726,6 +740,19 @@ function HoroscopeResultsContent() {
         >
           {t.tabVedicYogas}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("destiny-card")}
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+            activeTab === "destiny-card"
+              ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-xs"
+              : "text-amber-800 bg-amber-50/70 hover:bg-amber-100 hover:text-amber-950 border border-amber-200/80"
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <span>{t.tabDestinyCard || "Destiny Card"}</span>
+        </button>
       </div>
 
       {/* 5. Tab Content Panels */}
@@ -767,6 +794,32 @@ function HoroscopeResultsContent() {
               ) : (
                 <NorthIndianChart horoscope={horoscope} />
               )}
+            </div>
+
+            {/* Callout to Destiny Card */}
+            <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-600/15 to-amber-700/10 border border-amber-300/80 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-700 shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                    {language === "ta" ? "உங்கள் வேத விதி அட்டை தயார்!" : "Your Vedic Destiny Card is Ready!"}
+                  </h4>
+                  <p className="text-[11px] text-amber-800/80">
+                    {language === "ta"
+                      ? "லக்னம், ராசி, நட்சத்திரம் மற்றும் நடப்பு தசா அடங்கிய உயர் தெளிவுத்திறன் பகிர்வு அட்டை."
+                      : "Export a high-resolution, mobile-friendly share card with your verified astrological identity."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("destiny-card")}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition-colors shrink-0 cursor-pointer"
+              >
+                <span>{language === "ta" ? "காண்க" : "View Card"}</span>
+              </button>
             </div>
 
             <div className="pt-6 border-t border-[#E2DCD5]">
@@ -876,6 +929,13 @@ function HoroscopeResultsContent() {
               onCalculate={handleCalculateVedicExtensions}
               isCalculating={isCalculatingExtensions}
             />
+          </div>
+        )}
+
+        {/* Tab 10: Vedic Destiny Card */}
+        {activeTab === "destiny-card" && (
+          <div className="space-y-4">
+            <DestinyCard result={result} />
           </div>
         )}
       </div>

@@ -18,6 +18,7 @@ import {
   FileText,
   Clock,
   Sparkle,
+  Home,
 } from "lucide-react";
 
 export default function AstrologyToolsPage() {
@@ -72,7 +73,7 @@ export default function AstrologyToolsPage() {
       </div>
 
       {/* Primary Category Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl mx-auto pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pt-4">
         {/* Section Card 1: Horoscope / KP System */}
         <Link
           href="/tools/horoscope"
@@ -309,6 +310,66 @@ export default function AstrologyToolsPage() {
             </span>
             <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
               6 Modules
+            </span>
+          </div>
+        </Link>
+
+        {/* Section Card 5: Vastu Shastra */}
+        <Link
+          href="/vastu"
+          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-blue-600 transition-all relative overflow-hidden"
+          aria-label="Navigate to Vastu Shastra Assessment"
+        >
+          {/* Subtle accent highlight */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs group-hover:scale-105 transition-transform">
+                <Home className="w-8 h-8 transition-transform group-hover:scale-110" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                Vedic Architecture
+              </span>
+            </div>
+
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-blue-600 transition-colors">
+                Vastu Shastra
+              </h2>
+              <p className="text-xs sm:text-sm font-tamil text-blue-600 font-semibold mt-1">
+                வாஸ்து சாஸ்திரம்
+              </p>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
+              Evaluate directional harmony, room orientations, and spatial alignments based on classical Mayamata and Manasara principles with interactive 9×9 Vastu Purusha Mandala.
+            </p>
+
+            {/* Quick feature highlights inside card */}
+            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Residential &amp; Commercial
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                32 Outer Padas
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Dosha Identification
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Classical Remedies
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
+              <span>{language === "ta" ? "வாஸ்து திறக்க" : "Open Vastu Shastra"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </span>
+            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
+              4 Modules
             </span>
           </div>
         </Link>

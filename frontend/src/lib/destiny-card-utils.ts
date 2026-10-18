@@ -4,9 +4,9 @@
  * and renders high-resolution, exportable share cards on HTML5 Canvas.
  */
 
-import type { FullHoroscopeResult } from "./types";
-import type { LanguageCode } from "./translations";
-import { getRasiName, getNakshatraName, getLordName } from "./translations";
+import type { FullHoroscopeResult } from "./types.ts";
+import type { LanguageCode } from "./translations.ts";
+import { getRasiName, getNakshatraName, getLordName } from "./translations.ts";
 
 export interface DestinyCardData {
   isVerified: boolean;

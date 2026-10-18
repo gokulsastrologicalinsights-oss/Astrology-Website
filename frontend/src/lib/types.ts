@@ -1112,3 +1112,188 @@ export interface UserKpAnalysisListResponse {
   offset: number;
   items: UserKpAnalysisSummary[];
 }
+
+// ------------------------------------------------------------------------------
+// Vastu Shastra Models
+// ------------------------------------------------------------------------------
+
+export interface DirectionMetadata {
+  code: string;
+  sanskrit_name: string;
+  english_name: string;
+  chinese_name: string;
+  center_degree: number;
+  start_degree: number;
+  end_degree: number;
+  deity: string;
+  element: string;
+  planet: string;
+  traditional_significance: string;
+  recommended_colors: string[];
+  color_hex: string[];
+  traditional_remedies: string[];
+  suitable_uses: string[];
+  prohibited_uses: string[];
+}
+
+export interface PadaDeityMetadata {
+  pada_index: number;
+  direction_side: string;
+  sanskrit_name: string;
+  chinese_name: string;
+  nature: "auspicious" | "neutral" | "inauspicious";
+  governing_direction: string;
+  traditional_result: string;
+  start_degree?: number;
+  end_degree?: number;
+}
+
+export interface VastuDirectionsResponse {
+  directions_8: DirectionMetadata[];
+  directions_16: DirectionMetadata[];
+  padas_32: PadaDeityMetadata[];
+  engine_version: string;
+}
+
+export interface RoomPlacementsInput {
+  main_entrance_direction?: string;
+  main_entrance_pada?: string;
+  kitchen_direction?: string;
+  master_bedroom_direction?: string;
+  pooja_room_direction?: string;
+  toilet_directions?: string[];
+  septic_tank_direction?: string;
+  underground_water_tank_direction?: string;
+  overhead_water_tank_direction?: string;
+  living_room_direction?: string;
+  dining_room_direction?: string;
+  staircase_direction?: string;
+  study_room_direction?: string;
+  brahmasthan_status?: "clear" | "partially_obstructed" | "heavily_obstructed" | "unassessed";
+  plot_shape?: "square" | "rectangular" | "gaumukhi" | "shermukhi" | "triangular" | "irregular" | "unassessed";
+  slope_direction?: string;
+
+  // Commercial
+  owner_cabin_direction?: string;
+  accounts_cash_direction?: string;
+  conference_room_direction?: string;
+  reception_direction?: string;
+
+  // Industrial
+  heavy_machinery_direction?: string;
+  raw_material_storage_direction?: string;
+  finished_goods_direction?: string;
+  boiler_furnace_direction?: string;
+  effluent_treatment_direction?: string;
+}
+
+export interface VastuEvaluationRequest {
+  property_name: string;
+  property_type: "residential" | "commercial" | "plot" | "industrial";
+  facing_direction?: string;
+  facing_degrees?: number;
+  placements?: RoomPlacementsInput;
+  saved_horoscope_id?: string;
+  person_name?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface FactorEvaluation {
+  factor_key: string;
+  factor_name: string;
+  assessed: boolean;
+  input_value?: string | null;
+  score?: number | null;
+  max_weight: number;
+  severity: "ideal" | "acceptable" | "moderate_defect" | "severe_defect" | "unassessed";
+  traditional_rule: string;
+  rule_source: string;
+  explanation: string;
+  remedy?: string | null;
+}
+
+export interface VastuDosha {
+  dosha_code: string;
+  dosha_name: string;
+  severity: "critical" | "major" | "moderate" | "minor";
+  zone: string;
+  traditional_impact: string;
+  traditional_source: string;
+  remedies: string[];
+}
+
+export interface AstroOverlayResult {
+  lagna_sign: string;
+  lagna_ruler: string;
+  moon_sign?: string;
+  nakshatra?: string;
+  favorable_directions: string[];
+  unfavorable_directions: string[];
+  elemental_synergy: string;
+  planetary_zone_notes: string[];
+  calculation_source: string;
+}
+
+export interface VastuEvaluationResponse {
+  property_name: string;
+  property_type: string;
+  facing_direction: string;
+  facing_degrees?: number | null;
+  engine_version: string;
+  rubric_version: string;
+  compliance_score?: number | null;
+  score_grade?: string | null;
+  factors_assessed: number;
+  factors_total: number;
+  factor_results: FactorEvaluation[];
+  doshas: VastuDosha[];
+  general_remedies: string[];
+  missing_data_warnings: string[];
+  conflicting_input_warnings: string[];
+  astro_overlay?: AstroOverlayResult | null;
+  disclaimer: string;
+}
+
+export interface SaveVastuReportRequest {
+  property_name: string;
+  property_type: "residential" | "commercial" | "plot" | "industrial";
+  facing_direction: string;
+  facing_degrees?: number | null;
+  horoscope_id?: string | null;
+  person_name?: string | null;
+  birth_date?: string | null;
+  evaluation_data: Record<string, any>;
+}
+
+export interface SavedVastuReportResponse {
+  id: string;
+  user_id: string;
+  display_number: number;
+  property_name: string;
+  property_type: string;
+  facing_direction: string;
+  facing_degrees?: number | null;
+  horoscope_id?: string | null;
+  person_name?: string | null;
+  birth_date?: string | null;
+  calculation_data: Record<string, any>;
+  dosha_evaluations: Record<string, any>[];
+  remedy_recommendations: string[];
+  compliance_score: number;
+  engine_version: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedVastuReportsListResponse {
+  reports: SavedVastuReportResponse[];
+  total_count: number;
+  limit: number;
+  offset: number;
+}
+
+

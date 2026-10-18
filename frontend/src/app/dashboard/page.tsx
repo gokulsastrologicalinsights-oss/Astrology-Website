@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
-import { listNumerologyReports, getHealth, listUserKpEventAnalyses } from "@/lib/api";
+import { listNumerologyReports, getHealth, listVastuReports, listUserKpEventAnalyses } from "@/lib/api";
 import {
   SavedNumerologyReportResponse,
   HealthResponse,
+  SavedVastuReportResponse,
   UserKpAnalysisSummary,
 } from "@/lib/types";
 import { SavedHoroscopesList } from "@/components/saved/SavedHoroscopesList";
@@ -30,6 +31,7 @@ import {
   TrendingUp,
   ExternalLink,
   ChevronRight,
+  Home,
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
@@ -42,6 +44,8 @@ export default function DashboardPage() {
   const [numerologyReports, setNumerologyReports] = useState<SavedNumerologyReportResponse[]>([]);
   const [totalNumerologyCount, setTotalNumerologyCount] = useState<number>(0);
   const [totalHoroscopesCount, setTotalHoroscopesCount] = useState<number>(0);
+  const [vastuReports, setVastuReports] = useState<SavedVastuReportResponse[]>([]);
+  const [totalVastuCount, setTotalVastuCount] = useState<number>(0);
   const [kpAnalyses, setKpAnalyses] = useState<UserKpAnalysisSummary[]>([]);
   const [totalKpAnalysesCount, setTotalKpAnalysesCount] = useState<number>(0);
   const [loadingKpAnalyses, setLoadingKpAnalyses] = useState<boolean>(false);
@@ -100,11 +104,21 @@ export default function DashboardPage() {
           setLoadingReports(false);
         });
 
-      // 3. Total KP Event Analyses from backend
+      // 3. Total Vastu reports from backend
+      listVastuReports(session.access_token, 5, 0)
+        .then((res) => {
+          setVastuReports(res.reports || []);
+          setTotalVastuCount(res.total_count || 0);
+        })
+        .catch((err) => {
+          console.warn("Failed to load Vastu reports:", err);
+        });
+
+      // 4. Total KP Event Analyses from backend
       fetchKpAnalyses();
     }
 
-    // 4. Engine health
+    // 5. Engine health
     getHealth()
       .then((h) => setEngineHealth(h))
       .catch(() => setEngineHealth(null));
@@ -168,6 +182,14 @@ export default function DashboardPage() {
             <span>{language === "ta" ? "ஜாதகம் கணிக்க" : "New Horoscope"}</span>
           </Link>
 
+          <Link
+            href="/vastu"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#102A4C] bg-white hover:bg-slate-50 border border-[#DDE5F0] shadow-xs transition-colors"
+          >
+            <Home className="w-3.5 h-3.5 text-blue-600" />
+            <span>{language === "ta" ? "வாஸ்து" : "Vastu Shastra"}</span>
+          </Link>
+
           <button
             type="button"
             onClick={logout}
@@ -180,7 +202,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Real Statistics Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Stat 1: Total Saved Horoscopes */}
         <div className="p-5 rounded-2xl bg-white border border-[#DDE5F0] shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-[#52667E]">
@@ -197,12 +219,32 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stat 2: Total Saved Numerology Reports */}
+        {/* Stat 2: KP Event Analyses */}
+        <div className="p-5 rounded-2xl bg-white border border-[#DDE5F0] shadow-2xs space-y-2">
+          <div className="flex items-center justify-between text-[#52667E]">
+            <span className="text-xs font-semibold">KP Event Analyses</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Sparkles className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-serif font-bold text-[#102A4C]">
+            {loadingKpAnalyses ? (
+              <span className="text-sm font-sans font-normal text-[#94A3B8]">...</span>
+            ) : (
+              totalKpAnalysesCount
+            )}
+          </div>
+          <div className="text-[11px] text-[#52667E] flex items-center gap-1">
+            <span>Dasha–Bhukti predictions</span>
+          </div>
+        </div>
+
+        {/* Stat 3: Total Saved Numerology Reports */}
         <div className="p-5 rounded-2xl bg-white border border-[#DDE5F0] shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-[#52667E]">
             <span className="text-xs font-semibold">Numerology Reports</span>
             <div className="w-8 h-8 rounded-lg bg-[#EBF2FE] text-[#3478F6] flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+              <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-serif font-bold text-[#102A4C]">
@@ -213,7 +255,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stat 3: Astronomical Engine Status */}
+        {/* Stat 4: Total Saved Vastu Assessments */}
+        <div className="p-5 rounded-2xl bg-white border border-[#DDE5F0] shadow-2xs space-y-2">
+          <div className="flex items-center justify-between text-[#52667E]">
+            <span className="text-xs font-semibold">Vastu Reports</span>
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Home className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-serif font-bold text-[#102A4C]">
+            {totalVastuCount}
+          </div>
+          <div className="text-[11px] text-[#52667E] flex items-center gap-1">
+            <span>Spatial evaluations</span>
+          </div>
+        </div>
+
+        {/* Stat 5: Astronomical Engine Status */}
         <div className="p-5 rounded-2xl bg-white border border-[#DDE5F0] shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-[#52667E]">
             <span className="text-xs font-semibold">Ephemeris Engine</span>
@@ -229,7 +287,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stat 4: Security & Access Level */}
+        {/* Stat 6: Security & Access Level */}
         <div className="p-5 rounded-2xl bg-white border border-[#DDE5F0] shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-[#52667E]">
             <span className="text-xs font-semibold">Access Level</span>
@@ -331,6 +389,17 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Database className="w-3.5 h-3.5 text-[#B8862B]" />
                 <span>{language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Horoscopes"}</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
+              href="/vastu"
+              className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <Home className="w-3.5 h-3.5 text-blue-600" />
+                <span>{language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra Assessment"}</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
             </Link>
@@ -566,6 +635,77 @@ export default function DashboardPage() {
 
                     <Link
                       href={`/numerology/report/${item.id}`}
+                      className="px-2.5 py-1 rounded-lg border border-[#DDE5F0] bg-white hover:bg-[#EBF2FE] text-xs font-semibold text-[#102A4C]"
+                    >
+                      {t.reopenReport || "Reopen"}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Saved Vastu Assessments Section */}
+          <div className="rounded-2xl border border-[#DDE5F0] bg-white p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+              <div className="flex items-center gap-2">
+                <Home className="w-4 h-4 text-blue-600" />
+                <h2 className="font-serif text-base font-bold text-[#102A4C]">
+                  {language === "ta" ? "சேமிக்கப்பட்ட வாஸ்து கணிப்புகள்" : "Saved Vastu Assessments"}
+                </h2>
+              </div>
+              <Link
+                href="/vastu?tab=saved"
+                className="text-xs font-semibold text-[#3478F6] hover:underline inline-flex items-center gap-1"
+              >
+                <span>View All Assessments</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {loadingReports ? (
+              <div className="py-6 text-center text-xs text-[#52667E]">
+                <div className="inline-block animate-spin w-4 h-4 border-2 border-[#3478F6] border-t-transparent rounded-full mb-1" />
+                <p>{t.loading}</p>
+              </div>
+            ) : vastuReports.length === 0 ? (
+              <div className="py-6 px-4 rounded-xl border border-dashed border-[#DDE5F0] bg-[#F8FAFC] text-center">
+                <p className="text-xs text-[#52667E]">
+                  {language === "ta" ? "சேமிக்கப்பட்ட வாஸ்து கணிப்புகள் எதுவும் இல்லை." : "No saved Vastu assessments yet."}
+                </p>
+                <div className="mt-2.5">
+                  <Link
+                    href="/vastu"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#102A4C] hover:bg-[#1E3A61]"
+                  >
+                    <span>Evaluate Layout</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F1F5F9]">
+                {vastuReports.slice(0, 3).map((item) => (
+                  <div
+                    key={item.id}
+                    className="py-2.5 flex items-center justify-between hover:bg-[#F8FAFC] px-2 rounded-lg transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-bold text-xs flex items-center justify-center">
+                        #{item.display_number}
+                      </span>
+                      <div>
+                        <div className="font-bold text-xs text-[#102A4C]">
+                          {item.property_name}
+                        </div>
+                        <div className="text-[10px] text-[#64748B]">
+                          {item.property_type.toUpperCase()} • Facing {item.facing_direction} • Score: {item.compliance_score}/100
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/vastu/report/${item.id}`}
                       className="px-2.5 py-1 rounded-lg border border-[#DDE5F0] bg-white hover:bg-[#EBF2FE] text-xs font-semibold text-[#102A4C]"
                     >
                       {t.reopenReport || "Reopen"}

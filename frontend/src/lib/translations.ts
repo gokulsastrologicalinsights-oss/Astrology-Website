@@ -94,6 +94,25 @@ export interface TranslationDictionary {
   tabNabhasha: string;
   tabAshtakavarga: string;
   tabVedicYogas: string;
+  tabDestinyCard: string;
+  destinyCardTitle: string;
+  destinyCardSubtitle: string;
+  destinyCardDownload: string;
+  destinyCardGenerating: string;
+  destinyCardLagna: string;
+  destinyCardRasi: string;
+  destinyCardNakshatra: string;
+  destinyCardPada: string;
+  destinyCardDasa: string;
+  destinyCardBirthDasa: string;
+  destinyCardSunSign: string;
+  destinyCardLord: string;
+  destinyCardAyanamsa: string;
+  destinyCardVerification: string;
+  destinyCardPrivacyNotice: string;
+  destinyCardShowDate: string;
+  destinyCardMissingData: string;
+  destinyCardSwitchLang: string;
   vedicYogasTitle: string;
   vedicYogasSubtitle: string;
   vedicYogasTotalQualifying: string;
@@ -460,6 +479,28 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabNabhasha: "Nabhasha Yogas",
     tabAshtakavarga: "Ashtakavarga",
     tabVedicYogas: "Vedic Yogas",
+    tabDestinyCard: "Destiny Card",
+    destinyCardTitle: "Vedic Destiny Card",
+    destinyCardSubtitle:
+      "Authoritative birth identity summary card backed by XALEN ephemeris calculation.",
+    destinyCardDownload: "Download High-Res PNG",
+    destinyCardGenerating: "Generating Image...",
+    destinyCardLagna: "Ascendant (Lagna)",
+    destinyCardRasi: "Moon Sign (Rasi)",
+    destinyCardNakshatra: "Birth Star (Nakshatra)",
+    destinyCardPada: "Pada / Quarter",
+    destinyCardDasa: "Current Mahadasha",
+    destinyCardBirthDasa: "Birth Mahadasha",
+    destinyCardSunSign: "Sun Sign (Surya)",
+    destinyCardLord: "Star Lord",
+    destinyCardAyanamsa: "Ayanamsa",
+    destinyCardVerification: "Verified XALEN Calculation",
+    destinyCardPrivacyNotice:
+      "Exact coordinates and sensitive details are excluded to protect your privacy.",
+    destinyCardShowDate: "Include Birth Date",
+    destinyCardMissingData:
+      "Authoritative calculation data is required to generate the Destiny Card.",
+    destinyCardSwitchLang: "Card Language",
     vedicYogasTitle: "Vedic Yoga Calculator",
     vedicYogasSubtitle: "Classical Vedic astrological combinations evaluated on authoritative planetary longitudes, dignities, and house lordships.",
     vedicYogasTotalQualifying: "Qualifying Yogas",
@@ -843,6 +884,28 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabNabhasha: "நபச யோகங்கள்",
     tabAshtakavarga: "அஷ்டகவர்க்கம்",
     tabVedicYogas: "வேத யோகங்கள்",
+    tabDestinyCard: "விதி அட்டை",
+    destinyCardTitle: "வேத விதி அட்டை",
+    destinyCardSubtitle:
+      "XALEN வானியல் கணிப்பின் மூலம் பெறப்பட்ட அதிகாரப்பூர்வ ஜாதக அடையாள அட்டை.",
+    destinyCardDownload: "உயர் தெளிவுத்திறன் PNG பதிவிறக்கு",
+    destinyCardGenerating: "படம் உருவாக்கப்படுகிறது...",
+    destinyCardLagna: "லக்னம்",
+    destinyCardRasi: "சந்திர ராசி",
+    destinyCardNakshatra: "ஜன்ம நட்சத்திரம்",
+    destinyCardPada: "பாதம்",
+    destinyCardDasa: "தற்போதைய மகா தசா",
+    destinyCardBirthDasa: "ஜன்ம மகா தசா",
+    destinyCardSunSign: "சூரிய ராசி",
+    destinyCardLord: "நட்சத்திர அதிபதி",
+    destinyCardAyanamsa: "அயனாம்சம்",
+    destinyCardVerification: "சரிபார்க்கப்பட்ட XALEN கணிப்பு",
+    destinyCardPrivacyNotice:
+      "உங்கள் தனியுரிமையைப் பாதுகாக்க துல்லியமான இருப்பிட விவரங்கள் தவிர்க்கப்பட்டுள்ளன.",
+    destinyCardShowDate: "பிறந்த தேதியை இணைக்க",
+    destinyCardMissingData:
+      "விதி அட்டையை உருவாக்க அதிகாரப்பூர்வ கணிப்புத் தரவு தேவைப்படுகிறது.",
+    destinyCardSwitchLang: "அட்டை மொழி",
     vedicYogasTitle: "வேத யோக கால்குலேட்டர்",
     vedicYogasSubtitle: "துல்லியமான கிரக நிலைகள் மற்றும் பாவாதிபதிகள் அடிப்படையில் கணக்கிடப்பட்ட பாரம்பரிய வேத யோகங்கள்.",
     vedicYogasTotalQualifying: "பொருந்தும் யோகங்கள்",

@@ -283,6 +283,15 @@ export function Navbar() {
                               <span>{t.navTools || "Astrology Tools"}</span>
                             </Link>
 
+                            <Link
+                              href="/vastu"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors"
+                            >
+                              <HomeIcon className="w-3.5 h-3.5 text-blue-600" />
+                              <span>{language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra"}</span>
+                            </Link>
+
                             {user.role === "admin" && (
                               <Link
                                 href="/admin"
@@ -409,6 +418,15 @@ export function Navbar() {
                   >
                     <Compass className="w-3.5 h-3.5 text-[#B8862B]" />
                     <span>{language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Horoscopes"}</span>
+                  </Link>
+
+                  <Link
+                    href="/vastu"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#334155] hover:bg-[#F8FAFC]"
+                  >
+                    <HomeIcon className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra"}</span>
                   </Link>
                 </div>
               )}

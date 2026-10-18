@@ -35,7 +35,14 @@ import {
   KpEventAnalysisResponse,
   UserKpAnalysisSummary,
   UserKpAnalysisListResponse,
+  VastuDirectionsResponse,
+  VastuEvaluationRequest,
+  VastuEvaluationResponse,
+  SaveVastuReportRequest,
+  SavedVastuReportResponse,
+  SavedVastuReportsListResponse,
 } from "./types";
+
 
 function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
@@ -690,3 +697,98 @@ export async function listUserKpEventAnalyses(
     }
   );
 }
+
+// ------------------------------------------------------------------------------
+// Vastu Shastra API Functions
+// ------------------------------------------------------------------------------
+
+export async function getVastuDirections(): Promise<VastuDirectionsResponse> {
+  return request<VastuDirectionsResponse>("/api/v1/vastu/directions", {
+    method: "GET",
+  });
+}
+
+export async function evaluateVastuLayout(
+  req: VastuEvaluationRequest
+): Promise<VastuEvaluationResponse> {
+  return request<VastuEvaluationResponse>("/api/v1/vastu/evaluate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function saveVastuReport(
+  token: string,
+  req: SaveVastuReportRequest
+): Promise<SavedVastuReportResponse> {
+  return request<SavedVastuReportResponse>("/api/v1/vastu/reports", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listVastuReports(
+  token: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<SavedVastuReportsListResponse> {
+  return request<SavedVastuReportsListResponse>(
+    `/api/v1/vastu/reports?limit=${limit}&offset=${offset}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
+
+export async function getVastuReport(
+  token: string,
+  reportId: string
+): Promise<SavedVastuReportResponse> {
+  return request<SavedVastuReportResponse>(`/api/v1/vastu/reports/${reportId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function updateVastuReport(
+  token: string,
+  reportId: string,
+  req: SaveVastuReportRequest
+): Promise<SavedVastuReportResponse> {
+  return request<SavedVastuReportResponse>(`/api/v1/vastu/reports/${reportId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function deleteVastuReport(
+  token: string,
+  reportId: string
+): Promise<void> {
+  await request<void>(`/api/v1/vastu/reports/${reportId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+
+
+
