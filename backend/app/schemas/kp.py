@@ -1,8 +1,10 @@
 """Schemas for POST /api/v1/horoscope/kp."""
 
 from typing import List, Dict, Any, Optional
-from datetime import date, time
-from pydantic import BaseModel, Field
+from datetime import date, time, datetime
+import re
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from pydantic import BaseModel, Field, field_validator, model_validator
 from app.schemas.common import BirthInput, CalculationMetadata
 
 
@@ -205,6 +207,153 @@ class SavedKpChartItem(BaseModel):
 class SavedKpChartListResponse(BaseModel):
     charts: List[SavedKpChartItem]
     total_count: int
+
+
+# ===========================================================================
+# KP Transit Timeline Schemas (Phase 2)
+# ===========================================================================
+
+ALLOWED_TRANSIT_PLANETS = {
+    "Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"
+}
+
+
+class TransitTimelineRequest(BaseModel):
+    """Input payload for KP Transit Ingress and Sub-Lord Timeline."""
+    start_date: date = Field(..., description="Start date in ISO format YYYY-MM-DD", examples=["2026-10-18"])
+    start_time: Optional[time] = Field(default=time(0, 0, 0), description="Optional start time in ISO format HH:MM or HH:MM:SS (defaults to 00:00:00)")
+    end_date: Optional[date] = Field(default=None, description="Optional end date in ISO format YYYY-MM-DD")
+    end_time: Optional[time] = Field(default=None, description="Optional end time in ISO format HH:MM or HH:MM:SS")
+    forecast_days: Optional[int] = Field(default=None, ge=7, le=30, description="Calculation window duration in days (7 to 30 days). If omitted and end_date is not provided, defaults to 7.")
+    timezone: str = Field(default="UTC", description="Explicit IANA timezone (e.g. 'Asia/Kolkata', 'UTC') or numeric offset (e.g. '+05:30')")
+    planets: Optional[List[str]] = Field(
+        default=None,
+        description="Explicit list of planets to analyze. Allowed: Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu. Defaults to [Moon, Sun, Jupiter, Saturn, Rahu, Ketu].",
+    )
+    ayanamsa: int = Field(default=0, description="Sidereal ayanamsa ID: 0 = Lahiri (default), 1 = KP Krishnamurti")
+    max_events: Optional[int] = Field(default=500, ge=1, le=1000, description="Sensible ceiling on number of returned events (1 to 1000, default 500)")
+
+    @field_validator("timezone")
+    @classmethod
+    def validate_timezone(cls, v: str) -> str:
+        tz = v.strip() if v else ""
+        if not tz:
+            raise ValueError("timezone cannot be empty")
+        if tz.upper() in ("UTC", "Z", "+00:00", "-00:00", "+00", "-00"):
+            return tz
+        if tz.startswith(("+", "-")):
+            offset_pattern = re.compile(r"^[+-]\d{2}(:?\d{2})?$")
+            if not offset_pattern.match(tz):
+                raise ValueError(f"Invalid timezone offset format: '{tz}'. Use format like '+05:30' or '-04:00'.")
+            return tz
+        try:
+            ZoneInfo(tz)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(f"Invalid timezone: '{tz}'. Provide a valid IANA name (e.g. 'Asia/Kolkata') or offset.") from exc
+        return tz
+
+    @field_validator("planets")
+    @classmethod
+    def validate_planets(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        if v is not None:
+            if len(v) == 0:
+                raise ValueError("planets list cannot be empty when provided")
+            invalid = [p for p in v if p not in ALLOWED_TRANSIT_PLANETS]
+            if invalid:
+                raise ValueError(f"Unsupported planet(s): {invalid}. Allowed: {sorted(ALLOWED_TRANSIT_PLANETS)}")
+            # Preserve order and eliminate duplicate entries
+            seen = set()
+            deduped = []
+            for p in v:
+                if p not in seen:
+                    seen.add(p)
+                    deduped.append(p)
+            return deduped
+        return v
+
+    @field_validator("ayanamsa")
+    @classmethod
+    def validate_ayanamsa(cls, v: int) -> int:
+        if v not in (0, 1):
+            raise ValueError(f"ayanamsa must be 0 (Lahiri) or 1 (KP), got {v}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_date_range(self) -> "TransitTimelineRequest":
+        if self.end_date is not None:
+            if self.end_date < self.start_date:
+                raise ValueError("end_date cannot be earlier than start_date")
+            st = self.start_time or time(0, 0, 0)
+            et = self.end_time or time(0, 0, 0)
+            dt_start = datetime.combine(self.start_date, st)
+            dt_end = datetime.combine(self.end_date, et)
+            duration_days = (dt_end - dt_start).total_seconds() / 86400.0
+            if duration_days < 7.0 - 1e-4 or duration_days > 30.0 + 1e-4:
+                raise ValueError(f"Calculation window duration must be between 7 and 30 days (got {duration_days:.2f} days)")
+        return self
+
+
+class TransitIngressEventSchema(BaseModel):
+    """Schema for a single planetary boundary crossing event."""
+    planet: str
+    planet_id: int
+    utc_datetime: str
+    local_datetime: str
+    jd: float
+    boundary_type: str            # "rashi" | "nakshatra" | "sub_lord"
+    boundary_longitude: float     # degrees [0, 360)
+    is_retrograde: bool
+    speed_deg_per_day: float
+
+    # Rashi / Sign transition
+    from_sign: str
+    to_sign: str
+    from_sign_lord: str
+    to_sign_lord: str
+    is_rashi_boundary: bool
+
+    # Nakshatra / Star transition
+    from_nakshatra: str
+    to_nakshatra: str
+    from_star_lord: str
+    to_star_lord: str
+    is_nakshatra_boundary: bool
+
+    # KP Sub-Lord transition
+    from_sub_lord: str
+    to_sub_lord: str
+    from_kp_number: int
+    to_kp_number: int
+    is_sub_lord_boundary: bool
+
+    calculation_precision_seconds: float = 0.5
+
+
+class TransitTimelineBenchmarkStats(BaseModel):
+    """Execution diagnostics and evaluation counts."""
+    duration_ms: float
+    total_evaluations: int
+    step_evaluations: int
+    bisection_evaluations: int
+
+
+class TransitTimelineResponse(BaseModel):
+    """Full KP transit timeline response with window metadata and chronological events."""
+    start_time_utc: str
+    start_time_local: str
+    end_time_utc: str
+    end_time_local: str
+    timezone: str
+    utc_offset_hours: float
+    ayanamsa_id: int
+    ayanamsa_name: str
+    forecast_days: float
+    planets_analyzed: List[str]
+    total_events: int
+    truncated: bool = False
+    events: List[TransitIngressEventSchema]
+    benchmark_stats: Optional[TransitTimelineBenchmarkStats] = None
+
 
 
 

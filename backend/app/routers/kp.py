@@ -10,8 +10,11 @@ from app.schemas.kp import (
     SaveKpChartRequest,
     SavedKpChartItem,
     SavedKpChartListResponse,
+    TransitTimelineRequest,
+    TransitTimelineResponse,
 )
 from app.services.kp_service import calculate_kp_chart, calculate_horary_chart
+from app.services.kp_transit_timeline import compute_transit_timeline
 from app.services.auth_service import get_current_user
 from app.services.kp_engine.kp_chart_repository import (
     save_kp_chart,
@@ -131,3 +134,41 @@ def delete_chart(
             detail="Saved KP chart not found or unauthorized.",
         )
     return {"status": "success", "message": "Chart deleted successfully."}
+
+
+# 7. KP Transit Ingress and Sub-Lord Timeline Calculation
+@router.post(
+    "/kp/transit-timeline",
+    response_model=TransitTimelineResponse,
+    summary="Calculate KP Transit Ingress and Sub-Lord Timeline",
+    description="Calculate exact Sidereal Rashi, Nakshatra, and KP Sub-Lord boundary crossings over a 7-30 day window.",
+)
+def get_transit_timeline(
+    request: TransitTimelineRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> TransitTimelineResponse:
+    """Compute high-precision KP Transit Timeline. Requires valid authentication."""
+    try:
+        result = compute_transit_timeline(
+            start_date=request.start_date,
+            start_time=request.start_time,
+            end_date=request.end_date,
+            end_time=request.end_time,
+            forecast_days=request.forecast_days,
+            timezone_str=request.timezone,
+            planets=request.planets,
+            ayanamsa_id=request.ayanamsa,
+            max_events=request.max_events,
+        )
+        return TransitTimelineResponse(**result.to_dict())
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="KP Transit Timeline calculation failed.",
+        )
+
