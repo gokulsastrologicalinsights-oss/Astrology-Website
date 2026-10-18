@@ -455,6 +455,12 @@ export interface SavedKpChartRecord {
 export interface SaveKpChartPayload {
   chart_type: "natal" | "horary";
   title: string;
+  customer_full_name?: string;
+  customer_phone?: string;
+  country_code?: string;
+  customer_id?: string;
+  normalized_phone?: string;
+  whatsapp_number?: string;
   birth_date?: string;
   birth_time?: string;
   horary_number?: number;
@@ -565,6 +571,16 @@ export interface FullHoroscopeResult {
   };
 }
 
+export interface CustomerSummary {
+  id: string;
+  full_name: string;
+  birth_date: string;
+  country_code: string;
+  phone_number: string;
+  normalized_phone: string;
+  whatsapp_number: string;
+}
+
 export interface SavedHoroscopeItem {
   id: string;
   user_id: string;
@@ -578,6 +594,14 @@ export interface SavedHoroscopeItem {
   longitude: number;
   ayanamsa_id: number;
   house_system_id: number;
+  customer_id?: string | null;
+  customer?: CustomerSummary | null;
+  customer_phone?: string | null;
+  customer_country_code?: string | null;
+  country_code?: string | null;
+  normalized_phone?: string | null;
+  whatsapp_number?: string | null;
+  has_missing_contact?: boolean;
   calculation_result?: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -1295,5 +1319,81 @@ export interface SavedVastuReportsListResponse {
   limit: number;
   offset: number;
 }
+
+// ===========================================================================
+// KP Transit Timeline Interfaces (Phase 3)
+// ===========================================================================
+
+export interface TransitTimelineRequest {
+  start_date: string; // YYYY-MM-DD
+  start_time?: string; // HH:MM:SS (optional, defaults to 00:00:00)
+  end_date?: string; // YYYY-MM-DD (optional)
+  end_time?: string; // HH:MM:SS (optional)
+  forecast_days?: number; // 7 to 30 days
+  timezone: string; // IANA identifier (e.g. "Asia/Kolkata", "UTC") or offset ("+05:30")
+  planets?: string[]; // ["Moon", "Sun", "Jupiter", "Saturn", "Rahu", "Ketu", "Mars", "Mercury", "Venus"]
+  ayanamsa?: number; // 0 = Lahiri, 1 = KP
+  max_events?: number; // 1 to 1000
+}
+
+export interface TransitIngressEvent {
+  planet: string;
+  planet_id: number;
+  utc_datetime: string;
+  local_datetime: string;
+  jd: number;
+  boundary_type: "rashi" | "nakshatra" | "sub_lord";
+  boundary_longitude: number;
+  is_retrograde: boolean;
+  speed_deg_per_day: number;
+
+  // Sign transition
+  from_sign: string;
+  to_sign: string;
+  from_sign_lord: string;
+  to_sign_lord: string;
+  is_rashi_boundary: boolean;
+
+  // Star transition
+  from_nakshatra: string;
+  to_nakshatra: string;
+  from_star_lord: string;
+  to_star_lord: string;
+  is_nakshatra_boundary: boolean;
+
+  // KP Sub-Lord transition
+  from_sub_lord: string;
+  to_sub_lord: string;
+  from_kp_number: number;
+  to_kp_number: number;
+  is_sub_lord_boundary: boolean;
+
+  calculation_precision_seconds: number;
+}
+
+export interface TransitTimelineBenchmarkStats {
+  duration_ms: number;
+  total_evaluations: number;
+  step_evaluations: number;
+  bisection_evaluations: number;
+}
+
+export interface TransitTimelineResponse {
+  start_time_utc: string;
+  start_time_local: string;
+  end_time_utc: string;
+  end_time_local: string;
+  timezone: string;
+  utc_offset_hours: number;
+  ayanamsa_id: number;
+  ayanamsa_name: string;
+  forecast_days: number;
+  planets_analyzed: string[];
+  total_events: number;
+  truncated: boolean;
+  events: TransitIngressEvent[];
+  benchmark_stats?: TransitTimelineBenchmarkStats;
+}
+
 
 

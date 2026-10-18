@@ -373,6 +373,66 @@ export default function AstrologyToolsPage() {
             </span>
           </div>
         </Link>
+
+        {/* Section Card 6: KP Transit Watch */}
+        <Link
+          href="/tools/transit-watch"
+          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#B8862B] transition-all relative overflow-hidden"
+          aria-label="Navigate to KP Transit Watch"
+        >
+          {/* Subtle accent highlight */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8862B] to-[#E5B558]" />
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="w-16 h-16 rounded-2xl bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8862B] shadow-2xs group-hover:scale-105 transition-transform">
+                <Clock className="w-8 h-8 transition-transform group-hover:rotate-12" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
+                Live Ephemeris
+              </span>
+            </div>
+
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#B8862B] transition-colors">
+                KP Transit Watch
+              </h2>
+              <p className="text-xs sm:text-sm font-tamil text-[#B8862B] font-semibold mt-1">
+                கோசார கிரக நிலைகள்
+              </p>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
+              Track high-precision Sidereal Rashi, Nakshatra, and KP Sub-Lord (Tier 3 / 249 divisions) boundary crossings computed via native XALEN numerical bisection.
+            </p>
+
+            {/* Quick feature highlights inside card */}
+            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                249 Sub-Divisions
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Sub-Second Precision
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Retrograde Detection
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Date-Grouped Feed
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#B8862B] group-hover:translate-x-0.5 transition-transform">
+              <span>{language === "ta" ? "கோசாரம் திறக்க" : "Open Transit Watch"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </span>
+            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
+              Phase 3 Live
+            </span>
+          </div>
+        </Link>
       </div>
 
       {/* Engine & Rigor Disclaimer */}

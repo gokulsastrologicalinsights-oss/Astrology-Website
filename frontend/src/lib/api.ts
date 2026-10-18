@@ -33,7 +33,6 @@ import {
   VedicYogaResponse,
   KpEventAnalysisRequest,
   KpEventAnalysisResponse,
-  UserKpAnalysisSummary,
   UserKpAnalysisListResponse,
   VastuDirectionsResponse,
   VastuEvaluationRequest,
@@ -41,6 +40,8 @@ import {
   SaveVastuReportRequest,
   SavedVastuReportResponse,
   SavedVastuReportsListResponse,
+  TransitTimelineRequest,
+  TransitTimelineResponse,
 } from "./types";
 
 
@@ -788,6 +789,27 @@ export async function deleteVastuReport(
     },
   });
 }
+
+/**
+ * 20. KP Transit Ingress and Sub-Lord Timeline (POST /api/v1/horoscope/kp/transit-timeline)
+ */
+export async function getTransitTimeline(
+  req: TransitTimelineRequest,
+  token?: string
+): Promise<TransitTimelineResponse> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return request<TransitTimelineResponse>("/api/v1/horoscope/kp/transit-timeline", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
 
 
 

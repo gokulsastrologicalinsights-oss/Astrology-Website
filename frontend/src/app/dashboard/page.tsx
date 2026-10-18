@@ -383,6 +383,17 @@ export default function DashboardPage() {
             </Link>
 
             <Link
+              href="/tools/transit-watch"
+              className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-[#B8862B]" />
+                <span>KP Transit Watch</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
               href="/horoscopes"
               className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
             >
