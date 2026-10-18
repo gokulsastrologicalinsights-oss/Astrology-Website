@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateAndNormalizePhone } from "@/lib/phone-utils";
+import {
+  listCustomersForUser,
+  getOrCreateCustomerRecord,
+} from "@/lib/customer-service";
 
 /**
  * GET /api/horoscopes/[id]
@@ -56,9 +61,38 @@ export async function GET(
       }
     }
 
+    // Enrich horoscope with authoritative customer contact information
+    const adminClient = createAdminClient();
+    let customerInfo = record.calculation_result?.customer || null;
+    try {
+      const customers = await listCustomersForUser(user.id, true);
+      const matched =
+        customers.find((c) => c.id === customerInfo?.id) ||
+        customers.find(
+          (c) =>
+            c.full_name.trim().toLowerCase() === record.person_name.trim().toLowerCase() &&
+            c.birth_date === record.birth_date
+        );
+      if (matched && matched.normalized_phone && !matched.is_legacy_without_phone) {
+        customerInfo = matched;
+      }
+    } catch {
+      // Ignore
+    }
+
+    const hasPhone = !!customerInfo?.normalized_phone;
+
     return NextResponse.json({
       success: true,
-      horoscope: record,
+      horoscope: {
+        ...record,
+        customer_id: customerInfo?.id || null,
+        customer: hasPhone ? customerInfo : null,
+        customer_phone: customerInfo?.normalized_phone || null,
+        customer_country_code: customerInfo?.country_code || null,
+        whatsapp_number: customerInfo?.whatsapp_number || null,
+        has_missing_contact: !hasPhone,
+      },
     });
   } catch (err: any) {
     console.error("GET /api/horoscopes/[id] error:", err?.message || err);
@@ -71,12 +105,13 @@ export async function GET(
 
 /**
  * PUT /api/horoscopes/[id]
- * Updates the subject's birth details metadata.
+ * Updates the subject's birth details metadata and customer contact info.
  * CRITICAL RULES:
  * 1. Preserves the permanent sequential display_number (NEVER mutated)
  * 2. Updates the existing record without creating a duplicate record
  * 3. Does NOT alter the original calculation snapshot
  * 4. Strict ownership enforcement: only record owner or authorized admin can update
+ * 5. Synchronizes customer contact details to authoritative customer record
  */
 export async function PUT(
   request: NextRequest,
@@ -100,7 +135,7 @@ export async function PUT(
     // Verify existing record and ownership
     const { data: existing, error: findError } = await supabase
       .from("saved_horoscopes")
-      .select("id, user_id, display_number")
+      .select("id, user_id, display_number, calculation_result")
       .eq("id", id)
       .single();
 
@@ -140,6 +175,9 @@ export async function PUT(
       longitude,
       ayanamsa_id,
       house_system_id,
+      customer_phone,
+      country_code,
+      customer_id,
     } = body;
 
     // Strict validation
@@ -184,25 +222,66 @@ export async function PUT(
       );
     }
 
+    // Update or link customer contact info if customer_phone is provided
+    let updatedCustomer = null;
+    let updatedCalculationResult = existing.calculation_result || {};
+
+    if (customer_phone && typeof customer_phone === "string" && customer_phone.trim()) {
+      const effectiveCountryCode = (country_code || "+91").trim();
+      const phoneVal = validateAndNormalizePhone(customer_phone, effectiveCountryCode);
+      if (!phoneVal.isValid) {
+        return NextResponse.json(
+          { error: phoneVal.error || "Invalid WhatsApp phone number." },
+          { status: 400 }
+        );
+      }
+
+      const existingCustId = customer_id || existing.calculation_result?.customer?.id;
+      const { customer } = await getOrCreateCustomerRecord(existing.user_id, {
+        customerId: existingCustId,
+        fullName: person_name.trim(),
+        birthDate: birth_date,
+        countryCode: effectiveCountryCode,
+        phoneNumber: customer_phone,
+      });
+
+      updatedCustomer = customer;
+      updatedCalculationResult = {
+        ...updatedCalculationResult,
+        customer: {
+          id: customer.id,
+          full_name: customer.full_name,
+          birth_date: customer.birth_date,
+          country_code: customer.country_code,
+          phone_number: customer.phone_number,
+          normalized_phone: customer.normalized_phone,
+          whatsapp_number: customer.whatsapp_number,
+        },
+      };
+    }
+
     // Perform update
     const clientToUse = isAdmin ? createAdminClient() : supabase;
+    const updatePayload: Record<string, any> = {
+      person_name: person_name.trim(),
+      birth_date,
+      birth_time,
+      timezone: (timezone || "UTC").trim(),
+      birthplace: (birthplace || "Unknown Location").trim(),
+      latitude,
+      longitude,
+      ayanamsa_id: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
+      house_system_id: typeof house_system_id === "number" ? house_system_id : 2,
+      calculation_result: updatedCalculationResult,
+      updated_at: new Date().toISOString(),
+    };
+
     const { data: updatedRecord, error: updateError } = await clientToUse
       .from("saved_horoscopes")
-      .update({
-        person_name: person_name.trim(),
-        birth_date,
-        birth_time,
-        timezone: (timezone || "UTC").trim(),
-        birthplace: (birthplace || "Unknown Location").trim(),
-        latitude,
-        longitude,
-        ayanamsa_id: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
-        house_system_id: typeof house_system_id === "number" ? house_system_id : 2,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload as any)
       .eq("id", id)
       .select(
-        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at"
+        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, calculation_result, created_at, updated_at"
       )
       .single();
 
@@ -216,7 +295,11 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      horoscope: updatedRecord,
+      horoscope: {
+        ...updatedRecord,
+        customer: updatedCustomer || updatedCalculationResult.customer || null,
+        has_missing_contact: !updatedCustomer && !updatedCalculationResult.customer?.normalized_phone,
+      },
     });
   } catch (err: any) {
     console.error("PUT /api/horoscopes/[id] error:", err?.message || err);

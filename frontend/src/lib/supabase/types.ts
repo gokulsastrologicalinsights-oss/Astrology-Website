@@ -85,7 +85,70 @@ export type Database = {
           ayanamsa_id?: number;
           house_system_id?: number;
           calculation_result?: Record<string, any>;
+          customer_id?: string | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      customers: {
+        Row: {
+          id: string;
+          user_id: string;
+          full_name: string;
+          birth_date: string;
+          country_code: string;
+          phone_number: string;
+          normalized_phone: string;
+          whatsapp_number: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          full_name: string;
+          birth_date: string;
+          country_code?: string;
+          phone_number: string;
+          normalized_phone: string;
+          whatsapp_number: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          full_name?: string;
+          birth_date?: string;
+          country_code?: string;
+          phone_number?: string;
+          normalized_phone?: string;
+          whatsapp_number?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      customer_birthday_wishes: {
+        Row: {
+          id: string;
+          customer_id: string;
+          wish_date: string;
+          sent_by: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          wish_date: string;
+          sent_by?: string | null;
+          sent_at?: string;
+        };
+        Update: {
+          id?: string;
+          customer_id?: string;
+          wish_date?: string;
+          sent_by?: string | null;
+          sent_at?: string;
         };
         Relationships: [];
       };

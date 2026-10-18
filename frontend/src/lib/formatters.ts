@@ -130,3 +130,24 @@ export function formatBirthTime(timeStr: string | null | undefined): string {
   return `${hours12.toString().padStart(2, "0")}:${minutes} ${period}`;
 }
 
+/**
+ * Calculates current calendar age in full completed years from YYYY-MM-DD birth date.
+ */
+export function calculateCalendarAge(birthDateStr?: string | null): number | null {
+  if (!birthDateStr || typeof birthDateStr !== "string") return null;
+  const parts = birthDateStr.trim().split("-");
+  if (parts.length < 3) return null;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - y;
+  const mDiff = today.getMonth() - m;
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) {
+    age--;
+  }
+  return age >= 0 ? age : null;
+}
+

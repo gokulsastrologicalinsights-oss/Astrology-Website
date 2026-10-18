@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -9,23 +9,34 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   Compass,
   Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  ChevronRight,
   Layers,
   Calendar,
-  Grid3X3,
-  FileText,
   Clock,
-  Sparkle,
   Home,
   Flame,
+  Database,
+  User,
+  Settings,
+  Cake,
+  Phone,
+  BookOpen,
+  GraduationCap,
+  Activity,
+  HeartHandshake,
+  ShieldCheck,
+  Search,
+  Hash,
+  Briefcase,
 } from "lucide-react";
+import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
+import { HelpModal } from "@/components/layout/HelpModal";
 
 export default function AstrologyToolsPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [isBirthdayOpen, setIsBirthdayOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user)) {
@@ -35,8 +46,8 @@ export default function AstrologyToolsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#E8EEF7]">
-        <div className="w-8 h-8 border-4 border-[#3478F6] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#F2F3F5]">
+        <div className="w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -45,8 +56,188 @@ export default function AstrologyToolsPage() {
     return null;
   }
 
+  // Section 1: Astrology Tools Cards (matching Screenshot 1)
+  const astrologyTools = [
+    {
+      id: "horoscope",
+      titleTa: "ஜாதகம் (வேத & கே.பி)",
+      titleEn: "Horoscope (Vedic & KP)",
+      href: "/tools/horoscope",
+      icon: Compass,
+      color: "text-[#B4872B] border-[#B4872B]/40 bg-[#FAF2DE]/50",
+    },
+    {
+      id: "marriage",
+      titleTa: "திருமணப் பொருத்தம்",
+      titleEn: "Porutham & Match",
+      href: "/tools/horoscope",
+      icon: HeartHandshake,
+      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
+    },
+    {
+      id: "panchang",
+      titleTa: "தினசரி பஞ்சாங்கம்",
+      titleEn: "Daily Panchangam",
+      href: "/muhurta",
+      icon: Calendar,
+      color: "text-amber-600 border-amber-300 bg-amber-50",
+    },
+    {
+      id: "advanced-kp",
+      titleTa: "உயர்நிலை கே.பி",
+      titleEn: "Advanced KP System",
+      href: "/tools/advanced-kp",
+      icon: Layers,
+      color: "text-indigo-600 border-indigo-300 bg-indigo-50",
+    },
+    {
+      id: "kp-events",
+      titleTa: "கே.பி. நிகழ்வு கணிப்பு",
+      titleEn: "KP Events & Prediction",
+      href: "/tools/kp-events-prediction",
+      icon: Sparkles,
+      color: "text-[#B4872B] border-[#B4872B]/40 bg-[#FAF2DE]/50",
+    },
+    {
+      id: "transit-watch",
+      titleTa: "கோச்சார ஜாதகம்",
+      titleEn: "KP Transit Watch",
+      href: "/tools/transit-watch",
+      icon: Clock,
+      color: "text-teal-600 border-teal-300 bg-teal-50",
+    },
+    {
+      id: "d1-d9",
+      titleTa: "D1/D9 சக்கரங்கள்",
+      titleEn: "D1 Rasi & D9 Navamsa",
+      href: "/tools/d1-d9",
+      icon: Compass,
+      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
+    },
+    {
+      id: "numerology",
+      titleTa: "எண் கணிதம்",
+      titleEn: "Numerology System",
+      href: "/tools/numerology",
+      icon: Hash,
+      color: "text-blue-600 border-blue-300 bg-blue-50",
+    },
+    {
+      id: "muhurta",
+      titleTa: "சுப முகூர்த்தம்",
+      titleEn: "Muhurta Finder",
+      href: "/muhurta",
+      icon: Calendar,
+      color: "text-emerald-600 border-emerald-300 bg-emerald-50",
+    },
+    {
+      id: "vastu",
+      titleTa: "வாஸ்து சாஸ்திரம்",
+      titleEn: "Vastu Shastra Assessment",
+      href: "/vastu",
+      icon: Home,
+      color: "text-cyan-600 border-cyan-300 bg-cyan-50",
+    },
+    {
+      id: "remedies",
+      titleTa: "பரிகாரங்கள் & ஆலயங்கள்",
+      titleEn: "Remedies & Pariharam",
+      href: "/remedies",
+      icon: Flame,
+      color: "text-amber-700 border-amber-300 bg-amber-50",
+    },
+    {
+      id: "destiny-card",
+      titleTa: "விதி அட்டை",
+      titleEn: "Destiny Card Snapshot",
+      href: "/tools/horoscope?tab=destiny-card",
+      icon: Sparkles,
+      color: "text-purple-600 border-purple-300 bg-purple-50",
+    },
+  ];
+
+  // Section 2: Workspace / Practice Cards
+  const workspaceTools = [
+    {
+      id: "profile",
+      titleTa: "எனது சுயவிவரம்",
+      titleEn: "My Profile",
+      href: "/dashboard",
+      icon: User,
+      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
+    },
+    {
+      id: "saved-charts",
+      titleTa: "சேமிக்கப்பட்ட ஜாதகங்கள்",
+      titleEn: "Saved Horoscopes",
+      href: "/horoscopes",
+      icon: Database,
+      color: "text-[#B4872B] border-[#B4872B]/40 bg-[#FAF2DE]/50",
+    },
+    {
+      id: "birthdays",
+      titleTa: "பிறந்தநாள் நினைவூட்டல்",
+      titleEn: "Birthday Reminders",
+      action: () => setIsBirthdayOpen(true),
+      icon: Cake,
+      color: "text-amber-600 border-amber-300 bg-amber-50",
+    },
+    {
+      id: "contacts",
+      titleTa: "வாடிக்கையாளர் தொடர்புகள்",
+      titleEn: "Customer Contacts",
+      href: "/horoscopes",
+      icon: Phone,
+      color: "text-emerald-600 border-emerald-300 bg-emerald-50",
+    },
+    {
+      id: "settings",
+      titleTa: "அமைப்புகள்",
+      titleEn: "Account & Settings",
+      href: "/dashboard",
+      icon: Settings,
+      color: "text-[#8190A6] border-slate-300 bg-slate-50",
+    },
+  ];
+
+  // Section 3: Resources
+  const resourceTools = [
+    {
+      id: "vastu-guide",
+      titleTa: "வாஸ்து சாஸ்திர விதிகள்",
+      titleEn: "Vastu Shastra Principles",
+      href: "/vastu",
+      icon: Home,
+      color: "text-blue-600 border-blue-300 bg-blue-50",
+    },
+    {
+      id: "remedies-guide",
+      titleTa: "நவகிரக ஆலயங்கள் & மந்திரங்கள்",
+      titleEn: "Temples & Mantras",
+      href: "/remedies",
+      icon: Flame,
+      color: "text-amber-600 border-amber-300 bg-amber-50",
+    },
+    {
+      id: "ephemeris",
+      titleTa: "எஃபிமெரிஸ் கணித முறை",
+      titleEn: "XALEN Ephemeris Engine",
+      href: "/dashboard",
+      icon: Activity,
+      color: "text-emerald-600 border-emerald-300 bg-emerald-50",
+    },
+    {
+      id: "platform-guide",
+      titleTa: "தள வழிகாட்டி & ஆவணங்கள்",
+      titleEn: "Help & User Guide",
+      action: () => setIsHelpOpen(true),
+      icon: GraduationCap,
+      color: "text-indigo-600 border-indigo-300 bg-indigo-50",
+    },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumbs
         items={[
@@ -56,513 +247,180 @@ export default function AstrologyToolsPage() {
         ]}
       />
 
-      {/* Page Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
-          <Compass className="w-3.5 h-3.5 text-[#B8862B]" />
-          <span>{language === "ta" ? "கருவிகள் அடைவு" : "Master Tools Directory"}</span>
+      {/* Section 1: ஜோதிடக் கருவிகள் (Astrology Tools) */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
+            <Layers className="w-5 h-5 text-[#B4872B]" />
+            <h2 className="text-base sm:text-lg font-bold text-[#183047]">
+              {language === "ta" ? "ஜோதிடக் கருவிகள்" : "Astrology Tools"}
+            </h2>
+          </div>
+          <div className="flex-1 h-px bg-[#D9DEE7]" />
         </div>
 
-        <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#102A4C] tracking-tight">
-          Astrology Tools | ஜோதிடக் கருவிகள்
-        </h1>
-
-        <p className="text-sm sm:text-base text-[#52667E] leading-relaxed">
-          {t.toolsSubtitle ||
-            "Access your horoscope calculations, KP astrology analysis, and numerology tools from one place."}
-        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {astrologyTools.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Link
+                key={card.id}
+                href={card.href}
+                className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
+              >
+                <div
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                >
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
+                  {language === "ta" ? card.titleTa : card.titleEn}
+                </div>
+                <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
+                  {language === "ta" ? card.titleEn : card.titleTa}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Primary Category Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pt-4">
-        {/* Section Card 1: Horoscope / KP System */}
-        <Link
-          href="/tools/horoscope"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#B8862B] transition-all relative overflow-hidden"
-          aria-label="Navigate to Horoscope and KP System Tools"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8862B] to-[#E5B558]" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8862B] shadow-2xs group-hover:scale-105 transition-transform">
-                <Compass className="w-8 h-8 transition-transform group-hover:rotate-45" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
-                Vedic &amp; KP
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#B8862B] transition-colors">
-                Horoscope / KP System
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-[#B8862B] font-semibold mt-1">
-                ஜாதகம் மற்றும் கே.பி. ஜோதிடம்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Create and manage horoscopes, examine planetary positions, explore KP astrology calculations, and access Dasa-Bhukti timelines.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Create Horoscope
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Saved Horoscopes
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Placidus Sub-Lords
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                5-Level Dasa Hierarchy
-              </span>
-            </div>
+      {/* Section 2: என் பயிற்சி (My Workspace / Practice) */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
+            <Briefcase className="w-5 h-5 text-[#B4872B]" />
+            <h2 className="text-base sm:text-lg font-bold text-[#183047]">
+              {language === "ta" ? "என் பயிற்சி" : "My Practice"}
+            </h2>
           </div>
+          <div className="flex-1 h-px bg-[#D9DEE7]" />
+        </div>
 
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#B8862B] group-hover:translate-x-0.5 transition-transform">
-              <span>{t.sectionHoroscopeCta || "Open Horoscope Tools"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              6 Modules
-            </span>
-          </div>
-        </Link>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {workspaceTools.map((card) => {
+            const Icon = card.icon;
+            if (card.action) {
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={card.action}
+                  className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group cursor-pointer"
+                >
+                  <div
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                  >
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
+                    {language === "ta" ? card.titleTa : card.titleEn}
+                  </div>
+                  <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
+                    {language === "ta" ? card.titleEn : card.titleTa}
+                  </div>
+                </button>
+              );
+            }
 
-        {/* Section Card 2: Numerology */}
-        <Link
-          href="/tools/numerology"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#3478F6] transition-all relative overflow-hidden"
-          aria-label="Navigate to Numerology Tools"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#3478F6] to-[#60A5FA]" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-[#EBF2FE] border border-[#BFDBFE] flex items-center justify-center text-[#3478F6] shadow-2xs group-hover:scale-105 transition-transform">
-                <Sparkles className="w-8 h-8 transition-transform group-hover:rotate-12" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#EBF2FE] text-[#2563EB] border border-[#BFDBFE]">
-                Vibrational Science
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#3478F6] transition-colors">
-                Numerology
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-[#3478F6] font-semibold mt-1">
-                எண் கணிதம்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Calculate numerology values, analyze names and birth dates, compare alternative spellings, and access supported numerology reports.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Core Calculator
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Name Spelling Compare
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Driver &amp; Destiny
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Destiny Matrix &amp; Lo Shu
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#3478F6] group-hover:translate-x-0.5 transition-transform">
-              <span>{t.sectionNumerologyCta || "Open Numerology Tools"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              6 Modules
-            </span>
-          </div>
-        </Link>
-
-        {/* Section Card 3: Muhurta */}
-        <Link
-          href="/muhurta"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-emerald-500 transition-all relative overflow-hidden"
-          aria-label="Navigate to Vedic Muhurta Tools"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-600 to-teal-400" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-2xs group-hover:scale-105 transition-transform">
-                <Calendar className="w-8 h-8 transition-transform group-hover:rotate-6" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Panchanga Timing
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-emerald-700 transition-colors">
-                Muhurta Finder
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-emerald-700 font-semibold mt-1">
-                சுப முகூர்த்தம் &amp; பஞ்சாங்கம்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Find, evaluate, compare, save, and print auspicious date-time windows for weddings, housewarmings, business openings, and vehicle deliveries.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Auspicious Window Search
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Daily Panchangam
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Lagna &amp; Ashtama Shuddhi
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Navatara Compatibility
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-emerald-700 group-hover:translate-x-0.5 transition-transform">
-              <span>{language === "ta" ? "முகூர்த்தம் திறக்க" : "Open Muhurta Finder"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              8 Modules
-            </span>
-          </div>
-        </Link>
-
-        {/* Section Card 4: Advanced KP System */}
-        <Link
-          href="/tools/advanced-kp"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#B8862B] transition-all relative overflow-hidden"
-          aria-label="Navigate to Advanced KP System"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8862B] via-[#E5B558] to-[#102A4C]" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8862B] shadow-2xs group-hover:scale-105 transition-transform">
-                <Compass className="w-8 h-8 transition-transform group-hover:rotate-45" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
-                Krishnamurti Core
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#B8862B] transition-colors">
-                Advanced KP
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-[#B8862B] font-semibold mt-1">
-                உயர்நிலை கே.பி. முறை
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Explore 249 sub-division tables, 4-tier significators (A, B, C, D), Placidus cuspal arbiter analysis, authentic 1-249 Horary Prashna, and 5-level Vimshottari timelines.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Horary 1-249
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Cuspal Sub-Lords
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                4-Tier Significators
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                5-Level Dasa
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#B8862B] group-hover:translate-x-0.5 transition-transform">
-              <span>{language === "ta" ? "KP திறக்க" : "Open Advanced KP"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              6 Modules
-            </span>
-          </div>
-        </Link>
-
-        {/* Section Card 5: Vastu Shastra */}
-        <Link
-          href="/vastu"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-blue-600 transition-all relative overflow-hidden"
-          aria-label="Navigate to Vastu Shastra Assessment"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs group-hover:scale-105 transition-transform">
-                <Home className="w-8 h-8 transition-transform group-hover:scale-110" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                Vedic Architecture
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-blue-600 transition-colors">
-                Vastu Shastra
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-blue-600 font-semibold mt-1">
-                வாஸ்து சாஸ்திரம்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Evaluate directional harmony, room orientations, and spatial alignments based on classical Mayamata and Manasara principles with interactive 9×9 Vastu Purusha Mandala.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Residential &amp; Commercial
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                32 Outer Padas
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Dosha Identification
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Classical Remedies
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-              <span>{language === "ta" ? "வாஸ்து திறக்க" : "Open Vastu Shastra"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              4 Modules
-            </span>
-          </div>
-        </Link>
-
-        {/* Section Card 6: KP Transit Watch */}
-        <Link
-          href="/tools/transit-watch"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#B8862B] transition-all relative overflow-hidden"
-          aria-label="Navigate to KP Transit Watch"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8862B] to-[#E5B558]" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8862B] shadow-2xs group-hover:scale-105 transition-transform">
-                <Clock className="w-8 h-8 transition-transform group-hover:rotate-12" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
-                Live Ephemeris
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#B8862B] transition-colors">
-                KP Transit Watch
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-[#B8862B] font-semibold mt-1">
-                கோசார கிரக நிலைகள்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Track high-precision Sidereal Rashi, Nakshatra, and KP Sub-Lord (Tier 3 / 249 divisions) boundary crossings computed via native XALEN numerical bisection.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                249 Sub-Divisions
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Sub-Second Precision
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Retrograde Detection
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Date-Grouped Feed
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#B8862B] group-hover:translate-x-0.5 transition-transform">
-              <span>{language === "ta" ? "கோசாரம் திறக்க" : "Open Transit Watch"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              Phase 3 Live
-            </span>
-          </div>
-        </Link>
-
-        {/* Section Card 7: D1 Rasi & D9 Navamsa */}
-        <Link
-          href="/tools/d1-d9"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#B8862B] transition-all relative overflow-hidden"
-          aria-label="Navigate to D1 Rasi and D9 Navamsa Charts"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8862B] via-[#E5B558] to-[#102A4C]" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8862B] shadow-2xs group-hover:scale-105 transition-transform">
-                <Compass className="w-8 h-8 transition-transform group-hover:rotate-45" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
-                Varga Chakra
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#B8862B] transition-colors">
-                D1 Rasi &amp; D9 Navamsa
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-[#B8862B] font-semibold mt-1">
-                ராசி &amp; நவாம்ச சக்கரங்கள்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Explore side-by-side D1 Rasi and D9 Navamsa charts with 108-division integer arithmetic, automatic Vargottama detection, and 24 classical Pushkara Navamsas.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Dual D1 &amp; D9 View
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                South &amp; North Indian
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Vargottama Dignity
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                24 Pushkara Navamsas
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#B8862B] group-hover:translate-x-0.5 transition-transform">
-              <span>{language === "ta" ? "சக்கரம் திறக்க" : "Open D1 / D9 Visualizer"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              Production Live
-            </span>
-          </div>
-        </Link>
-
-        {/* Section Card 7: Remedies & Pariharam */}
-        <Link
-          href="/remedies"
-          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-amber-600 transition-all relative overflow-hidden"
-          aria-label="Navigate to Remedies and Pariharam Hub"
-        >
-          {/* Subtle accent highlight */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-600 via-[#B8862B] to-[#102A4C]" />
-
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-2xs group-hover:scale-105 transition-transform">
-                <Flame className="w-8 h-8 transition-transform group-hover:scale-110" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                Shastra Pariharam
-              </span>
-            </div>
-
-            <div>
-              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-amber-700 transition-colors">
-                Remedies &amp; Pariharam
-              </h2>
-              <p className="text-xs sm:text-sm font-tamil text-amber-700 font-semibold mt-1">
-                பரிகாரங்கள் &amp; ஆலயங்கள்
-              </p>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
-              Explore 39 verified problem domains, authentic Devanagari Sanskrit mantras with Tamil transliteration, 9 Kaveri Delta Navagraha Temples, and Yogakaraka Daan protection rules.
-            </p>
-
-            {/* Quick feature highlights inside card */}
-            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                39 Life Domains
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Devanagari &amp; Tamil
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                9 Kaveri Temples
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-                Yogakaraka Safeguard
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">
-              <span>{language === "ta" ? "பரிகாரங்கள் திறக்க" : "Open Remedies Hub"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </span>
-            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
-              Phase 2A Live
-            </span>
-          </div>
-        </Link>
+            return (
+              <Link
+                key={card.id}
+                href={card.href!}
+                className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
+              >
+                <div
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                >
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
+                  {language === "ta" ? card.titleTa : card.titleEn}
+                </div>
+                <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
+                  {language === "ta" ? card.titleEn : card.titleTa}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Engine & Rigor Disclaimer */}
-      <div className="max-w-5xl mx-auto p-4 rounded-2xl bg-white border border-[#DDE5F0] flex items-center gap-3 text-xs text-[#52667E] shadow-2xs">
+      {/* Section 3: ஆதாரங்கள் (Resources) */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
+            <BookOpen className="w-5 h-5 text-[#B4872B]" />
+            <h2 className="text-base sm:text-lg font-bold text-[#183047]">
+              {language === "ta" ? "ஆதாரங்கள்" : "Resources"}
+            </h2>
+          </div>
+          <div className="flex-1 h-px bg-[#D9DEE7]" />
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {resourceTools.map((card) => {
+            const Icon = card.icon;
+            if (card.action) {
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={card.action}
+                  className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group cursor-pointer"
+                >
+                  <div
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                  >
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
+                    {language === "ta" ? card.titleTa : card.titleEn}
+                  </div>
+                  <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
+                    {language === "ta" ? card.titleEn : card.titleTa}
+                  </div>
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={card.id}
+                href={card.href!}
+                className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
+              >
+                <div
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                >
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
+                  {language === "ta" ? card.titleTa : card.titleEn}
+                </div>
+                <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
+                  {language === "ta" ? card.titleEn : card.titleTa}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Engine & Calculation Integrity Banner */}
+      <div className="p-4 rounded-2xl bg-white border border-[#D9DEE7] flex items-center gap-3 text-xs text-[#52667E] shadow-2xs">
         <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
         <p className="leading-relaxed">
-          <strong>Deterministic Rigor:</strong> All tools in both sections operate on validated mathematical ephemeris formulas (JPL/Swiss Ephemeris standard) and verified classical numerology algorithms without conversational AI dependencies.
+          <strong>{language === "ta" ? "துல்லியமான எஃபிமெரிஸ் கணிதம்:" : "Deterministic Ephemeris:"}</strong>{" "}
+          {language === "ta"
+            ? "அனைத்து கிரக நிலைகள், கே.பி. உப-அதிபதிகள் மற்றும் தசா காலங்கள் சுவிஸ் எஃபிமெரிஸ் மற்றும் XALEN வானியல் முறையின் மூலம் நேரடியாகக் கணக்கிடப்படுகின்றன."
+            : "All planetary positions, KP cusps, and Dasa periods operate on verified astronomical formulas powered by the XALEN computational core."}
         </p>
       </div>
+
+      {/* Modals */}
+      <BirthdayReminderModal isOpen={isBirthdayOpen} onClose={() => setIsBirthdayOpen(false)} />
+      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
 }

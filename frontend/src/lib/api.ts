@@ -54,6 +54,14 @@ import {
   ContentValidationReport,
   RemedyEligibilityRequest,
   RemedyEligibilityResponse,
+  SupportedKpEventItem,
+  KpPredictionScanRequest,
+  KpPredictionResponse,
+  RemedyAnalysisResponse,
+  LiveRemedyAnalysisRequest,
+  SaveRemedyReportRequest,
+  SavedRemedyReportResponse,
+  SavedRemedyReportsListResponse,
 } from "./types";
 
 
@@ -86,14 +94,36 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
 
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        ...(options.headers || {}),
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          ...(options.headers || {}),
+        },
+      });
+    } catch (primaryFetchErr) {
+      // In the browser, if direct fetch to API_BASE_URL failed (e.g. cross-origin, host mismatch, or PNA policy),
+      // fallback to same-origin path via Next.js rewrites proxy
+      if (typeof window !== "undefined" && url.startsWith("http")) {
+        try {
+          response = await fetch(path, {
+            ...options,
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              ...(options.headers || {}),
+            },
+          });
+        } catch {
+          throw primaryFetchErr;
+        }
+      } else {
+        throw primaryFetchErr;
+      }
+    }
 
     if (!response.ok) {
       let errorData: ApiErrorResponse | undefined;
@@ -116,10 +146,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     if (err instanceof ApiError) {
       throw err;
     }
-    const errorMsg =
-      err instanceof Error
-        ? err.message
-        : "Failed to connect to calculation engine. Please ensure the backend is running.";
+    const rawMsg = err instanceof Error ? err.message : "";
+    const isConnRefused =
+      !rawMsg ||
+      rawMsg.toLowerCase().includes("failed to fetch") ||
+      rawMsg.toLowerCase().includes("networkerror") ||
+      rawMsg.toLowerCase().includes("connection refused");
+
+    const errorMsg = isConnRefused
+      ? "Unable to connect to astrology calculation backend at http://127.0.0.1:8000. Please ensure the FastAPI backend is running."
+      : rawMsg || "Failed to connect to calculation engine.";
     throw new ApiError(errorMsg, 0);
   }
 }
@@ -914,6 +950,133 @@ export async function checkRemedyEligibility(
     body: JSON.stringify(req),
   });
 }
+
+async function resolveAuthHeaders(token?: string): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {};
+  let activeToken = token;
+  if (!activeToken && typeof window !== "undefined") {
+    try {
+      const { createClient } = await import("./supabase/client");
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      activeToken = data?.session?.access_token;
+    } catch {
+      // Fallback if supabase client is not accessible in context
+    }
+  }
+  if (activeToken) {
+    headers["Authorization"] = `Bearer ${activeToken}`;
+  }
+  return headers;
+}
+
+export async function getSavedHoroscopeRemedyAnalysis(
+  horoscopeId: string,
+  token?: string
+): Promise<RemedyAnalysisResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<RemedyAnalysisResponse>(
+    `/api/v1/remedies/analysis/saved/${encodeURIComponent(horoscopeId)}`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeaders,
+      },
+    }
+  );
+}
+
+export async function getLiveRemedyAnalysis(
+  req: LiveRemedyAnalysisRequest,
+  token?: string
+): Promise<RemedyAnalysisResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<RemedyAnalysisResponse>("/api/v1/remedies/analysis/live", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function saveRemedyReport(
+  payload: SaveRemedyReportRequest,
+  token?: string
+): Promise<SavedRemedyReportResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedRemedyReportResponse>("/api/v1/remedies/reports", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getRemedyReport(
+  reportId: string,
+  token?: string
+): Promise<SavedRemedyReportResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedRemedyReportResponse>(
+    `/api/v1/remedies/reports/${encodeURIComponent(reportId)}`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeaders,
+      },
+    }
+  );
+}
+
+export async function listRemedyReportsForHoroscope(
+  horoscopeId: string,
+  token?: string
+): Promise<SavedRemedyReportsListResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedRemedyReportsListResponse>(
+    `/api/v1/remedies/reports/by-horoscope/${encodeURIComponent(horoscopeId)}`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeaders,
+      },
+    }
+  );
+}
+
+
+// ------------------------------------------------------------------------------
+// KP Events & Prediction API Functions
+// ------------------------------------------------------------------------------
+
+export async function getSupportedKpEvents(): Promise<{ status: string; total_events: number; events: SupportedKpEventItem[] }> {
+  return request<{ status: string; total_events: number; events: SupportedKpEventItem[] }>(
+    "/api/v1/kp-prediction/events",
+    {
+      method: "GET",
+    }
+  );
+}
+
+export async function scanKpPrediction(
+  req: KpPredictionScanRequest,
+  token?: string
+): Promise<KpPredictionResponse> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return request<KpPredictionResponse>("/api/v1/kp-prediction/scan", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
 
 
 

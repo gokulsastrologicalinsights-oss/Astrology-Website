@@ -73,7 +73,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Protected Backend API Endpoints:
-  // Unauthenticated requests to non-public /api routes are rejected immediately with 401.
+  // Pass through /api/v1/* to FastAPI backend (FastAPI handles its own token auth & public endpoints)
+  if (pathname.startsWith("/api/v1/")) {
+    return response;
+  }
+
+  // Unauthenticated requests to non-public Next.js /api routes are rejected immediately with 401.
   if (pathname.startsWith("/api/")) {
     const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) =>
       pathname.startsWith(prefix)

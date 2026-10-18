@@ -66,11 +66,11 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${notoTamil.variable} ${cinzel.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#E8EEF7] text-[#102A4C]">
+      <body className="min-h-full flex flex-col bg-[#F2F3F5] text-[#183047]">
         <LanguageProvider>
           <AuthProvider>
             <div className="flex flex-col min-h-screen">
-              <Suspense fallback={<div className="h-16 bg-white border-b border-[#E2DCD5]" />}>
+              <Suspense fallback={<div className="h-14 bg-white border-b border-[#D9DEE7]" />}>
                 <Navbar />
               </Suspense>
               <main className="flex-1 w-full">{children}</main>

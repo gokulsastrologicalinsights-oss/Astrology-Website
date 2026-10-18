@@ -2,6 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { compactDasaTree } from "@/lib/horoscope-storage-utils";
+import { validateAndNormalizePhone } from "@/lib/phone-utils";
+import {
+  getOrCreateCustomerRecord,
+  listCustomersForUser,
+} from "@/lib/customer-service";
 
 /**
  * GET /api/horoscopes
@@ -57,7 +62,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("saved_horoscopes")
       .select(
-        "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at",
+        "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, calculation_result, created_at, updated_at",
         { count: "exact" }
       );
 
@@ -69,13 +74,13 @@ export async function GET(request: NextRequest) {
       query = query.ilike("person_name", `%${search}%`);
     }
 
-    // Normal user: order by user display_number ASC
-    // Admin all view: order by created_at DESC with stable record identifier
-    if (viewAll) {
-      query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
-    } else {
-      query = query.order("display_number", { ascending: true }).range(offset, offset + limit - 1);
-    }
+    // Display saved horoscopes in descending order of generation/creation time (newest first)
+    // with stable secondary sort on display_number DESC and primary key id DESC
+    query = query
+      .order("created_at", { ascending: false })
+      .order("display_number", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     const { data: horoscopes, count, error } = await query;
 
@@ -87,8 +92,38 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Load authoritative customer profiles to enrich horoscopes & detect legacy missing contacts
+    const allCustomers = await listCustomersForUser(user.id, isAdmin);
+    const customerById = new Map(allCustomers.map((c) => [c.id, c]));
+    const customerByNameDob = new Map(
+      allCustomers.map((c) => [`${c.full_name.trim().toLowerCase()}_${c.birth_date}`, c])
+    );
+
+    let enrichedHoroscopes = (horoscopes || []).map((h) => {
+      const calc = h.calculation_result || {};
+      const savedCust = calc.customer;
+      let matchedCust = savedCust?.id ? customerById.get(savedCust.id) : undefined;
+      if (!matchedCust) {
+        matchedCust = customerByNameDob.get(`${h.person_name.trim().toLowerCase()}_${h.birth_date}`);
+      }
+
+      const hasPhone = !!matchedCust?.normalized_phone && !matchedCust?.is_legacy_without_phone;
+
+      // Clean calculation_result from lightweight listing to preserve bandwidth
+      const { calculation_result: _, ...cleanHoro } = h;
+
+      return {
+        ...cleanHoro,
+        customer_id: matchedCust?.id || savedCust?.id || null,
+        customer: hasPhone ? matchedCust : null,
+        customer_phone: matchedCust?.normalized_phone || savedCust?.normalized_phone || null,
+        customer_country_code: matchedCust?.country_code || savedCust?.country_code || null,
+        whatsapp_number: matchedCust?.whatsapp_number || savedCust?.whatsapp_number || null,
+        has_missing_contact: !hasPhone,
+      };
+    });
+
     // If admin viewAll, enrich with owner username/display_name
-    let enrichedHoroscopes = horoscopes || [];
     if (viewAll && enrichedHoroscopes.length > 0) {
       try {
         const adminClient = createAdminClient();
@@ -156,6 +191,7 @@ export async function POST(request: NextRequest) {
     const {
       idempotency_key,
       person_name,
+      customer_full_name,
       birth_date,
       birth_time,
       timezone,
@@ -165,16 +201,56 @@ export async function POST(request: NextRequest) {
       ayanamsa_id,
       house_system_id,
       calculation_result,
+      customer_phone,
+      country_code,
+      customer_id,
     } = body;
 
-    // Strict validation of actual required inputs
-    const trimmedName = (person_name || "").trim() || "Unnamed Horoscope";
-    if (!birth_date || typeof birth_date !== "string") {
+    // 1. Mandatory Customer Full Name & Date of Birth
+    const finalCustomerName = (customer_full_name || person_name || "").trim();
+    if (!finalCustomerName) {
       return NextResponse.json(
-        { error: "birth_date is required (YYYY-MM-DD)." },
+        { error: "Customer Full Name is required." },
         { status: 400 }
       );
     }
+
+    if (!birth_date || typeof birth_date !== "string") {
+      return NextResponse.json(
+        { error: "Date of Birth is required (YYYY-MM-DD)." },
+        { status: 400 }
+      );
+    }
+
+    // 2. Optional Customer WhatsApp Number & Country Code
+    const effectiveCountryCode = (country_code || "+91").trim();
+    const rawCustomerPhone = (
+      customer_phone ||
+      calculation_result?.customer?.phone_number ||
+      calculation_result?.customer_phone ||
+      ""
+    ).toString().trim();
+
+    if (rawCustomerPhone) {
+      const phoneValidation = validateAndNormalizePhone(rawCustomerPhone, effectiveCountryCode);
+      if (!phoneValidation.isValid) {
+        return NextResponse.json(
+          { error: phoneValidation.error || "Invalid WhatsApp phone number." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 3. Authoritative Customer Deduplication & Provisioning
+    const { customer: authoritativeCustomer } = await getOrCreateCustomerRecord(user.id, {
+      customerId: customer_id,
+      fullName: finalCustomerName,
+      birthDate: birth_date,
+      countryCode: effectiveCountryCode,
+      phoneNumber: rawCustomerPhone || undefined,
+    });
+
+    const trimmedName = authoritativeCustomer.full_name;
     if (!birth_time || typeof birth_time !== "string") {
       return NextResponse.json(
         { error: "birth_time is required (HH:MM or HH:MM:SS)." },
@@ -274,6 +350,15 @@ export async function POST(request: NextRequest) {
       horoscope: calculation_result.horoscope,
       dasa: dasaPayload,
       kp: calculation_result.kp,
+      customer: {
+        id: authoritativeCustomer.id,
+        full_name: authoritativeCustomer.full_name,
+        birth_date: authoritativeCustomer.birth_date,
+        country_code: authoritativeCustomer.country_code,
+        phone_number: authoritativeCustomer.phone_number,
+        normalized_phone: authoritativeCustomer.normalized_phone,
+        whatsapp_number: authoritativeCustomer.whatsapp_number,
+      },
     };
 
     // 3. Monotonic Sequential Numbering Mechanism:

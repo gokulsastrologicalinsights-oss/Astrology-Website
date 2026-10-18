@@ -13,6 +13,7 @@ import {
 } from "@/lib/types";
 import { COMMON_TIMEZONES } from "@/lib/cities";
 import { prepareCalculationSnapshot } from "@/lib/horoscope-storage-utils";
+import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useAuth } from "@/lib/auth-context";
@@ -25,6 +26,9 @@ import {
   Loader2,
   Search,
   ArrowLeft,
+  Phone,
+  Users,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function HoroscopeFormPage() {
@@ -32,9 +36,18 @@ export default function HoroscopeFormPage() {
   const { language, t } = useLanguage();
   const { isAuthenticated } = useAuth();
 
-  // Form Fields
+  // Customer & Form Fields
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  // Existing Customers Reuse & Autocomplete
+  const [savedCustomers, setSavedCustomers] = useState<any[]>([]);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+
   const [birthTime, setBirthTime] = useState("");
   const [isTimeConfirmed, setIsTimeConfirmed] = useState(true);
 
@@ -103,7 +116,35 @@ export default function HoroscopeFormPage() {
       .catch((err) => {
         console.warn("Could not load backend metadata options:", err);
       });
-  }, []);
+
+    // Fetch existing customers to enable automatic profile reuse
+    if (isAuthenticated) {
+      fetch("/api/customers")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.customers) {
+            setSavedCustomers(data.customers);
+          }
+        })
+        .catch((err) => console.warn("Could not load existing customers:", err));
+    }
+  }, [isAuthenticated]);
+
+  // Handle selecting an existing customer
+  const handleSelectCustomer = (customer: any) => {
+    setFullName(customer.full_name || "");
+    setBirthDate(customer.birth_date || "");
+    setCountryCode(customer.country_code || "+91");
+    setCustomerPhone(customer.phone_number || customer.normalized_phone || "");
+    setCustomerId(customer.id);
+    setShowCustomerDropdown(false);
+    setErrors((prev) => ({
+      ...prev,
+      fullName: "",
+      birthDate: "",
+      customerPhone: "",
+    }));
+  };
 
   // Handle location search input with debounce
   const handleLocationQueryChange = (text: string) => {
@@ -149,8 +190,30 @@ export default function HoroscopeFormPage() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // 1. Mandatory Customer Full Name
+    if (!fullName.trim()) {
+      newErrors.fullName =
+        language === "ta"
+          ? "வாடிக்கையாளர் முழுப் பெயர் தேவை."
+          : "Customer Full Name is required.";
+    }
+
+    // 2. Mandatory Date of Birth
     if (!birthDate) {
-      newErrors.birthDate = t.valDateRequired;
+      newErrors.birthDate =
+        language === "ta" ? "பிறந்த தேதி தேவை." : t.valDateRequired;
+    }
+
+    // 3. Optional Customer WhatsApp Number
+    if (customerPhone.trim()) {
+      const pVal = validateAndNormalizePhone(customerPhone, countryCode);
+      if (!pVal.isValid) {
+        newErrors.customerPhone =
+          pVal.error ||
+          (language === "ta"
+            ? "செல்லுபடியற்ற வாட்ஸ்அப் எண்."
+            : "Invalid WhatsApp phone number.");
+      }
     }
 
     if (isTimeConfirmed && !birthTime) {
@@ -222,8 +285,12 @@ export default function HoroscopeFormPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               idempotency_key: idempotencyKey,
-              person_name: fullName.trim() || "Unnamed Horoscope",
+              person_name: fullName.trim(),
+              customer_full_name: fullName.trim(),
               birth_date: birthDate,
+              customer_phone: customerPhone.trim(),
+              country_code: countryCode,
+              customer_id: customerId || undefined,
               birth_time: formattedTime,
               timezone: timezone.trim(),
               birthplace: locationQuery.trim() || `Coordinates: ${latitude}, ${longitude}`,
@@ -366,20 +433,145 @@ export default function HoroscopeFormPage() {
             </h3>
           </div>
 
+          {/* Existing Client Selector */}
+          {savedCustomers.length > 0 && (
+            <div className="p-3 bg-[#FAF8F5] border border-[#E2DCD5] rounded-lg">
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="customerSelect" className="text-xs font-bold text-[#102A4C] flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-[#B8860B]" />
+                  <span>{language === "ta" ? "முந்தைய வாடிக்கையாளர் தேர்வு" : "Returning Customer / Existing Client"}</span>
+                </label>
+                {customerId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomerId(null);
+                      setFullName("");
+                      setBirthDate("");
+                      setCustomerPhone("");
+                    }}
+                    className="text-[11px] font-semibold text-rose-600 hover:underline"
+                  >
+                    {language === "ta" ? "புதிய வாடிக்கையாளர் (Reset)" : "Clear / New Customer"}
+                  </button>
+                )}
+              </div>
+              <select
+                id="customerSelect"
+                value={customerId || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) {
+                    setCustomerId(null);
+                    return;
+                  }
+                  const found = savedCustomers.find((c) => c.id === val);
+                  if (found) {
+                    handleSelectCustomer(found);
+                  }
+                }}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-[#D8BD80] bg-white text-[#0F172A] focus:ring-1 focus:ring-[#B8860B]"
+              >
+                <option value="">
+                  {language === "ta"
+                    ? "-- புதிய வாடிக்கையாளர் (அல்லது பட்டியலிலிருந்து தேர்வு செய்க) --"
+                    : "-- Select Saved Customer (or enter new details below) --"}
+                </option>
+                {savedCustomers.map((cust) => (
+                  <option key={cust.id} value={cust.id}>
+                    {cust.full_name} ({cust.normalized_phone || cust.phone_number}) - DOB: {cust.birth_date || "N/A"}
+                  </option>
+                ))}
+              </select>
+              {customerId && (
+                <p className="mt-1.5 text-[11px] text-emerald-700 font-medium flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>
+                    {language === "ta"
+                      ? "வாடிக்கையாளர் சுயவிவரம் இணைக்கப்பட்டுள்ளது."
+                      : "Authoritative client profile linked. Horoscope will be saved under this customer."}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Full Name */}
+            {/* Customer Full Name */}
             <div>
               <label htmlFor="fullName" className="block text-xs font-semibold text-[#334155] mb-1">
-                {t.fieldName} <span className="text-[#94A3B8] font-normal">({t.optional})</span>
+                {language === "ta" ? "வாடிக்கையாளர் முழுப் பெயர்" : "Customer Full Name"}{" "}
+                <span className="text-rose-600">*</span>
               </label>
               <input
                 id="fullName"
                 type="text"
+                required
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  setErrors((prev) => ({ ...prev, fullName: "" }));
+                }}
                 placeholder={t.fieldNamePlaceholder}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                className={`w-full px-3.5 py-2.5 rounded-lg border text-sm text-[#0F172A] bg-[#FFFDF9] placeholder:text-[#94A3B8] focus:ring-1 ${
+                  errors.fullName
+                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
+                    : "border-[#D8BD80]/80 focus:border-[#B8860B] focus:ring-[#B8860B]"
+                }`}
               />
+              {errors.fullName && (
+                <p className="mt-1 text-xs text-rose-600">{errors.fullName}</p>
+              )}
+            </div>
+
+            {/* Customer WhatsApp Number & Country Code (Optional) */}
+            <div>
+              <label htmlFor="customerPhone" className="block text-xs font-semibold text-[#334155] mb-1">
+                {language === "ta" ? "வாட்ஸ்அப் எண் (விருப்பத்தேர்வு)" : "Customer WhatsApp Number (Optional)"}
+              </label>
+              <div className="flex gap-2">
+                <select
+                  id="countryCode"
+                  value={countryCode}
+                  onChange={(e) => {
+                    setCountryCode(e.target.value);
+                    setErrors((prev) => ({ ...prev, customerPhone: "" }));
+                  }}
+                  className="w-28 sm:w-32 px-2 py-2.5 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-xs font-medium text-[#0F172A] focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                >
+                  {SUPPORTED_COUNTRY_CODES.map((item) => (
+                    <option key={item.code} value={item.code}>
+                      {item.flag} {item.code}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex-1 relative">
+                  <input
+                    id="customerPhone"
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => {
+                      setCustomerPhone(e.target.value);
+                      setErrors((prev) => ({ ...prev, customerPhone: "" }));
+                    }}
+                    placeholder={countryCode === "+91" ? "98765 43210 (Optional)" : "Phone number (Optional)"}
+                    className={`w-full px-3.5 py-2.5 rounded-lg border text-sm text-[#0F172A] bg-[#FFFDF9] focus:ring-1 ${
+                      errors.customerPhone
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
+                        : "border-[#D8BD80]/80 focus:border-[#B8860B] focus:ring-[#B8860B]"
+                    }`}
+                  />
+                </div>
+              </div>
+              {errors.customerPhone ? (
+                <p className="mt-1 text-xs text-rose-600">{errors.customerPhone}</p>
+              ) : (
+                <p className="mt-1 text-[11px] text-[#64748B]">
+                  {language === "ta"
+                    ? "விருப்பத்தேர்வு: பிறந்தநாள் வாழ்த்துக்கள் & வாட்ஸ்அப் தொடர்புக்கு பயன்படுத்தப்படுகிறது."
+                    : "Optional: Used for birthday reminders and WhatsApp wishes."}
+                </p>
+              )}
             </div>
 
             {/* Birth Date */}
@@ -434,7 +626,7 @@ export default function HoroscopeFormPage() {
             </div>
 
             {/* Time Confirmation Toggle */}
-            <div className="flex flex-col justify-center pt-2">
+            <div className="flex flex-col justify-center sm:col-span-2 pt-1">
               <label className="flex items-center gap-2 text-xs font-medium text-[#334155] cursor-pointer">
                 <input
                   type="checkbox"

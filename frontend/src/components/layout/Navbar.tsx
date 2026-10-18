@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -15,17 +15,28 @@ import {
   X,
   Compass,
   Activity,
-  User as UserIcon,
   LogOut,
   Shield,
   LayoutDashboard,
   LogIn,
-  HelpCircle,
   Sparkles,
   Home as HomeIcon,
   ChevronDown,
   Calendar,
+  Cake,
+  Flame,
+  Briefcase,
+  BookOpen,
+  GraduationCap,
+  Layers,
+  Clock,
+  Headphones,
+  Settings,
+  Database,
+  User,
+  Home,
 } from "lucide-react";
+import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -34,7 +45,11 @@ export function Navbar() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isBirthdayOpen, setIsBirthdayOpen] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,196 +66,315 @@ export function Navbar() {
     };
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+        setUserDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close menus on path change
+  useEffect(() => {
+    setActiveDropdown(null);
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const isLoginPage =
     pathname === "/login" ||
     pathname === "/forgot-password" ||
     pathname === "/register" ||
     pathname === "/update-password";
 
-  // Exactly THREE primary navigation items when authenticated
-  const mainNavItems = [
+  // Navigation Items with Submenus matching reference screenshots
+  const navItems = [
     {
-      href: "/",
-      label: t.navHome || "Home",
+      id: "home",
+      label: language === "ta" ? "முகப்பு" : "Home",
       icon: HomeIcon,
+      href: "/",
       isActive: pathname === "/" || pathname === "/home",
+      hasDropdown: false,
     },
     {
-      href: "/dashboard",
-      label: t.navDashboard || "Dashboard",
-      icon: LayoutDashboard,
-      isActive: pathname === "/dashboard" || pathname.startsWith("/admin"),
-    },
-    {
+      id: "tools",
+      label: language === "ta" ? "ஜோதிடக் கருவிகள்" : "Astrology Tools",
+      icon: Layers,
       href: "/tools",
-      label: t.navTools || "Astrology Tools",
-      icon: Sparkles,
       isActive:
         pathname.startsWith("/tools") ||
         pathname.startsWith("/horoscope") ||
-        pathname.startsWith("/numerology"),
+        pathname.startsWith("/numerology") ||
+        pathname.startsWith("/muhurta") ||
+        pathname.startsWith("/vastu") ||
+        pathname.startsWith("/remedies"),
+      hasDropdown: true,
+      children: [
+        {
+          title: language === "ta" ? "ஜாதகம் (வேத & கே.பி)" : "Horoscope (Vedic & KP)",
+          href: "/tools/horoscope",
+          icon: Compass,
+        },
+        {
+          title: language === "ta" ? "உயர்நிலை கே.பி. முறை" : "Advanced KP System",
+          href: "/tools/advanced-kp",
+          icon: Layers,
+        },
+        {
+          title: language === "ta" ? "கோச்சார ஜாதகம்" : "KP Transit Watch",
+          href: "/tools/transit-watch",
+          icon: Clock,
+        },
+        {
+          title: language === "ta" ? "கே.பி. நிகழ்வு கணிப்பு" : "KP Events & Prediction",
+          href: "/tools/kp-events-prediction",
+          icon: Sparkles,
+        },
+        {
+          title: language === "ta" ? "D1 ராசி & D9 நவாம்சம்" : "D1 Rasi & D9 Navamsa",
+          href: "/tools/d1-d9",
+          icon: Compass,
+        },
+        {
+          title: language === "ta" ? "எண் கணிதம்" : "Numerology System",
+          href: "/tools/numerology",
+          icon: Sparkles,
+        },
+        {
+          title: language === "ta" ? "தினசரி பஞ்சாங்கம் & முகூர்த்தம்" : "Daily Panchang & Muhurta",
+          href: "/muhurta",
+          icon: Calendar,
+        },
+        {
+          title: language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra Assessment",
+          href: "/vastu",
+          icon: Home,
+        },
+        {
+          title: language === "ta" ? "பரிகாரங்கள் & நவகிரக ஆலயங்கள்" : "Remedies & Pariharam Hub",
+          href: "/remedies",
+          icon: Flame,
+        },
+      ],
     },
     {
-      href: "/muhurta",
-      label: t.navMuhurta || "Muhurta",
-      icon: Calendar,
-      isActive: pathname.startsWith("/muhurta"),
+      id: "workspace",
+      label: language === "ta" ? "என் பயிற்சி" : "My Practice",
+      icon: Briefcase,
+      href: "/horoscopes",
+      isActive: pathname === "/horoscopes",
+      hasDropdown: true,
+      children: [
+        {
+          title: language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Horoscopes Directory",
+          href: "/horoscopes",
+          icon: Database,
+        },
+        {
+          title: language === "ta" ? "புதிய ஜாதகம் கணிக்க" : "New Horoscope Calculation",
+          href: "/horoscope",
+          icon: Compass,
+        },
+        {
+          title: language === "ta" ? "எனது சுயவிவரம்" : "My Profile & Account",
+          href: "/dashboard",
+          icon: User,
+        },
+        {
+          title: language === "ta" ? "பிறந்தநாள் நினைவூட்டல்" : "Birthday Wishes & Alerts",
+          action: () => setIsBirthdayOpen(true),
+          icon: Cake,
+        },
+      ],
+    },
+    {
+      id: "resources",
+      label: language === "ta" ? "ஆதாரங்கள்" : "Resources",
+      icon: BookOpen,
+      href: "/vastu",
+      isActive: false,
+      hasDropdown: true,
+      children: [
+        {
+          title: language === "ta" ? "வாஸ்து சாஸ்திரம் வழிகாட்டி" : "Vastu Classical Architecture",
+          href: "/vastu",
+          icon: Home,
+        },
+        {
+          title: language === "ta" ? "பரிகாரங்கள் & வழிமுறைகள்" : "Remedies & Vedic Mantras",
+          href: "/remedies",
+          icon: Flame,
+        },
+        {
+          title: language === "ta" ? "சுப முகூர்த்த காலண்டர்" : "Auspicious Dates Finder",
+          href: "/muhurta",
+          icon: Calendar,
+        },
+        {
+          title: language === "ta" ? "எஃபிமெரிஸ் கணித உறுதிமொழி" : "XALEN Ephemeris Core",
+          href: "/dashboard",
+          icon: Activity,
+        },
+      ],
+    },
+    {
+      id: "training",
+      label: language === "ta" ? "பயிற்சி" : "Training",
+      icon: GraduationCap,
+      href: "#",
+      isActive: false,
+      hasDropdown: true,
+      children: [
+        {
+          title: language === "ta" ? "தள வழிகாட்டி & ஆவணங்கள்" : "Platform Help & Guide",
+          action: () => setIsHelpOpen(true),
+          icon: BookOpen,
+        },
+        {
+          title: language === "ta" ? "கே.பி. மற்றும் வேத முறைகள் விளக்கம்" : "KP & Vedic Calculation Guide",
+          action: () => setIsHelpOpen(true),
+          icon: GraduationCap,
+        },
+      ],
+    },
+    {
+      id: "dashboard",
+      label: language === "ta" ? "Dashboard" : "Dashboard",
+      icon: LayoutDashboard,
+      href: "/dashboard",
+      isActive: pathname === "/dashboard" || pathname.startsWith("/admin"),
+      hasDropdown: true,
+      children: [
+        {
+          title: language === "ta" ? "பயனர் டாஷ்போர்டு" : "User Dashboard Overview",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+        },
+        ...(role === "admin"
+          ? [
+              {
+                title: language === "ta" ? "நிர்வாகி போர்டல் (Admin)" : "Administrator Portal",
+                href: "/admin",
+                icon: Shield,
+              },
+            ]
+          : []),
+      ],
     },
   ];
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#DDE5F0] shadow-xs">
-        {/* Top Header Row */}
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#D9DEE7] shadow-xs">
+        {/* Top Header Bar (Level 1) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center justify-between gap-3 sm:gap-6">
+          <div className="h-14 flex items-center justify-between gap-3 sm:gap-6">
             {/* 1. Brand Logo & Name */}
-            <Link
-              href={isAuthenticated ? "/" : "/login"}
-              className="flex items-center gap-3 shrink-0 group focus:outline-hidden"
-              aria-label="Gokul’s Astrological Insights Home"
-            >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A4C] via-[#1E3A61] to-[#3478F6] flex items-center justify-center text-white shadow-xs border border-[#3478F6]/30 group-hover:scale-105 transition-transform">
-                <Compass className="w-5 h-5 text-[#FAF2DE] transition-transform group-hover:rotate-45" />
-              </div>
-              <div className="min-w-0">
-                <div className="font-serif text-base sm:text-lg font-bold text-[#102A4C] tracking-tight leading-tight truncate">
-                  {t.brandName}
-                </div>
-                <div className="text-[10px] sm:text-[11px] text-[#52667E] truncate hidden sm:block">
-                  {language === "ta"
-                    ? "துல்லிய வேத & கே.பி வானியல் தளம்"
-                    : "Precision Vedic & KP Astronomical System"}
-                </div>
-              </div>
-            </Link>
-
-            {/* 2. Center Search Bar (for authenticated users) */}
-            {isAuthenticated && !isLoginPage && (
-              <div className="hidden lg:flex flex-1 justify-center max-w-md mx-2">
-                <HeaderSearch />
-              </div>
-            )}
-
-            {/* 3. Primary Desktop Navigation Tabs (Only 3 Items) */}
-            {isAuthenticated && !isLoginPage && (
-              <nav
-                className="hidden md:flex items-center gap-1 bg-[#F8FAFC] p-1 rounded-xl border border-[#DDE5F0]"
-                aria-label="Primary Navigation"
+            <div className="flex items-center gap-3 sm:gap-6">
+              <Link
+                href={isAuthenticated ? "/" : "/login"}
+                className="flex items-center gap-2.5 shrink-0 group focus:outline-hidden"
+                aria-label="Gokul’s Astrological Insights Home"
               >
-                {mainNavItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        item.isActive
-                          ? "bg-white text-[#102A4C] shadow-2xs border border-[#DDE5F0]"
-                          : "text-[#52667E] hover:text-[#102A4C] hover:bg-white/60"
-                      }`}
-                    >
-                      <Icon
-                        className={`w-3.5 h-3.5 ${
-                          item.isActive ? "text-[#3478F6]" : "text-[#94A3B8]"
-                        }`}
-                      />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
+                <div className="w-8 h-8 rounded-lg bg-[#153F6B] flex items-center justify-center text-white shadow-xs border border-[#B4872B]/30 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-4 h-4 text-[#B4872B] transition-transform group-hover:rotate-12" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-serif text-base sm:text-lg font-bold text-[#153F6B] tracking-tight leading-tight truncate">
+                    {t.brandName}
+                  </div>
+                  <div className="text-[10px] text-[#8190A6] truncate hidden lg:block">
+                    {language === "ta"
+                      ? "துல்லிய வேத & கே.பி வானியல் தளம்"
+                      : "Precision Vedic & KP Astronomical System"}
+                  </div>
+                </div>
+              </Link>
 
-            {/* 4. Controls: Health, Language, Help, Profile & Mobile Toggle */}
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              {/* Engine Health Indicator */}
-              <div
-                className="hidden xl:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-[#DDE5F0] bg-[#F8FAFC]"
-                title={
-                  health?.status === "healthy"
-                    ? `${health.engine.name} (${health.engine.version}) Ready`
-                    : "Checking backend connection..."
-                }
-              >
-                <Activity
-                  className={`w-3 h-3 ${
-                    health?.status === "healthy"
-                      ? "text-emerald-500 animate-pulse"
-                      : "text-amber-500"
-                  }`}
-                />
-                <span className="text-[#52667E] font-medium text-[11px]">
-                  {health?.status === "healthy" ? t.statusOnline : t.statusOffline}
-                </span>
-              </div>
+              {/* 2. Top Compact Search Bar */}
+              {isAuthenticated && !isLoginPage && (
+                <div className="hidden sm:flex items-center max-w-xs md:max-w-sm w-full">
+                  <HeaderSearch />
+                </div>
+              )}
+            </div>
 
+            {/* 3. Controls: Help, Language, Log Out, User Avatar */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Language Switcher */}
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#DDE5F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#102A4C] transition-all cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#183047] transition-all cursor-pointer shadow-2xs"
                 aria-label="Toggle language"
               >
-                <Globe className="w-3.5 h-3.5 text-[#3478F6]" />
+                <Globe className="w-3.5 h-3.5 text-[#153F6B]" />
                 <span className="text-xs">{language === "en" ? "தமிழ்" : "English"}</span>
               </button>
 
-              {/* Help & Support Button */}
+              {/* Support / Help Headphones Button */}
               {isAuthenticated && (
                 <button
                   type="button"
                   onClick={() => setIsHelpOpen(true)}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-[#DDE5F0] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#52667E] hover:text-[#102A4C] transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1"
-                  aria-label="Open Platform Guide and Help"
-                  title={t.helpGuide || "Help & Guide"}
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#183047] transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1"
+                  aria-label="Support & Help"
+                  title={language === "ta" ? "உதவி & வழிகாட்டி" : "Support & Help"}
                 >
-                  <HelpCircle className="w-4 h-4 text-[#3478F6]" />
-                  <span className="hidden sm:inline">{t.helpGuide || "Help"}</span>
+                  <Headphones className="w-4 h-4 text-[#153F6B]" />
+                  <span className="hidden md:inline">{language === "ta" ? "உதவி" : "Help"}</span>
                 </button>
               )}
 
-              {/* Auth Profile Controls */}
+              {/* Log Out Button */}
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-rose-50 text-xs font-semibold text-[#183047] hover:text-rose-600 transition-all cursor-pointer shadow-2xs"
+                  aria-label="Log out"
+                  title={t.navLogout || "Log Out"}
+                >
+                  <LogOut className="w-3.5 h-3.5 text-[#8190A6] group-hover:text-rose-600" />
+                  <span className="hidden sm:inline">{language === "ta" ? "வெளியேறு" : "Log Out"}</span>
+                </button>
+              )}
+
+              {/* User Avatar Circle */}
               {!isLoading && (
                 <>
                   {isAuthenticated && user ? (
-                    <div className="relative">
+                    <div className="relative" ref={dropdownRef}>
                       <button
                         type="button"
                         onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                        className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#DDE5F0] bg-[#F8FAFC] hover:bg-[#EFF6FF] text-xs font-semibold text-[#102A4C] shadow-2xs transition-all cursor-pointer"
+                        className="w-8 h-8 rounded-full bg-[#153F6B] text-white border-2 border-[#B4872B] flex items-center justify-center font-bold text-xs shadow-xs hover:scale-105 transition-transform cursor-pointer"
                         aria-expanded={userDropdownOpen}
-                        aria-label="User profile menu"
+                        aria-label="User Profile"
+                        title={user.displayName || user.username}
                       >
-                        <div className="w-5 h-5 rounded-full bg-[#102A4C] text-white flex items-center justify-center text-[10px] font-bold">
-                          {user.username?.charAt(0).toUpperCase() || "U"}
-                        </div>
-                        <span className="max-w-[80px] sm:max-w-[110px] truncate hidden sm:inline">
-                          {user.displayName || user.username}
-                        </span>
-                        {user.role === "admin" && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-[#B8862B] text-white hidden md:inline">
-                            Admin
-                          </span>
-                        )}
-                        <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
+                        {user.username?.charAt(0).toUpperCase() || "G"}
                       </button>
 
                       {userDropdownOpen && (
                         <div
-                          className="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl bg-white border border-[#DDE5F0] py-2 z-50 divide-y divide-[#F1F5F9] animate-in fade-in duration-150"
-                          onMouseLeave={() => setUserDropdownOpen(false)}
+                          className="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl bg-white border border-[#D9DEE7] py-2 z-50 divide-y divide-[#F2F3F5] animate-in fade-in duration-150"
                         >
                           <div className="px-4 py-2.5 text-xs">
-                            <div className="font-bold text-[#102A4C] truncate">
+                            <div className="font-bold text-[#183047] truncate">
                               {user.displayName || user.username}
                             </div>
-                            <div className="truncate text-[11px] text-[#64748B]">
+                            <div className="truncate text-[11px] text-[#8190A6]">
                               {user.email || `@${user.username}`}
                             </div>
                             <div className="mt-1 flex items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded text-[10px] font-semibold bg-[#EBF2FE] text-[#3478F6] border border-[#BFDBFE]">
-                                <Shield className="w-2.5 h-2.5" />
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#EBF2FE] text-[#153F6B] border border-[#BFDBFE]">
+                                <Shield className="w-2.5 h-2.5 text-[#153F6B]" />
                                 {user.role === "admin" ? "Administrator" : "Standard User"}
                               </span>
                             </div>
@@ -248,48 +382,21 @@ export function Navbar() {
 
                           <div className="py-1">
                             <Link
-                              href="/"
-                              onClick={() => setUserDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors"
-                            >
-                              <HomeIcon className="w-3.5 h-3.5 text-[#3478F6]" />
-                              <span>{t.navHome || "Home"}</span>
-                            </Link>
-
-                            <Link
                               href="/dashboard"
                               onClick={() => setUserDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors"
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] transition-colors"
                             >
-                              <LayoutDashboard className="w-3.5 h-3.5 text-[#3478F6]" />
+                              <LayoutDashboard className="w-3.5 h-3.5 text-[#153F6B]" />
                               <span>{t.navDashboard || "Dashboard"}</span>
                             </Link>
 
                             <Link
                               href="/horoscopes"
                               onClick={() => setUserDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors"
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] transition-colors"
                             >
-                              <Compass className="w-3.5 h-3.5 text-[#B8862B]" />
+                              <Database className="w-3.5 h-3.5 text-[#B4872B]" />
                               <span>{language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Horoscopes"}</span>
-                            </Link>
-
-                            <Link
-                              href="/tools"
-                              onClick={() => setUserDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors"
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-[#B8862B]" />
-                              <span>{t.navTools || "Astrology Tools"}</span>
-                            </Link>
-
-                            <Link
-                              href="/vastu"
-                              onClick={() => setUserDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors"
-                            >
-                              <HomeIcon className="w-3.5 h-3.5 text-blue-600" />
-                              <span>{language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra"}</span>
                             </Link>
 
                             {user.role === "admin" && (
@@ -314,7 +421,7 @@ export function Navbar() {
                               className="w-full flex items-center gap-2 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left transition-colors cursor-pointer"
                             >
                               <LogOut className="w-3.5 h-3.5" />
-                              <span>{t.navLogout}</span>
+                              <span>{t.navLogout || "Log Out"}</span>
                             </button>
                           </div>
                         </div>
@@ -324,7 +431,7 @@ export function Navbar() {
                     !isLoginPage && (
                       <Link
                         href="/login"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#102A4C] bg-[#102A4C] hover:bg-[#1E3A61] text-xs font-semibold text-white shadow-xs transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#153F6B] bg-[#153F6B] hover:bg-[#0F3155] text-xs font-semibold text-white shadow-xs transition-colors"
                       >
                         <LogIn className="w-3.5 h-3.5" />
                         <span>{t.navLogin}</span>
@@ -339,7 +446,7 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 rounded-xl text-[#334155] hover:text-[#102A4C] hover:bg-[#F8FAFC] border border-[#DDE5F0]"
+                  className="md:hidden p-1.5 rounded-lg text-[#183047] hover:bg-[#F2F3F5] border border-[#D9DEE7]"
                   aria-label="Open mobile navigation menu"
                 >
                   {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -349,87 +456,205 @@ export function Navbar() {
           </div>
         </div>
 
+        {/* Main Navigation Row (Level 2) - VedicSage Reference Navigation */}
+        {isAuthenticated && !isLoginPage && (
+          <div className="hidden md:block border-t border-[#D9DEE7] bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <nav
+                className="h-10.5 flex items-center gap-1 sm:gap-2 overflow-visible"
+                aria-label="Secondary Navigation Bar"
+              >
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isMenuOpen = activeDropdown === item.id;
+
+                  if (!item.hasDropdown) {
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-all relative ${
+                          item.isActive
+                            ? "text-[#153F6B] font-bold border-b-2 border-[#B4872B]"
+                            : "text-[#183047] hover:text-[#153F6B] hover:bg-[#F2F3F5] rounded-t-md"
+                        }`}
+                      >
+                        <Icon
+                          className={`w-3.5 h-3.5 ${
+                            item.isActive ? "text-[#153F6B]" : "text-[#8190A6]"
+                          }`}
+                        />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="relative"
+                      onMouseEnter={() => setActiveDropdown(item.id)}
+                      onMouseLeave={() => setActiveDropdown(null)}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActiveDropdown(isMenuOpen ? null : item.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all cursor-pointer relative ${
+                          item.isActive
+                            ? "text-[#153F6B] font-bold border-b-2 border-[#B4872B]"
+                            : "text-[#183047] hover:text-[#153F6B] hover:bg-[#F2F3F5] rounded-t-md"
+                        }`}
+                      >
+                        <Icon
+                          className={`w-3.5 h-3.5 ${
+                            item.isActive ? "text-[#153F6B]" : "text-[#8190A6]"
+                          }`}
+                        />
+                        <span>{item.label}</span>
+                        <ChevronDown className="w-3 h-3 text-[#8190A6]" />
+                      </button>
+
+                      {/* Dropdown Menu Box */}
+                      {isMenuOpen && item.children && (
+                        <div
+                          className="absolute left-0 top-full mt-0 w-64 rounded-xl shadow-xl bg-white border border-[#D9DEE7] py-1.5 z-50 animate-in fade-in duration-100"
+                        >
+                          {item.children.map((subItem, idx) => {
+                            const SubIcon = subItem.icon;
+                            if (subItem.action) {
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveDropdown(null);
+                                    subItem.action();
+                                  }}
+                                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] hover:text-[#153F6B] text-left transition-colors cursor-pointer"
+                                >
+                                  <SubIcon className="w-3.5 h-3.5 text-[#B4872B] shrink-0" />
+                                  <span className="truncate">{subItem.title}</span>
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <Link
+                                key={idx}
+                                href={subItem.href}
+                                onClick={() => setActiveDropdown(null)}
+                                className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] hover:text-[#153F6B] transition-colors"
+                              >
+                                <SubIcon className="w-3.5 h-3.5 text-[#153F6B] shrink-0" />
+                                <span className="truncate">{subItem.title}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        )}
+
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#DDE5F0] bg-white px-4 pt-3 pb-5 space-y-4 shadow-lg animate-in slide-in-from-top-2 duration-150">
+          <div className="md:hidden border-t border-[#D9DEE7] bg-white px-4 pt-3 pb-5 space-y-4 shadow-lg animate-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
             {/* Mobile Search */}
             <div className="pt-1">
               <HeaderSearch />
             </div>
 
-            {/* Mobile 3-Item Navigation */}
-            <nav className="flex flex-col space-y-1" aria-label="Mobile Navigation">
-              {mainNavItems.map((item) => {
+            {/* Mobile Navigation Links */}
+            <nav className="flex flex-col space-y-2" aria-label="Mobile Navigation">
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
-                      item.isActive
-                        ? "bg-[#EBF2FE] text-[#3478F6]"
-                        : "text-[#334155] hover:bg-[#F8FAFC]"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </Link>
+                  <div key={item.id} className="space-y-1">
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold ${
+                        item.isActive
+                          ? "bg-[#EBF2FE] text-[#153F6B]"
+                          : "text-[#183047] hover:bg-[#F2F3F5]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon className="w-4 h-4 text-[#153F6B]" />
+                        <span>{item.label}</span>
+                      </div>
+                    </Link>
+
+                    {item.children && (
+                      <div className="pl-6 space-y-1">
+                        {item.children.map((sub, sIdx) => {
+                          const SubIcon = sub.icon;
+                          if (sub.action) {
+                            return (
+                              <button
+                                key={sIdx}
+                                type="button"
+                                onClick={() => {
+                                  setMobileMenuOpen(false);
+                                  sub.action();
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-[#52667E] hover:text-[#153F6B] text-left"
+                              >
+                                <SubIcon className="w-3 h-3 text-[#B4872B]" />
+                                <span className="truncate">{sub.title}</span>
+                              </button>
+                            );
+                          }
+                          return (
+                            <Link
+                              key={sIdx}
+                              href={sub.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-[#52667E] hover:text-[#153F6B]"
+                            >
+                              <SubIcon className="w-3 h-3 text-[#153F6B]" />
+                              <span className="truncate">{sub.title}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
 
             {/* Mobile Profile & Logout */}
-            <div className="pt-3 border-t border-[#DDE5F0] space-y-2">
+            <div className="pt-3 border-t border-[#D9DEE7] flex items-center justify-between">
               {isAuthenticated && user && (
-                <div className="flex items-center justify-between py-1">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#102A4C] text-white flex items-center justify-center text-xs font-bold">
-                      {user.username?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-[#102A4C]">
-                        {user.displayName || user.username}
-                      </div>
-                      <div className="text-[10px] text-[#64748B]">@{user.username}</div>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-[#153F6B] text-white flex items-center justify-center text-xs font-bold border border-[#B4872B]">
+                    {user.username?.charAt(0).toUpperCase() || "G"}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      logout();
-                    }}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>{t.navLogout}</span>
-                  </button>
+                  <div>
+                    <div className="text-xs font-bold text-[#183047]">
+                      {user.displayName || user.username}
+                    </div>
+                    <div className="text-[10px] text-[#8190A6]">@{user.username}</div>
+                  </div>
                 </div>
               )}
 
-              {isAuthenticated && (
-                <div className="pt-1 flex flex-col space-y-1">
-                  <Link
-                    href="/horoscopes"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#334155] hover:bg-[#F8FAFC]"
-                  >
-                    <Compass className="w-3.5 h-3.5 text-[#B8862B]" />
-                    <span>{language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Horoscopes"}</span>
-                  </Link>
-
-                  <Link
-                    href="/vastu"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#334155] hover:bg-[#F8FAFC]"
-                  >
-                    <HomeIcon className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra"}</span>
-                  </Link>
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{language === "ta" ? "வெளியேறு" : "Log Out"}</span>
+              </button>
             </div>
           </div>
         )}
@@ -437,6 +662,13 @@ export function Navbar() {
 
       {/* Guide & Help Modal */}
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+
+      {/* Birthday Reminder Modal */}
+      <BirthdayReminderModal
+        isOpen={isBirthdayOpen}
+        onClose={() => setIsBirthdayOpen(false)}
+        autoCheckOnLogin={true}
+      />
     </>
   );
 }

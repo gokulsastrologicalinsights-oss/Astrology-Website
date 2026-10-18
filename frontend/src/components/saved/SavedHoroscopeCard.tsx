@@ -3,12 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth-context";
 import { SavedHoroscopeItem } from "@/lib/types";
-import {
-  formatBirthDate,
-  formatBirthTime,
-} from "@/lib/formatters";
-import { formatHoroscopeSequence } from "@/lib/horoscope-storage-utils";
+import { formatBirthDate, formatBirthTime, formatSerialNumber } from "@/lib/formatters";
 import {
   Calendar,
   Clock,
@@ -17,10 +14,10 @@ import {
   ExternalLink,
   Info,
   Trash2,
-  Sliders,
-  Check,
-  X,
+  Eye,
+  MessageCircle,
   Sparkles,
+  Phone,
 } from "lucide-react";
 
 interface SavedHoroscopeCardProps {
@@ -35,30 +32,49 @@ export function SavedHoroscopeCard({
   onDelete,
 }: SavedHoroscopeCardProps) {
   const { language, t } = useLanguage();
+  const { user } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const sequenceText = formatHoroscopeSequence(horoscope.display_number, language);
+  const displayName = horoscope.person_name?.trim() || t.unnamedHoroscope || "Unnamed";
+  const initial = displayName.charAt(0).toUpperCase() || "H";
+  const idNumber = horoscope.display_number ? formatSerialNumber(horoscope.display_number) : (horoscope.id?.slice(0, 6) || "—");
+
   const birthDateFormatted = formatBirthDate(horoscope.birth_date, language);
   const birthTimeFormatted = formatBirthTime(horoscope.birth_time);
-  const calculatedDateFormatted = horoscope.created_at
-    ? formatBirthDate(horoscope.created_at.split("T")[0], language)
-    : "—";
-  const birthplaceText = horoscope.birthplace?.trim() || t.locationUnavailable;
-  const displayName = horoscope.person_name?.trim() || t.unnamedHoroscope;
+  const birthplaceText = horoscope.birthplace?.trim() || t.locationUnavailable || "Tamil Nadu";
 
-  const ayanamsaName =
+  // Creation date/time formatted
+  const createdDateStr = horoscope.created_at
+    ? new Date(horoscope.created_at).toLocaleDateString(language === "ta" ? "ta-IN" : "en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+
+  const createdTimeStr = horoscope.created_at
+    ? new Date(horoscope.created_at).toLocaleTimeString(language === "ta" ? "ta-IN" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  const isKp = horoscope.ayanamsa_id === 1 || horoscope.ayanamsa_id === 3;
+  const ayanamsaLabel =
     horoscope.ayanamsa_id === 1
       ? "KP"
       : horoscope.ayanamsa_id === 2
       ? "Raman"
+      : horoscope.ayanamsa_id === 3
+      ? "KP New"
       : "Lahiri";
+  const typeText = isKp
+    ? (language === "ta" ? "கே.பி" : "KP")
+    : (language === "ta" ? "வேத" : "Vedic");
 
-  // Check if record was edited after creation
-  const isEdited =
-    horoscope.updated_at &&
-    horoscope.created_at &&
-    new Date(horoscope.updated_at).getTime() - new Date(horoscope.created_at).getTime() > 1000;
+  // WhatsApp digits
+  const waDigits = (horoscope.whatsapp_number || horoscope.normalized_phone || horoscope.customer_phone || "").replace(/\D/g, "");
 
   const handleDelete = async () => {
     if (!onDelete) return;
@@ -72,94 +88,96 @@ export function SavedHoroscopeCard({
   };
 
   return (
-    <div className="relative rounded-2xl border border-[#E2DCD5] bg-white p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group">
+    <div className="rounded-2xl border border-[#D9DEE7] hover:border-[#B4872B] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
       <div>
-        {/* 1. Top Area: Sequential Number Badge conforming to specification */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-serif font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
-            <span>{sequenceText}</span>
+        {/* Top Section: Avatar, ID, Name, Language Badge */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start gap-3 min-w-0">
+            {/* Avatar Circle */}
+            <div className="w-11 h-11 rounded-full bg-[#153F6B] text-white flex items-center justify-center font-bold text-base shrink-0 border border-[#B4872B]/30 shadow-2xs">
+              {initial}
+            </div>
+
+            <div className="min-w-0 space-y-1">
+              {/* ID & Name */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FAF2DE] text-[#B4872B] border border-[#D8BD80]">
+                  {idNumber}
+                </span>
+                <h3
+                  className="font-bold text-sm sm:text-base text-[#183047] truncate"
+                  title={displayName}
+                >
+                  {displayName}
+                </h3>
+              </div>
+
+              {/* Date & Time */}
+              <div className="flex items-center gap-1.5 text-xs text-[#8190A6]">
+                <Calendar className="w-3.5 h-3.5 text-[#8190A6] shrink-0" />
+                <span className="truncate">
+                  {birthDateFormatted} {birthTimeFormatted}
+                </span>
+              </div>
+
+              {/* Birth Place */}
+              <div className="flex items-center gap-1.5 text-xs text-[#8190A6]">
+                <MapPin className="w-3.5 h-3.5 text-[#8190A6] shrink-0" />
+                <span className="truncate" title={birthplaceText}>
+                  {birthplaceText}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-[#64748B] px-2 py-0.5 rounded bg-[#FAF8F5] border border-[#E2DCD5]">
-              {ayanamsaName}
+          {/* Language Indicator Badge */}
+          <div className="shrink-0 flex flex-col items-end gap-1">
+            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F2F3F5] text-[#8190A6] border border-[#D9DEE7]">
+              {language === "ta" ? "🌐 TA" : "🌐 EN"}
             </span>
 
-            {isEdited && (
-              <span
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full"
-                title={t.editedWithoutRecalcNotice}
-              >
-                <Info className="w-3 h-3 text-amber-600 shrink-0" />
-                <span>{t.editedWithoutRecalcBadge}</span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 2. Subject's Name: Main Heading */}
-        <h3
-          className="font-serif text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-snug truncate mb-4"
-          title={displayName}
-        >
-          {displayName}
-        </h3>
-
-        {/* 3. Core Birth Details & Metadata */}
-        <div className="space-y-2 text-xs sm:text-sm text-[#334155] border-t border-[#F1ECE4] pt-3.5 mb-5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-[#64748B] font-medium min-w-[80px] flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#B8860B] shrink-0" />
-              <span>{t.birthDateLabel}:</span>
-            </span>
-            <span className="font-semibold text-[#0F172A]">
-              {birthDateFormatted}
-            </span>
-          </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-[#64748B] font-medium min-w-[80px] flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[#B8860B] shrink-0" />
-              <span>{t.birthTimeLabel}:</span>
-            </span>
-            <span className="font-semibold text-[#0F172A] font-mono">
-              {birthTimeFormatted}
-            </span>
-            {horoscope.timezone && (
-              <span className="text-[11px] text-[#64748B] truncate">
-                ({horoscope.timezone})
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-[#64748B] font-medium min-w-[80px] flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#B8860B] shrink-0" />
-              <span>{t.birthPlaceLabel}:</span>
-            </span>
-            <span className="font-medium text-[#0F172A] truncate" title={birthplaceText}>
-              {birthplaceText}
-            </span>
-          </div>
-
-          <div className="flex items-baseline gap-2 text-xs text-[#64748B] pt-1 border-t border-[#F1ECE4]/60">
-            <span className="min-w-[80px] flex items-center gap-1.5">
-              <Sliders className="w-3 h-3 text-[#94A3B8] shrink-0" />
-              <span>{language === "ta" ? "கணிக்கப்பட்ட நாள்:" : "Calculated:"}</span>
-            </span>
-            <span className="font-mono text-[11px] text-[#475569]">
-              {calculatedDateFormatted}
+            {/* Vedic or KP Type Badge */}
+            <span
+              className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                isKp
+                  ? "bg-amber-50 text-amber-800 border-amber-300"
+                  : "bg-[#EBF2FE] text-[#153F6B] border-[#BFDBFE]"
+              }`}
+            >
+              {typeText} ({ayanamsaLabel})
             </span>
           </div>
         </div>
+
+        {/* WhatsApp Customer Contact Details if present */}
+        {waDigits.length >= 7 && (
+          <div className="mt-2.5 mb-2 px-2.5 py-1.5 rounded-lg bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1.5 text-emerald-800">
+              <Phone className="w-3 h-3 text-emerald-600" />
+              <span className="font-mono text-[11px] font-semibold">
+                {horoscope.normalized_phone || horoscope.customer_phone}
+              </span>
+            </div>
+            <a
+              href={`https://wa.me/${waDigits}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold text-emerald-700 bg-white hover:bg-emerald-100 border border-emerald-300 transition-colors"
+              title="Open WhatsApp Chat"
+            >
+              <MessageCircle className="w-3 h-3 text-emerald-600" />
+              <span>Chat</span>
+            </a>
+          </div>
+        )}
       </div>
 
-      {/* 4. Action Buttons */}
-      <div className="pt-4 border-t border-[#F1ECE4]">
+      {/* Bottom Row: Author/Timestamp + Actions */}
+      <div className="mt-3 pt-3 border-t border-[#F2F3F5]">
         {showDeleteConfirm ? (
           <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs flex items-center justify-between gap-2">
             <span className="text-rose-800 font-semibold text-[11px]">
-              {language === "ta" ? "நீக்கவா? உறுதிப்படுத்தவும்." : "Confirm deletion?"}
+              {language === "ta" ? "நீக்கவா?" : "Delete?"}
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -168,58 +186,64 @@ export function SavedHoroscopeCard({
                 disabled={isDeleting}
                 className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] disabled:opacity-50 cursor-pointer"
               >
-                {isDeleting ? "..." : language === "ta" ? "ஆம், நீக்கு" : "Delete"}
+                {isDeleting ? "..." : language === "ta" ? "ஆம்" : "Yes"}
               </button>
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="px-2 py-1 rounded border border-rose-300 bg-white hover:bg-rose-100 text-rose-800 text-[11px] cursor-pointer"
+                className="px-2 py-1 rounded border border-rose-300 bg-white text-rose-800 text-[11px] cursor-pointer"
               >
                 {language === "ta" ? "ரத்து" : "Cancel"}
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onEdit(horoscope)}
-              className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#0F172A] shadow-2xs hover:border-[#94A3B8] transition-all cursor-pointer"
-              title={t.actionEdit}
-            >
-              <Edit3 className="w-3.5 h-3.5 text-[#64748B]" />
-              <span className="hidden sm:inline">{t.actionEdit}</span>
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            {/* Generation Date & Time */}
+            <div className="text-[11px] text-[#8190A6] flex items-center gap-1 min-w-0 truncate" title={createdDateStr && createdTimeStr ? `${createdDateStr}, ${createdTimeStr}` : undefined}>
+              <Clock className="w-3 h-3 text-[#8190A6] shrink-0" />
+              <span className="truncate">
+                {createdDateStr && createdTimeStr
+                  ? `${createdDateStr}, ${createdTimeStr}`
+                  : createdDateStr || createdTimeStr}
+              </span>
+            </div>
 
-            {onDelete && (
+            {/* Actions: Edit, Delete, KP Events, View */}
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="p-2 rounded-xl border border-transparent hover:border-rose-200 hover:bg-rose-50 text-[#94A3B8] hover:text-rose-600 transition-colors cursor-pointer"
-                title={t.deleteHoroscope || "Delete"}
-                aria-label="Delete horoscope"
+                onClick={() => onEdit(horoscope)}
+                className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] hover:text-[#153F6B] transition-colors cursor-pointer"
+                title={t.actionEdit || "Edit"}
+                aria-label="Edit horoscope metadata"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Edit3 className="w-3.5 h-3.5" />
               </button>
-            )}
 
-            <Link
-              href={`/horoscope/results?id=${horoscope.id}&tab=kp#kp-events`}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-amber-300 bg-amber-50/90 hover:bg-amber-100 text-xs font-semibold text-amber-900 shadow-2xs hover:border-amber-400 transition-all cursor-pointer"
-              title={language === "ta" ? "கே.பி. நிகழ்வுகள்" : "KP Events"}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>{language === "ta" ? "KP நிகழ்வுகள்" : "KP Events"}</span>
-            </Link>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-rose-50 text-[#8190A6] hover:text-rose-600 transition-colors cursor-pointer"
+                  title={t.deleteHoroscope || "Delete"}
+                  aria-label="Delete horoscope"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
 
-            <Link
-              href={`/horoscope/results?id=${horoscope.id}`}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-xs transition-all"
-            >
-              <span>{t.actionOpenHoroscope}</span>
-              <ExternalLink className="w-3.5 h-3.5 text-[#D8BD80]" />
-            </Link>
+              {/* View Action Button matching Screenshot 2 */}
+              <Link
+                href={`/horoscope/results?id=${horoscope.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D9DEE7] hover:border-[#153F6B] bg-white hover:bg-[#EBF2FE] text-xs font-semibold text-[#153F6B] transition-colors"
+                title={t.actionOpenHoroscope || "View Horoscope"}
+              >
+                <Eye className="w-3.5 h-3.5 text-[#153F6B]" />
+                <span>{language === "ta" ? "காண்க" : "View"}</span>
+              </Link>
+            </div>
           </div>
         )}
       </div>

@@ -60,6 +60,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
       }
+      try {
+        const supabase = createClient();
+        const { data: sData } = await supabase.auth.getSession();
+        setSession(sData?.session || null);
+      } catch {
+        // Ignored
+      }
     } catch {
       setUser(null);
     } finally {
@@ -68,15 +75,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshUser();
+    let isMounted = true;
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data?.session || null);
-    });
+
+    async function initAuth() {
+      try {
+        await Promise.allSettled([
+          refreshUser(),
+          supabase.auth.getSession().then(({ data }) => {
+            if (isMounted && data?.session) {
+              setSession(data.session);
+            }
+          }),
+        ]);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    initAuth();
+
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess);
+      if (isMounted) setSession(sess);
     });
     return () => {
+      isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
   }, [refreshUser]);

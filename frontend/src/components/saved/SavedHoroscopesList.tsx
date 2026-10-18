@@ -18,6 +18,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Sparkles,
   LayoutGrid,
   List,
@@ -28,18 +30,25 @@ import {
   Clock,
   MapPin,
   Sliders,
+  Download,
+  Filter,
+  Crown,
 } from "lucide-react";
 
 interface SavedHoroscopesListProps {
   pageSize?: number;
   showHeader?: boolean;
+  showBanner?: boolean;
   title?: string;
+  columns?: 2 | 3;
 }
 
 export function SavedHoroscopesList({
-  pageSize = 6,
-  showHeader = true,
+  pageSize: initialPageSize = 12,
+  showHeader = false,
+  showBanner = true,
   title,
+  columns = 3,
 }: SavedHoroscopesListProps) {
   const { language, t } = useLanguage();
 
@@ -47,6 +56,7 @@ export function SavedHoroscopesList({
   const [horoscopes, setHoroscopes] = useState<SavedHoroscopeItem[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(initialPageSize);
   const [totalPages, setTotalPages] = useState<number>(1);
 
   // View mode: cards or table
@@ -82,15 +92,48 @@ export function SavedHoroscopesList({
     }, 350);
   };
 
+  const handleManualSearch = () => {
+    setDebouncedSearch(searchTerm.trim());
+    setCurrentPage(1);
+  };
+
   const handleClearSearch = () => {
     setSearchTerm("");
     setDebouncedSearch("");
     setCurrentPage(1);
   };
 
+  // Export to CSV
+  const handleExportCsv = () => {
+    if (horoscopes.length === 0) return;
+    const headers = ["Serial", "Name", "Birth Date", "Birth Time", "Birthplace", "Ayanamsa", "Created At"];
+    const rows = horoscopes.map((h) => [
+      h.display_number,
+      `"${(h.person_name || "").replace(/"/g, '""')}"`,
+      h.birth_date,
+      h.birth_time,
+      `"${(h.birthplace || "").replace(/"/g, '""')}"`,
+      h.ayanamsa_id === 1 ? "KP" : h.ayanamsa_id === 2 ? "Raman" : "Lahiri",
+      h.created_at,
+    ]);
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `horoscopes_export_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Fetch horoscopes from API
   const fetchHoroscopes = useCallback(
-    async (pageToFetch = currentPage, search = debouncedSearch, showRefreshing = false) => {
+    async (pageToFetch = currentPage, search = debouncedSearch, limit = pageSize, showRefreshing = false) => {
       if (showRefreshing) {
         setIsRefreshing(true);
       } else {
@@ -101,7 +144,7 @@ export function SavedHoroscopesList({
       try {
         const queryParams = new URLSearchParams({
           page: pageToFetch.toString(),
-          limit: pageSize.toString(),
+          limit: limit.toString(),
         });
         if (search) {
           queryParams.set("search", search);
@@ -117,7 +160,15 @@ export function SavedHoroscopesList({
         }
 
         const data: SavedHoroscopesListResponse = await res.json();
-        setHoroscopes(data.horoscopes || []);
+        // Preserve strictly descending order of generation/creation time with stable secondary sort
+        const rawList = data.horoscopes || [];
+        const sortedList = [...rawList].sort((a, b) => {
+          const tA = new Date(a.created_at || 0).getTime();
+          const tB = new Date(b.created_at || 0).getTime();
+          if (tB !== tA) return tB - tA;
+          return (b.display_number || 0) - (a.display_number || 0);
+        });
+        setHoroscopes(sortedList);
         setTotalCount(data.totalCount || 0);
         setTotalPages(data.totalPages || 1);
         setCurrentPage(data.page || 1);
@@ -138,8 +189,8 @@ export function SavedHoroscopesList({
   );
 
   useEffect(() => {
-    fetchHoroscopes(currentPage, debouncedSearch);
-  }, [currentPage, debouncedSearch, fetchHoroscopes]);
+    fetchHoroscopes(currentPage, debouncedSearch, pageSize);
+  }, [currentPage, debouncedSearch, pageSize, fetchHoroscopes]);
 
   const handleOpenEdit = (item: SavedHoroscopeItem) => {
     setSelectedHoroscope(item);
@@ -152,7 +203,7 @@ export function SavedHoroscopesList({
   };
 
   const handleEditSuccess = () => {
-    fetchHoroscopes(currentPage, debouncedSearch, true);
+    fetchHoroscopes(currentPage, debouncedSearch, pageSize, true);
   };
 
   const handleDeleteHoroscope = async (id: string) => {
@@ -165,7 +216,7 @@ export function SavedHoroscopesList({
         throw new Error(errData.error || "Failed to delete horoscope.");
       }
       // Refresh list
-      await fetchHoroscopes(currentPage, debouncedSearch, true);
+      await fetchHoroscopes(currentPage, debouncedSearch, pageSize, true);
     } catch (err: any) {
       console.error("Error deleting horoscope:", err);
       alert(err.message || "Failed to delete horoscope.");
@@ -183,102 +234,187 @@ export function SavedHoroscopesList({
     }
   };
 
+  // Range text: e.g. "1 to 12 of 693"
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalCount);
+
   return (
-    <div className="space-y-6">
-      {/* 1. Header Toolbar: Title, Total Badge, Search Bar, View Toggle, Refresh */}
+    <div className="space-y-4">
+      {/* Optional Section Header */}
       {showHeader && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2DCD5]">
-          <div className="flex items-center gap-2.5">
-            <Database className="w-5 h-5 text-[#B8860B]" />
+        <div className="flex items-center justify-between pb-3 border-b border-[#D9DEE7]">
+          <div className="flex items-center gap-2">
+            <Database className="w-5 h-5 text-[#B4872B]" />
+            <h2 className="font-serif text-base sm:text-lg font-bold text-[#183047]">
+              {title || (language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Horoscopes")}
+            </h2>
+          </div>
+          <Link
+            href="/horoscope"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#153F6B] hover:bg-[#0F3155] shadow-xs transition-colors"
+          >
+            <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
+            <span>{language === "ta" ? "+ புதிய ஜாதகம்" : "+ Create Horoscope"}</span>
+          </Link>
+        </div>
+      )}
+
+      {/* 1. Subscription or Account Status Banner matching Screenshot 2 */}
+      {showBanner && (
+        <div className="rounded-xl border border-[#D8BD80] bg-[#FAF7F0] p-3.5 sm:p-4 shadow-2xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B4872B] shrink-0">
+              <Crown className="w-4 h-4 text-[#B4872B]" />
+            </div>
             <div>
-              <h2 className="font-serif text-lg font-bold text-[#0F172A]">
-                {title || t.savedHoroscopesTitle}
-              </h2>
-              <span className="text-xs text-[#64748B]">
-                {t.totalHoroscopes.replace("{count}", totalCount.toString())}
-              </span>
+              <div className="text-xs sm:text-sm font-bold text-[#183047] flex items-center gap-1.5">
+                <span>{language === "ta" ? "பிரீமியம் அணுகல் செயல்படுகிறது" : "Premium Access Active"}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              </div>
+              <div className="text-[11px] text-[#8190A6]">
+                {language === "ta"
+                  ? "வரம்பற்ற துல்லிய ஜாதகக் கணக்கீடுகள் மற்றும் சேமிப்பு இயக்கத்தில் உள்ளது."
+                  : "You have unlimited horoscopes creations with permanent sequential serial numbers."}
+              </div>
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* View Mode Toggle */}
-            <div className="inline-flex rounded-xl border border-[#CBD5E1] p-0.5 bg-[#FAF8F5]">
+      {/* 2. Compact Search & Pagination Toolbar matching Screenshot 2 */}
+      <div className="rounded-xl border border-[#D9DEE7] bg-white p-2.5 sm:p-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left Side: Search input + கண்டுபிடி Button + Filter */}
+        <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+              placeholder={language === "ta" ? "தேடுக..." : "Search..."}
+              className="w-full px-3 py-1.5 text-xs text-[#183047] placeholder-[#8190A6] border border-[#D9DEE7] rounded-lg focus:outline-hidden focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B]/20 transition-all bg-white"
+            />
+            {searchTerm && (
               <button
                 type="button"
-                onClick={() => setViewMode("cards")}
-                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
-                  viewMode === "cards"
-                    ? "bg-white text-[#0F172A] shadow-xs"
-                    : "text-[#64748B] hover:text-[#0F172A]"
-                }`}
-                title="Cards view"
+                onClick={handleClearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-[#8190A6] hover:text-[#183047]"
+                title={t.clearSearch}
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">{language === "ta" ? "கார்டுகள்" : "Cards"}</span>
+                <X className="w-3.5 h-3.5" />
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
-                  viewMode === "table"
-                    ? "bg-white text-[#0F172A] shadow-xs"
-                    : "text-[#64748B] hover:text-[#0F172A]"
-                }`}
-                title="Table view"
-              >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">{language === "ta" ? "அட்டவணை" : "Table"}</span>
-              </button>
-            </div>
+            )}
+          </div>
 
-            {/* Search Box */}
-            <div className="relative flex-1 sm:w-60">
-              <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder={t.searchHoroscopesPlaceholder}
-                className="w-full pl-9 pr-8 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 transition-all"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-[#94A3B8] hover:text-[#0F172A]"
-                  title={t.clearSearch}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+          <button
+            type="button"
+            onClick={handleManualSearch}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>{language === "ta" ? "கண்டுபிடி" : "Search"}</span>
+          </button>
 
-            {/* Refresh Button */}
+          <button
+            type="button"
+            onClick={() => fetchHoroscopes(currentPage, debouncedSearch, pageSize, true)}
+            className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] transition-colors cursor-pointer shrink-0"
+            title={language === "ta" ? "வடிகட்டி / புதுப்பி" : "Filter / Refresh"}
+          >
+            <Filter className="w-3.5 h-3.5 text-[#8190A6]" />
+          </button>
+        </div>
+
+        {/* Right Side: Export + Record Counter + Pagination + Page Size */}
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-between md:justify-end text-xs text-[#8190A6]">
+          {/* Download / Export */}
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={horoscopes.length === 0}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#183047] transition-colors cursor-pointer disabled:opacity-40"
+            title={language === "ta" ? "தரவிறக்கம்" : "Export CSV"}
+          >
+            <Download className="w-3.5 h-3.5 text-[#153F6B]" />
+            <span>{language === "ta" ? "பதிவிறக்கம்" : "Export"}</span>
+          </button>
+
+          {/* Record Counter: 1 to 12 of 693 */}
+          <span className="text-xs font-medium text-[#183047] whitespace-nowrap">
+            {startItem} to {endItem} of {totalCount}
+          </span>
+
+          {/* Pagination Controls << < > >> */}
+          <div className="inline-flex items-center gap-1">
             <button
               type="button"
-              onClick={() => fetchHoroscopes(currentPage, debouncedSearch, true)}
-              disabled={isLoading || isRefreshing}
-              className="p-2 rounded-xl border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-[#475569] hover:text-[#0F172A] transition-colors cursor-pointer disabled:opacity-50"
-              title={language === "ta" ? "புதுப்பி" : "Refresh list"}
-              aria-label="Refresh"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage <= 1}
+              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="First Page"
             >
-              <RefreshCw
-                className={`w-4 h-4 ${isRefreshing ? "animate-spin text-[#B8860B]" : ""}`}
-              />
+              <ChevronsLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="Next Page"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage >= totalPages}
+              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="Last Page"
+            >
+              <ChevronsRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-      )}
 
-      {/* 2. Loading State */}
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-[#8190A6] hidden sm:inline">
+              {language === "ta" ? "பக்க அளவு" : "Page Size"}
+            </span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 text-xs border border-[#D9DEE7] rounded-lg bg-white text-[#183047] font-semibold focus:outline-hidden cursor-pointer"
+            >
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value={48}>48</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Loading State */}
       {isLoading && (
         <div className="py-16 text-center space-y-3">
-          <div className="inline-block animate-spin w-8 h-8 border-4 border-[#B8860B] border-t-transparent rounded-full" />
-          <p className="text-xs text-[#64748B]">{t.loading}</p>
+          <div className="inline-block animate-spin w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full" />
+          <p className="text-xs text-[#8190A6]">{t.loading}</p>
         </div>
       )}
 
-      {/* 3. Error State */}
+      {/* 4. Error State */}
       {!isLoading && errorMessage && (
         <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -287,60 +423,63 @@ export function SavedHoroscopesList({
           </div>
           <button
             type="button"
-            onClick={() => fetchHoroscopes(currentPage, debouncedSearch)}
-            className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors shrink-0"
+            onClick={() => fetchHoroscopes(currentPage, debouncedSearch, pageSize)}
+            className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer"
           >
             {t.retry}
           </button>
         </div>
       )}
 
-      {/* 4. Empty State: No horoscopes yet */}
+      {/* 5. Empty State: No horoscopes yet */}
       {!isLoading && !errorMessage && horoscopes.length === 0 && !debouncedSearch && (
-        <div className="py-12 px-6 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#FAF8F5] text-center">
-          <div className="w-14 h-14 mx-auto rounded-full bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8860B] mb-3.5 shadow-2xs">
+        <div className="py-12 px-6 rounded-2xl border border-dashed border-[#D9DEE7] bg-white text-center">
+          <div className="w-14 h-14 mx-auto rounded-full bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B4872B] mb-3.5 shadow-2xs">
             <Compass className="w-7 h-7" />
           </div>
-          <h3 className="font-serif text-base sm:text-lg font-bold text-[#0F172A]">
+          <h3 className="font-serif text-base sm:text-lg font-bold text-[#183047]">
             {t.noSavedHoroscopes}
           </h3>
-          <p className="mt-1.5 text-xs text-[#64748B] max-w-md mx-auto leading-relaxed">
+          <p className="mt-1.5 text-xs text-[#8190A6] max-w-md mx-auto leading-relaxed">
             {t.noSavedHoroscopesDesc}
           </p>
           <div className="mt-5">
             <Link
               href="/horoscope"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-xs transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#153F6B] hover:bg-[#0F3155] shadow-xs transition-colors"
             >
-              <span>{t.calculate}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>{language === "ta" ? "+ புதிய ஜாதகம் கணிக்க" : "+ Calculate Horoscope"}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#B4872B]" />
             </Link>
           </div>
         </div>
       )}
 
-      {/* 5. Empty State: Search yielded no matches */}
+      {/* 6. Empty State: Search yielded no matches */}
       {!isLoading && !errorMessage && horoscopes.length === 0 && debouncedSearch && (
-        <div className="py-10 px-4 rounded-2xl border border-[#E2DCD5] bg-white text-center">
-          <p className="text-xs sm:text-sm text-[#64748B]">
-            {t.noSearchResults}
-          </p>
+        <div className="py-10 px-4 rounded-2xl border border-[#D9DEE7] bg-white text-center">
+          <p className="text-xs sm:text-sm text-[#8190A6]">{t.noSearchResults}</p>
           <button
             type="button"
             onClick={handleClearSearch}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-[#FAF8F5] text-xs font-semibold text-[#0F172A] hover:bg-white"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D9DEE7] bg-[#F2F3F5] text-xs font-semibold text-[#183047] hover:bg-white cursor-pointer"
           >
             <span>{t.clearSearch}</span>
           </button>
         </div>
       )}
 
-      {/* 6. List / Cards / Table Rendering */}
+      {/* 7. 3-Column Responsive Cards Grid matching Screenshot 2 */}
       {!isLoading && !errorMessage && horoscopes.length > 0 && (
         <>
           {viewMode === "cards" ? (
-            /* Card Grid: Responsive 1 col on mobile, 2 cols on tablet/desktop */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div
+              className={
+                columns === 2
+                  ? "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
+                  : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+              }
+            >
               {horoscopes.map((item) => (
                 <SavedHoroscopeCard
                   key={item.id}
@@ -351,73 +490,93 @@ export function SavedHoroscopesList({
               ))}
             </div>
           ) : (
-            /* Table View: Clean responsive data table */
-            <div className="rounded-2xl border border-[#E2DCD5] bg-white overflow-hidden shadow-xs">
+            /* Table View: Clean data table */
+            <div className="rounded-2xl border border-[#D9DEE7] bg-white overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#FAF8F5] text-[#475569] uppercase font-bold border-b border-[#E2DCD5]">
+                  <thead className="bg-[#FAF7F0] text-[#183047] uppercase font-bold border-b border-[#D9DEE7]">
                     <tr>
                       <th className="px-4 py-3">{language === "ta" ? "ஜாதக எண்" : "Horoscope No."}</th>
                       <th className="px-4 py-3">{language === "ta" ? "பெயர்" : "Subject Name"}</th>
+                      <th className="px-4 py-3">{language === "ta" ? "வகை" : "Type"}</th>
                       <th className="px-4 py-3">{language === "ta" ? "பிறந்த தேதி & நேரம்" : "Birth Date & Time"}</th>
                       <th className="px-4 py-3">{language === "ta" ? "பிறந்த இடம்" : "Birthplace"}</th>
-                      <th className="px-4 py-3">{language === "ta" ? "அயனாம்சம்" : "Ayanamsa"}</th>
-                      <th className="px-4 py-3">{language === "ta" ? "கணிக்கப்பட்ட நாள்" : "Calculated At"}</th>
+                      <th className="px-4 py-3">{language === "ta" ? "உருவாக்கிய நேரம்" : "Generated"}</th>
                       <th className="px-4 py-3 text-right">{language === "ta" ? "நடவடிக்கை" : "Action"}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E2DCD5] text-[#334155]">
+                  <tbody className="divide-y divide-[#D9DEE7] text-[#183047]">
                     {horoscopes.map((item) => {
                       const seqText = formatHoroscopeSequence(item.display_number, language);
                       const birthDateStr = formatBirthDate(item.birth_date, language);
                       const birthTimeStr = formatBirthTime(item.birth_time);
-                      const calcDateStr = item.created_at
-                        ? formatBirthDate(item.created_at.split("T")[0], language)
-                        : "—";
+                      const isKp = item.ayanamsa_id === 1 || item.ayanamsa_id === 3;
                       const ayanamsaLabel =
-                        item.ayanamsa_id === 1 ? "KP" : item.ayanamsa_id === 2 ? "Raman" : "Lahiri";
+                        item.ayanamsa_id === 1 ? "KP" : item.ayanamsa_id === 2 ? "Raman" : item.ayanamsa_id === 3 ? "KP New" : "Lahiri";
+                      const typeLabel = isKp
+                        ? (language === "ta" ? "கே.பி" : "KP")
+                        : (language === "ta" ? "வேத" : "Vedic");
+                      const genDateStr = item.created_at
+                        ? new Date(item.created_at).toLocaleDateString(language === "ta" ? "ta-IN" : "en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "";
+                      const genTimeStr = item.created_at
+                        ? new Date(item.created_at).toLocaleTimeString(language === "ta" ? "ta-IN" : "en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "";
 
                       return (
-                        <tr key={item.id} className="hover:bg-[#FAF8F5]/80 transition-colors">
+                        <tr key={item.id} className="hover:bg-[#FAF7F0]/60 transition-colors">
                           <td className="px-4 py-3.5">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-serif font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#FAF2DE] text-[#B4872B] border border-[#D8BD80]">
                               {seqText}
                             </span>
                           </td>
-                          <td className="px-4 py-3.5 font-bold text-[#0F172A]">
+                          <td className="px-4 py-3.5 font-bold text-[#183047]">
                             {item.person_name?.trim() || t.unnamedHoroscope}
                           </td>
-                          <td className="px-4 py-3.5 text-[#475569]">
+                          <td className="px-4 py-3.5">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                isKp
+                                  ? "bg-amber-50 text-amber-800 border-amber-300"
+                                  : "bg-[#EBF2FE] text-[#153F6B] border-[#BFDBFE]"
+                              }`}
+                            >
+                              {typeLabel} ({ayanamsaLabel})
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-[#52667E]">
                             <div>{birthDateStr}</div>
-                            <div className="text-[11px] font-mono text-[#64748B]">
+                            <div className="text-[11px] font-mono text-[#8190A6]">
                               {birthTimeStr} {item.timezone ? `(${item.timezone})` : ""}
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-[#475569] max-w-[180px] truncate" title={item.birthplace}>
+                          <td className="px-4 py-3.5 text-[#52667E] max-w-[180px] truncate" title={item.birthplace}>
                             {item.birthplace || t.locationUnavailable}
                           </td>
-                          <td className="px-4 py-3.5">
-                            <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-[#FAF8F5] border border-[#E2DCD5]">
-                              {ayanamsaLabel}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-[#64748B] font-mono text-[11px]">
-                            {calcDateStr}
+                          <td className="px-4 py-3.5 text-[#52667E] whitespace-nowrap text-[11px]">
+                            <div>{genDateStr}</div>
+                            <div className="text-[10px] text-[#8190A6]">{genTimeStr}</div>
                           </td>
                           <td className="px-4 py-3.5 text-right">
                             <div className="inline-flex items-center gap-1.5">
                               <Link
                                 href={`/horoscope/results?id=${item.id}`}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-[11px] font-semibold transition-colors"
-                                title={t.actionOpenHoroscope}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-[11px] font-semibold transition-colors"
                               >
-                                <span>{language === "ta" ? "திறக்க" : "Open"}</span>
-                                <ExternalLink className="w-3 h-3 text-[#D8BD80]" />
+                                <span>{language === "ta" ? "காண்க" : "View"}</span>
+                                <ExternalLink className="w-3 h-3 text-[#B4872B]" />
                               </Link>
                               <button
                                 type="button"
                                 onClick={() => handleOpenEdit(item)}
-                                className="p-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-[#475569] hover:text-[#0F172A] transition-colors"
+                                className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] transition-colors"
                                 title={t.actionEdit}
                               >
                                 <Edit3 className="w-3 h-3" />
@@ -425,7 +584,7 @@ export function SavedHoroscopesList({
                               <button
                                 type="button"
                                 onClick={() => setHoroscopeToDelete(item)}
-                                className="p-1.5 rounded-lg border border-transparent hover:border-rose-200 hover:bg-rose-50 text-[#94A3B8] hover:text-rose-600 transition-colors"
+                                className="p-1.5 rounded-lg border border-transparent hover:border-rose-200 hover:bg-rose-50 text-[#8190A6] hover:text-rose-600 transition-colors"
                                 title={t.deleteHoroscope || "Delete"}
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -443,37 +602,6 @@ export function SavedHoroscopesList({
         </>
       )}
 
-      {/* 7. Pagination Controls */}
-      {!isLoading && !errorMessage && totalPages > 1 && (
-        <div className="pt-4 border-t border-[#E2DCD5] flex items-center justify-between gap-3 text-xs">
-          <button
-            type="button"
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage <= 1}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-[#0F172A] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>{t.prevPage}</span>
-          </button>
-
-          <span className="font-medium text-[#64748B]">
-            {t.pageIndicator
-              .replace("{current}", currentPage.toString())
-              .replace("{total}", totalPages.toString())}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={currentPage >= totalPages}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-[#0F172A] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <span>{t.nextPage}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Edit Modal */}
       <SavedHoroscopeEditModal
         horoscope={selectedHoroscope}
@@ -482,27 +610,27 @@ export function SavedHoroscopesList({
         onSuccess={handleEditSuccess}
       />
 
-      {/* Delete Confirmation Modal for Table View */}
+      {/* Delete Confirmation Modal */}
       {horoscopeToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-[#E2DCD5] space-y-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-[#D9DEE7] space-y-4">
             <div className="flex items-center gap-2.5 text-rose-600">
               <AlertCircle className="w-5 h-5 shrink-0" />
-              <h4 className="font-bold text-sm text-[#0F172A]">
+              <h4 className="font-bold text-sm text-[#183047]">
                 {language === "ta" ? "ஜாதகத்தை நீக்கவா?" : "Delete Horoscope?"}
               </h4>
             </div>
-            <p className="text-xs text-[#64748B] leading-relaxed">
+            <p className="text-xs text-[#8190A6] leading-relaxed">
               {language === "ta"
-                ? `"${horoscopeToDelete.person_name || 'ஜாதகம்'}" (${formatHoroscopeSequence(horoscopeToDelete.display_number, 'ta')}) நிரந்தரமாக நீக்கப்படும். இந்த வரிசை எண் மீண்டும் பயன்படுத்தப்படாது.`
-                : `"${horoscopeToDelete.person_name || 'Horoscope'}" (${formatHoroscopeSequence(horoscopeToDelete.display_number, 'en')}) will be permanently deleted. This sequential number will remain unused.`}
+                ? `"${horoscopeToDelete.person_name || "ஜாதகம்"}" (${formatHoroscopeSequence(horoscopeToDelete.display_number, "ta")}) நிரந்தரமாக நீக்கப்படும்.`
+                : `"${horoscopeToDelete.person_name || "Horoscope"}" (${formatHoroscopeSequence(horoscopeToDelete.display_number, "en")}) will be permanently deleted.`}
             </p>
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2DCD5]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#D9DEE7]">
               <button
                 type="button"
                 onClick={() => setHoroscopeToDelete(null)}
                 disabled={isDeleting}
-                className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#475569]"
+                className="px-3 py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#183047] cursor-pointer"
               >
                 {language === "ta" ? "ரத்து" : "Cancel"}
               </button>
@@ -510,7 +638,7 @@ export function SavedHoroscopesList({
                 type="button"
                 onClick={confirmDeleteAction}
                 disabled={isDeleting}
-                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
               >
                 {isDeleting ? "..." : language === "ta" ? "ஆம், நீக்கு" : "Delete"}
               </button>

@@ -51,6 +51,7 @@ export interface PlanetInfo {
   sign_name_tamil: string;
   degree_in_sign: number;   // 0.0 to 30.0
   nakshatra: NakshatraDetail;
+  house?: number;
 }
 
 export interface HouseInfo {
@@ -1834,12 +1835,17 @@ export interface ChartContextSummary {
   running_bhukti?: string | null;
   running_pratyantardasha?: string | null;
   yogakaraka_graha?: string | null;
+  yogakaraka_planets?: string[];
   functional_benefics: string[];
   functional_malefics: string[];
-  afflicted_grahas: string[];
-  afflicted_bhavas: number[];
-  kuja_dosha_present: boolean;
-  kuja_dosha_cancelled: boolean;
+  afflicted_grahas?: string[];
+  afflicted_bhavas?: number[];
+  debilitated_planets?: string[];
+  combust_planets?: string[];
+  exalted_planets?: string[];
+  kuja_dosha_status?: string;
+  kuja_dosha_present?: boolean;
+  kuja_dosha_cancelled?: boolean;
   kuja_dosha_cancellation_reason?: string | null;
   d9_data_status?: string;
   d9_planetary_signs?: Record<string, string>;

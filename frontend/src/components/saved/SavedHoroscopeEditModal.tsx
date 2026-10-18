@@ -8,6 +8,7 @@ import { formatSerialNumber } from "@/lib/formatters";
 import { COMMON_TIMEZONES } from "@/lib/cities";
 import { calculateFullHoroscopeSuite } from "@/lib/api";
 import { saveActiveCalculation } from "@/lib/storage";
+import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
 import {
   X,
   Save,
@@ -22,6 +23,7 @@ import {
   Sliders,
   Layers,
   Sparkles,
+  Phone,
 } from "lucide-react";
 
 interface SavedHoroscopeEditModalProps {
@@ -44,6 +46,8 @@ export function SavedHoroscopeEditModal({
   const [personName, setPersonName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [birthTime, setBirthTime] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [timezone, setTimezone] = useState("Asia/Kolkata");
   const [birthplace, setBirthplace] = useState("");
   const [latitude, setLatitude] = useState<number | "">("");
@@ -63,6 +67,12 @@ export function SavedHoroscopeEditModal({
       setPersonName(horoscope.person_name || "");
       setBirthDate(horoscope.birth_date || "");
       setBirthTime(horoscope.birth_time || "");
+      setCountryCode(
+        horoscope.customer_country_code || horoscope.country_code || "+91"
+      );
+      setCustomerPhone(
+        horoscope.customer_phone || horoscope.normalized_phone || horoscope.whatsapp_number || ""
+      );
       setTimezone(horoscope.timezone || "Asia/Kolkata");
       setBirthplace(horoscope.birthplace || "");
       setLatitude(typeof horoscope.latitude === "number" ? horoscope.latitude : "");
@@ -94,6 +104,13 @@ export function SavedHoroscopeEditModal({
 
     if (!birthTime.trim()) {
       newErrors.birthTime = t.valTimeRequired;
+    }
+
+    if (customerPhone.trim()) {
+      const pVal = validateAndNormalizePhone(customerPhone, countryCode);
+      if (!pVal.isValid) {
+        newErrors.customerPhone = pVal.error || "Invalid WhatsApp phone number.";
+      }
     }
 
     if (
@@ -141,6 +158,7 @@ export function SavedHoroscopeEditModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           person_name: personName.trim(),
+          customer_full_name: personName.trim(),
           birth_date: birthDate,
           birth_time: birthTime.trim(),
           timezone: timezone.trim(),
@@ -149,6 +167,9 @@ export function SavedHoroscopeEditModal({
           longitude: Number(longitude),
           ayanamsa_id: ayanamsaId,
           house_system_id: houseSystemId,
+          customer_phone: customerPhone.trim() || undefined,
+          country_code: countryCode,
+          customer_id: horoscope.customer_id || undefined,
         }),
       });
 
@@ -209,7 +230,11 @@ export function SavedHoroscopeEditModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           person_name: personName.trim(),
+          customer_full_name: personName.trim(),
           birth_date: birthDate,
+          customer_phone: customerPhone.trim(),
+          country_code: countryCode,
+          customer_id: horoscope.customer_id || undefined,
           birth_time: formattedTime,
           timezone: timezone.trim(),
           birthplace: birthplace.trim(),
@@ -308,6 +333,53 @@ export function SavedHoroscopeEditModal({
             />
             {errors.personName && (
               <p className="mt-1 text-[11px] text-rose-600">{errors.personName}</p>
+            )}
+          </div>
+
+          {/* Customer WhatsApp Phone */}
+          <div>
+            <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{language === "ta" ? "வாட்ஸ்அப் தொடர்பு எண்" : "Customer WhatsApp Number"}</span>
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={countryCode}
+                onChange={(e) => {
+                  setCountryCode(e.target.value);
+                  setErrors((prev) => ({ ...prev, customerPhone: "" }));
+                }}
+                className="w-28 sm:w-32 px-2.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-medium text-[#0F172A] focus:border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20"
+              >
+                {SUPPORTED_COUNTRY_CODES.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.flag} {item.code}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                value={customerPhone}
+                onChange={(e) => {
+                  setCustomerPhone(e.target.value);
+                  setErrors((prev) => ({ ...prev, customerPhone: "" }));
+                }}
+                placeholder={countryCode === "+91" ? "98765 43210" : "Phone number"}
+                className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                  errors.customerPhone
+                    ? "border-rose-400 bg-rose-50/20"
+                    : "border-[#CBD5E1] focus:border-[#B8860B]"
+                }`}
+              />
+            </div>
+            {errors.customerPhone ? (
+              <p className="mt-1 text-[11px] text-rose-600">{errors.customerPhone}</p>
+            ) : (
+              <p className="mt-1 text-[11px] text-[#64748B]">
+                {language === "ta"
+                  ? "பிறந்தநாள் வாழ்த்துக்கள் & வாட்ஸ்அப் தொடர்புக்கு அவசியமானது."
+                  : "Required for birthday reminders and direct WhatsApp contact."}
+              </p>
             )}
           </div>
 

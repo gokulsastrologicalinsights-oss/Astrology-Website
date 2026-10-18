@@ -20,6 +20,7 @@ import { HoraryPrashnaTab } from "@/components/advanced-kp/HoraryPrashnaTab";
 import { KpDasaTimelineTab } from "@/components/advanced-kp/KpDasaTimelineTab";
 import { KpReportsExportTab } from "@/components/advanced-kp/KpReportsExportTab";
 import { SavedKpRecordsList } from "@/components/advanced-kp/SavedKpRecordsList";
+import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
 import {
   Compass,
   Layers,
@@ -33,6 +34,8 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
+  Phone,
+  Users,
 } from "lucide-react";
 
 type WorkspaceTab =
@@ -58,6 +61,10 @@ function AdvancedKpContent() {
   const [personName, setPersonName] = useState<string>("Sample Client");
   const [birthDate, setBirthDate] = useState<string>("1995-10-24");
   const [birthTime, setBirthTime] = useState<string>("14:30:00");
+  const [countryCode, setCountryCode] = useState<string>("+91");
+  const [customerPhone, setCustomerPhone] = useState<string>("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [savedCustomers, setSavedCustomers] = useState<any[]>([]);
   const [locationName, setLocationName] = useState<string>("Chennai, India");
   const [latitude, setLatitude] = useState<number>(13.0827);
   const [longitude, setLongitude] = useState<number>(80.2707);
@@ -78,6 +85,26 @@ function AdvancedKpContent() {
       router.replace("/login");
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Load existing customers for reuse and deduplication
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetch("/api/customers")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.customers) setSavedCustomers(data.customers);
+        })
+        .catch((err) => console.warn("Could not load customers for KP:", err));
+    }
+  }, [isAuthenticated]);
+
+  const handleSelectCustomer = (customer: any) => {
+    setPersonName(customer.full_name || "");
+    if (customer.birth_date) setBirthDate(customer.birth_date);
+    setCountryCode(customer.country_code || "+91");
+    setCustomerPhone(customer.phone_number || customer.normalized_phone || "");
+    setCustomerId(customer.id);
+  };
 
   // Synchronize URL query parameter with active tab
   const handleTabChange = (tab: WorkspaceTab) => {
@@ -121,17 +148,64 @@ function AdvancedKpContent() {
     }
   }, [isAuthenticated]);
 
-  // Save Natal Chart to public.saved_kp_charts
+  // Save Natal Chart to public.saved_kp_charts with mandatory customer contact validation
   const handleSaveNatal = async () => {
     if (!natalResult || !session?.access_token) return;
     setSavingNatal(true);
     setError(null);
     setSaveSuccessMsg(null);
 
+    const trimmedName = personName.trim();
+    if (!trimmedName) {
+      setError(
+        language === "ta"
+          ? "வாடிக்கையாளர் பெயர் தேவை."
+          : "Customer Full Name is required to save client horoscope."
+      );
+      setSavingNatal(false);
+      return;
+    }
+
+    if (!birthDate) {
+      setError(
+        language === "ta"
+          ? "பிறந்த தேதி தேவை."
+          : "Date of Birth is required for client horoscope."
+      );
+      setSavingNatal(false);
+      return;
+    }
+
+    const rawPhone = customerPhone.trim();
+    let normPhone: string | undefined = undefined;
+    let waNum: string | undefined = undefined;
+
+    if (rawPhone) {
+      const phoneVal = validateAndNormalizePhone(rawPhone, countryCode);
+      if (!phoneVal.isValid) {
+        setError(
+          phoneVal.error ||
+            (language === "ta"
+              ? "செல்லுபடியற்ற வாட்ஸ்அப் எண்."
+              : "Invalid WhatsApp phone number.")
+        );
+        setSavingNatal(false);
+        return;
+      }
+      normPhone = phoneVal.normalizedPhone;
+      waNum = phoneVal.whatsappNumber;
+    }
+
     try {
       const payload = {
         chart_type: "natal" as const,
-        title: personName.trim() || "KP Natal Chart",
+        title: trimmedName,
+        customer_full_name: trimmedName,
+        customer_phone: rawPhone || undefined,
+        country_code: countryCode,
+        customer_id: customerId || undefined,
+        normalized_phone: normPhone,
+        whatsapp_number: waNum,
         birth_date: birthDate,
         birth_time: birthTime,
         location_name: locationName,
@@ -220,6 +294,14 @@ function AdvancedKpContent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/tools/transit-watch"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-[#8C6D23] bg-[#FAF2DE] border border-[#D8BD80] hover:bg-[#F2E5C2] transition-colors flex items-center gap-1.5 shadow-2xs"
+          >
+            <Clock className="w-3.5 h-3.5 text-[#B8862B]" />
+            <span>{language === "ta" ? "KP கோசாரம்" : "KP Transit Watch"}</span>
+          </Link>
+
           <Link
             href="/tools"
             className="px-4 py-2 rounded-xl text-xs font-semibold text-[#52667E] border border-[#DDE5F0] hover:bg-[#F8FAFC] transition-colors"
@@ -374,16 +456,107 @@ function AdvancedKpContent() {
             </div>
 
             <form onSubmit={handleCalculateNatal} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Existing Client Selector */}
+              {savedCustomers.length > 0 && (
+                <div className="p-3 bg-[#FAF8F5] border border-[#E2DCD5] rounded-xl">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label htmlFor="kpCustomerSelect" className="text-xs font-bold text-[#102A4C] flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-[#B8862B]" />
+                      <span>{language === "ta" ? "முந்தைய வாடிக்கையாளர் தேர்வு" : "Returning Customer / Saved Client"}</span>
+                    </label>
+                    {customerId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomerId(null);
+                          setPersonName("");
+                          setCustomerPhone("");
+                        }}
+                        className="text-[11px] font-semibold text-rose-600 hover:underline"
+                      >
+                        {language === "ta" ? "புதிய வாடிக்கையாளர் (Reset)" : "Clear / New Customer"}
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    id="kpCustomerSelect"
+                    value={customerId || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setCustomerId(null);
+                        return;
+                      }
+                      const found = savedCustomers.find((c) => c.id === val);
+                      if (found) {
+                        handleSelectCustomer(found);
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-[#DDE5F0] bg-white text-[#102A4C] focus:ring-2 focus:ring-[#B8862B]"
+                  >
+                    <option value="">
+                      {language === "ta"
+                        ? "-- புதிய வாடிக்கையாளர் (அல்லது பட்டியலிலிருந்து தேர்வு செய்க) --"
+                        : "-- Select Saved Customer (or enter new client details) --"}
+                    </option>
+                    {savedCustomers.map((cust) => (
+                      <option key={cust.id} value={cust.id}>
+                        {cust.full_name} ({cust.normalized_phone || cust.phone_number}) - DOB: {cust.birth_date || "N/A"}
+                      </option>
+                    ))}
+                  </select>
+                  {customerId && (
+                    <p className="mt-1.5 text-[11px] text-emerald-700 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>
+                        {language === "ta"
+                          ? "வாடிக்கையாளர் சுயவிவரம் இணைக்கப்பட்டுள்ளது."
+                          : "Authoritative client profile linked. KP horoscope will be saved under this customer."}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-[#52667E]">Person Name / Label</label>
+                  <label className="block text-xs font-bold text-[#52667E]">
+                    {language === "ta" ? "வாடிக்கையாளர் முழுப் பெயர்*" : "Customer Full Name*"}
+                  </label>
                   <input
                     type="text"
                     required
                     value={personName}
                     onChange={(e) => setPersonName(e.target.value)}
+                    placeholder="e.g. John Doe"
                     className="w-full px-3 py-2 text-xs rounded-lg border border-[#DDE5F0] focus:ring-2 focus:ring-[#B8862B] text-[#102A4C]"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-[#52667E]">
+                    {language === "ta" ? "வாட்ஸ்அப் எண் (விருப்பத்தேர்வு)" : "WhatsApp Number (Optional)"}
+                  </label>
+                  <div className="flex gap-1.5">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="w-24 px-1.5 py-2 text-xs rounded-lg border border-[#DDE5F0] bg-white text-[#102A4C] focus:ring-2 focus:ring-[#B8862B]"
+                    >
+                      {SUPPORTED_COUNTRY_CODES.map((item) => (
+                        <option key={item.code} value={item.code}>
+                          {item.flag} {item.code}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder={countryCode === "+91" ? "98765 43210 (Optional)" : "Phone (Optional)"}
+                      className="flex-1 px-3 py-2 text-xs rounded-lg border border-[#DDE5F0] focus:ring-2 focus:ring-[#B8862B] text-[#102A4C]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1">
