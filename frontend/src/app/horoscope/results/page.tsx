@@ -72,6 +72,9 @@ function HoroscopeResultsContent() {
     if (tabParam && validTabs.includes(tabParam)) {
       return tabParam as any;
     }
+    if (typeof window !== "undefined" && window.location.hash === "#kp-events") {
+      return "kp";
+    }
     return "chart";
   });
 
@@ -79,6 +82,8 @@ function HoroscopeResultsContent() {
     const validTabs = ["chart", "planets", "houses", "dasa", "kp", "panchang", "vedic-yogas", "nabhasha", "ashtakavarga"];
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam as any);
+    } else if (typeof window !== "undefined" && window.location.hash === "#kp-events") {
+      setActiveTab("kp");
     }
   }, [tabParam]);
 

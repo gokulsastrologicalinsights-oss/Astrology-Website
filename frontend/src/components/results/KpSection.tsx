@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { KpResponse, DasaResponse, HoroscopeResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaName, getRasiName, getLordName } from "@/lib/translations";
@@ -34,7 +34,30 @@ export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionPr
   const { language, t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<
     "planets" | "cusps" | "significators" | "house_significators" | "ruling_planets" | "dasa" | "events"
-  >("planets");
+  >(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#kp-events") {
+      return "events";
+    }
+    return "planets";
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (typeof window !== "undefined" && window.location.hash === "#kp-events") {
+        setActiveSubTab("events");
+        setTimeout(() => {
+          const el = document.getElementById("kp-events");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 150);
+      }
+    };
+
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   if (!kp) {
     return (
@@ -647,12 +670,14 @@ export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionPr
 
       {/* 7. KP Event Analysis */}
       {activeSubTab === "events" && (
-        <KpEventAnalysisSection
-          kp={kp}
-          dasa={dasa}
-          horoscope={horoscope}
-          savedHoroscopeId={savedHoroscopeId}
-        />
+        <div id="kp-events" className="scroll-mt-6">
+          <KpEventAnalysisSection
+            kp={kp}
+            dasa={dasa}
+            horoscope={horoscope}
+            savedHoroscopeId={savedHoroscopeId}
+          />
+        </div>
       )}
     </div>
   );

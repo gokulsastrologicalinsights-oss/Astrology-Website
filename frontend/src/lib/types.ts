@@ -1086,4 +1086,29 @@ export interface KpEventAnalysisRequest {
   save_horoscope_id?: string;
 }
 
+export interface UserKpAnalysisSummary {
+  id: string;
+  user_id: string;
+  horoscope_id?: string | null;
+  rule_set_version: string;
+  calculation_timestamp: string;
+  created_at: string;
+  updated_at: string;
+  running_period?: string | null;
+  total_periods: number;
+  green_count: number;
+  orange_count: number;
+  red_count: number;
+  persistence_status: string;
+  person_name?: string | null;
+  birth_date?: string | null;
+  display_number?: number | null;
+  lagna?: string | null;
+}
 
+export interface UserKpAnalysisListResponse {
+  total_count: number;
+  limit: number;
+  offset: number;
+  items: UserKpAnalysisSummary[];
+}

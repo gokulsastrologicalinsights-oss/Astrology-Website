@@ -33,6 +33,8 @@ import {
   VedicYogaResponse,
   KpEventAnalysisRequest,
   KpEventAnalysisResponse,
+  UserKpAnalysisSummary,
+  UserKpAnalysisListResponse,
 } from "./types";
 
 function getApiBaseUrl(): string {
@@ -673,5 +675,18 @@ export async function getKpEventRegistry(): Promise<{
   });
 }
 
-
-
+export async function listUserKpEventAnalyses(
+  token: string,
+  limit: number = 10,
+  offset: number = 0
+): Promise<UserKpAnalysisListResponse> {
+  return request<UserKpAnalysisListResponse>(
+    `/api/v1/horoscope/kp-events/user-analyses?limit=${limit}&offset=${offset}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
