@@ -92,6 +92,8 @@ class OverallAnalysisSummary(BaseModel):
     green_count: int
     orange_count: int
     red_count: int
+    persistence_status: Optional[str] = "database"
+    persistence_warning: Optional[str] = None
 
 
 class KpEventAnalysisResponse(BaseModel):
@@ -102,6 +104,8 @@ class KpEventAnalysisResponse(BaseModel):
     overall_summary: OverallAnalysisSummary
     periods: List[PeriodAnalysisResult]
     human_readable_report: str
+    persistence_status: Optional[str] = "database"
+    persistence_warning: Optional[str] = None
 
 
 class SavedHoroscopeAnalysisRequest(BaseModel):

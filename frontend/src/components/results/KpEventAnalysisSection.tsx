@@ -373,6 +373,19 @@ export function KpEventAnalysisSection({
           )}
         </div>
 
+        {/* Persistence Notice / Warning Banner */}
+        {(analysisResult?.persistence_warning || analysisResult?.overall_summary?.persistence_warning) && (
+          <div className="mt-3 p-3 rounded-xl bg-amber-50/90 border border-amber-200 flex items-start gap-2.5 text-xs text-amber-900 shadow-2xs">
+            <span className="text-amber-700 text-sm">⚠️</span>
+            <div className="flex-1">
+              <span className="font-semibold block">{language === "ta" ? "தற்காலிக சேமிப்பு அறிவிப்பு" : "Storage Notice"}</span>
+              <span className="text-amber-800 text-[11px] leading-relaxed">
+                {analysisResult.persistence_warning || analysisResult?.overall_summary?.persistence_warning}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 2. Compact Summary Statistics Cards */}
         {analysisResult?.overall_summary && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-4 pt-4 border-t border-[#E8DEC8]">

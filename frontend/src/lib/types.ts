@@ -1047,6 +1047,8 @@ export interface OverallAnalysisSummary {
   green_count: number;
   orange_count: number;
   red_count: number;
+  persistence_status?: string;
+  persistence_warning?: string;
 }
 
 export interface KpEventAnalysisResponse {
@@ -1057,6 +1059,8 @@ export interface KpEventAnalysisResponse {
   overall_summary: OverallAnalysisSummary;
   periods: PeriodAnalysisResult[];
   human_readable_report: string;
+  persistence_status?: string;
+  persistence_warning?: string;
 }
 
 export interface KpEventPeriodInput {

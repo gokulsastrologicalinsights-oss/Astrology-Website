@@ -260,11 +260,20 @@ def analyze_saved_horoscope(
     )
 
     # Persist analysis to database
-    save_kp_event_analysis(
+    save_res = save_kp_event_analysis(
         user_id=user_id,
         horoscope_id=saved_horoscope_id,
         analysis_data=analysis_res,
     )
+
+    if save_res:
+        p_status = save_res.get("persistence_status", "database")
+        p_warning = save_res.get("persistence_warning")
+        analysis_res["persistence_status"] = p_status
+        analysis_res["persistence_warning"] = p_warning
+        if "overall_summary" in analysis_res:
+            analysis_res["overall_summary"]["persistence_status"] = p_status
+            analysis_res["overall_summary"]["persistence_warning"] = p_warning
 
     return KpEventAnalysisResponse(**analysis_res)
 
@@ -307,6 +316,8 @@ def get_saved_analysis(
     summary = record.get("summary", {})
     periods = record.get("results", [])
     report = summary.get("human_readable_report") or "Retrieved from saved analysis."
+    p_status = record.get("persistence_status", "database")
+    p_warning = record.get("persistence_warning")
     return KpEventAnalysisResponse(
         rule_set_version=record.get("rule_set_version", RULE_SET_VERSION),
         lagna=None,
@@ -319,9 +330,13 @@ def get_saved_analysis(
             "green_count": summary.get("green_count", 0),
             "orange_count": summary.get("orange_count", 0),
             "red_count": summary.get("red_count", 0),
+            "persistence_status": p_status,
+            "persistence_warning": p_warning,
         },
         periods=periods,
         human_readable_report=report,
+        persistence_status=p_status,
+        persistence_warning=p_warning,
     )
 
 

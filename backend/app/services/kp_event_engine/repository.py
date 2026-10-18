@@ -5,15 +5,17 @@ public.kp_event_analyses with Row-Level Security (RLS) enforcement and
 robust fallback in-memory cache for dev/offline/testing modes.
 """
 
-from __future__ import annotations
 import hashlib
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 
 from app.services.auth_service import get_supabase_client
 from .event_rules import RULE_SET_VERSION
+
+logger = logging.getLogger(__name__)
 
 # In-memory fallback cache for development, testing, and offline modes
 _LOCAL_KP_EVENT_ANALYSES: Dict[str, Dict[str, Any]] = {}
@@ -60,6 +62,7 @@ def save_kp_event_analysis(
         "results": analysis_data.get("periods", []),
         "created_at": now_iso,
         "updated_at": now_iso,
+        "persistence_status": "database",
     }
 
     if supabase:
@@ -89,16 +92,30 @@ def save_kp_event_analysis(
                         .execute()
                     )
                     if res.data and len(res.data) > 0:
-                        return res.data[0]
+                        out = dict(res.data[0])
+                        out["persistence_status"] = "database"
+                        return out
 
             res = supabase.table("kp_event_analyses").insert(row_data).execute()
             if res.data and len(res.data) > 0:
-                return res.data[0]
-        except Exception:
-            # Table might not exist or network unreachable, fall back to in-memory cache
-            pass
+                out = dict(res.data[0])
+                out["persistence_status"] = "database"
+                return out
+        except Exception as exc:
+            logger.warning(
+                "Database persistence to public.kp_event_analyses was unavailable (%s); falling back to ephemeral in-memory cache.",
+                exc,
+            )
 
-    # Fallback to local cache
+    # Fallback to local cache with explicit operational warning
+    warning_msg = (
+        "Warning: Analysis saved to temporary in-memory cache because database table "
+        "public.kp_event_analyses is not provisioned or unreachable. Results will not "
+        "persist across server restarts or multiple backend workers."
+    )
+    row_data["persistence_status"] = "in_memory_ephemeral"
+    row_data["persistence_warning"] = warning_msg
+
     # If horoscope_id provided, replace existing entry for same horoscope
     if horoscope_id:
         for k, v in list(_LOCAL_KP_EVENT_ANALYSES.items()):
@@ -124,14 +141,21 @@ def get_kp_event_analysis(
                 query = query.eq("user_id", user_id)
             res = query.order("created_at", desc=True).limit(1).execute()
             if res.data and len(res.data) > 0:
-                return res.data[0]
+                out = dict(res.data[0])
+                out["persistence_status"] = "database"
+                return out
         except Exception:
             pass
 
     # Search local cache
     for record in _LOCAL_KP_EVENT_ANALYSES.values():
         if record.get("horoscope_id") == horoscope_id and (is_admin or record.get("user_id") == user_id):
-            return record
+            out = dict(record)
+            out["persistence_status"] = "in_memory_ephemeral"
+            out["persistence_warning"] = (
+                "Warning: Retrieved from temporary in-memory cache; not yet committed to durable database."
+            )
+            return out
     return None
 
 
