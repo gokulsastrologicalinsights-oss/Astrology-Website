@@ -6,10 +6,13 @@ Supabase REST queries via Service Role client first, gracefully falling back
 to verified, canonical in-memory registries for development, testing, and offline modes.
 """
 
+import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from app.services.auth_service import get_supabase_client
 from app.services.remedy_engine.taxonomy import VERIFIED_PROBLEM_TAXONOMY, TAXONOMY_BY_SLUG
+
+logger = logging.getLogger(__name__)
 
 # ─── Canonical Classical Source References ────────────────────────────────────
 VERIFIED_SOURCES: List[Dict[str, Any]] = [
@@ -849,9 +852,13 @@ def save_report_record(
                 saved = res.data[0]
                 IN_MEMORY_REMEDY_REPORTS[saved["id"]] = saved
                 return saved
-        except Exception:
-            pass
+        except Exception as err:
+            logger.warning(
+                "Supabase insert into 'remedy_reports' failed (%s); storing in fallback in-memory registry.",
+                err,
+            )
 
+    logger.info("Persisted remedy report %s into in-memory fallback store.", report_id)
     IN_MEMORY_REMEDY_REPORTS[report_id] = record
     return record
 
@@ -871,8 +878,12 @@ def get_report_record(
                 if is_admin or str(row.get("user_id")) == str(user_id):
                     return row
                 return None
-        except Exception:
-            pass
+        except Exception as err:
+            logger.warning(
+                "Supabase query for 'remedy_reports' (id=%s) failed (%s); checking in-memory fallback store.",
+                report_id,
+                err,
+            )
 
     # Check local fallback
     row = IN_MEMORY_REMEDY_REPORTS.get(report_id)
@@ -899,8 +910,11 @@ def list_report_records(
             res = query.order("created_at", desc=True).execute()
             if res.data is not None:
                 return res.data
-        except Exception:
-            pass
+        except Exception as err:
+            logger.warning(
+                "Supabase list query for 'remedy_reports' failed (%s); listing from in-memory fallback store.",
+                err,
+            )
 
     # Fallback to in-memory records
     results = []
