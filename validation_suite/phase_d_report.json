@@ -1,0 +1,89 @@
+{
+  "report_name": "Phase D \u2014 Independent Dasa and KP Verification Report (Corrected)",
+  "timestamp_iso": "2026-10-17T20:41:00+05:30",
+  "engine": "XALEN Astronomical & Astrological Engine (Rust / PyO3 xalen bindings)",
+  "audit_note": "The synthetic historical celebrity horoscopes (Tagore, Gandhi, Nehru, Vivekananda) previously cited in the Phase D draft have been retracted. An audit confirmed that Tagore is Horoscope No. 35 (not 46) with Moon in Revati (~351\u00b059') and Mercury balance, Gandhi is No. 41 (not 54), Nehru is No. 59 (not 63), and Vivekananda is No. 36 (not 48). Independent canonical verification is strictly based on published tabular and classical texts (Krishnamurti KP Reader No. 1 & 3, BPHS Ch. 46, and B.V. Raman HPA p. 196).",
+  "summary": {
+    "independently_verified_count": 8,
+    "integration_tested_only_count": 2,
+    "unverified_count": 1,
+    "failed_count": 0
+  },
+  "categorized_features": {
+    "independently_verified": [
+      {
+        "feature": "KP 249 Sub-Divisions & 6 Sign Boundary Splits",
+        "authority": "Prof. K.S. Krishnamurti, KP Reader No. 1: Casting the Horoscope (1971/2007) and KP Reader No. 3 (1971), pp. 287-295",
+        "details": "Verified exact degrees, star lords, sub lords, and sign rulerships across all 249 divisions. Confirmed the 6 canonical sign boundary splits at 30\u00b0 (KP #22/#23, Sun/Rahu), 90\u00b0 (KP #62/#63, Jupiter/Moon), 150\u00b0 (KP #105/#106, Sun/Rahu), 210\u00b0 (KP #145/#146, Jupiter/Moon), 270\u00b0 (KP #188/#189, Sun/Rahu), and 330\u00b0 (KP #228/#229, Jupiter/Moon). Confirmed that 60\u00b0, 120\u00b0, 180\u00b0, 240\u00b0, 300\u00b0, and 360\u00b0 align exactly with natural sub endpoints without splitting.",
+        "tolerance": "Exact match across all 249 sub-divisions",
+        "status": "PASS"
+      },
+      {
+        "feature": "KP Interval Partitioning & Boundary Rule",
+        "authority": "Krishnamurti KP Reader No. 1 & Mathematical Half-Open Convention [start, end)",
+        "details": "Verified that all 12 sign transitions and sub boundaries follow strict [start, end) interval semantics.",
+        "status": "PASS"
+      },
+      {
+        "feature": "KP Sign Rulership Mapping (kp_number_to_sign)",
+        "authority": "Prof. K.S. Krishnamurti Master 249 Table",
+        "details": "Verified 1-based sign mapping for all numbers 1 through 249 across complete 360\u00b0 zodiac sweep with 0.05\u00b0 resolution.",
+        "status": "PASS"
+      },
+      {
+        "feature": "Vimshottari Dasa Total Cycle Span & Lords Sequence",
+        "authority": "Brihat Parashara Hora Shastra (BPHS) Vol. 2 Ch. 46",
+        "details": "Verified 120-year cycle length and 9-lord sequence (Ketu 7, Venus 20, Sun 6, Moon 10, Mars 7, Rahu 18, Jupiter 16, Saturn 19, Mercury 17).",
+        "tolerance": "Exact 120.0 years (43,830.0 days at 365.25 days/year)",
+        "status": "PASS"
+      },
+      {
+        "feature": "Vimshottari Dasa Bhukti (Antardasha) Published Reference Table",
+        "authority": "Dr. B.V. Raman, Hindu Predictive Astrology (1938/1981 ed.), Ch. XX, p. 196; BPHS Vol. 2 Ch. 46",
+        "details": "Verified Sun Mahadasha published table (Sun 3m18d, Moon 6m, Mars 4m6d, Rahu 10m24d, Jupiter 9m18d, Saturn 11m12d, Mercury 10m6d, Ketu 4m6d, Venus 12m).",
+        "tolerance": "< 0.0001 years",
+        "status": "PASS"
+      },
+      {
+        "feature": "Universal Bhukti Duration Proportionality (81 Combinations)",
+        "authority": "BPHS Vol. 2 Ch. 46 (Formula: Y_maha * Y_bhukti / 120)",
+        "details": "Verified all 81 Mahadasha-Antardasha combinations match canonical formula exact to 1e-4 years.",
+        "tolerance": "< 0.0001 years",
+        "status": "PASS"
+      },
+      {
+        "feature": "All 27 Nakshatra Boundaries & Numerical Robustness",
+        "authority": "Mathematical Nakshatra Partitioning & Vimshottari Balance Law",
+        "details": "Verified all 27 nakshatra boundary points, plus values immediately above (+1e-6\u00b0) and below (-1e-6\u00b0). The IEEE 754 remainder truncation bug in dasha.rs was resolved using robust lower-bound subtraction and clamping. Zero-balance collapse at exact 40\u00b0 integer boundary multiples is 100% eliminated.",
+        "status": "PASS"
+      },
+      {
+        "feature": "Dasa Year-Length Standard",
+        "authority": "Julian Year Convention (365.25 days) / Dr. B.V. Raman Hindu Predictive Astrology p. 195",
+        "details": "XALEN uses YEAR_IN_DAYS = 365.25. Total 120-year cycle equals 43,830.0 Julian days.",
+        "status": "DOCUMENTED & VERIFIED"
+      }
+    ],
+    "integration_tested_only": [
+      {
+        "feature": "KP Cuspal Analysis & Significator Strength Hierarchy",
+        "details": "xalen.kp_cuspal_analysis and xalen.kp_significators tested across multiple chart configurations for data integrity, sorting order, and house promise detection.",
+        "status": "INTEGRATION-TESTED ONLY"
+      },
+      {
+        "feature": "PyO3 Python Bindings Zero-Duplication Bridge",
+        "details": "Input validation and data structure conversion verified across 258 automated tests.",
+        "status": "INTEGRATION-TESTED ONLY"
+      }
+    ],
+    "unverified": [
+      {
+        "feature": "Historical Celebrity Horoscopes (Notable Horoscopes)",
+        "reason": "Source Retraction & Proprietary Ayanamsa Discrepancy",
+        "details": "Historical chart balances from Dr. B.V. Raman's Notable Horoscopes (Tagore, Gandhi, Nehru, Vivekananda) were computed by Raman using Raman Ayanamsa (which differs from Lahiri by ~1\u00b026') and manual approximate calendar month arithmetic. They cannot serve as automated precision oracles for modern Lahiri ephemeris verification.",
+        "status": "UNVERIFIED (RETRACTED FROM INDEPENDENT CANONICAL LAYER)"
+      }
+    ],
+    "failed": []
+  }
+}

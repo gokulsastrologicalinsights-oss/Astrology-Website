@@ -1,0 +1,536 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/lib/i18n";
+import { SavedHoroscopeItem } from "@/lib/types";
+import { formatSerialNumber } from "@/lib/formatters";
+import { COMMON_TIMEZONES } from "@/lib/cities";
+import { calculateFullHoroscopeSuite } from "@/lib/api";
+import { saveActiveCalculation } from "@/lib/storage";
+import {
+  X,
+  Save,
+  RotateCw,
+  Compass,
+  AlertCircle,
+  CheckCircle2,
+  Calendar,
+  Clock,
+  MapPin,
+  Globe,
+  Sliders,
+  Layers,
+  Sparkles,
+} from "lucide-react";
+
+interface SavedHoroscopeEditModalProps {
+  horoscope: SavedHoroscopeItem | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function SavedHoroscopeEditModal({
+  horoscope,
+  isOpen,
+  onClose,
+  onSuccess,
+}: SavedHoroscopeEditModalProps) {
+  const router = useRouter();
+  const { language, t } = useLanguage();
+
+  // Form states
+  const [personName, setPersonName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [birthTime, setBirthTime] = useState("");
+  const [timezone, setTimezone] = useState("Asia/Kolkata");
+  const [birthplace, setBirthplace] = useState("");
+  const [latitude, setLatitude] = useState<number | "">("");
+  const [longitude, setLongitude] = useState<number | "">("");
+  const [ayanamsaId, setAyanamsaId] = useState<number>(0);
+  const [houseSystemId, setHouseSystemId] = useState<number>(2);
+
+  // Status states
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCalculatingNew, setIsCalculatingNew] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (horoscope) {
+      setPersonName(horoscope.person_name || "");
+      setBirthDate(horoscope.birth_date || "");
+      setBirthTime(horoscope.birth_time || "");
+      setTimezone(horoscope.timezone || "Asia/Kolkata");
+      setBirthplace(horoscope.birthplace || "");
+      setLatitude(typeof horoscope.latitude === "number" ? horoscope.latitude : "");
+      setLongitude(typeof horoscope.longitude === "number" ? horoscope.longitude : "");
+      setAyanamsaId(typeof horoscope.ayanamsa_id === "number" ? horoscope.ayanamsa_id : 0);
+      setHouseSystemId(
+        typeof horoscope.house_system_id === "number" ? horoscope.house_system_id : 2
+      );
+      setErrors({});
+      setErrorMessage(null);
+      setSuccessMessage(null);
+    }
+  }, [horoscope]);
+
+  if (!isOpen || !horoscope) return null;
+
+  const serialText = formatSerialNumber(horoscope.display_number);
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!personName.trim()) {
+      newErrors.personName = language === "ta" ? "பெயர் தேவை" : "Birth name is required";
+    }
+
+    if (!birthDate) {
+      newErrors.birthDate = t.valDateRequired;
+    }
+
+    if (!birthTime.trim()) {
+      newErrors.birthTime = t.valTimeRequired;
+    }
+
+    if (
+      latitude === "" ||
+      isNaN(Number(latitude)) ||
+      Number(latitude) < -90 ||
+      Number(latitude) > 90
+    ) {
+      newErrors.latitude = t.valLatInvalid;
+    }
+
+    if (
+      longitude === "" ||
+      isNaN(Number(longitude)) ||
+      Number(longitude) < -180 ||
+      Number(longitude) > 180
+    ) {
+      newErrors.longitude = t.valLonInvalid;
+    }
+
+    if (!timezone.trim()) {
+      newErrors.timezone = t.valTzRequired;
+    }
+
+    if (!birthplace.trim()) {
+      newErrors.birthplace = t.valPlaceRequired;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Action 1: Save Changes to Existing Record (without recalculating snapshot)
+  const handleSaveChanges = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!validate()) return;
+
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/horoscopes/${horoscope.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          person_name: personName.trim(),
+          birth_date: birthDate,
+          birth_time: birthTime.trim(),
+          timezone: timezone.trim(),
+          birthplace: birthplace.trim(),
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          ayanamsa_id: ayanamsaId,
+          house_system_id: houseSystemId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update horoscope record.");
+      }
+
+      setSuccessMessage(
+        language === "ta"
+          ? "ஜாதக விவரங்கள் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டன."
+          : "Horoscope details updated successfully."
+      );
+      onSuccess();
+      setTimeout(() => {
+        onClose();
+      }, 700);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to save horoscope changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Action 2: Recalculate as New Horoscope (generates fresh calculation and saves as new record)
+  const handleRecalculateAsNew = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!validate()) return;
+
+    setIsCalculatingNew(true);
+    try {
+      // 1. Run full calculation suite
+      const formattedTime =
+        birthTime.includes(":") && birthTime.split(":").length === 2
+          ? `${birthTime}:00`
+          : birthTime;
+
+      const calcResult = await calculateFullHoroscopeSuite({
+        fullName: personName.trim(),
+        birthDate,
+        birthTime: formattedTime,
+        isTimeConfirmed: true,
+        locationName: birthplace.trim(),
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        timezone: timezone.trim(),
+        ayanamsaId,
+        houseSystemId,
+        includePanchang: true,
+        includeOuterPlanets: true,
+      });
+
+      // 2. Persist to database as a NEW saved horoscope
+      const saveRes = await fetch("/api/horoscopes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          person_name: personName.trim(),
+          birth_date: birthDate,
+          birth_time: formattedTime,
+          timezone: timezone.trim(),
+          birthplace: birthplace.trim(),
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          ayanamsa_id: ayanamsaId,
+          house_system_id: houseSystemId,
+          calculation_result: calcResult,
+        }),
+      });
+
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) {
+        throw new Error(saveData.error || "Failed to save recalculated horoscope.");
+      }
+
+      const newRecord = saveData.horoscope;
+      saveActiveCalculation({
+        ...calcResult,
+        savedId: newRecord.id,
+        displayNumber: newRecord.display_number,
+        isSaved: true,
+      });
+
+      onSuccess();
+      onClose();
+      router.push(`/horoscope/results?id=${newRecord.id}`);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Recalculation failed.");
+    } finally {
+      setIsCalculatingNew(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white rounded-2xl border border-[#E2DCD5] shadow-2xl p-6 sm:p-8 my-8 max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-[#E2DCD5]">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
+              <span>{serialText}</span>
+            </div>
+            <div>
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#0F172A]">
+                {t.editHoroscopeTitle}
+              </h2>
+              <p className="text-xs text-[#64748B]">
+                {t.editHoroscopeSubtitle}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#FAF8F5] transition-colors"
+            aria-label="Close dialog"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Notices */}
+        {errorMessage && (
+          <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        {/* Form Body */}
+        <form onSubmit={handleSaveChanges} className="mt-6 space-y-4">
+          {/* Birth Name */}
+          <div>
+            <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+              {t.fieldName} *
+            </label>
+            <input
+              type="text"
+              value={personName}
+              onChange={(e) => setPersonName(e.target.value)}
+              placeholder={t.fieldNamePlaceholder}
+              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                errors.personName
+                  ? "border-rose-400 bg-rose-50/20"
+                  : "border-[#CBD5E1] focus:border-[#B8860B]"
+              }`}
+            />
+            {errors.personName && (
+              <p className="mt-1 text-[11px] text-rose-600">{errors.personName}</p>
+            )}
+          </div>
+
+          {/* Date and Time */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>{t.fieldDate} *</span>
+              </label>
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                  errors.birthDate
+                    ? "border-rose-400 bg-rose-50/20"
+                    : "border-[#CBD5E1] focus:border-[#B8860B]"
+                }`}
+              />
+              {errors.birthDate && (
+                <p className="mt-1 text-[11px] text-rose-600">{errors.birthDate}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>{t.fieldTime} (HH:MM or HH:MM:SS) *</span>
+              </label>
+              <input
+                type="text"
+                value={birthTime}
+                onChange={(e) => setBirthTime(e.target.value)}
+                placeholder="10:30:00"
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-mono bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                  errors.birthTime
+                    ? "border-rose-400 bg-rose-50/20"
+                    : "border-[#CBD5E1] focus:border-[#B8860B]"
+                }`}
+              />
+              {errors.birthTime && (
+                <p className="mt-1 text-[11px] text-rose-600">{errors.birthTime}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Timezone and Birthplace */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>{t.fieldTimezone} *</span>
+              </label>
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm bg-white focus:outline-hidden focus:border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20"
+              >
+                {COMMON_TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label} ({tz.offset})
+                  </option>
+                ))}
+                {!COMMON_TIMEZONES.some((tz) => tz.value === timezone) && (
+                  <option value={timezone}>{timezone}</option>
+                )}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>{t.fieldPlace} *</span>
+              </label>
+              <input
+                type="text"
+                value={birthplace}
+                onChange={(e) => setBirthplace(e.target.value)}
+                placeholder={t.fieldPlacePlaceholder}
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                  errors.birthplace
+                    ? "border-rose-400 bg-rose-50/20"
+                    : "border-[#CBD5E1] focus:border-[#B8860B]"
+                }`}
+              />
+              {errors.birthplace && (
+                <p className="mt-1 text-[11px] text-rose-600">{errors.birthplace}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Latitude and Longitude */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                {t.fieldLatitude} (-90 to +90) *
+              </label>
+              <input
+                type="number"
+                step="0.0001"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value === "" ? "" : Number(e.target.value))}
+                placeholder="13.0827"
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-mono bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                  errors.latitude
+                    ? "border-rose-400 bg-rose-50/20"
+                    : "border-[#CBD5E1] focus:border-[#B8860B]"
+                }`}
+              />
+              {errors.latitude && (
+                <p className="mt-1 text-[11px] text-rose-600">{errors.latitude}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                {t.fieldLongitude} (-180 to +180) *
+              </label>
+              <input
+                type="number"
+                step="0.0001"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value === "" ? "" : Number(e.target.value))}
+                placeholder="80.2707"
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-mono bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${
+                  errors.longitude
+                    ? "border-rose-400 bg-rose-50/20"
+                    : "border-[#CBD5E1] focus:border-[#B8860B]"
+                }`}
+              />
+              {errors.longitude && (
+                <p className="mt-1 text-[11px] text-rose-600">{errors.longitude}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Ayanamsa and House System */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>{t.fieldAyanamsa}</span>
+              </label>
+              <select
+                value={ayanamsaId}
+                onChange={(e) => setAyanamsaId(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm bg-white focus:outline-hidden focus:border-[#B8860B]"
+              >
+                <option value={0}>Lahiri (Chitrapaksha Standard Vedic)</option>
+                <option value={1}>KP (Krishnamurti Paddhati)</option>
+                <option value={2}>Raman (Dr. B.V. Raman)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#B8860B]" />
+                <span>{t.fieldHouseSystem}</span>
+              </label>
+              <select
+                value={houseSystemId}
+                onChange={(e) => setHouseSystemId(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs sm:text-sm bg-white focus:outline-hidden focus:border-[#B8860B]"
+              >
+                <option value={2}>Placidus (Standard KP)</option>
+                <option value={0}>Whole Sign (Rashi-Bhava)</option>
+                <option value={1}>Equal House</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Explanatory Distinction Notice */}
+          <div className="p-3.5 rounded-xl bg-[#FAF7F0] border border-[#D8BD80]/60 text-xs text-[#64748B] space-y-1">
+            <div className="font-semibold text-[#0F172A] flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-[#B8860B]" />
+              <span>
+                {language === "ta"
+                  ? "விவரங்களைப் புதுப்பித்தல் vs மறு கணிப்பு"
+                  : "Metadata Update vs. Recalculation"}
+              </span>
+            </div>
+            <p className="leading-relaxed">
+              {language === "ta"
+                ? "'மாற்றங்களைச் சேமி' என்பது நிரந்தர வரிசை எண்ணை மாற்றாமல் விவரங்களை மட்டுமே புதுப்பிக்கும். புதிய ஜோதிட கணிப்பு முடிவுகள் வேண்டுமெனில் 'புதிய ஜாதகமாகக் கணக்கிடுக' என்பதைப் பயன்படுத்தவும்."
+                : "'Save Changes' updates stored metadata without altering the permanent serial number or existing calculation snapshot. To produce updated astronomical planetary positions and dasas, use 'Calculate as New Horoscope'."}
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="pt-4 border-t border-[#E2DCD5] flex flex-col sm:flex-row items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving || isCalculatingNew}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#475569] transition-colors cursor-pointer"
+            >
+              {t.back}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRecalculateAsNew}
+              disabled={isSaving || isCalculatingNew}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#D8BD80] bg-[#FAF2DE] hover:bg-[#FAF6EC] text-xs font-bold text-[#784E0E] shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#B8860B]" />
+              <span>
+                {isCalculatingNew ? t.recalculatingAsNew : t.recalculateAsNewButton}
+              </span>
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSaving || isCalculatingNew}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Save className="w-3.5 h-3.5 text-[#D8BD80]" />
+              <span>{isSaving ? t.savingChanges : t.saveChangesButton}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

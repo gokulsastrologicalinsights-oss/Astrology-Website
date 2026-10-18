@@ -1,0 +1,49 @@
+# Gokul's Astrological Insights - Root Git Ignore
+
+# Environment files and credentials (CRITICAL: Never commit real secrets)
+.env
+.env.local
+.env.*.local
+*.env
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local
+scratch/
+rustup-init.exe
+!.env.example
+!frontend/.env.example
+!backend/.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.egg-info/
+dist/
+
+# Node.js
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Rust & binaries
+target/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# System & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
