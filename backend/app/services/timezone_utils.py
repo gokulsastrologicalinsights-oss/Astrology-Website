@@ -29,6 +29,11 @@ def resolve_birth_datetime(
     """Convert local birth date, time, and timezone string into:
     (local_datetime, utc_datetime, julian_day, timezone_identifier, utc_offset_hours)
     """
+    if isinstance(birth_date, str):
+        birth_date = date.fromisoformat(birth_date)
+    if isinstance(birth_time, str):
+        birth_time = time.fromisoformat(birth_time)
+
     tz_clean = tz_string.strip()
     if tz_clean.upper() in ("UTC", "Z", "+00:00", "-00:00", "+00", "-00"):
         local_dt = datetime.combine(birth_date, birth_time, tzinfo=dt_timezone.utc)

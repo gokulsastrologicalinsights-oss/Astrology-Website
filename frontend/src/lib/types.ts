@@ -202,6 +202,7 @@ export interface HoroscopeRequest extends BirthInput {
   include_nabhasha?: boolean;
   include_ashtakavarga?: boolean;
   include_vedic_yogas?: boolean;
+  include_varga?: boolean;
   gender?: string;
 }
 
@@ -215,6 +216,7 @@ export interface HoroscopeResponse {
   nabhasha_yogas?: NabhashaResponse;
   ashtakavarga?: AshtakavargaResponse;
   vedic_yogas?: VedicYogaResponse;
+  varga_d1_d9?: VargaD1D9Response;
 }
 
 export interface DasaPeriodAgeDict {
@@ -1394,6 +1396,219 @@ export interface TransitTimelineResponse {
   events: TransitIngressEvent[];
   benchmark_stats?: TransitTimelineBenchmarkStats;
 }
+
+
+// ─── Remedies & Pariharam Module Types ───────────────────────────────────────
+
+export interface SourceReferenceResponse {
+  id?: string;
+  code: string;
+  title_en: string;
+  title_sa?: string;
+  author?: string;
+  tradition: string;
+  canonical_status: string;
+  description?: string;
+  is_published: boolean;
+}
+
+export interface ProblemTaxonomyItem {
+  id?: string;
+  slug: string;
+  category: string;
+  name_en: string;
+  name_ta: string;
+  description_en?: string;
+  description_ta?: string;
+  primary_karakas: string[];
+  governing_houses: number[];
+  display_order: number;
+  is_published: boolean;
+  verification_status: string;
+}
+
+export interface ProblemTaxonomyListResponse {
+  total_count: number;
+  categories: string[];
+  items: ProblemTaxonomyItem[];
+}
+
+export interface RemedyItem {
+  id?: string;
+  code: string;
+  graha: string;
+  remedy_type: string;
+  name_en: string;
+  name_ta: string;
+  description_en: string;
+  description_ta: string;
+  deity_en: string;
+  deity_ta: string;
+  sanskrit_text?: string;
+  transliteration_iast?: string;
+  transliteration_ta?: string;
+  meaning_en?: string;
+  meaning_ta?: string;
+  procedure_en: string;
+  procedure_ta: string;
+  japa_count?: number;
+  timing_recommendation_en?: string;
+  timing_recommendation_ta?: string;
+  source_reference_id?: string;
+  source_code?: string;
+  source_verse_or_page?: string;
+  is_pacification_only: boolean;
+  problem_slugs: string[];
+  is_published: boolean;
+  verification_status: string;
+}
+
+export interface RemedyListResponse {
+  total_count: number;
+  items: RemedyItem[];
+}
+
+export interface NavagrahaTempleItem {
+  id?: string;
+  code: string;
+  graha: string;
+  name_en: string;
+  name_ta: string;
+  presiding_deity_en: string;
+  presiding_deity_ta: string;
+  graha_deity_en: string;
+  graha_deity_ta: string;
+  place_name_en: string;
+  place_name_ta: string;
+  district_en: string;
+  district_ta: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+  visiting_day_en: string;
+  visiting_day_ta: string;
+  significance_en: string;
+  significance_ta: string;
+  remedy_offerings_en: string;
+  remedy_offerings_ta: string;
+  source_tradition: string;
+  is_published: boolean;
+  verification_status: string;
+}
+
+export interface NavagrahaTempleListResponse {
+  total_count: number;
+  items: NavagrahaTempleItem[];
+}
+
+export interface ContentValidationCheck {
+  check_name: string;
+  is_valid: boolean;
+  details: string;
+}
+
+export interface ContentValidationReport {
+  total_remedies_audited: number;
+  total_problems_audited: number;
+  total_temples_audited: number;
+  checks: ContentValidationCheck[];
+  all_passed: boolean;
+}
+
+export interface RemedyEligibilityRequest {
+  ascendant_sign: string;
+  graha: string;
+  remedy_type: string;
+}
+
+export interface RemedyEligibilityResponse {
+  graha: string;
+  ascendant_sign: string;
+  remedy_type: string;
+  is_eligible: boolean;
+  is_yogakaraka: boolean;
+  is_functional_benefic: boolean;
+  is_functional_malefic: boolean;
+  restriction_reason?: string;
+  safe_alternative_recommendation?: string;
+}
+
+
+// ─── D1 Rasi & D9 Navamsa Varga Module Types ──────────────────────────────────
+
+export interface VargaPlanetPosition {
+  name: string;
+  body_id: number;
+  d1_longitude: number;
+  d1_sign_index: number;
+  d1_sign_name: string;
+  d1_sign_name_tamil: string;
+  d1_degree_in_sign: number;
+  d1_house: number;
+  d1_sign_lord: string;
+  d9_sign_index: number;
+  d9_sign_name: string;
+  d9_sign_name_tamil: string;
+  d9_degree_in_sign: number;
+  d9_house: number;
+  d9_sign_lord: string;
+  is_vargottama: boolean;
+  is_pushkara_navamsa: boolean;
+  is_retrograde: boolean;
+  speed_deg_per_day: number;
+  nakshatra_name: string;
+  nakshatra_index: number;
+  pada: number;
+  star_lord: string;
+}
+
+export interface VargaAscendantPosition {
+  d1_degree: number;
+  d1_sign_index: number;
+  d1_sign_name: string;
+  d1_sign_name_tamil: string;
+  d1_degree_in_sign: number;
+  d1_sign_lord: string;
+  d9_sign_index: number;
+  d9_sign_name: string;
+  d9_sign_name_tamil: string;
+  d9_degree_in_sign: number;
+  d9_sign_lord: string;
+  is_vargottama: boolean;
+  nakshatra_name: string;
+  nakshatra_index: number;
+  pada: number;
+  star_lord: string;
+}
+
+export interface VargaChartSummary {
+  vargottama_planets: string[];
+  pushkara_navamsa_planets: string[];
+  total_vargottama_count: number;
+  d9_lagna_sign: string;
+  d9_lagna_sign_tamil: string;
+}
+
+export interface VargaD1D9Response {
+  metadata: CalculationMetadata;
+  ascendant: VargaAscendantPosition;
+  planets: VargaPlanetPosition[];
+  summary: VargaChartSummary;
+  d1_chart: any;
+  d9_chart: any;
+}
+
+export interface VargaD1D9Request {
+  saved_horoscope_id?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  ayanamsa?: number;
+  house_system?: number;
+}
+
 
 
 

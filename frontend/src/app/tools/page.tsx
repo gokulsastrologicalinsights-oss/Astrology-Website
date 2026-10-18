@@ -19,6 +19,7 @@ import {
   Clock,
   Sparkle,
   Home,
+  Flame,
 } from "lucide-react";
 
 export default function AstrologyToolsPage() {
@@ -430,6 +431,126 @@ export default function AstrologyToolsPage() {
             </span>
             <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
               Phase 3 Live
+            </span>
+          </div>
+        </Link>
+
+        {/* Section Card 7: D1 Rasi & D9 Navamsa */}
+        <Link
+          href="/tools/d1-d9"
+          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-[#B8862B] transition-all relative overflow-hidden"
+          aria-label="Navigate to D1 Rasi and D9 Navamsa Charts"
+        >
+          {/* Subtle accent highlight */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8862B] via-[#E5B558] to-[#102A4C]" />
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="w-16 h-16 rounded-2xl bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B8862B] shadow-2xs group-hover:scale-105 transition-transform">
+                <Compass className="w-8 h-8 transition-transform group-hover:rotate-45" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
+                Varga Chakra
+              </span>
+            </div>
+
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-[#B8862B] transition-colors">
+                D1 Rasi &amp; D9 Navamsa
+              </h2>
+              <p className="text-xs sm:text-sm font-tamil text-[#B8862B] font-semibold mt-1">
+                ராசி &amp; நவாம்ச சக்கரங்கள்
+              </p>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
+              Explore side-by-side D1 Rasi and D9 Navamsa charts with 108-division integer arithmetic, automatic Vargottama detection, and 24 classical Pushkara Navamsas.
+            </p>
+
+            {/* Quick feature highlights inside card */}
+            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Dual D1 &amp; D9 View
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                South &amp; North Indian
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Vargottama Dignity
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                24 Pushkara Navamsas
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#B8862B] group-hover:translate-x-0.5 transition-transform">
+              <span>{language === "ta" ? "சக்கரம் திறக்க" : "Open D1 / D9 Visualizer"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </span>
+            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
+              Production Live
+            </span>
+          </div>
+        </Link>
+
+        {/* Section Card 7: Remedies & Pariharam */}
+        <Link
+          href="/remedies"
+          className="group flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-[#DDE5F0] bg-white p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-amber-600 transition-all relative overflow-hidden"
+          aria-label="Navigate to Remedies and Pariharam Hub"
+        >
+          {/* Subtle accent highlight */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-600 via-[#B8862B] to-[#102A4C]" />
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-2xs group-hover:scale-105 transition-transform">
+                <Flame className="w-8 h-8 transition-transform group-hover:scale-110" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                Shastra Pariharam
+              </span>
+            </div>
+
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-[#102A4C] group-hover:text-amber-700 transition-colors">
+                Remedies &amp; Pariharam
+              </h2>
+              <p className="text-xs sm:text-sm font-tamil text-amber-700 font-semibold mt-1">
+                பரிகாரங்கள் &amp; ஆலயங்கள்
+              </p>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#52667E] leading-relaxed">
+              Explore 39 verified problem domains, authentic Devanagari Sanskrit mantras with Tamil transliteration, 9 Kaveri Delta Navagraha Temples, and Yogakaraka Daan protection rules.
+            </p>
+
+            {/* Quick feature highlights inside card */}
+            <div className="pt-2 flex flex-wrap gap-1.5 text-[11px] text-[#52667E]">
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                39 Life Domains
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Devanagari &amp; Tamil
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                9 Kaveri Temples
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                Yogakaraka Safeguard
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">
+              <span>{language === "ta" ? "பரிகாரங்கள் திறக்க" : "Open Remedies Hub"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </span>
+            <span className="text-xs text-[#94A3B8] font-medium hidden sm:inline">
+              Phase 2A Live
             </span>
           </div>
         </Link>

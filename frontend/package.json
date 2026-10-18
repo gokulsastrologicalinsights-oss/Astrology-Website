@@ -14,7 +14,8 @@
     "test:destiny-card": "node --experimental-strip-types scripts/test-destiny-card.mjs",
     "test:saved": "node --experimental-strip-types --env-file=.env.local scripts/test-saved-horoscopes.mjs",
     "test:transit-watch": "node scripts/test-transit-watch.mjs",
-    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs && node scripts/test-transit-watch.mjs"
+    "test:d1-d9": "node scripts/test-d1-d9.mjs",
+    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs && node scripts/test-transit-watch.mjs && node scripts/test-d1-d9.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

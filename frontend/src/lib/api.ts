@@ -42,6 +42,18 @@ import {
   SavedVastuReportsListResponse,
   TransitTimelineRequest,
   TransitTimelineResponse,
+  VargaD1D9Request,
+  VargaD1D9Response,
+  SourceReferenceResponse,
+  ProblemTaxonomyItem,
+  ProblemTaxonomyListResponse,
+  RemedyItem,
+  RemedyListResponse,
+  NavagrahaTempleItem,
+  NavagrahaTempleListResponse,
+  ContentValidationReport,
+  RemedyEligibilityRequest,
+  RemedyEligibilityResponse,
 } from "./types";
 
 
@@ -809,6 +821,100 @@ export async function getTransitTimeline(
     body: JSON.stringify(req),
   });
 }
+
+/**
+ * 21. D1 Rasi & D9 Navamsa Charts (POST /api/v1/horoscope/varga/d1-d9)
+ */
+export async function calculateVargaD1D9(
+  req: VargaD1D9Request,
+  token?: string
+): Promise<VargaD1D9Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return request<VargaD1D9Response>("/api/v1/horoscope/varga/d1-d9", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 22. Get Saved Horoscope D1/D9 (GET /api/v1/horoscope/varga/d1-d9/{id})
+ */
+export async function getSavedHoroscopeVargaD1D9(
+  horoscopeId: string,
+  token: string
+): Promise<VargaD1D9Response> {
+  return request<VargaD1D9Response>(`/api/v1/horoscope/varga/d1-d9/${horoscopeId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * 23. Remedies & Pariharam Module API Methods
+ */
+
+export async function getProblemTaxonomy(
+  category?: string
+): Promise<ProblemTaxonomyListResponse> {
+  const query = category ? `?category=${encodeURIComponent(category)}` : "";
+  return request<ProblemTaxonomyListResponse>(`/api/v1/remedies/taxonomy${query}`);
+}
+
+export async function getRemedyCatalog(params?: {
+  graha?: string;
+  remedy_type?: string;
+  problem_slug?: string;
+}): Promise<RemedyListResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.graha) searchParams.append("graha", params.graha);
+  if (params?.remedy_type) searchParams.append("remedy_type", params.remedy_type);
+  if (params?.problem_slug) searchParams.append("problem_slug", params.problem_slug);
+  const qs = searchParams.toString();
+  return request<RemedyListResponse>(`/api/v1/remedies/catalog${qs ? `?${qs}` : ""}`);
+}
+
+export async function getRemedyDetail(code: string): Promise<RemedyItem> {
+  return request<RemedyItem>(`/api/v1/remedies/catalog/${encodeURIComponent(code)}`);
+}
+
+export async function getNavagrahaTemples(
+  graha?: string
+): Promise<NavagrahaTempleListResponse> {
+  const query = graha ? `?graha=${encodeURIComponent(graha)}` : "";
+  return request<NavagrahaTempleListResponse>(`/api/v1/remedies/temples${query}`);
+}
+
+export async function getTempleDetail(code: string): Promise<NavagrahaTempleItem> {
+  return request<NavagrahaTempleItem>(`/api/v1/remedies/temples/${encodeURIComponent(code)}`);
+}
+
+export async function getClassicalSources(): Promise<SourceReferenceResponse[]> {
+  return request<SourceReferenceResponse[]>("/api/v1/remedies/sources");
+}
+
+export async function validateRemedyContent(): Promise<ContentValidationReport> {
+  return request<ContentValidationReport>("/api/v1/remedies/validate-content", {
+    method: "POST",
+  });
+}
+
+export async function checkRemedyEligibility(
+  req: RemedyEligibilityRequest
+): Promise<RemedyEligibilityResponse> {
+  return request<RemedyEligibilityResponse>("/api/v1/remedies/eligibility-check", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
 
 
 

@@ -34,13 +34,17 @@ import {
   Home,
   AlertTriangle,
   RefreshCw,
+  Cake,
+  Flame,
 } from "lucide-react";
+import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
   const { user, session, isAuthenticated, isLoading, logout } = useAuth();
 
+  const [isBirthdayModalOpen, setIsBirthdayModalOpen] = useState(false);
   const [numerologyReports, setNumerologyReports] = useState<SavedNumerologyReportResponse[]>([]);
   const [totalNumerologyCount, setTotalNumerologyCount] = useState<number>(0);
   const [totalHoroscopesCount, setTotalHoroscopesCount] = useState<number>(0);
@@ -189,6 +193,15 @@ export default function DashboardPage() {
             <Home className="w-3.5 h-3.5 text-blue-600" />
             <span>{language === "ta" ? "வாஸ்து" : "Vastu Shastra"}</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsBirthdayModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 shadow-xs transition-colors cursor-pointer"
+          >
+            <Cake className="w-3.5 h-3.5 text-amber-600" />
+            <span>{language === "ta" ? "பிறந்தநாள் நினைவூட்டல்" : "Birthday Wishes"}</span>
+          </button>
 
           <button
             type="button"
@@ -394,6 +407,17 @@ export default function DashboardPage() {
             </Link>
 
             <Link
+              href="/tools/d1-d9"
+              className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <Compass className="w-3.5 h-3.5 text-[#B8862B]" />
+                <span>{language === "ta" ? "D1/D9 ராசி & நவாம்சம்" : "D1 Rasi & D9 Navamsa"}</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
               href="/horoscopes"
               className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
             >
@@ -411,6 +435,17 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Home className="w-3.5 h-3.5 text-blue-600" />
                 <span>{language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra Assessment"}</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
+              href="/remedies"
+              className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <Flame className="w-3.5 h-3.5 text-amber-600" />
+                <span>{language === "ta" ? "பரிகாரங்கள் & ஆலயங்கள்" : "Remedies & Pariharam"}</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
             </Link>
@@ -733,6 +768,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Birthday Reminder Modal */}
+      <BirthdayReminderModal
+        isOpen={isBirthdayModalOpen}
+        onClose={() => setIsBirthdayModalOpen(false)}
+      />
     </div>
   );
 }

@@ -174,10 +174,10 @@ class YogaChartContext:
 
                 if lon is not None:
                     self.planet_longitude[p_name] = float(lon)
-                    # Navamsa calculation: each sign is 30 deg divided into 9 navamsas of 3°20' (3.333333°)
-                    # Total navamsa index from 0 Aries = int(lon / (30 / 9)) % 12 + 1
-                    navamsa_idx = (int(float(lon) / (30.0 / 9.0)) % 12) + 1
-                    self.planet_navamsa_sign[p_name] = navamsa_idx
+                    # Boundary-safe integer milli-arcsecond Navamsa calculation (immune to IEEE 754 division truncation)
+                    from app.services.varga_engine import calculate_navamsa_from_longitude
+                    varga_info = calculate_navamsa_from_longitude(float(lon))
+                    self.planet_navamsa_sign[p_name] = varga_info["d9_sign_index"]
                 else:
                     # Approximation if longitude omitted: based on degree in sign
                     nav_in_sign = int(deg_in_sign / (30.0 / 9.0))

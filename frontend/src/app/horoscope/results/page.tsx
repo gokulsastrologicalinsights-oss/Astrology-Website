@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { getActiveCalculation, saveActiveCalculation } from "@/lib/storage";
-import { FullHoroscopeResult } from "@/lib/types";
+import { FullHoroscopeResult, HoroscopeResponse } from "@/lib/types";
 import {
   formatSerialNumber,
   formatBirthDate,
@@ -67,6 +67,7 @@ function HoroscopeResultsContent() {
   const [retryNotice, setRetryNotice] = useState<string | null>(null);
 
   const [chartMode, setChartMode] = useState<"south" | "north">("south");
+  const [vargaDivision, setVargaDivision] = useState<"d1" | "d9">("d1");
   const [activeTab, setActiveTab] = useState<
     "chart" | "planets" | "houses" | "dasa" | "kp" | "panchang" | "vedic-yogas" | "nabhasha" | "ashtakavarga" | "destiny-card"
   >(() => {
@@ -761,39 +762,104 @@ function HoroscopeResultsContent() {
         {/* Tab 1: Birth Chart with South / North Switcher */}
         {activeTab === "chart" && (
           <div className="space-y-6">
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-xs font-semibold text-[#64748B] mr-2">
-                {t.chartSwitchMode}:
-              </span>
-              <button
-                type="button"
-                onClick={() => setChartMode("south")}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                  chartMode === "south"
-                    ? "bg-[#B8860B] text-white shadow-2xs"
-                    : "bg-white border border-[#E2DCD5] text-[#334155] hover:bg-[#FAF6EC]"
-                }`}
-              >
-                {t.chartSouthIndian}
-              </button>
-              <button
-                type="button"
-                onClick={() => setChartMode("north")}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                  chartMode === "north"
-                    ? "bg-[#B8860B] text-white shadow-2xs"
-                    : "bg-white border border-[#E2DCD5] text-[#334155] hover:bg-[#FAF6EC]"
-                }`}
-              >
-                {t.chartNorthIndian}
-              </button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-4">
+              {/* Divisional Chart Switcher: D1 vs D9 */}
+              <div className="flex items-center justify-center gap-1.5 p-1 rounded-xl bg-[#FAF7F0] border border-[#E8DEC8] text-xs">
+                <button
+                  type="button"
+                  onClick={() => setVargaDivision("d1")}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    vargaDivision === "d1"
+                      ? "bg-[#102A4C] text-white shadow-2xs"
+                      : "text-[#64748B] hover:text-[#102A4C]"
+                  }`}
+                >
+                  {language === "ta" ? "D1 ராசி (Rasi)" : "D1 Rasi Chakra"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVargaDivision("d9")}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    vargaDivision === "d9"
+                      ? "bg-[#102A4C] text-white shadow-2xs"
+                      : "text-[#64748B] hover:text-[#102A4C]"
+                  }`}
+                >
+                  {language === "ta" ? "D9 நவாம்சம் (Navamsa)" : "D9 Navamsa Chakra"}
+                </button>
+              </div>
+
+              {/* Chart Style Switcher: South vs North */}
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs font-semibold text-[#64748B] mr-1">
+                  {t.chartSwitchMode}:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setChartMode("south")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    chartMode === "south"
+                      ? "bg-[#B8860B] text-white shadow-2xs"
+                      : "bg-white border border-[#E2DCD5] text-[#334155] hover:bg-[#FAF6EC]"
+                  }`}
+                >
+                  {t.chartSouthIndian}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartMode("north")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    chartMode === "north"
+                      ? "bg-[#B8860B] text-white shadow-2xs"
+                      : "bg-white border border-[#E2DCD5] text-[#334155] hover:bg-[#FAF6EC]"
+                  }`}
+                >
+                  {t.chartNorthIndian}
+                </button>
+              </div>
             </div>
+
+            {/* D9 Summary Callout if Navamsa selected */}
+            {vargaDivision === "d9" && horoscope.varga_d1_d9 && (
+              <div className="p-3 rounded-xl bg-[#FAF2DE]/60 border border-[#D8BD80] flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-[#8C6D23] font-semibold">
+                  <Compass className="w-4 h-4 text-[#B8862B]" />
+                  <span>
+                    Navamsa Lagna: <strong>{horoscope.varga_d1_d9.ascendant.d9_sign_name}</strong> • Vargottama:{" "}
+                    <strong>
+                      {horoscope.varga_d1_d9.summary.vargottama_planets.length > 0
+                        ? horoscope.varga_d1_d9.summary.vargottama_planets.join(", ")
+                        : "None"}
+                    </strong>
+                  </span>
+                </div>
+                <Link
+                  href={idParam ? `/tools/d1-d9?saved_id=${idParam}` : "/tools/d1-d9"}
+                  className="inline-flex items-center gap-1 text-[#8C6D23] hover:text-[#102A4C] font-bold text-xs transition-colors"
+                >
+                  <span>{language === "ta" ? "முழு D1/D9 ஆய்வு →" : "Full D1/D9 Comparative Analysis →"}</span>
+                </Link>
+              </div>
+            )}
 
             <div className="py-2">
               {chartMode === "south" ? (
-                <SouthIndianChart horoscope={horoscope} />
+                <SouthIndianChart
+                  horoscope={
+                    vargaDivision === "d9" && horoscope.varga_d1_d9
+                      ? (horoscope.varga_d1_d9.d9_chart as unknown as HoroscopeResponse)
+                      : horoscope
+                  }
+                  title={vargaDivision === "d9" ? "D9 Navamsa Chakra (நவாம்சம்)" : undefined}
+                />
               ) : (
-                <NorthIndianChart horoscope={horoscope} />
+                <NorthIndianChart
+                  horoscope={
+                    vargaDivision === "d9" && horoscope.varga_d1_d9
+                      ? (horoscope.varga_d1_d9.d9_chart as unknown as HoroscopeResponse)
+                      : horoscope
+                  }
+                />
               )}
             </div>
 

@@ -8,6 +8,7 @@ from app.schemas.common import BirthInput, CalculationMetadata
 from app.schemas.nabhasha import NabhashaResponse
 from app.schemas.ashtakavarga import AshtakavargaResponse
 from app.schemas.yoga import VedicYogaResponse
+from app.schemas.varga import VargaD1D9Response
 
 
 class HoroscopeRequest(BirthInput):
@@ -18,6 +19,7 @@ class HoroscopeRequest(BirthInput):
     include_nabhasha: bool = Field(True, description="Compute classical Nabhasha Yogas per BPHS Ch. 35")
     include_ashtakavarga: bool = Field(True, description="Compute classical Ashtakavarga BAV/SAV and Shodhana per BPHS Ch. 66-69")
     include_vedic_yogas: bool = Field(True, description="Compute classical Vedic Yogas (Gajakesari, Raja, Dhana, Mahapurusha, etc.)")
+    include_varga: bool = Field(True, description="Compute D1 Rasi and D9 Navamsa divisional charts")
     gender: Optional[str] = Field("male", description="Gender ('male' or 'female') for gender-specific yogas")
 
 
@@ -94,3 +96,4 @@ class HoroscopeResponse(BaseModel):
     nabhasha_yogas: Optional[NabhashaResponse] = None
     ashtakavarga: Optional[AshtakavargaResponse] = None
     vedic_yogas: Optional[VedicYogaResponse] = None
+    varga_d1_d9: Optional[VargaD1D9Response] = None
