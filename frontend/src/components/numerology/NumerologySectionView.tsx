@@ -8,6 +8,13 @@ import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { listNumerologyReports } from "@/lib/api";
 import { SavedNumerologyReportResponse } from "@/lib/types";
+import { NameCorrectionStudio } from "@/components/numerology/NameCorrectionStudio";
+import { BusinessNumerologyStudio } from "@/components/numerology/BusinessNumerologyStudio";
+import { PhoneNumberStudio } from "@/components/numerology/PhoneNumberStudio";
+import { VehicleNumberStudio } from "@/components/numerology/VehicleNumberStudio";
+import { PropertyNumerologyStudio } from "@/components/numerology/PropertyNumerologyStudio";
+import { MarriageNumerologyStudio } from "@/components/numerology/MarriageNumerologyStudio";
+import { FamilyNumerologyStudio } from "@/components/numerology/FamilyNumerologyStudio";
 import {
   Compass,
   Sparkles,
@@ -19,6 +26,7 @@ import {
   FileText,
   Clock,
   Heart,
+  Baby,
   Eye,
   CheckCircle2,
   AlertCircle,
@@ -28,6 +36,10 @@ import {
   Trash2,
   RefreshCw,
   Layers,
+  Building2,
+  Phone,
+  Car,
+  Home,
 } from "lucide-react";
 
 // Client-side helper calculation functions for instant name comparison
@@ -94,27 +106,19 @@ export function NumerologySectionView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab =
-    (searchParams.get("tab") as "overview" | "name" | "compatibility" | "reports") ||
+    (searchParams.get("tab") as "overview" | "name" | "business" | "phone" | "vehicle" | "property" | "marriage" | "family" | "compatibility" | "reports") ||
     "overview";
 
   const { language, t } = useLanguage();
   const { user, session, isAuthenticated, isLoading } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "name" | "compatibility" | "reports">(
+  const [activeTab, setActiveTab] = useState<"overview" | "name" | "business" | "phone" | "vehicle" | "property" | "marriage" | "family" | "compatibility" | "reports">(
     initialTab
   );
 
   // Saved reports state
   const [savedReports, setSavedReports] = useState<SavedNumerologyReportResponse[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
-
-  // Name Spelling Comparator state
-  const [primaryName, setPrimaryName] = useState("Gokul");
-  const [alternativeSpellings, setAlternativeSpellings] = useState<string[]>([
-    "Gokull",
-    "Gokhul",
-  ]);
-  const [spellingConvention, setSpellingConvention] = useState<"pythagorean" | "chaldean">("pythagorean");
 
   // Compatibility Checker state
   const [partner1Name, setPartner1Name] = useState("Partner 1");
@@ -131,7 +135,7 @@ export function NumerologySectionView() {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["overview", "name", "compatibility", "reports"].includes(tabParam)) {
+    if (tabParam && ["overview", "name", "business", "phone", "vehicle", "property", "marriage", "family", "compatibility", "reports"].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [searchParams]);
@@ -276,6 +280,96 @@ export function NumerologySectionView() {
       color: "text-[#3478F6] bg-[#EBF2FE] border-[#BFDBFE]",
     },
     {
+      id: "card-business",
+      titleEn: "Business & Brand Studio",
+      titleTa: "வணிக & பிராண்ட் எண் கணிதம்",
+      descEn:
+        "Audit statutory legal names vs brand names, evaluate multi-founder equity resonance, test tagline synergy, and match industry planetary rulers.",
+      descTa:
+        "நிறுவனத்தின் சட்டப்பூர்வ பெயர், பொது பிராண்ட் பெயர், கூட்டாளர் பிறந்த எண்கள் மற்றும் தொழில்துறை அதிர்வுகளை துல்லியமாக ஒப்பிடுங்கள்.",
+      icon: Building2,
+      action: () => setActiveTab("business"),
+      ctaEn: "Launch Business Studio",
+      ctaTa: "வணிக அரங்கத்தைத் திறக்க",
+      badge: "Corporate & Brand",
+      color: "text-[#3478F6] bg-[#EBF2FE] border-[#BFDBFE]",
+    },
+    {
+      id: "card-phone",
+      titleEn: "Phone Number Numerology",
+      titleTa: "கைபேசி எண் கணிதம்",
+      descEn:
+        "Analyze SIM and hotline vibrations, 0-9 digit frequencies, missing numbers, VIP vanity rhythm, and birth date compatibility.",
+      descTa:
+        "கைபேசி எண்ணின் கூட்டுத்தொகை, 0-9 அதிர்வுகள், விடுபட்ட எண்கள், மற்றும் பிறந்த தேதியுடனான இணக்கத்தை அறியுங்கள்.",
+      icon: Phone,
+      action: () => setActiveTab("phone"),
+      ctaEn: "Launch Phone Studio",
+      ctaTa: "கைபேசி அரங்கத்தைத் திறக்க",
+      badge: "Mobile & SIM",
+      color: "text-[#3478F6] bg-[#EBF2FE] border-[#BFDBFE]",
+    },
+    {
+      id: "card-vehicle",
+      titleEn: "Vehicle Registration Numerology",
+      titleTa: "வாகன பதிவு எண் கணிதம்",
+      descEn:
+        "Analyze motor vehicle plates (TN, MH, DL, KA, BH), digits-only vs full alphanumeric conventions, VIP vanity patterns, and driver compatibility.",
+      descTa:
+        "வாகன பதிவு எண்களின் அதிர்வு, 3 வித கணக்கீட்டு முறைகள், விஐபி பேட்டர்ன்கள் மற்றும் ஓட்டுநர் பிறந்த தேதியுடனான பொருத்தத்தை அறியுங்கள்.",
+      icon: Car,
+      action: () => setActiveTab("vehicle"),
+      ctaEn: "Launch Vehicle Studio",
+      ctaTa: "வாகன அரங்கத்தைத் திறக்க",
+      badge: "Vehicle & Asset",
+      color: "text-amber-600 bg-amber-50 border-amber-200",
+    },
+    {
+      id: "card-property",
+      titleEn: "Property & House Numerology",
+      titleTa: "வீடு & மனை எண் கணிதம்",
+      descEn:
+        "Analyze door/flat numbers, building, floor, plot numbers, 6 calculation modes, 8-direction Vastu facing alignments, and resident family affinity.",
+      descTa:
+        "வீட்டு கதவு எண், அடுக்குமாடி தளம், கட்டிட எண், மனை எண், 6 வித கணக்கீட்டு முறைகள், 8 திசை வாஸ்து பொருத்தம் மற்றும் குடும்ப உறுப்பினர் இணக்கத்தை அறியுங்கள்.",
+      icon: Home,
+      action: () => setActiveTab("property"),
+      ctaEn: "Launch Property Studio",
+      ctaTa: "மனை அரங்கம் திறக்க",
+      badge: "House & Vastu",
+      color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    },
+    {
+      id: "card-marriage",
+      titleEn: "Marriage & Couple Numerology",
+      titleTa: "திருமண & கூட்டாண்மை எண் கணிதம்",
+      descEn:
+        "Comprehensive couple numerology evaluating Birth/Psychic, Life Path, Expression, and Soul Urge dynamics, shared strengths, and practical dialogue prompts.",
+      descTa:
+        "தம்பதியரின் பிறந்த எண், விதி எண், பெயர் எண்கள், ஆன்ம விருப்பம், இணைந்த பலங்கள் மற்றும் உரையாடலுக்கான கேள்விகளை அறியுங்கள்.",
+      icon: Heart,
+      action: () => setActiveTab("marriage"),
+      ctaEn: "Launch Marriage Studio",
+      ctaTa: "திருமண அரங்கம் திறக்க",
+      badge: "Couple Synergy",
+      color: "text-rose-600 bg-rose-50 border-rose-200",
+    },
+    {
+      id: "card-family",
+      titleEn: "Family & Baby Numerology",
+      titleTa: "குடும்ப & குழந்தை எண் கணிதம்",
+      descEn:
+        "Multi-generational household vibration mapping, parent-child compatibility, and baby name numerology with deterministic phonetic scoring.",
+      descTa:
+        "பல தலைமுறை குடும்ப அதிர்வுகள், பெற்றோர்-குழந்தை இணக்கம் மற்றும் குழந்தைக்கான உன்னத பெயர் பரிந்துரைகளை ஒருங்கிணைக்கும் அரங்கம்.",
+      icon: Baby,
+      action: () => setActiveTab("family"),
+      ctaEn: "Launch Family Studio",
+      ctaTa: "குடும்ப அரங்கம் திறக்க",
+      badge: "Family & Baby",
+      color: "text-purple-600 bg-purple-50 border-purple-200",
+    },
+    {
       id: "card-reports",
       titleEn: "Numerology Reports & Matrix",
       titleTa: "அறிக்கைகள் & விதி வரைபடம்",
@@ -361,6 +455,72 @@ export function NumerologySectionView() {
             }`}
           >
             {language === "ta" ? "பெயர் ஒப்பீடு" : "Name Comparator"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("business")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "business"
+                ? "bg-[#102A4C] text-white shadow-xs"
+                : "text-[#52667E] hover:text-[#102A4C]"
+            }`}
+          >
+            {language === "ta" ? "வணிக அரங்கம்" : "Business Studio"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("phone")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "phone"
+                ? "bg-[#102A4C] text-white shadow-xs"
+                : "text-[#52667E] hover:text-[#102A4C]"
+            }`}
+          >
+            {language === "ta" ? "கைபேசி அரங்கம்" : "Phone Studio"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("vehicle")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "vehicle"
+                ? "bg-[#102A4C] text-white shadow-xs"
+                : "text-[#52667E] hover:text-[#102A4C]"
+            }`}
+          >
+            {language === "ta" ? "வாகன அரங்கம்" : "Vehicle Studio"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("property")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "property"
+                ? "bg-[#102A4C] text-white shadow-xs"
+                : "text-[#52667E] hover:text-[#102A4C]"
+            }`}
+          >
+            {language === "ta" ? "மனை அரங்கம்" : "Property Studio"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("marriage")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "marriage"
+                ? "bg-[#102A4C] text-white shadow-xs"
+                : "text-[#52667E] hover:text-[#102A4C]"
+            }`}
+          >
+            {language === "ta" ? "திருமண அரங்கம்" : "Marriage Studio"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("family")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "family"
+                ? "bg-[#102A4C] text-white shadow-xs"
+                : "text-[#52667E] hover:text-[#102A4C]"
+            }`}
+          >
+            {language === "ta" ? "குடும்பம் & குழந்தை" : "Family & Baby Studio"}
           </button>
           <button
             type="button"
@@ -500,193 +660,41 @@ export function NumerologySectionView() {
         </div>
       )}
 
-      {/* TAB 2: NAME SPELLING COMPARATOR */}
+      {/* TAB 2: NAME SUGGESTION & CORRECTION STUDIO */}
       {activeTab === "name" && (
-        <div className="space-y-6">
-          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#DDE5F0] shadow-xs space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-4 h-4 text-[#3478F6]" />
-                <h2 className="text-lg font-bold text-[#102A4C]">
-                  {language === "ta"
-                    ? "பெயர் எண் மற்றும் மாற்று எழுத்து ஒப்பீடு"
-                    : "Name Numerology & Alternative Spelling Comparison"}
-                </h2>
-              </div>
-              <p className="text-xs text-[#52667E]">
-                {language === "ta"
-                  ? "பல்வேறு மாற்று எழுத்துப்பிழைகளை உள்ளிட்டு அவற்றின் பித்தகோரியன் மற்றும் கால்டியன் கூட்டு எண்களை அருகருகே ஒப்பிடுங்கள்."
-                  : "Enter different name spellings to compare their total expression number, vowels (Soul Urge), and consonants (Personality)."}
-              </p>
-            </div>
-
-            {/* Inputs & Settings */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-[#F1F5F9]">
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-[#334155] mb-1">
-                  Primary Name / பிறந்த பெயர்
-                </label>
-                <input
-                  type="text"
-                  value={primaryName}
-                  onChange={(e) => setPrimaryName(e.target.value)}
-                  placeholder="e.g. Gokul"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#DDE5F0] text-sm text-[#102A4C] focus:border-[#3478F6] focus:ring-1 focus:ring-[#3478F6]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#334155] mb-1">
-                  Numerology Convention
-                </label>
-                <select
-                  value={spellingConvention}
-                  onChange={(e) => setSpellingConvention(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#DDE5F0] text-xs text-[#102A4C] focus:border-[#3478F6]"
-                >
-                  <option value="pythagorean">Pythagorean (Western 1-9)</option>
-                  <option value="chaldean">Chaldean (Ancient 1-8)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Alternative Spellings Input Rows */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#102A4C]">
-                  Alternative Spellings to Compare:
-                </span>
-                {alternativeSpellings.length < 4 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setAlternativeSpellings([...alternativeSpellings, ""])
-                    }
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#3478F6] hover:underline cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Spelling</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {alternativeSpellings.map((spelling, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={spelling}
-                      onChange={(e) => {
-                        const updated = [...alternativeSpellings];
-                        updated[idx] = e.target.value;
-                        setAlternativeSpellings(updated);
-                      }}
-                      placeholder={`Alternative #${idx + 1} (e.g. ${primaryName + "l"})`}
-                      className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] text-xs text-[#102A4C] focus:border-[#3478F6]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = alternativeSpellings.filter(
-                          (_, i) => i !== idx
-                        );
-                        setAlternativeSpellings(updated);
-                      }}
-                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
-                      title="Remove"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Comparison Results Table */}
-            <div className="pt-4 border-t border-[#F1F5F9]">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#94A3B8] mb-3">
-                Side-by-Side Vibrational Analysis ({spellingConvention.toUpperCase()})
-              </h3>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-[#DDE5F0] rounded-xl overflow-hidden">
-                  <thead className="bg-[#F8FAFC] text-[#52667E] border-b border-[#DDE5F0]">
-                    <tr>
-                      <th className="py-2.5 px-3 font-semibold">Spelling</th>
-                      <th className="py-2.5 px-3 font-semibold text-center">Name Number</th>
-                      <th className="py-2.5 px-3 font-semibold text-center">Soul Urge (Vowels)</th>
-                      <th className="py-2.5 px-3 font-semibold text-center">Personality (Consonants)</th>
-                      <th className="py-2.5 px-3 font-semibold text-center">Letters</th>
-                      <th className="py-2.5 px-3 font-semibold">Vibrational Synthesis</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#F1F5F9]">
-                    {[primaryName, ...alternativeSpellings.filter((s) => s.trim())].map(
-                      (nameStr, idx) => {
-                        const calc = calculateNameVibration(
-                          nameStr || "Unnamed",
-                          spellingConvention
-                        );
-                        const isPrimary = idx === 0;
-
-                        return (
-                          <tr
-                            key={idx}
-                            className={
-                              isPrimary
-                                ? "bg-[#EBF2FE]/30 font-semibold text-[#102A4C]"
-                                : "hover:bg-[#F8FAFC]"
-                            }
-                          >
-                            <td className="py-3 px-3">
-                              <div className="flex items-center gap-2">
-                                <span>{calc.cleanName || nameStr}</span>
-                                {isPrimary && (
-                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#3478F6] text-white">
-                                    Primary
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#EBF2FE] border border-[#BFDBFE] text-[#3478F6] font-bold text-xs">
-                                {calc.expression}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 text-center font-mono">
-                              {calc.soulUrge}
-                            </td>
-                            <td className="py-3 px-3 text-center font-mono">
-                              {calc.personality}
-                            </td>
-                            <td className="py-3 px-3 text-center text-[#52667E]">
-                              {calc.letterCount}
-                            </td>
-                            <td className="py-3 px-3 text-[11px] text-[#52667E]">
-                              {calc.expression === 1 && "Leadership, pioneering initiative, dynamic drive."}
-                              {calc.expression === 2 && "Cooperation, diplomacy, sensitivity, peace."}
-                              {calc.expression === 3 && "Creative expression, joy, communication, inspiration."}
-                              {calc.expression === 4 && "Stability, disciplined structure, methodical work."}
-                              {calc.expression === 5 && "Freedom, versatility, adventure, adaptability."}
-                              {calc.expression === 6 && "Nurturing, responsibility, harmonious home."}
-                              {calc.expression === 7 && "Analysis, analytical intellect, metaphysical inquiry."}
-                              {calc.expression === 8 && "Material mastery, executive authority, abundance."}
-                              {calc.expression === 9 && "Universal compassion, humanitarian vision."}
-                              {calc.expression === 11 && "Master Intuition (11/2) — Spiritual illumination."}
-                              {calc.expression === 22 && "Master Builder (22/4) — Transforming vision into reality."}
-                              {calc.expression === 33 && "Master Teacher (33/6) — Selfless devotion and service."}
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+        <NameCorrectionStudio />
       )}
+
+      {/* TAB 2B: BUSINESS & BRAND NUMEROLOGY STUDIO */}
+      {activeTab === "business" && (
+        <BusinessNumerologyStudio />
+      )}
+
+      {/* TAB 2C: PHONE & MOBILE NUMBER NUMEROLOGY STUDIO */}
+      {activeTab === "phone" && (
+        <PhoneNumberStudio />
+      )}
+
+      {/* TAB 2D: VEHICLE REGISTRATION NUMBER NUMEROLOGY STUDIO */}
+      {activeTab === "vehicle" && (
+        <VehicleNumberStudio />
+      )}
+
+      {/* TAB 2E: PROPERTY & HOUSE NUMEROLOGY STUDIO */}
+      {activeTab === "property" && (
+        <PropertyNumerologyStudio />
+      )}
+
+      {/* TAB 2F: MARRIAGE & COUPLE NUMEROLOGY STUDIO */}
+      {activeTab === "marriage" && (
+        <MarriageNumerologyStudio />
+      )}
+
+      {/* TAB 2G: FAMILY & BABY NUMEROLOGY STUDIO */}
+      {activeTab === "family" && (
+        <FamilyNumerologyStudio />
+      )}
+
 
       {/* TAB 3: COMPATIBILITY ANALYZER */}
       {activeTab === "compatibility" && (

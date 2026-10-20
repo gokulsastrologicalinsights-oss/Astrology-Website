@@ -3,14 +3,14 @@
  * Versioned, compact calculation snapshot serialization and display formatting.
  */
 
-import type { FullHoroscopeResult } from "./types";
+import type { FullHoroscopeResult, SavedHoroscopeItem } from "./types";
 
 /**
- * Prunes the deep Vimshottari Dasa tree to a manageable depth (default 3 levels:
- * Mahadasha -> Antardasha -> Pratyantardasha) and removes repeated nested dictionaries,
- * preventing huge payload overflows while preserving full temporal accuracy.
+ * Prunes the deep Vimshottari Dasa tree while preserving the complete 5-level hierarchy
+ * (Mahadasha -> Antardasha -> Pratyantardasha -> Sookshmadasha -> Pranadasha) and
+ * removes repeated redundant dictionaries, ensuring full temporal accuracy and Benefit Bhavas.
  */
-export function compactDasaTree(tree: any[], maxDepth = 3): any[] {
+export function compactDasaTree(tree: any[], maxDepth = 5): any[] {
   if (!Array.isArray(tree) || maxDepth <= 0) return [];
   return tree.map((node) => {
     const compactNode: any = {
@@ -23,8 +23,17 @@ export function compactDasaTree(tree: any[], maxDepth = 3): any[] {
       start_date_iso: node.start_date_iso,
       end_date_iso: node.end_date_iso,
     };
+    if (node.theoretical_start_jd !== undefined) compactNode.theoretical_start_jd = node.theoretical_start_jd;
+    if (node.theoretical_end_jd !== undefined) compactNode.theoretical_end_jd = node.theoretical_end_jd;
+    if (node.theoretical_duration_days !== undefined) compactNode.theoretical_duration_days = node.theoretical_duration_days;
+    if (node.theoretical_duration_years !== undefined) compactNode.theoretical_duration_years = node.theoretical_duration_years;
+    if (node.theoretical_start_date_iso !== undefined) compactNode.theoretical_start_date_iso = node.theoretical_start_date_iso;
+    if (node.theoretical_end_date_iso !== undefined) compactNode.theoretical_end_date_iso = node.theoretical_end_date_iso;
+    if (node.is_active !== undefined) compactNode.is_active = node.is_active;
+    if (node.is_active_at_birth !== undefined) compactNode.is_active_at_birth = node.is_active_at_birth;
     if (node.star_lord) compactNode.star_lord = node.star_lord;
     if (node.benefit_bhavas) compactNode.benefit_bhavas = node.benefit_bhavas;
+    if (node.benefit_bhavas_detail) compactNode.benefit_bhavas_detail = node.benefit_bhavas_detail;
     if (node.period_lord_occupied !== undefined && node.period_lord_occupied !== null) {
       compactNode.period_lord_occupied = node.period_lord_occupied;
     }
@@ -52,7 +61,7 @@ export function compactDasaTree(tree: any[], maxDepth = 3): any[] {
 /**
  * Prepares a structured, versioned calculation snapshot for database persistence.
  * Strictly includes real calculation results from XALEN/FastAPI without placeholders.
- * Retains full core Vedic horoscope, KP analysis, 5-level active period, and compacted dasa tree.
+ * Retains full core Vedic horoscope, KP analysis, 5-level active period, and 5-level dasa tree.
  */
 export function prepareCalculationSnapshot(
   result: FullHoroscopeResult,
@@ -62,7 +71,7 @@ export function prepareCalculationSnapshot(
   if (dasa && Array.isArray(dasa.dasa_tree)) {
     dasa = {
       ...dasa,
-      dasa_tree: compactDasaTree(dasa.dasa_tree, 3),
+      dasa_tree: compactDasaTree(dasa.dasa_tree, 5),
     };
   }
 
@@ -91,3 +100,75 @@ export function formatHoroscopeSequence(
   }
   return lang === "ta" ? `ஜாதக எண் ${num}` : `Horoscope No. ${num}`;
 }
+
+/**
+ * Exports an array of saved horoscopes to CSV format.
+ * Preserves all standard export columns:
+ *   Serial, Name, Birth Date, Birth Time, Birthplace, Ayanamsa, Created At.
+ * Safely resolves birth time from record fields or nested calculation snapshots,
+ * handling missing, unknown, or empty birth times gracefully with "Unknown".
+ * Escapes quotes, commas, and newlines according to standard CSV RFC 4180 rules.
+ */
+export function exportHoroscopesToCsv(horoscopes: SavedHoroscopeItem[]): string {
+  const headers = [
+    "Serial",
+    "Name",
+    "Birth Date",
+    "Birth Time",
+    "Birthplace",
+    "Ayanamsa",
+    "Created At",
+  ];
+
+  if (!Array.isArray(horoscopes) || horoscopes.length === 0) {
+    return headers.join(",") + "\n";
+  }
+
+  const escapeCsv = (val: any): string => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val);
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  const rows = horoscopes.map((h) => {
+    const serial =
+      h.display_number !== undefined && h.display_number !== null
+        ? String(h.display_number)
+        : "";
+
+    const name = escapeCsv(h.person_name || "Unnamed");
+
+    const birthDate = h.birth_date ? escapeCsv(h.birth_date) : escapeCsv("Unknown");
+
+    // Support birth_time safely with fallbacks and handling of missing or unknown times
+    const candidateTime = (
+      h.birth_time ||
+      (h as any).clientInputs?.birthTime ||
+      (h as any).clientInputs?.birth_time ||
+      (h as any).calculation_result?.clientInputs?.birthTime ||
+      (h as any).calculation_result?.clientInputs?.birth_time ||
+      (h as any).calculation_result?.horoscope?.birth_time ||
+      ""
+    ).toString().trim();
+
+    const birthTime =
+      candidateTime &&
+      candidateTime !== "—" &&
+      candidateTime.toLowerCase() !== "unknown"
+        ? escapeCsv(candidateTime)
+        : escapeCsv("Unknown");
+
+    const birthplace = escapeCsv(h.birthplace || "Unknown Location");
+
+    const ayanamsaName =
+      h.ayanamsa_id === 1 ? "KP" : h.ayanamsa_id === 2 ? "Raman" : "Lahiri";
+    const ayanamsa = escapeCsv(ayanamsaName);
+
+    const createdAt = h.created_at ? escapeCsv(h.created_at) : escapeCsv("");
+
+    return [serial, name, birthDate, birthTime, birthplace, ayanamsa, createdAt].join(",");
+  });
+
+  return [headers.join(","), ...rows].join("\n");
+}
+

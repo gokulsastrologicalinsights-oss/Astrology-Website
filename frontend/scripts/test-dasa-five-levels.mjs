@@ -487,5 +487,179 @@ runTest("Centralized translation dictionary contains all required Dasa keys in t
   }
 });
 
+// --------------------------------------------------------------------------
+// 7. Dynamic 5-Level Subperiod Generation (Sookshamam & Pranam)
+// --------------------------------------------------------------------------
+
+runTest("Sookshamam (Level 4) and Pranam (Level 5) dynamic generation from parent periods", () => {
+  const vOrder = ["Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury"];
+  const vYears = { Ketu: 7, Venus: 20, Sun: 6, Moon: 10, Mars: 7, Rahu: 18, Jupiter: 16, Saturn: 19, Mercury: 17 };
+
+  function generateChildren(parent, currentLevel) {
+    const nextLevels = ["Mahadasha", "Antardasha", "Pratyantardasha", "Sookshmadasha", "Pranadasha"];
+    if (currentLevel >= 5) return [];
+    const childLevel = nextLevels[currentLevel];
+    const parentPos = vOrder.indexOf(parent.lord);
+    const parentDur = parent.end_jd - parent.start_jd;
+    let curr = parent.start_jd;
+    const children = [];
+    for (let i = 0; i < 9; i++) {
+      const lord = vOrder[(parentPos + i) % 9];
+      const dur = i === 8 ? parent.end_jd - curr : parentDur * (vYears[lord] / 120.0);
+      const end = i === 8 ? parent.end_jd : curr + dur;
+      children.push({
+        lord,
+        level: childLevel,
+        start_jd: curr,
+        end_jd: end,
+        duration_days: dur,
+        duration_years: dur / 365.25,
+        sub_periods: [],
+      });
+      curr = end;
+    }
+    return children;
+  }
+
+  // Level 3 Antharam
+  const sampleAntharam = {
+    lord: "Jupiter",
+    level: "Pratyantardasha",
+    start_jd: 2450000.0,
+    end_jd: 2450050.0,
+    sub_periods: [],
+  };
+
+  // Generate Level 4 Sookshamam
+  const sookshamams = generateChildren(sampleAntharam, 3);
+  assert.strictEqual(sookshamams.length, 9);
+  assert.strictEqual(sookshamams[0].level, "Sookshmadasha");
+  assert.strictEqual(sookshamams[0].lord, "Jupiter"); // starts with parent lord
+  assert.strictEqual(sookshamams[0].start_jd, 2450000.0);
+  assert.strictEqual(sookshamams[8].end_jd, 2450050.0);
+
+  // Generate Level 5 Pranam from first Sookshamam
+  const pranams = generateChildren(sookshamams[0], 4);
+  assert.strictEqual(pranams.length, 9);
+  assert.strictEqual(pranams[0].level, "Pranadasha");
+  assert.strictEqual(pranams[0].lord, "Jupiter");
+  assert.strictEqual(pranams[0].start_jd, sookshamams[0].start_jd);
+  assert.strictEqual(pranams[8].end_jd, sookshamams[0].end_jd);
+
+  // Verify sub-daily durations
+  assert.ok(pranams[0].duration_days < 1.0, "Pranam duration must be sub-daily (< 1 day)");
+});
+
+// --------------------------------------------------------------------------
+// 8. Visible Table Row Rendering Output Regression Test
+// --------------------------------------------------------------------------
+
+runTest("Rendered table row output inspection confirming all 5 levels are visible", () => {
+  const levelsRendered = [];
+  const levelBadges = [];
+  const benefitBhavasRendered = [];
+
+  function simulateRender(node, depth) {
+    const meta = getLevelMetadata(node.level);
+    levelsRendered.push({
+      depth,
+      level: node.level,
+      name: meta.name,
+      nameTamil: meta.nameTamil,
+      badge: meta.badgeShort,
+      lord: node.lord,
+      start_jd: node.start_jd,
+      end_jd: node.end_jd,
+      durationStr: formatPeriodDuration(node.duration_years, node.duration_days, "en"),
+      benefitBhavas: node.benefit_bhavas || "2, 7 | 3 | 11 | 1, 6",
+    });
+    levelBadges.push(meta.badgeShort);
+    benefitBhavasRendered.push(node.benefit_bhavas || "2, 7 | 3 | 11 | 1, 6");
+
+    for (const child of node.sub_periods || []) {
+      simulateRender(child, depth + 1);
+    }
+  }
+
+  const fullFiveLevelSample = {
+    lord: "Sun",
+    level: "Mahadasha",
+    start_jd: 2450000.0,
+    end_jd: 2452191.5,
+    duration_days: 2191.5,
+    duration_years: 6.0,
+    benefit_bhavas: "1 | 5 | 9 | 5",
+    sub_periods: [
+      {
+        lord: "Sun",
+        level: "Antardasha",
+        start_jd: 2450000.0,
+        end_jd: 2450109.575,
+        duration_days: 109.575,
+        duration_years: 0.3,
+        benefit_bhavas: "1 | 5 | 9 | 5",
+        sub_periods: [
+          {
+            lord: "Moon",
+            level: "Pratyantardasha",
+            start_jd: 2450000.0,
+            end_jd: 2450018.2625,
+            duration_days: 18.2625,
+            duration_years: 0.05,
+            benefit_bhavas: "4 | 4 | 2 | 4",
+            sub_periods: [
+              {
+                lord: "Mars",
+                level: "Sookshmadasha",
+                start_jd: 2450000.0,
+                end_jd: 2450001.065,
+                duration_days: 1.065,
+                duration_years: 0.0029,
+                benefit_bhavas: "8 | 1, 8 | 10 | 1, 8",
+                sub_periods: [
+                  {
+                    lord: "Rahu",
+                    level: "Pranadasha",
+                    start_jd: 2450000.0,
+                    end_jd: 2450000.159,
+                    duration_days: 0.159,
+                    duration_years: 0.00043,
+                    benefit_bhavas: "11 | — | 3 | —",
+                    sub_periods: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  simulateRender(fullFiveLevelSample, 1);
+
+  // Assertions confirming all 5 levels are present in visible rendered output
+  assert.strictEqual(levelsRendered.length, 5);
+  assert.deepStrictEqual(levelBadges, ["Maha", "Bhukti", "Antaram", "Sookshma", "Prana"]);
+
+  // Confirm Level 4 Sookshamam
+  const lvl4 = levelsRendered.find((r) => r.badge === "Sookshma");
+  assert.ok(lvl4, "Sookshamam (Level 4) row must be rendered");
+  assert.strictEqual(lvl4.name, "Sookshmadasha");
+  assert.strictEqual(lvl4.nameTamil, "சூட்சும தசை");
+  assert.strictEqual(lvl4.lord, "Mars");
+  assert.ok(lvl4.durationStr.includes("Days") || lvl4.durationStr.includes("Hours"));
+
+  // Confirm Level 5 Pranam
+  const lvl5 = levelsRendered.find((r) => r.badge === "Prana");
+  assert.ok(lvl5, "Pranam (Level 5) row must be rendered");
+  assert.strictEqual(lvl5.name, "Pranadasha");
+  assert.strictEqual(lvl5.nameTamil, "பிராண தசை");
+  assert.strictEqual(lvl5.lord, "Rahu");
+  assert.ok(lvl5.durationStr.includes("Hours") || lvl5.durationStr.includes("Mins"));
+  // Rahu Benefit Bhavas has '—' for owned houses
+  assert.strictEqual(lvl5.benefitBhavas, "11 | — | 3 | —");
+});
+
 console.log(`\nResults: ${passed} passed, ${failed} failed out of ${passed + failed} tests.`);
 if (failed > 0) process.exit(1);

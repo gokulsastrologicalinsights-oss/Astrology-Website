@@ -79,6 +79,7 @@ class VargaD1D9Response(BaseModel):
     summary: VargaChartSummary
     d1_chart: Dict[str, Any] = Field(..., description="Standard format consumable by SouthIndianChart and NorthIndianChart")
     d9_chart: Dict[str, Any] = Field(..., description="Standard format consumable by SouthIndianChart and NorthIndianChart")
+    shodashvarga: Optional[Any] = Field(None, description="Optional complete 16-divisional chart response")
 
 
 class VargaD1D9Request(BaseModel):
@@ -93,3 +94,76 @@ class VargaD1D9Request(BaseModel):
     longitude: Optional[float] = Field(None, ge=-180.0, le=180.0, description="Longitude in decimal degrees")
     ayanamsa: int = Field(0, description="Ayanamsa ID (0=Lahiri, 1=KP)")
     house_system: int = Field(0, description="House System ID (0=WholeSign)")
+
+
+# ---------------------------------------------------------------------------
+# Complete Classical Shodashvarga (16 Divisional Charts) Schemas
+# ---------------------------------------------------------------------------
+
+class ShodashvargaPlanetEntry(BaseModel):
+    """Position of a celestial body in a specific divisional chart."""
+    name: str = Field(..., description="Planet name")
+    body_id: int = Field(0, description="XALEN astronomical body ID")
+    sign_index: int = Field(..., ge=1, le=12, description="Divisional sign index (1=Aries .. 12=Pisces)")
+    sign_name: str = Field(..., description="Divisional sign name (English)")
+    sign_name_tamil: str = Field(..., description="Divisional sign name (Tamil)")
+    degree_in_sign: float = Field(..., description="Normalized degree within divisional sign [0, 30)")
+    house: int = Field(..., ge=1, le=12, description="House from divisional Ascendant (1-12)")
+    sign_lord: str = Field(..., description="Ruler of the divisional sign")
+    is_retrograde: bool = Field(False, description="True if planet is retrograde")
+    is_vargottama: bool = Field(False, description="True if planet occupies identical sign in this varga as in D1 Rasi")
+    shashtyamsa_deity: Optional[str] = Field(None, description="Classical Shashtyamsa deity name (D60 only)")
+    shashtyamsa_deity_tamil: Optional[str] = Field(None, description="Classical Shashtyamsa deity Tamil name (D60 only)")
+    shashtyamsa_nature: Optional[str] = Field(None, description="Deity nature: Benefic, Malefic, Neutral (D60 only)")
+
+
+class ShodashvargaAscendantEntry(BaseModel):
+    """Position of Ascendant (Lagna) in a specific divisional chart."""
+    sign_index: int = Field(..., ge=1, le=12, description="Divisional Ascendant sign index (1-12)")
+    sign_name: str = Field(..., description="Divisional Ascendant sign name (English)")
+    sign_name_tamil: str = Field(..., description="Divisional Ascendant sign name (Tamil)")
+    degree_in_sign: float = Field(..., description="Normalized degree within divisional sign [0, 30)")
+    sign_lord: str = Field(..., description="Ruler of the divisional Ascendant sign")
+    is_vargottama: bool = Field(False, description="True if Lagna occupies identical sign in this varga as in D1 Rasi")
+    shashtyamsa_deity: Optional[str] = Field(None, description="Classical Shashtyamsa deity name (D60 only)")
+    shashtyamsa_deity_tamil: Optional[str] = Field(None, description="Classical Shashtyamsa deity Tamil name (D60 only)")
+    shashtyamsa_nature: Optional[str] = Field(None, description="Deity nature: Benefic, Malefic, Neutral (D60 only)")
+
+
+class ShodashvargaChartItem(BaseModel):
+    """Complete specification of a single divisional chart in the Shodashvarga set."""
+    division_id: str = Field(..., description="Chart identifier, e.g. 'D1', 'D2', ..., 'D60'")
+    division_number: int = Field(..., description="Divisional denominator: 1, 2, 3, 4, 7, 9, 10, 12, 16, 20, 24, 27, 30, 40, 45, 60")
+    name: str = Field(..., description="Sanskrit/English name of the divisional chart")
+    name_tamil: str = Field(..., description="Tamil name of the divisional chart")
+    significance: str = Field(..., description="Core astrological domain evaluated by this varga")
+    significance_tamil: str = Field(..., description="Tamil description of significance")
+    span_degrees: float = Field(..., description="Arc span of each division in degrees")
+    ascendant: ShodashvargaAscendantEntry
+    planets: List[ShodashvargaPlanetEntry]
+    chart: Dict[str, Any] = Field(..., description="Direct chart component consumable structure: metadata, ascendant, planets")
+
+
+class ShodashvargaResponse(BaseModel):
+    """Comprehensive response for all 16 canonical Shodashvarga divisional charts."""
+    metadata: Optional[CalculationMetadata] = None
+    charts: Dict[str, ShodashvargaChartItem] = Field(..., description="Dictionary of all 16 divisional charts keyed by D-code (D1 to D60)")
+    planet_vargas: Dict[str, Dict[str, int]] = Field(..., description="Mapping of each planet to its 16 divisional sign indices (1-12)")
+    vargottama_planets: List[str] = Field(default_factory=list, description="Planets with Vargottama dignity in D9 Navamsa")
+    d1_chart: Dict[str, Any] = Field(..., description="D1 Rasi chart structure")
+    d9_chart: Dict[str, Any] = Field(..., description="D9 Navamsa chart structure")
+    d10_chart: Dict[str, Any] = Field(..., description="D10 Dasamsa chart structure for career")
+    d60_chart: Dict[str, Any] = Field(..., description="D60 Shashtyamsa chart structure for karmic validation")
+
+
+class ShodashvargaRequest(BaseModel):
+    """Request payload for full Shodashvarga calculation supporting saved horoscopes and ad-hoc inputs."""
+    saved_horoscope_id: Optional[str] = Field(None, description="Optional ID of saved horoscope")
+    birth_date: Optional[str] = Field(None, description="Birth date YYYY-MM-DD")
+    birth_time: Optional[str] = Field(None, description="Birth time HH:MM:SS")
+    timezone: Optional[str] = Field("Asia/Kolkata", description="IANA timezone or offset")
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0, description="Latitude in decimal degrees")
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0, description="Longitude in decimal degrees")
+    ayanamsa: int = Field(0, description="Ayanamsa ID (0=Lahiri, 1=KP)")
+    house_system: int = Field(0, description="House System ID (0=WholeSign)")
+

@@ -1,0 +1,441 @@
+{
+  "total": 68,
+  "passed": 68,
+  "failed": 0,
+  "console_errors": [
+    "CONSOLE error: Access to fetch at 'http://127.0.0.1:8000/api/v1/numerology/reports?limit=10&offset=0' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "CONSOLE error: Failed to load resource: net::ERR_FAILED",
+    "CONSOLE error: Access to fetch at 'http://127.0.0.1:8000/api/v1/numerology/reports?limit=10&offset=0' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "CONSOLE error: Failed to load resource: net::ERR_FAILED",
+    "CONSOLE error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "CONSOLE error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "CONSOLE error: Access to fetch at 'http://127.0.0.1:8000/api/v1/numerology/reports?limit=10&offset=0' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "CONSOLE error: Failed to load resource: net::ERR_FAILED",
+    "CONSOLE error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "CONSOLE error: Access to fetch at 'http://127.0.0.1:8000/api/v1/numerology/reports?limit=10&offset=0' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "CONSOLE error: Failed to load resource: net::ERR_FAILED",
+    "CONSOLE error: Access to fetch at 'http://127.0.0.1:8000/api/v1/numerology/reports?limit=10&offset=0' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "CONSOLE error: Failed to load resource: net::ERR_FAILED",
+    "CONSOLE error: Access to fetch at 'http://127.0.0.1:8000/api/v1/numerology/reports?limit=10&offset=0' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "CONSOLE error: Failed to load resource: net::ERR_FAILED",
+    "CONSOLE error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>\n      <AppDevOverlayErrorBoundary globalError={[...]}>\n        <ReplaySsrOnlyErrors>\n        <DevRootHTTPAccessFallbackBoundary>\n          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>\n            <HTTPAccessFallbackErrorBoundary pathname=\"/horoscope...\" notFound={<NotAllowedRootHTTPFallbackError>} ...>\n              <RedirectBoundary>\n                <RedirectErrorBoundary router={{...}}>\n                  <Head>\n                  <__next_root_layout_boundary__>\n                    <SegmentViewNode type=\"layout\" pagePath=\"layout.tsx\">\n                      <SegmentTrieNode>\n                      <link>\n                      <script>\n                      <script>\n                      <script>\n                      <script>\n                      <script>\n                      <RootLayout>\n                        <html lang=\"en\" className=\"inter_7b06...\">\n                          <body className=\"min-h-full...\">\n                            <LanguageProvider>\n                              <div\n+                               className=\"font-tamil\"\n-                               className=\"font-sans\"\n                              >\n                  ...\n",
+    "PAGE ERROR: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <div className=\"font-tamil\">\n      <AuthProvider>\n        <div className=\"flex flex-...\">\n          <Suspense fallback={{...}}>\n            <Navbar>\n              <header className=\"sticky top...\">\n                <div className=\"max-w-7xl ...\">\n                  <div className=\"h-14 flex ...\">\n                    <div className=\"flex items...\">\n                      <LinkComponent href=\"/login\" className=\"flex items...\" aria-label=\"Gokul’s As...\">\n                        <a className=\"flex items...\" aria-label=\"Gokul’s As...\" ref={function} onClick={function onClick} ...>\n                          <div>\n                          <div className=\"min-w-0\">\n                            <div\n                              className=\"font-serif text-base sm:text-lg font-bold text-[#153F6B] tracking-tight leadi...\"\n                            >\n+                             கோகுலின் ஜோதிட நுண்ணறிவுகள்\n-                             {\"Gokul's Astrological Insights\"}\n                            ...\n                    ...\n              ...\n          ...\n",
+    "PAGE ERROR: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>\n      <LoadingBoundary name=\"results/\" loading={null}>\n        <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>\n          <RedirectBoundary>\n            <RedirectErrorBoundary router={{...}}>\n              <InnerLayoutRouter url=\"/horoscope...\" tree={[...]} params={{}} renderTree={{...}} segmentPath={[...]} ...>\n                <SegmentViewNode type=\"page\" pagePath=\"horoscope/...\">\n                  <SegmentTrieNode>\n                  <ClientPageRoot Component={function HoroscopeResultsPage} serverProvidedParams={null}>\n                    <HoroscopeResultsPage params={Promise} searchParams={Promise}>\n                      <Suspense fallback={<div>}>\n                        <HoroscopeResultsContent>\n                          <div className=\"max-w-2xl ...\">\n                            <div>\n                            <h2 className=\"font-serif text-lg font-bold text-[#183047]\">\n+                             சேமிக்கப்பட்ட ஜாதகம் ஏற்றப்படுகிறது...\n-                             Loading saved horoscope snapshot...\n                            ...\n                ...\n              ...\n",
+    "PAGE ERROR: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <body className=\"min-h-full...\">\n      <LanguageProvider>\n        <div className=\"font-tamil\">\n          <AuthProvider>\n            <div className=\"flex flex-...\">\n              <Suspense>\n              <main>\n              <Suspense fallback={{...}}>\n                <Footer>\n                  <footer className=\"w-full bor...\">\n                    <div className=\"max-w-7xl ...\">\n                      <div className=\"grid grid-...\">\n                        <div className=\"md:col-spa...\">\n                          <div className=\"flex items...\">\n                            <div>\n                            <span className=\"font-serif text-lg font-bold text-[#102A4C]\">\n+                             கோகுலின் ஜோதிட நுண்ணறிவுகள்\n-                             {\"Gokul's Astrological Insights\"}\n                          ...\n                        ...\n                      ...\n"
+  ],
+  "network_failures": [
+    "HTTP 500 http://localhost:3000/api/v1/numerology/reports?limit=10&offset=0",
+    "HTTP 500 http://localhost:3000/api/v1/numerology/reports?limit=10&offset=0",
+    "HTTP 500 http://localhost:3000/api/v1/numerology/reports?limit=10&offset=0"
+  ],
+  "tests": [
+    {
+      "category": "Security",
+      "test": "Unauthenticated /dashboard redirects to /login",
+      "status": "PASS",
+      "details": "http://localhost:3000/login?redirect=%2Fdashboard"
+    },
+    {
+      "category": "Security",
+      "test": "Unauthenticated /horoscopes redirects to /login",
+      "status": "PASS",
+      "details": "http://localhost:3000/login?redirect=%2Fhoroscopes"
+    },
+    {
+      "category": "Authentication",
+      "test": "Admin login successful and session established",
+      "status": "PASS",
+      "details": "http://localhost:3000/dashboard"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Dashboard at 1366x768 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1366, innerWidth=1366"
+    },
+    {
+      "category": "UI-Header",
+      "test": "Brand name visible at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Header",
+      "test": "Header search input visible at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Header",
+      "test": "Support headphones icon visible at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Navigation",
+      "test": "Tier 2 navigation bar rendered at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Cards",
+      "test": "Dashboard quick-access module cards rendered at 1366x768",
+      "status": "PASS",
+      "details": "Count: 27"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Tools-Hub at 1366x768 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1366, innerWidth=1366"
+    },
+    {
+      "category": "UI-Tools",
+      "test": "Tools landing page cards rendered at 1366x768",
+      "status": "PASS",
+      "details": "Count: 10"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Saved-Horoscopes at 1366x768 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1366, innerWidth=1366"
+    },
+    {
+      "category": "UI-Toolbar",
+      "test": "Saved horoscopes toolbar complete at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Cards",
+      "test": "Saved horoscope customer cards rendered at 1366x768",
+      "status": "PASS",
+      "details": "Found 12 cards"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Horoscope-Detail at 1366x768 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1366, innerWidth=1366"
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Horoscope detail title visible at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Vedic/KP pill toggle visible at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Horizontal customer details bar visible at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Charts",
+      "test": "3-Chart landscape grid (Rasi, Navamsa, Bhava) rendered at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-KP",
+      "test": "KP Section rendered via pill toggle at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Consultation",
+      "test": "Consultation notes textarea rendered at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Reports",
+      "test": "Reports & Downloads tab rendered at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Modal",
+      "test": "Notes modal opens at 1366x768",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Dashboard at 1440x900 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1440, innerWidth=1440"
+    },
+    {
+      "category": "UI-Header",
+      "test": "Brand name visible at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Header",
+      "test": "Header search input visible at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Header",
+      "test": "Support headphones icon visible at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Navigation",
+      "test": "Tier 2 navigation bar rendered at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Cards",
+      "test": "Dashboard quick-access module cards rendered at 1440x900",
+      "status": "PASS",
+      "details": "Count: 27"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Tools-Hub at 1440x900 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1440, innerWidth=1440"
+    },
+    {
+      "category": "UI-Tools",
+      "test": "Tools landing page cards rendered at 1440x900",
+      "status": "PASS",
+      "details": "Count: 10"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Saved-Horoscopes at 1440x900 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1440, innerWidth=1440"
+    },
+    {
+      "category": "UI-Toolbar",
+      "test": "Saved horoscopes toolbar complete at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Cards",
+      "test": "Saved horoscope customer cards rendered at 1440x900",
+      "status": "PASS",
+      "details": "Found 12 cards"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Horoscope-Detail at 1440x900 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1440, innerWidth=1440"
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Horoscope detail title visible at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Vedic/KP pill toggle visible at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Horizontal customer details bar visible at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Charts",
+      "test": "3-Chart landscape grid (Rasi, Navamsa, Bhava) rendered at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-KP",
+      "test": "KP Section rendered via pill toggle at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Consultation",
+      "test": "Consultation notes textarea rendered at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Reports",
+      "test": "Reports & Downloads tab rendered at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Modal",
+      "test": "Notes modal opens at 1440x900",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Dashboard at 1920x1080 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1920, innerWidth=1920"
+    },
+    {
+      "category": "UI-Header",
+      "test": "Brand name visible at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Header",
+      "test": "Header search input visible at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Header",
+      "test": "Support headphones icon visible at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Navigation",
+      "test": "Tier 2 navigation bar rendered at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Cards",
+      "test": "Dashboard quick-access module cards rendered at 1920x1080",
+      "status": "PASS",
+      "details": "Count: 27"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Tools-Hub at 1920x1080 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1920, innerWidth=1920"
+    },
+    {
+      "category": "UI-Tools",
+      "test": "Tools landing page cards rendered at 1920x1080",
+      "status": "PASS",
+      "details": "Count: 10"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Saved-Horoscopes at 1920x1080 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1920, innerWidth=1920"
+    },
+    {
+      "category": "UI-Toolbar",
+      "test": "Saved horoscopes toolbar complete at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Cards",
+      "test": "Saved horoscope customer cards rendered at 1920x1080",
+      "status": "PASS",
+      "details": "Found 12 cards"
+    },
+    {
+      "category": "Layout-Overflow",
+      "test": "Horoscope-Detail at 1920x1080 no horizontal scroll",
+      "status": "PASS",
+      "details": "scrollWidth=1920, innerWidth=1920"
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Horoscope detail title visible at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Vedic/KP pill toggle visible at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Detail",
+      "test": "Horizontal customer details bar visible at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Charts",
+      "test": "3-Chart landscape grid (Rasi, Navamsa, Bhava) rendered at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-KP",
+      "test": "KP Section rendered via pill toggle at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Consultation",
+      "test": "Consultation notes textarea rendered at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Reports",
+      "test": "Reports & Downloads tab rendered at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "UI-Modal",
+      "test": "Notes modal opens at 1920x1080",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "Interactive-Search",
+      "test": "Header search queries and displays interactive dropdown",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "Interactive-Help",
+      "test": "Headphones support button opens Help & Support modal",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "Interactive-I18n",
+      "test": "Language toggle successfully alternates between English and Tamil",
+      "status": "PASS",
+      "details": "Toggled: தமிழ் -> English"
+    },
+    {
+      "category": "Interactive-Auth",
+      "test": "User profile dropdown displays Log Out action",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "category": "Typography",
+      "test": "Tamil glyph rendering without replacement character or tofu boxes",
+      "status": "PASS",
+      "details": "Found 6 sample terms: ஜாதக விவரங்கள், ஜோதிடக் கருவிகள், பாவக சக்கரம், அஷ்டகவர்க பலன்கள், ராசி (D1), நவாம்சம் (D9)"
+    }
+  ]
+}

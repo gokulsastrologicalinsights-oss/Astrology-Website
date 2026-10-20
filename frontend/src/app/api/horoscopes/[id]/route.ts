@@ -225,6 +225,16 @@ export async function PUT(
     // Update or link customer contact info if customer_phone is provided
     let updatedCustomer = null;
     let updatedCalculationResult = existing.calculation_result || {};
+    if (body.calculation_result && typeof body.calculation_result === "object") {
+      updatedCalculationResult = {
+        ...updatedCalculationResult,
+        ...body.calculation_result,
+        horoscope: {
+          ...(updatedCalculationResult.horoscope || {}),
+          ...(body.calculation_result.horoscope || {}),
+        },
+      };
+    }
 
     if (customer_phone && typeof customer_phone === "string" && customer_phone.trim()) {
       const effectiveCountryCode = (country_code || "+91").trim();
@@ -305,6 +315,127 @@ export async function PUT(
     console.error("PUT /api/horoscopes/[id] error:", err?.message || err);
     return NextResponse.json(
       { error: "Internal error updating saved horoscope." },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/horoscopes/[id]
+ * Atomically updates the calculation snapshot of an existing horoscope record
+ * (e.g. persisting newly calculated Doshas, Yogas, or Varga extensions).
+ * - Enforces authentication and record ownership (or admin role).
+ * - Deeply merges calculation_result with existing data to prevent erasing Dasa, KP, charts, or customer contact.
+ * - Mutates only the existing record without creating duplicate rows or altering the permanent display_number.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized access: Sign-in required." },
+        { status: 401 }
+      );
+    }
+
+    // Verify existing record and ownership
+    const { data: existing, error: findError } = await supabase
+      .from("saved_horoscopes")
+      .select("id, user_id, display_number, calculation_result")
+      .eq("id", id)
+      .single();
+
+    if (findError || !existing) {
+      return NextResponse.json(
+        { error: "Horoscope not found or access denied." },
+        { status: 404 }
+      );
+    }
+
+    let isAdmin = false;
+    if (existing.user_id !== user.id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role !== "admin") {
+        return NextResponse.json(
+          { error: "Forbidden: You are not authorized to update this horoscope." },
+          { status: 403 }
+        );
+      }
+      isAdmin = true;
+    }
+
+    const body = await request.json();
+    const incomingCalc = body.calculation_result;
+
+    if (!incomingCalc || typeof incomingCalc !== "object") {
+      return NextResponse.json(
+        { error: "A valid calculation_result object is required for PATCH." },
+        { status: 400 }
+      );
+    }
+
+    const existingCalc = existing.calculation_result || {};
+    const mergedHoroscope = {
+      ...(existingCalc.horoscope || {}),
+      ...(incomingCalc.horoscope || {}),
+    };
+    if (incomingCalc.doshas && !mergedHoroscope.doshas) {
+      mergedHoroscope.doshas = incomingCalc.doshas;
+    }
+
+    const mergedCalculationResult = {
+      ...existingCalc,
+      ...incomingCalc,
+      horoscope: mergedHoroscope,
+      dasa: incomingCalc.dasa || existingCalc.dasa,
+      kp: incomingCalc.kp || existingCalc.kp,
+      customer: existingCalc.customer || incomingCalc.customer,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const clientToUse = isAdmin ? createAdminClient() : supabase;
+    const { data: updatedRecord, error: updateError } = await clientToUse
+      .from("saved_horoscopes")
+      .update({
+        calculation_result: mergedCalculationResult,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select(
+        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, calculation_result, created_at, updated_at"
+      )
+      .single();
+
+    if (updateError) {
+      console.error("PATCH saved_horoscopes error:", updateError);
+      return NextResponse.json(
+        { error: updateError.message || "Failed to update horoscope calculation." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      horoscope: updatedRecord,
+    });
+  } catch (err: any) {
+    console.error("PATCH /api/horoscopes/[id] error:", err?.message || err);
+    return NextResponse.json(
+      { error: "Internal error updating saved horoscope calculation." },
       { status: 500 }
     );
   }

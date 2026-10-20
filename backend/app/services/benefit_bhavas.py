@@ -432,6 +432,15 @@ def enrich_dasa_tree(
         lord = getattr(node, "lord", None) or (node.get("lord") if isinstance(node, dict) else None)
         if lord:
             res = calculate_benefit_bhavas(lord, planet_contexts)
+            detail_dict = {
+                "star_lord": res.star_lord,
+                "period_lord": res.period_lord,
+                "star_lord_houses": res.star_lord_occupied,
+                "star_lord_owned_houses": res.star_lord_owned,
+                "planet_placement_house": res.period_lord_occupied,
+                "planet_owned_houses": res.period_lord_owned,
+                "formatted": res.formatted,
+            }
             if isinstance(node, dict):
                 node["star_lord"] = res.star_lord
                 node["benefit_bhavas"] = res.formatted
@@ -439,6 +448,7 @@ def enrich_dasa_tree(
                 node["star_lord_occupied"] = res.star_lord_occupied
                 node["period_lord_owned"] = res.period_lord_owned
                 node["star_lord_owned"] = res.star_lord_owned
+                node["benefit_bhavas_detail"] = detail_dict
             else:
                 setattr(node, "star_lord", res.star_lord)
                 setattr(node, "benefit_bhavas", res.formatted)
@@ -446,6 +456,7 @@ def enrich_dasa_tree(
                 setattr(node, "star_lord_occupied", res.star_lord_occupied)
                 setattr(node, "period_lord_owned", res.period_lord_owned)
                 setattr(node, "star_lord_owned", res.star_lord_owned)
+                setattr(node, "benefit_bhavas_detail", detail_dict)
 
         sub_periods = getattr(node, "sub_periods", None) or (node.get("sub_periods") if isinstance(node, dict) else None)
         if sub_periods:

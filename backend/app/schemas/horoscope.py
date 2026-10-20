@@ -1,12 +1,12 @@
 """Schemas for POST /api/v1/horoscope/calculate."""
 
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field
 from app.schemas.common import BirthInput, CalculationMetadata
 
 
 from app.schemas.nabhasha import NabhashaResponse
-from app.schemas.ashtakavarga import AshtakavargaResponse
+from app.schemas.ashtakavarga import AshtakavargaResponse, KakshaTransitQuery
 from app.schemas.yoga import VedicYogaResponse
 from app.schemas.varga import VargaD1D9Response
 
@@ -20,7 +20,13 @@ class HoroscopeRequest(BirthInput):
     include_ashtakavarga: bool = Field(True, description="Compute classical Ashtakavarga BAV/SAV and Shodhana per BPHS Ch. 66-69")
     include_vedic_yogas: bool = Field(True, description="Compute classical Vedic Yogas (Gajakesari, Raja, Dhana, Mahapurusha, etc.)")
     include_varga: bool = Field(True, description="Compute D1 Rasi and D9 Navamsa divisional charts")
+    include_doshas: bool = Field(False, description="Compute unified Vedic Dosha analysis (30 catalogue rules)")
     gender: Optional[str] = Field("male", description="Gender ('male' or 'female') for gender-specific yogas")
+
+
+class KakshaTransitEvaluationRequest(HoroscopeRequest):
+    transit: KakshaTransitQuery = Field(..., description="Transit planet and degree/sign to evaluate")
+
 
 
 class NakshatraDetail(BaseModel):
@@ -97,3 +103,22 @@ class HoroscopeResponse(BaseModel):
     ashtakavarga: Optional[AshtakavargaResponse] = None
     vedic_yogas: Optional[VedicYogaResponse] = None
     varga_d1_d9: Optional[VargaD1D9Response] = None
+    doshas: Optional[Any] = None
+
+
+class LiveTransitsRequest(BaseModel):
+    timezone: str = Field("Asia/Kolkata", description="IANA timezone name or UTC offset")
+    latitude: Optional[float] = Field(13.0827, description="Latitude for local calculation")
+    longitude: Optional[float] = Field(80.2707, description="Longitude for local calculation")
+    ayanamsa: int = Field(0, description="Ayanamsa ID (0=Lahiri)")
+    target_datetime: Optional[str] = Field(None, description="Optional ISO timestamp to compute transits for. Defaults to current time.")
+
+
+class LiveTransitsResponse(BaseModel):
+    calculated_at: str
+    timezone: str
+    ayanamsa_id: int
+    ayanamsa_name: str
+    julian_day_ut1: float
+    planets: List[PlanetInfo]
+

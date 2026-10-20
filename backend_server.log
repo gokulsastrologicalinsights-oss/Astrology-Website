@@ -1,0 +1,57 @@
+INFO:     Started server process [30680]
+INFO:     Waiting for application startup.
+[2026-10-19 10:01:55,031] [INFO] Administrator account already exists (username: Gokul Murugan). Idempotency verified; no duplicate created.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56045 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50988 - "OPTIONS /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "OPTIONS /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50988 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58511 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58511 - "OPTIONS /api/v1/horoscope/kp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "POST /api/v1/horoscope/kp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "POST /api/v1/horoscope/kp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "OPTIONS /api/v1/horoscope/kp/charts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "POST /api/v1/horoscope/kp/charts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "OPTIONS /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "OPTIONS /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "POST /api/v1/horoscope/kp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56839 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59594 - "OPTIONS /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57118 - "OPTIONS /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59594 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57118 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "POST /api/v1/horoscope/kp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57118 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59594 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59594 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57118 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "POST /api/v1/horoscope/kp/charts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59505 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51404 - "OPTIONS /api/v1/predictions/marriage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51404 - "POST /api/v1/predictions/marriage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59505 - "OPTIONS /api/v1/horoscope/kp/horary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "POST /api/v1/horoscope/kp/horary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "POST /api/v1/horoscope/kp/charts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59885 - "OPTIONS /api/v1/horoscope/kp/charts?limit=50&offset=0&chart_type=horary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59885 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0&chart_type=horary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59885 - "GET /api/v1/horoscope/kp/charts?limit=50&offset=0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59885 - "OPTIONS /api/v1/horoscope/kp/charts/fe016842-2401-4108-9b9c-4b8397ab2196 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "DELETE /api/v1/horoscope/kp/charts/fe016842-2401-4108-9b9c-4b8397ab2196 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "OPTIONS /api/v1/horoscope/kp/charts/dd7ce5b8-57bd-4116-89c7-8fd80c567828 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59885 - "DELETE /api/v1/horoscope/kp/charts/dd7ce5b8-57bd-4116-89c7-8fd80c567828 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59885 - "OPTIONS /api/v1/horoscope/kp/charts/9af90f7d-5ccd-4c22-b459-506f3d7df6f8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50361 - "DELETE /api/v1/horoscope/kp/charts/9af90f7d-5ccd-4c22-b459-506f3d7df6f8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61688 - "GET /api/v1/horoscope/kp/charts HTTP/1.1" 401 Unauthorized

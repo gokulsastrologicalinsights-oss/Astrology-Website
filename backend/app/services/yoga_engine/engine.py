@@ -12,6 +12,7 @@ from app.services.yoga_engine.evaluators.raja_yogas import evaluate_raja_yogas
 from app.services.yoga_engine.evaluators.dhana_yogas import evaluate_dhana_yogas
 from app.services.yoga_engine.evaluators.lunar_solar import evaluate_lunar_solar_yogas
 from app.services.yoga_engine.evaluators.parivartana import evaluate_parivartana_yogas
+from app.services.yoga_engine.evaluators.arishta import evaluate_arishta_yogas
 
 
 def calculate_vedic_yogas(
@@ -46,6 +47,7 @@ def calculate_vedic_yogas(
     all_yogas.extend(evaluate_dhana_yogas(ctx))
     all_yogas.extend(evaluate_lunar_solar_yogas(ctx))
     all_yogas.extend(evaluate_parivartana_yogas(ctx))
+    all_yogas.extend(evaluate_arishta_yogas(ctx))
 
     # Compute summary counts
     total_evaluated = len(all_yogas)
@@ -56,9 +58,10 @@ def calculate_vedic_yogas(
     dhana_count = len([y for y in qualifying_yogas if y.category == "Dhana Yoga"])
     mahapurusha_count = len([y for y in qualifying_yogas if y.category == "Panch Mahapurusha"])
     vipareeta_count = len([y for y in qualifying_yogas if y.category == "Vipareeta Raja"])
+    arishta_count = len([y for y in qualifying_yogas if y.category == "Arishta Bhanga"])
     other_classical_count = len([
         y for y in qualifying_yogas
-        if y.category in {"Major Classical", "Lunar/Solar", "Parivartana"}
+        if y.category in {"Major Classical", "Lunar/Solar", "Parivartana", "Arishta Bhanga"}
     ])
 
     summary = YogaSummary(
@@ -70,7 +73,9 @@ def calculate_vedic_yogas(
         vipareeta_yogas_count=vipareeta_count,
         other_classical_count=other_classical_count,
         cancelled_count=len(cancelled_yogas),
+        arishta_bhanga_count=arishta_count,
     )
+
 
     return VedicYogaResponse(
         summary=summary,

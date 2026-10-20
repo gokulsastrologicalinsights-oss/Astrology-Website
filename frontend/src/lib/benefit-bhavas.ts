@@ -406,6 +406,15 @@ export function enrichDasaTreeWithBenefitBhavas(
       node.star_lord_occupied = res.starLordOccupied;
       node.period_lord_owned = res.periodLordOwned;
       node.star_lord_owned = res.starLordOwned;
+      node.benefit_bhavas_detail = {
+        star_lord: res.starLord,
+        period_lord: res.periodLord,
+        star_lord_houses: res.starLordOccupied,
+        star_lord_owned_houses: res.starLordOwned,
+        planet_placement_house: res.periodLordOccupied,
+        planet_owned_houses: res.periodLordOwned,
+        formatted: res.formatted,
+      };
     }
     if (node.sub_periods && node.sub_periods.length > 0) {
       enrichDasaTreeWithBenefitBhavas(node.sub_periods, contexts);

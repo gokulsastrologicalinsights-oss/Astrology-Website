@@ -7,9 +7,12 @@ and robust fallback in-memory handling during development, testing, or offline m
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
+import logging
 import uuid
 
 from app.services.auth_service import get_supabase_client
+
+logger = logging.getLogger(__name__)
 
 # In-memory storage cache for development, testing, or offline mode
 _LOCAL_SAVED_KP_CHARTS: Dict[str, Dict[str, Any]] = {}
@@ -49,6 +52,11 @@ def save_kp_chart(user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         "engine_version": ENGINE_VERSION,
         "calculation_result": data.get("calculation_result", {}),
         "saved_horoscope_id": data.get("saved_horoscope_id"),
+        "customer_id": data.get("customer_id"),
+        "customer_phone": data.get("customer_phone"),
+        "country_code": data.get("country_code", "+91"),
+        "normalized_phone": data.get("normalized_phone"),
+        "whatsapp_number": data.get("whatsapp_number"),
     }
 
     if supabase:
@@ -56,9 +64,10 @@ def save_kp_chart(user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
             res = supabase.table("saved_kp_charts").insert(row_data).execute()
             if res.data and len(res.data) > 0:
                 return res.data[0]
+            raise RuntimeError("Database write succeeded but returned no data.")
         except Exception as e:
-            # Table might not exist yet or connection error, fall through to local cache
-            pass
+            logger.error("Failed to persist KP chart to Supabase for user %s: %s", user_id, e, exc_info=True)
+            raise RuntimeError(f"Database write failed: {str(e)}") from e
 
     # Fallback in-memory storage for offline / dev / tests
     user_records = [
@@ -99,8 +108,10 @@ def list_kp_charts(
             res = query.order("display_number", desc=True).range(offset, offset + limit - 1).execute()
             if res.data is not None:
                 return res.data
-        except Exception:
-            pass
+            return []
+        except Exception as e:
+            logger.error("Failed to list KP charts from Supabase for user %s: %s", user_id, e, exc_info=True)
+            raise RuntimeError(f"Database query failed: {str(e)}") from e
 
     # Fallback to local storage
     records = list(_LOCAL_SAVED_KP_CHARTS.values())
@@ -125,8 +136,10 @@ def get_kp_chart(user_id: str, record_id: str, is_admin: bool = False) -> Option
             res = query.execute()
             if res.data and len(res.data) > 0:
                 return res.data[0]
-        except Exception:
-            pass
+            return None
+        except Exception as e:
+            logger.error("Failed to fetch KP chart %s from Supabase: %s", record_id, e, exc_info=True)
+            raise RuntimeError(f"Database query failed: {str(e)}") from e
 
     record = _LOCAL_SAVED_KP_CHARTS.get(record_id)
     if record and (is_admin or record.get("user_id") == user_id):
@@ -144,10 +157,12 @@ def delete_kp_chart(user_id: str, record_id: str, is_admin: bool = False) -> boo
             if not is_admin:
                 query = query.eq("user_id", user_id)
             res = query.execute()
-            if res.data:
+            if res.data and len(res.data) > 0:
                 return True
-        except Exception:
-            pass
+            return False
+        except Exception as e:
+            logger.error("Failed to delete KP chart %s from Supabase: %s", record_id, e, exc_info=True)
+            raise RuntimeError(f"Database deletion failed: {str(e)}") from e
 
     record = _LOCAL_SAVED_KP_CHARTS.get(record_id)
     if record and (is_admin or record.get("user_id") == user_id):

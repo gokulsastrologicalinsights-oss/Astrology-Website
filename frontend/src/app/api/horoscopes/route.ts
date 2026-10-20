@@ -112,8 +112,16 @@ export async function GET(request: NextRequest) {
       // Clean calculation_result from lightweight listing to preserve bandwidth
       const { calculation_result: _, ...cleanHoro } = h;
 
+      const resolvedBirthTime =
+        (h.birth_time && typeof h.birth_time === "string" && h.birth_time.trim()) ||
+        (calc.clientInputs?.birthTime && typeof calc.clientInputs.birthTime === "string" && calc.clientInputs.birthTime.trim()) ||
+        (calc.clientInputs?.birth_time && typeof calc.clientInputs.birth_time === "string" && calc.clientInputs.birth_time.trim()) ||
+        (calc.horoscope?.birth_time && typeof calc.horoscope.birth_time === "string" && calc.horoscope.birth_time.trim()) ||
+        null;
+
       return {
         ...cleanHoro,
+        birth_time: resolvedBirthTime,
         customer_id: matchedCust?.id || savedCust?.id || null,
         customer: hasPhone ? matchedCust : null,
         customer_phone: matchedCust?.normalized_phone || savedCust?.normalized_phone || null,
@@ -321,13 +329,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Prepare structured, versioned calculation snapshot
-    // Prunes huge 60k-node dasa trees down to 3 levels while preserving the 5-level active period,
-    // keeping payload ~200 KB and preventing gateway timeouts or size errors.
+    // Preserves complete 5-level Dasa hierarchy while removing redundant object wrappers
     let dasaPayload = calculation_result.dasa;
     if (dasaPayload && Array.isArray(dasaPayload.dasa_tree)) {
       dasaPayload = {
         ...dasaPayload,
-        dasa_tree: compactDasaTree(dasaPayload.dasa_tree, 3),
+        dasa_tree: compactDasaTree(dasaPayload.dasa_tree, 5),
       };
     }
 

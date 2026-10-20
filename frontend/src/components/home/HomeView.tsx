@@ -20,6 +20,7 @@ import {
   PlusCircle,
   ExternalLink,
   HeartHandshake,
+  Heart,
   Hash,
   Home as HomeIcon,
   Flame,
@@ -75,8 +76,19 @@ export function HomeView() {
     };
   }, []);
 
+interface AstrologyToolCard {
+  id: string;
+  titleTa: string;
+  titleEn: string;
+  descriptionTa?: string;
+  descriptionEn?: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}
+
   // Section 1: Astrology Tools Cards (matching Screenshot 1)
-  const astrologyTools = [
+  const astrologyTools: AstrologyToolCard[] = [
     {
       id: "horoscope",
       titleTa: "ஜாதகம் (வேத & கே.பி)",
@@ -89,9 +101,19 @@ export function HomeView() {
       id: "marriage",
       titleTa: "திருமணப் பொருத்தம்",
       titleEn: "Porutham & Match",
-      href: "/tools/horoscope",
+      href: "/tools/marriage-compatibility",
       icon: HeartHandshake,
       color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
+    },
+    {
+      id: "marriage-prediction",
+      titleTa: "திருமண கணிப்பு",
+      titleEn: "Marriage Prediction",
+      descriptionTa: "கே.பி மற்றும் வேத ஜோதிட முறையில் திருமண வாய்ப்புகள் மற்றும் கால நிர்ணயம்.",
+      descriptionEn: "Analyze marriage prospects and timing using KP and Vedic astrology.",
+      href: "/tools/marriage-prediction",
+      icon: Heart,
+      color: "text-rose-600 border-rose-300 bg-rose-50",
     },
     {
       id: "panchang",
@@ -277,6 +299,10 @@ export function HomeView() {
               <Link
                 key={card.id}
                 href={card.href}
+                title={
+                  (language === "ta" ? card.descriptionTa : card.descriptionEn) ||
+                  (language === "ta" ? card.titleTa : card.titleEn)
+                }
                 className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
               >
                 <div

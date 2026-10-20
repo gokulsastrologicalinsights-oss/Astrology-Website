@@ -23,13 +23,16 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.numerology import (
+    calculate_birth_psychic_number,
     calculate_life_path,
+    calculate_life_path_detailed,
     calculate_birthday_number,
     calculate_attitude_number,
     calculate_personal_year,
     calculate_name_numbers,
     calculate_maturity_number,
     reduce_number,
+    reduce_number_steps,
     calculate_destiny_matrix,
     calculate_compatibility,
     reduce_arcana,
@@ -114,6 +117,89 @@ class TestTraditionalNumerologyCalculations:
         assert 4 not in res["karmic_lessons"]
         assert 2 in res["karmic_lessons"]
         assert 1 in res["hidden_passion"]
+
+    def test_birth_psychic_number_mulank(self):
+        """Verify Birth/Psychic Number (Mulank) reduces day of birth to root vibration (1-9)."""
+        # Day 25 -> 2+5 = 7
+        psychic, method, data = calculate_birth_psychic_number("1990-10-25")
+        assert psychic == 7
+        assert data["raw_day"] == 25
+        assert data["planet"]["en"].startswith("Ketu")
+
+        # Day 14 -> 1+4 = 5
+        psychic_14, _, data_14 = calculate_birth_psychic_number("1995-05-14")
+        assert psychic_14 == 5
+        assert data_14["planet"]["en"].startswith("Mercury")
+
+        # Day 29 -> 2+9 = 11 -> 2
+        psychic_29, _, data_29 = calculate_birth_psychic_number("1988-07-29")
+        assert psychic_29 == 2
+        assert data_29["raw_day"] == 29
+        assert data_29["master_value"] == 11
+
+    def test_transparent_calculation_steps(self):
+        """Verify calculation breakdown exposes letter-by-letter mappings and word sums."""
+        res = calculate_name_numbers("Sundar Raman", convention="pythagorean")
+        mappings = res["letter_mappings"]
+        words = res["word_breakdowns"]
+
+        assert len(mappings) > 0
+        assert len(words) == 2
+        assert words[0]["word"] == "Sundar"
+        assert words[1]["word"] == "Raman"
+        assert "expression_steps" in res
+        assert "soul_urge_steps" in res
+        assert "personality_steps" in res
+
+    def test_tamil_name_phonetic_calculation(self):
+        """Verify Tamil script names resolve accurately with non-zero expression and vowels/consonants."""
+        # "கோகுல்" (Gokul) in Tamil script
+        res_gokul = calculate_name_numbers("கோகுல்", convention="pythagorean")
+        assert res_gokul["expression"] > 0
+        assert res_gokul["soul_urge"] > 0
+        assert res_gokul["personality"] > 0
+        assert len(res_gokul["letter_mappings"]) > 0
+
+        # "முருகன்" (Murugan) in Tamil script
+        res_murugan = calculate_name_numbers("முருகன்", convention="pythagorean")
+        assert res_murugan["expression"] > 0
+        assert len(res_murugan["word_breakdowns"]) == 1
+
+    def test_initials_and_hyphenated_names(self):
+        """Verify names with initials, dots, hyphens, and apostrophes parse gracefully."""
+        # Initials with period
+        res_initials = calculate_name_numbers("G. Murugan", convention="pythagorean")
+        assert res_initials["expression"] > 0
+        assert any(w["word"] == "G" for w in res_initials["word_breakdowns"])
+
+        # Hyphenated name
+        res_hyphen = calculate_name_numbers("Mary-Jane", convention="pythagorean")
+        assert res_hyphen["expression"] > 0
+        assert len(res_hyphen["word_breakdowns"]) == 2
+
+        # Apostrophe name
+        res_apostrophe = calculate_name_numbers("O'Connor", convention="pythagorean")
+        assert res_apostrophe["expression"] > 0
+
+    def test_maturity_number_calculation(self):
+        """Verify Maturity Number = Life Path + Expression Number, reduced preserving Master numbers."""
+        mat, method = calculate_maturity_number(life_path=7, expression=5)
+        # 7 + 5 = 12 -> 3
+        assert mat == 3
+        assert "12 -> 3" in method
+
+        # Master number preservation: 11 + 22 = 33
+        mat_master, method_m = calculate_maturity_number(life_path=11, expression=22)
+        assert mat_master == 33
+
+    def test_karmic_debt_detection_traditional(self):
+        """Verify 13, 14, 16, 19 detected across Day, Life Path, and Expression."""
+        # Born on 14th
+        debts = detect_karmic_debts("1995-05-14", "Sundar", lp_compound=14, expr_compound=16)
+        numbers = [d["number"] for d in debts]
+        assert 14 in numbers
+        assert 16 in numbers
+
 
 
 # ------------------------------------------------------------------------------
@@ -300,6 +386,61 @@ class TestNumerologyEndpoints:
         res = client.post("/api/v1/numerology/traditional", json=payload)
         assert res.status_code == 422
 
+    def test_empty_or_punctuation_name_validation_failure(self):
+        """Test empty, whitespace-only, or punctuation-only full_name values fail with 422."""
+        # Whitespace-only name
+        res_ws = client.post("/api/v1/numerology/traditional", json={
+            "full_name": "   ",
+            "birth_date": "1995-06-15",
+        })
+        assert res_ws.status_code == 422
+
+        # Punctuation-only name
+        res_punct = client.post("/api/v1/numerology/traditional", json={
+            "full_name": "...---...",
+            "birth_date": "1995-06-15",
+        })
+        assert res_punct.status_code == 422
+
+    def test_traditional_numerology_response_includes_psychic_and_breakdown(self):
+        """Test endpoint returns birth_psychic_number and transparent calculation breakdown."""
+        payload = {
+            "full_name": "Sundar Raman",
+            "birth_date": "1990-10-25",
+            "system_convention": "pythagorean",
+            "language": "en",
+        }
+        res = client.post("/api/v1/numerology/traditional", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+
+        # Birth / Psychic number
+        assert data["birth_psychic_number"] is not None
+        assert data["birth_psychic_number"]["number_value"] == 7
+        assert data["birth_psychic_number"]["raw_value"] == 25
+
+        # Calculation breakdown
+        cb = data["calculation_breakdown"]
+        assert cb is not None
+        assert len(cb["letter_mappings"]) > 0
+        assert len(cb["word_breakdowns"]) == 2
+        assert cb["word_breakdowns"][0]["word"] == "Sundar"
+        assert cb["life_path_period_reduction"]["period_total"] > 0
+
+    def test_tamil_name_api_endpoint(self):
+        """Test endpoint with Tamil script name."""
+        payload = {
+            "full_name": "கோகுல் முருகன்",
+            "birth_date": "1995-06-15",
+            "system_convention": "pythagorean",
+            "language": "ta",
+        }
+        res = client.post("/api/v1/numerology/traditional", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["expression_destiny"]["number_value"] > 0
+        assert len(data["calculation_breakdown"]["letter_mappings"]) > 0
+
     def test_destiny_matrix_endpoint_success(self):
         """Test POST /api/v1/numerology/destiny-matrix."""
         payload = {
@@ -340,5 +481,265 @@ class TestNumerologyEndpoints:
         assert res.status_code == 200
         data = res.json()
         assert data["engine_version"] == "1.0.0"
-        assert len(data["methods"]) == 3
+        assert len(data["methods"]) == 10
+        method_ids = [m["id"] for m in data["methods"]]
+        assert "name_correction" in method_ids
+        assert "business" in method_ids
+        assert "phone" in method_ids
+        assert "vehicle" in method_ids
+        assert "property" in method_ids
+        assert "marriage" in method_ids
+        assert "family" in method_ids
         assert len(data["conventions"]) == 2
+
+    def test_vehicle_analysis_endpoint_success(self):
+        """Test POST /api/v1/numerology/vehicle/analyze."""
+        payload = {
+            "registration_number": "TN 09 AB 1234",
+            "system_convention": "chaldean",
+            "calculation_mode": "digits_only",
+            "vehicle_usage": "personal",
+            "primary_birth_date": "1994-06-15",
+            "primary_owner_name": "Gokul",
+            "candidate_numbers": ["MH 12 CD 5678", "DL 3C AB 9999"],
+        }
+        res = client.post("/api/v1/numerology/vehicle/analyze", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+
+        assert data["state_code"] == "TN"
+        assert data["rto_code"] == "09"
+        assert data["series_letters"] == "AB"
+        assert data["numeric_digits"] == "1234"
+        assert data["is_valid_indian_format"] is True
+        assert data["primary_analysis"]["calculation_mode"] == "digits_only"
+        assert data["primary_analysis"]["compound_sum"] == 10  # 1+2+3+4 = 10
+        assert data["primary_analysis"]["root_number"] == 1
+        assert len(data["owner_alignments"]) == 1
+        assert data["owner_alignments"][0]["name"] == "Gokul"
+        assert len(data["candidates"]) == 2
+
+    def test_property_analysis_endpoint_success(self):
+        """Test POST /api/v1/numerology/property/analyze."""
+        payload = {
+            "property_category": "apartment_flat",
+            "tenure_type": "purchased",
+            "door_flat_number": "4B",
+            "building_number": "3",
+            "floor_number": "4",
+            "building_name": "Lotus Greens",
+            "facing_direction": "North-East",
+            "property_usage": "residential_living",
+            "system_convention": "chaldean",
+            "calculation_mode": "door_number",
+            "primary_birth_date": "1994-06-15",
+            "primary_owner_name": "Gokul",
+            "candidate_properties": [
+                {"door_flat_number": "102", "building_name": "Skyline Heights"},
+                {"door_flat_number": "504", "building_name": "Royal Residency"},
+            ],
+        }
+        res = client.post("/api/v1/numerology/property/analyze", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+
+        assert data["door_flat_number"] == "4B"
+        assert data["property_category"] == "apartment_flat"
+        assert data["primary_analysis"]["calculation_mode"] == "door_number"
+        # 4 + B(2) = 6 in Chaldean
+        assert data["door_analysis"]["compound_sum"] == 6
+        assert data["door_analysis"]["root_number"] == 6
+        assert data["vastu_alignment"] is not None
+        assert data["vastu_alignment"]["facing_direction"] == "North-East"
+        assert len(data["resident_alignments"]) == 1
+        assert data["resident_alignments"][0]["name"] == "Gokul"
+        assert len(data["candidates"]) == 2
+
+    def test_marriage_analysis_endpoint_success(self):
+        """Test POST /api/v1/numerology/marriage/analyze."""
+        payload = {
+            "person_a": {
+                "full_name": "Gokul Murugan",
+                "birth_date": "1995-06-15",
+                "relationship_status": "married",
+            },
+            "person_b": {
+                "full_name": "Ananya Sharma",
+                "birth_date": "1996-09-22",
+                "relationship_status": "married",
+            },
+            "system_convention": "pythagorean",
+            "language": "en",
+        }
+        res = client.post("/api/v1/numerology/marriage/analyze", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+
+        assert data["engine_version"] == "1.0.0"
+        assert data["relationship_status"] == "married"
+        assert data["person_a_profile"]["birth_psychic_number"] == 6
+        assert data["person_b_profile"]["birth_psychic_number"] == 4
+        assert data["psychic_compatibility"]["score"] > 0
+        assert data["life_path_compatibility"]["score"] > 0
+        assert data["expression_compatibility"] is not None
+        assert data["overall_score"] > 0
+        assert len(data["conversation_prompts"]) >= 3
+        assert "disclaimer" in data
+
+
+class TestNumerologyReportPersistence:
+    """Test suite for saving, retrieving, listing, and deleting numerology reports."""
+
+    @pytest.fixture(autouse=True)
+    def setup_and_teardown(self):
+        from app.services.auth_service import get_current_user
+        current_mock_user = {"id": "test-user-uuid-1", "role": "user", "email": "test1@example.com"}
+        app.dependency_overrides[get_current_user] = lambda: current_mock_user
+        yield
+        app.dependency_overrides.pop(get_current_user, None)
+
+    def test_save_and_retrieve_numerology_report(self):
+        payload = {
+            "person_name": "Gokul Murugan",
+            "birth_date": "1994-06-15",
+            "method": "traditional",
+            "system_convention": "pythagorean",
+            "calculation_data": {"birth_psychic_number": {"number_value": 6}},
+            "interpretation_data": {"overall_synthesis": "Test reading."},
+        }
+        res = client.post("/api/v1/numerology/reports", json=payload)
+        assert res.status_code == 200
+        saved = res.json()
+        assert "id" in saved
+        assert saved["person_name"] == "Gokul Murugan"
+        assert saved["method"] == "traditional"
+        assert saved["display_number"] >= 1
+        assert saved["engine_version"] == "1.0.0"
+
+        # Retrieve by id
+        report_id = saved["id"]
+        res_get = client.get(f"/api/v1/numerology/reports/{report_id}")
+        assert res_get.status_code == 200
+        fetched = res_get.json()
+        assert fetched["id"] == report_id
+        assert fetched["person_name"] == "Gokul Murugan"
+
+    def test_display_number_monotonic_increment(self):
+        payload1 = {
+            "person_name": "Person One",
+            "birth_date": "1990-01-01",
+            "method": "destiny_matrix",
+            "system_convention": "pythagorean",
+            "calculation_data": {"day_arcana": {"arcana_number": 1}},
+            "interpretation_data": {},
+        }
+        res1 = client.post("/api/v1/numerology/reports", json=payload1)
+        assert res1.status_code == 200
+        num1 = res1.json()["display_number"]
+
+        payload2 = {
+            "person_name": "Person Two",
+            "birth_date": "1992-02-02",
+            "method": "advanced",
+            "system_convention": "pythagorean",
+            "calculation_data": {"lo_shu": {}},
+            "interpretation_data": {},
+        }
+        res2 = client.post("/api/v1/numerology/reports", json=payload2)
+        assert res2.status_code == 200
+        num2 = res2.json()["display_number"]
+
+        assert num2 > num1
+
+    def test_list_reports_ordered_descending(self):
+        res = client.get("/api/v1/numerology/reports")
+        assert res.status_code == 200
+        data = res.json()
+        assert "reports" in data
+        assert "count" in data
+        reports = data["reports"]
+        if len(reports) >= 2:
+            assert reports[0]["display_number"] >= reports[1]["display_number"]
+
+    def test_unauthorized_user_isolation(self):
+        from app.services.auth_service import get_current_user
+
+        # User 1 saves
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-isolation-1",
+            "role": "user",
+            "email": "iso1@example.com",
+        }
+        payload = {
+            "person_name": "Private User",
+            "birth_date": "1988-08-08",
+            "method": "business",
+            "system_convention": "chaldean",
+            "calculation_data": {},
+            "interpretation_data": {},
+        }
+        res = client.post("/api/v1/numerology/reports", json=payload)
+        assert res.status_code == 200
+        report_id = res.json()["id"]
+
+        # User 2 tries to fetch and delete
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-isolation-2",
+            "role": "user",
+            "email": "iso2@example.com",
+        }
+        res_other = client.get(f"/api/v1/numerology/reports/{report_id}")
+        assert res_other.status_code == 404
+
+        res_del_other = client.delete(f"/api/v1/numerology/reports/{report_id}")
+        assert res_del_other.status_code == 404
+
+        # Original user can delete
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": "user-isolation-1",
+            "role": "user",
+            "email": "iso1@example.com",
+        }
+        res_del = client.delete(f"/api/v1/numerology/reports/{report_id}")
+        assert res_del.status_code == 200
+
+    def test_all_ten_methods_validation(self):
+        valid_methods = [
+            "traditional",
+            "destiny_matrix",
+            "advanced",
+            "name_correction",
+            "business",
+            "phone",
+            "vehicle",
+            "property",
+            "marriage",
+            "family",
+        ]
+        for m in valid_methods:
+            payload = {
+                "person_name": f"Test {m}",
+                "birth_date": "1990-05-15",
+                "method": m,
+                "system_convention": "pythagorean",
+                "calculation_data": {"method": m},
+                "interpretation_data": {},
+            }
+            res = client.post("/api/v1/numerology/reports", json=payload)
+            assert res.status_code == 200, f"Method {m} should be accepted"
+
+        # Invalid method should be rejected with 422
+        bad_payload = {
+            "person_name": "Test Invalid",
+            "birth_date": "1990-05-15",
+            "method": "unsupported_magic_method",
+            "system_convention": "pythagorean",
+            "calculation_data": {},
+            "interpretation_data": {},
+        }
+        res_bad = client.post("/api/v1/numerology/reports", json=bad_payload)
+        assert res_bad.status_code == 422
+
+
+
+

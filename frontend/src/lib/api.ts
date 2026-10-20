@@ -26,11 +26,29 @@ import {
   SaveNumerologyReportRequest,
   SavedNumerologyReportResponse,
   NumerologyMetadataResponse,
+  NameAnalysisRequest,
+  NameAnalysisResponse,
+  NameCorrectionRequest,
+  NameCorrectionResponse,
+  BusinessNumerologyRequest,
+  BusinessNumerologyResponse,
+  PhoneNumerologyRequest,
+  PhoneNumerologyResponse,
+  VehicleNumerologyRequest,
+  VehicleNumerologyResponse,
+  PropertyNumerologyRequest,
+  PropertyNumerologyResponse,
+  MarriageNumerologyRequest,
+  MarriageNumerologyResponse,
+  FamilyNumerologyRequest,
+  FamilyNumerologyResponse,
   HoraryKpRequest,
   HoraryKpResponse,
   SaveKpChartPayload,
   SavedKpChartRecord,
   VedicYogaResponse,
+  UnifiedDoshaResponse,
+  MedicalAstrologyResponse,
   KpEventAnalysisRequest,
   KpEventAnalysisResponse,
   UserKpAnalysisListResponse,
@@ -42,6 +60,7 @@ import {
   SavedVastuReportsListResponse,
   TransitTimelineRequest,
   TransitTimelineResponse,
+  ShadbalaResponse,
   VargaD1D9Request,
   VargaD1D9Response,
   SourceReferenceResponse,
@@ -62,6 +81,22 @@ import {
   SaveRemedyReportRequest,
   SavedRemedyReportResponse,
   SavedRemedyReportsListResponse,
+  UnifiedMarriageRequest,
+  UnifiedMarriageResponse,
+  MarriageCompatibilityRequest,
+  MarriageCompatibilityResponse,
+  RuleRegisterResponse,
+  SaveMarriageCompatibilityReportRequest,
+  UpdateMarriageReportMetadataRequest,
+  SavedMarriageReportSummary,
+  SavedMarriageReportDetail,
+  SavedMarriageReportsListResponse,
+  LiveTransitsResponse,
+  HoroscopeWritingRequest,
+  HoroscopeWritingResponse,
+  HoroscopeWritingSaveResponse,
+  SavedHoroscopeWritingItem,
+  SavedHoroscopeWritingListResponse,
 } from "./types";
 
 
@@ -185,6 +220,49 @@ export async function calculateHoroscope(req: HoroscopeRequest): Promise<Horosco
 }
 
 /**
+ * 3b. Real-time Live Planetary Transits (GET/POST /api/v1/horoscope/live-transits)
+ */
+export async function getLiveTransits(params?: {
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  ayanamsa?: number;
+  target_datetime?: string;
+}): Promise<LiveTransitsResponse> {
+  const query = new URLSearchParams();
+  if (params?.timezone) query.set("timezone", params.timezone);
+  if (params?.latitude !== undefined) query.set("latitude", String(params.latitude));
+  if (params?.longitude !== undefined) query.set("longitude", String(params.longitude));
+  if (params?.ayanamsa !== undefined) query.set("ayanamsa", String(params.ayanamsa));
+  if (params?.target_datetime) query.set("target_datetime", params.target_datetime);
+  const qStr = query.toString();
+  const getPath = `/api/v1/horoscope/live-transits${qStr ? `?${qStr}` : ""}`;
+
+  try {
+    return await request<LiveTransitsResponse>(getPath);
+  } catch (getErr) {
+    // Resilient fallback to POST endpoint with structured payload
+    try {
+      return await request<LiveTransitsResponse>("/api/v1/horoscope/live-transits", {
+        method: "POST",
+        body: JSON.stringify({
+          timezone: params?.timezone || "Asia/Kolkata",
+          latitude: params?.latitude ?? 13.0827,
+          longitude: params?.longitude ?? 80.2707,
+          ayanamsa: params?.ayanamsa ?? 0,
+          target_datetime: params?.target_datetime,
+        }),
+      });
+    } catch {
+      // Re-throw original or final error
+      throw getErr;
+    }
+  }
+}
+
+
+
+/**
  * 4. Vimshottari Dasa calculation (POST /api/v1/horoscope/dasa)
  */
 export async function calculateDasa(req: DasaRequest): Promise<DasaResponse> {
@@ -250,6 +328,56 @@ export async function calculateVedicYogas(
   });
 }
 
+/**
+ * 8b. Classical Vedic Doshas calculation (POST /api/v1/vedic/doshas)
+ */
+export async function calculateDoshas(
+  req: BirthInput & {
+    ayanamsa?: number;
+    house_system?: number;
+    include_2nd_house_in_kuja?: boolean;
+    transit_date?: string;
+    transit_time?: string;
+  }
+): Promise<UnifiedDoshaResponse> {
+  return request<UnifiedDoshaResponse>("/api/v1/vedic/doshas", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 8c. Classical Shadbala calculation (POST /api/v1/vedic/shadbala)
+ */
+export async function calculateShadbala(
+  req: BirthInput & {
+    ayanamsa?: number;
+    house_system?: number;
+    gender?: string;
+  }
+): Promise<ShadbalaResponse> {
+  return request<ShadbalaResponse>("/api/v1/vedic/shadbala", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 8d. Classical Vedic & KP Medical Astrology calculation (POST /api/v1/vedic/medical-astrology)
+ */
+export async function calculateMedicalAstrology(
+  req: BirthInput & {
+    ayanamsa?: number;
+    house_system?: number;
+    gender?: string;
+  }
+): Promise<MedicalAstrologyResponse> {
+  return request<MedicalAstrologyResponse>("/api/v1/vedic/medical-astrology", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
 export interface ClientHoroscopeFormData {
   fullName?: string;
   birthDate: string; // YYYY-MM-DD
@@ -290,6 +418,7 @@ export async function calculateFullHoroscopeSuite(
     include_nabhasha: true,
     include_ashtakavarga: true,
     include_vedic_yogas: true,
+    include_doshas: true,
   });
 
   // 2. Calculate Vimshottari Dasa (complete 5 levels: Maha -> Antar -> Pratyantar -> Sookshma -> Prana)
@@ -328,6 +457,7 @@ export async function calculateFullHoroscopeSuite(
     nabhasha: horoscope.nabhasha_yogas,
     ashtakavarga: horoscope.ashtakavarga,
     vedic_yogas: horoscope.vedic_yogas,
+    doshas: horoscope.doshas,
     calculatedAt: new Date().toISOString(),
     clientInputs: {
       fullName: form.fullName,
@@ -387,6 +517,112 @@ export async function calculateAdvancedAnalysis(
   });
 }
 
+export async function analyzeNameNumerology(
+  req: NameAnalysisRequest,
+  token?: string
+): Promise<NameAnalysisResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<NameAnalysisResponse>("/api/v1/numerology/name/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function suggestNameCorrections(
+  req: NameCorrectionRequest,
+  token?: string
+): Promise<NameCorrectionResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<NameCorrectionResponse>("/api/v1/numerology/name/suggest-corrections", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function analyzeBusinessNumerology(
+  req: BusinessNumerologyRequest,
+  token?: string
+): Promise<BusinessNumerologyResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<BusinessNumerologyResponse>("/api/v1/numerology/business/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function analyzePhoneNumerology(
+  req: PhoneNumerologyRequest,
+  token?: string
+): Promise<PhoneNumerologyResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<PhoneNumerologyResponse>("/api/v1/numerology/phone/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function analyzeVehicleNumerology(
+  req: VehicleNumerologyRequest,
+  token?: string
+): Promise<VehicleNumerologyResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<VehicleNumerologyResponse>("/api/v1/numerology/vehicle/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function analyzePropertyNumerology(
+  req: PropertyNumerologyRequest,
+  token?: string
+): Promise<PropertyNumerologyResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<PropertyNumerologyResponse>("/api/v1/numerology/property/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function analyzeMarriageNumerology(
+  req: MarriageNumerologyRequest,
+  token?: string
+): Promise<MarriageNumerologyResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<MarriageNumerologyResponse>("/api/v1/numerology/marriage/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+export async function analyzeFamilyNumerology(
+  req: FamilyNumerologyRequest,
+  token?: string
+): Promise<FamilyNumerologyResponse> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return request<FamilyNumerologyResponse>("/api/v1/numerology/family/analyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+
+
 export async function getNumerologyMetadata(): Promise<NumerologyMetadataResponse> {
   return request<NumerologyMetadataResponse>("/api/v1/numerology/metadata", {
     method: "GET",
@@ -444,6 +680,67 @@ export async function deleteNumerologyReport(
       Authorization: `Bearer ${token}`,
     },
   });
+}
+
+/**
+ * Download Saved Numerology Report PDF (GET /api/v1/numerology/reports/{id}/pdf)
+ */
+export async function downloadNumerologyReportPdf(
+  reportId: string,
+  lang: string = "en",
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/numerology/reports/${encodeURIComponent(reportId)}/pdf?lang=${encodeURIComponent(lang)}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to download numerology PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * Export Ad-Hoc Numerology PDF directly from live studio calculation (POST /api/v1/numerology/export-pdf)
+ */
+export async function exportNumerologyPdf(
+  payload: {
+    person_name: string;
+    birth_date?: string | null;
+    method: string;
+    system_convention?: string;
+    language?: string;
+    calculation_data: Record<string, any>;
+    interpretation_data?: Record<string, any> | null;
+    display_number?: number | null;
+    report_id?: string | null;
+  },
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/numerology/export-pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to export numerology PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
 }
 
 // ============================================================================
@@ -1077,9 +1374,293 @@ export async function scanKpPrediction(
   });
 }
 
+/**
+ * 23. Unified KP + Vedic Marriage Prediction Engine (POST /api/v1/predictions/marriage)
+ */
+export async function predictMarriageEvent(
+  req: UnifiedMarriageRequest,
+  token?: string
+): Promise<UnifiedMarriageResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<UnifiedMarriageResponse>("/api/v1/predictions/marriage", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 24. Dual-Horoscope Marriage Compatibility Analysis (POST /api/marriage-compatibility/analyze)
+ */
+export async function analyzeMarriageCompatibility(
+  req: MarriageCompatibilityRequest,
+  token?: string
+): Promise<MarriageCompatibilityResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 25. Marriage Compatibility Rules Register (GET /api/marriage-compatibility/rules)
+ */
+export async function getMarriageCompatibilityRules(): Promise<RuleRegisterResponse> {
+  return request<RuleRegisterResponse>("/api/marriage-compatibility/rules", {
+    method: "GET",
+  });
+}
+
+/**
+ * 26. Save Marriage Compatibility Report (POST /api/marriage-compatibility/saved)
+ */
+export async function saveMarriageCompatibilityReport(
+  req: SaveMarriageCompatibilityReportRequest,
+  token?: string
+): Promise<SavedMarriageReportDetail> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedMarriageReportDetail>("/api/marriage-compatibility/saved", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 27. List Saved Marriage Compatibility Reports (GET /api/marriage-compatibility/saved)
+ */
+export async function listSavedMarriageCompatibilityReports(
+  options: { limit?: number; offset?: number; all_users?: boolean } = {},
+  token?: string
+): Promise<SavedMarriageReportsListResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const params = new URLSearchParams();
+  if (options.limit !== undefined) params.set("limit", options.limit.toString());
+  if (options.offset !== undefined) params.set("offset", options.offset.toString());
+  if (options.all_users) params.set("all_users", "true");
+  const queryStr = params.toString() ? `?${params.toString()}` : "";
+
+  return request<SavedMarriageReportsListResponse>(`/api/marriage-compatibility/saved${queryStr}`, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+/**
+ * 28. Get Saved Marriage Compatibility Report by ID (GET /api/marriage-compatibility/saved/{id})
+ */
+export async function getSavedMarriageCompatibilityReport(
+  reportId: string,
+  token?: string
+): Promise<SavedMarriageReportDetail> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedMarriageReportDetail>(`/api/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+/**
+ * 29. Update Saved Marriage Compatibility Report Metadata (PATCH /api/marriage-compatibility/saved/{id})
+ */
+export async function updateSavedMarriageCompatibilityReportMetadata(
+  reportId: string,
+  req: UpdateMarriageReportMetadataRequest,
+  token?: string
+): Promise<SavedMarriageReportDetail> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedMarriageReportDetail>(`/api/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
+    method: "PATCH",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 30. Delete Saved Marriage Compatibility Report (DELETE /api/marriage-compatibility/saved/{id})
+ */
+export async function deleteSavedMarriageCompatibilityReport(
+  reportId: string,
+  token?: string
+): Promise<{ success: boolean; message: string }> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<{ success: boolean; message: string }>(`/api/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
+    method: "DELETE",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
 
 
 
 
 
 
+
+
+
+
+/**
+ * 31. Calculate Traditional Tamil Horoscope Writing (POST /api/v1/tools/horoscope-writing/calculate)
+ */
+export async function calculateHoroscopeWriting(
+  req: import("./types").HoroscopeWritingRequest,
+  token?: string
+): Promise<import("./types").HoroscopeWritingResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<import("./types").HoroscopeWritingResponse>("/api/v1/tools/horoscope-writing/calculate", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 32. Download Six-Page Traditional Tamil Horoscope Booklet PDF (POST /api/v1/tools/horoscope-writing/pdf)
+ */
+export async function downloadHoroscopeWritingPdf(
+  req: import("./types").HoroscopeWritingRequest & { precalculated_data?: any },
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/tools/horoscope-writing/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate horoscope writing PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * 33. Save Horoscope Writing Document (POST /api/v1/tools/horoscope-writing/save)
+ */
+export async function saveHoroscopeWriting(
+  payload: {
+    horoscope_id?: string | null;
+    person_name: string;
+    birth_date: string;
+    birth_time: string;
+    birth_place?: string | null;
+    latitude: number;
+    longitude: number;
+    timezone?: string;
+    panchanga_system?: string;
+    calculated_data: any;
+    overrides?: any;
+  },
+  token?: string
+): Promise<HoroscopeWritingSaveResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<HoroscopeWritingSaveResponse>("/api/v1/tools/horoscope-writing/save", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * 34. List Saved Horoscope Writing Documents (GET /api/v1/tools/horoscope-writing/saved)
+ */
+export async function listSavedHoroscopeWritings(
+  token?: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<SavedHoroscopeWritingListResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const query = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  }).toString();
+  return request<SavedHoroscopeWritingListResponse>(`/api/v1/tools/horoscope-writing/saved?${query}`, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+/**
+ * 35. Get Saved Horoscope Writing Document by ID (GET /api/v1/tools/horoscope-writing/saved/{id})
+ */
+export async function getSavedHoroscopeWriting(
+  id: string,
+  token?: string
+): Promise<SavedHoroscopeWritingItem> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedHoroscopeWritingItem>(`/api/v1/tools/horoscope-writing/saved/${encodeURIComponent(id)}`, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+/**
+ * 36. Delete Saved Horoscope Writing Document by ID (DELETE /api/v1/tools/horoscope-writing/saved/{id})
+ */
+export async function deleteSavedHoroscopeWriting(
+  id: string,
+  token?: string
+): Promise<{ success: boolean; message: string }> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<{ success: boolean; message: string }>(`/api/v1/tools/horoscope-writing/saved/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+/**
+ * 37. Update Saved Horoscope Writing Document by ID (PUT /api/v1/tools/horoscope-writing/saved/{id})
+ */
+export async function updateSavedHoroscopeWriting(
+  id: string,
+  payload: import("./types").HoroscopeWritingUpdateRequest,
+  token?: string
+): Promise<SavedHoroscopeWritingItem> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedHoroscopeWritingItem>(`/api/v1/tools/horoscope-writing/saved/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}

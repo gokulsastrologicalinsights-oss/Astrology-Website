@@ -310,3 +310,167 @@ export function getLevelMetadata(level: string): LevelMetadata {
     levelNumber: 5,
   };
 }
+
+export const VIMSHOTTARI_ORDER: string[] = [
+  "Ketu", "Venus", "Sun", "Moon", "Mars",
+  "Rahu", "Jupiter", "Saturn", "Mercury",
+];
+
+export const VIMSHOTTARI_YEARS: Record<string, number> = {
+  Ketu: 7,
+  Venus: 20,
+  Sun: 6,
+  Moon: 10,
+  Mars: 7,
+  Rahu: 18,
+  Jupiter: 16,
+  Saturn: 19,
+  Mercury: 17,
+};
+
+export const LEVEL_NAMES: string[] = [
+  "Mahadasha",
+  "Antardasha",
+  "Pratyantardasha",
+  "Sookshmadasha",
+  "Pranadasha",
+];
+
+/**
+ * Generate authentic 9 child subperiods on-the-fly using canonical Vimshottari proportions.
+ * Ensures Sookshamam and Pranam are deterministically present and expandable across any chart.
+ */
+export function generateChildSubPeriods(
+  parentNode: DasaPeriodNode,
+  utcOffsetHours: number = 0,
+  birthDate?: string
+): DasaPeriodNode[] {
+  const currentDepth = getLevelMetadata(parentNode.level).levelNumber;
+  if (currentDepth >= 5) return [];
+
+  const childLevel = LEVEL_NAMES[currentDepth];
+  const parentLord = parentNode.lord;
+  const parentPos = VIMSHOTTARI_ORDER.indexOf(parentLord);
+  if (parentPos === -1) return [];
+
+  const isBirthChain = !!parentNode.is_active_at_birth;
+  let parentTheoStartJd = parentNode.theoretical_start_jd;
+  let parentTheoEndJd = parentNode.theoretical_end_jd ?? parentNode.end_jd;
+
+  if (parentTheoStartJd === undefined || isNaN(parentTheoStartJd)) {
+    if (isBirthChain && currentDepth === 1) {
+      const fullYears = VIMSHOTTARI_YEARS[parentLord] ?? 120;
+      parentTheoStartJd = parentTheoEndJd - fullYears * 365.25;
+    } else {
+      parentTheoStartJd = parentNode.start_jd;
+    }
+  }
+
+  const parentTheoDur = parentTheoEndJd - parentTheoStartJd;
+  const birthJd = parentNode.start_jd;
+
+  const children: DasaPeriodNode[] = [];
+  let currTheoJd = parentTheoStartJd;
+
+  let bYear: number | undefined;
+  let bMonth: number | undefined;
+  let bDay: number | undefined;
+  if (birthDate) {
+    const parts = birthDate.split("-").map(Number);
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      bYear = parts[0];
+      bMonth = parts[1];
+      bDay = parts[2];
+    }
+  }
+
+  for (let i = 0; i < 9; i++) {
+    const lord = VIMSHOTTARI_ORDER[(parentPos + i) % 9];
+    const cTheoDur = i === 8 ? parentTheoEndJd - currTheoJd : parentTheoDur * (VIMSHOTTARI_YEARS[lord] / 120.0);
+    const cTheoEndJd = i === 8 ? parentTheoEndJd : currTheoJd + cTheoDur;
+    const cTheoStartJd = currTheoJd;
+    currTheoJd = cTheoEndJd;
+
+    let cStartJd: number;
+    let cEndJd: number;
+    let cIsActiveAtBirth = false;
+
+    if (!isBirthChain) {
+      cStartJd = cTheoStartJd;
+      cEndJd = cTheoEndJd;
+      cIsActiveAtBirth = false;
+    } else {
+      // 1. Completed before birth -> omit
+      if (cTheoEndJd <= birthJd + 1e-7) {
+        continue;
+      }
+      // 2. Spans birth instant -> active at birth (clipped to birthJd)
+      if (cTheoStartJd <= birthJd && cTheoEndJd > birthJd) {
+        cStartJd = birthJd;
+        cEndJd = cTheoEndJd;
+        cIsActiveAtBirth = true;
+      } else {
+        // 3. Starts after birth -> full canonical duration
+        cStartJd = cTheoStartJd;
+        cEndJd = cTheoEndJd;
+        cIsActiveAtBirth = false;
+      }
+    }
+
+    const durDays = cEndJd - cStartJd;
+    const sDt = jdToCalendarDateTime(cStartJd, utcOffsetHours);
+    const eDt = jdToCalendarDateTime(cEndJd, utcOffsetHours);
+
+    const isSubDaily = currentDepth + 1 >= 4;
+    const sDateIso = sDt ? (isSubDaily ? `${sDt.dateStr}T${sDt.timeStr}` : sDt.dateStr) : undefined;
+    const eDateIso = eDt ? (isSubDaily ? `${eDt.dateStr}T${eDt.timeStr}` : eDt.dateStr) : undefined;
+
+    const tsDt = jdToCalendarDateTime(cTheoStartJd, utcOffsetHours);
+    const teDt = jdToCalendarDateTime(cTheoEndJd, utcOffsetHours);
+    const theoSDateIso = tsDt ? (isSubDaily ? `${tsDt.dateStr}T${tsDt.timeStr}` : tsDt.dateStr) : undefined;
+    const theoEDateIso = teDt ? (isSubDaily ? `${teDt.dateStr}T${teDt.timeStr}` : teDt.dateStr) : undefined;
+
+    let startAge: string | undefined;
+    let endAge: string | undefined;
+    let startAgeDict: DasaPeriodAgeDict | undefined;
+    let endAgeDict: DasaPeriodAgeDict | undefined;
+
+    if (bYear !== undefined && bMonth !== undefined && bDay !== undefined && sDt && eDt) {
+      const sAgeObj = calculateCalendarAge(bYear, bMonth, bDay, sDt.year, sDt.month, sDt.day);
+      const eAgeObj = calculateCalendarAge(bYear, bMonth, bDay, eDt.year, eDt.month, eDt.day);
+      if (sAgeObj) {
+        startAge = formatCalendarAge(sAgeObj, "en");
+        startAgeDict = sAgeObj;
+      }
+      if (eAgeObj) {
+        endAge = formatCalendarAge(eAgeObj, "en");
+        endAgeDict = eAgeObj;
+      }
+    }
+
+    children.push({
+      lord,
+      level: childLevel,
+      start_jd: cStartJd,
+      end_jd: cEndJd,
+      duration_days: durDays,
+      duration_years: durDays / 365.25,
+      start_date_iso: sDateIso,
+      end_date_iso: eDateIso,
+      start_age: startAge,
+      end_age: endAge,
+      start_age_dict: startAgeDict,
+      end_age_dict: endAgeDict,
+      theoretical_start_jd: cTheoStartJd,
+      theoretical_end_jd: cTheoEndJd,
+      theoretical_duration_days: cTheoDur,
+      theoretical_duration_years: cTheoDur / 365.25,
+      theoretical_start_date_iso: theoSDateIso,
+      theoretical_end_date_iso: theoEDateIso,
+      is_active_at_birth: cIsActiveAtBirth,
+      sub_periods: [],
+    });
+  }
+
+  return children;
+}

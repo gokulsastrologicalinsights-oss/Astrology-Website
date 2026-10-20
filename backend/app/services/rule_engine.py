@@ -190,7 +190,15 @@ def list_documented_rules() -> List[RuleAuditNote]:
             tradition="Parashari & Jaimini Upadesha Sutras",
             status="Draft",
             description="Extracts 10th sign, ruler, occupants, aspecting grahas, and Amatyakaraka.",
-            documentation_ref="Outstanding: Dashamsha (D10) divisional verification and Shadbala weights.",
+            documentation_ref="Outstanding: Dashamsha (D10) divisional verification.",
+        ),
+        RuleAuditNote(
+            rule_id="RULE-SHADBALA-01",
+            rule_name="Parashari Shadbala (Six-fold Planetary Strength)",
+            tradition="Brihat Parashara Hora Shastra Chapter 23",
+            status="Implemented",
+            description="Six-fold planetary strength calculation (Sthana, Dig, Kala, Cheshta, Naisargika, Drik balas) for 7 classical grahas with virupa/rupa totals, thresholds, and ranks.",
+            documentation_ref="BPHS Chapter 23; app/services/shadbala_engine",
         ),
         RuleAuditNote(
             rule_id="RULE-YOGA-01",

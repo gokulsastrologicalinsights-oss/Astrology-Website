@@ -1,26 +1,29 @@
 """Traditional Numerology Engine.
 
 Implements Pythagorean and Chaldean calculation conventions, master-number (11, 22, 33)
-preservation, letter-to-number reduction, and comprehensive bilingual (English/Tamil)
-interpretations.
+preservation, transparent letter-to-number reduction steps, Tamil & Unicode support,
+karmic debt detection (13, 14, 16, 19), birth/psychic number (Mulank), and comprehensive
+bilingual (English/Tamil) interpretations.
 """
 
 import re
 import unicodedata
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
+
+ENGINE_VERSION = "1.0.0"
 
 # ------------------------------------------------------------------------------
 # 1. Letter to Number Mappings
 # ------------------------------------------------------------------------------
 
-# Pythagorean Alphabet Map (1-9)
+# Pythagorean Alphabet Map (1-9 Western standard)
 PYTHAGOREAN_MAP: Dict[str, int] = {
     "A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "H": 8, "I": 9,
     "J": 1, "K": 2, "L": 3, "M": 4, "N": 5, "O": 6, "P": 7, "Q": 8, "R": 9,
     "S": 1, "T": 2, "U": 3, "V": 4, "W": 5, "X": 6, "Y": 7, "Z": 8,
 }
 
-# Chaldean Alphabet Map (1-8; 9 is reserved as sacred)
+# Chaldean Alphabet Map (1-8; 9 is reserved as sacred and separate from letters)
 CHALDEAN_MAP: Dict[str, int] = {
     "A": 1, "I": 1, "J": 1, "Q": 1, "Y": 1,
     "B": 2, "K": 2, "R": 2,
@@ -32,11 +35,48 @@ CHALDEAN_MAP: Dict[str, int] = {
     "F": 8, "P": 8,
 }
 
-VOWELS = {"A", "E", "I", "O", "U"}
+LATIN_VOWELS = {"A", "E", "I", "O", "U"}
+VOWELS = LATIN_VOWELS
+
+# Tamil Script Classical Phonetic (Akshar Anka) Mapping
+TAMIL_INDEPENDENT_VOWELS: Dict[str, int] = {
+    "அ": 1, "ஆ": 1,
+    "இ": 1, "ஈ": 1,
+    "உ": 6, "ஊ": 6,
+    "எ": 5, "ஏ": 5, "ஐ": 5,
+    "ஒ": 7, "ஓ": 7, "ஔ": 7,
+    "ஃ": 1,  # Ayutha Ezhuthu
+}
+
+TAMIL_DEPENDENT_VOWELS: Dict[str, int] = {
+    "\u0bbe": 1,  # ா
+    "\u0bbf": 1,  # ி
+    "\u0bc0": 1,  # ீ
+    "\u0bc1": 6,  # ு
+    "\u0bc2": 6,  # ூ
+    "\u0bc6": 5,  # ெ
+    "\u0bc7": 5,  # ே
+    "\u0bc8": 5,  # ை
+    "\u0bca": 7,  # ொ
+    "\u0bcb": 7,  # ோ
+    "\u0bcc": 7,  # ௌ
+}
+
+TAMIL_CONSONANTS: Dict[str, int] = {
+    "க": 2, "ங": 5,
+    "ச": 6, "ஞ": 5,
+    "ட": 4, "ண": 5,
+    "த": 4, "ந": 5,
+    "ப": 8, "ம": 4,
+    "ய": 1, "ர": 2, "ல": 3, "வ": 6, "ழ": 5, "ள": 3, "ற": 2, "ன": 5,
+    "ஜ": 1, "ஷ": 5, "ஸ": 3, "ஹ": 5,
+}
+
+TAMIL_PULLI = "\u0bcd"  # ் virama / halant (value 0)
 
 
 # ------------------------------------------------------------------------------
-# 2. Number Reduction Helpers
+# 2. Number Reduction Helpers with Transparent Steps
 # ------------------------------------------------------------------------------
 
 def reduce_number(val: int, preserve_master: bool = True) -> int:
@@ -52,53 +92,169 @@ def reduce_number(val: int, preserve_master: bool = True) -> int:
     return val
 
 
+def reduce_number_steps(val: int, preserve_master: bool = True) -> Tuple[int, List[str]]:
+    """Deterministically reduce an integer and record all intermediate reduction steps."""
+    if val <= 0:
+        return 0, ["0"]
+    steps: List[str] = [str(val)]
+    curr = val
+    while curr > 9:
+        if preserve_master and curr in (11, 22, 33):
+            steps.append(f"Master Number {curr} preserved")
+            break
+        digits = [int(d) for d in str(curr)]
+        curr = sum(digits)
+        step_str = f"{' + '.join(str(d) for d in digits)} = {curr}"
+        steps.append(step_str)
+        if preserve_master and curr in (11, 22, 33):
+            steps.append(f"Master Number {curr} preserved")
+            break
+    return curr, steps
+
+
+def strip_latin_diacritics(text: str) -> str:
+    """Strip accents from Latin characters (e.g. 'é' -> 'e', 'ñ' -> 'n') while preserving non-Latin scripts."""
+    result = []
+    for c in text:
+        decomposed = unicodedata.normalize("NFKD", c)
+        if decomposed and decomposed[0].isascii() and decomposed[0].isalpha():
+            result.append(decomposed[0])
+        else:
+            result.append(c)
+    return "".join(result)
+
+
 def normalize_text(text: str) -> str:
-    """Normalize text: strip accents/diacritics and convert to uppercase ASCII letters."""
-    nfkd_form = unicodedata.normalize("NFKD", text)
-    cleaned = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
-    return re.sub(r"[^A-Za-z]", "", cleaned).upper()
+    """Normalize text: strip accents from Latin characters while preserving Unicode scripts and words."""
+    cleaned = strip_latin_diacritics(text.strip())
+    return unicodedata.normalize("NFC", cleaned)
+
+
+def get_letter_info(char: str, convention: str = "pythagorean") -> Tuple[int, bool, bool]:
+    """Retrieve number value, whether character is a vowel, and whether it is a valid letter.
+    Returns: (value, is_vowel, is_valid_letter)
+    """
+    # Check Latin letters (case insensitive)
+    up = char.upper()
+    mapping = CHALDEAN_MAP if convention == "chaldean" else PYTHAGOREAN_MAP
+    if up in mapping:
+        return mapping[up], up in LATIN_VOWELS, True
+
+    # Check Tamil Independent Vowels
+    if char in TAMIL_INDEPENDENT_VOWELS:
+        return TAMIL_INDEPENDENT_VOWELS[char], True, True
+
+    # Check Tamil Dependent Vowel Signs (Matras)
+    if char in TAMIL_DEPENDENT_VOWELS:
+        return TAMIL_DEPENDENT_VOWELS[char], True, True
+
+    # Check Tamil Consonants
+    if char in TAMIL_CONSONANTS:
+        return TAMIL_CONSONANTS[char], False, True
+
+    # Check Tamil Pulli (modifier with 0 numeric weight)
+    if char == TAMIL_PULLI:
+        return 0, False, False
+
+    # Check other Unicode alphabetic characters
+    if char.isalpha():
+        cp = ord(char)
+        sum_digits = sum(int(d) for d in str(cp))
+        val = reduce_number(sum_digits, preserve_master=False) or 1
+        return val, False, True
+
+    # Punctuation / spaces / symbols
+    return 0, False, False
 
 
 def get_letter_value(char: str, convention: str = "pythagorean") -> int:
-    """Map character to number with Unicode code-point fallback for non-Latin characters."""
-    char = char.upper()
-    mapping = CHALDEAN_MAP if convention == "chaldean" else PYTHAGOREAN_MAP
-    if char in mapping:
-        return mapping[char]
-    # Fallback for unicode characters: sum digits of codepoint and reduce to 1-9
-    code = ord(char)
-    sum_digits = sum(int(d) for d in str(code))
-    return reduce_number(sum_digits, preserve_master=False) or 1
+    """Legacy helper mapping character to number with Unicode code-point fallback."""
+    val, _, is_valid = get_letter_info(char, convention)
+    return val if is_valid else (1 if char.isalpha() else 0)
 
 
 # ------------------------------------------------------------------------------
 # 3. Core Traditional Numerology Calculations
 # ------------------------------------------------------------------------------
 
-def calculate_life_path(birth_date: str) -> Tuple[int, str]:
-    """Calculate Life Path number from YYYY-MM-DD birthdate."""
+def calculate_birth_psychic_number(birth_date: str) -> Tuple[int, str, Dict[str, Any]]:
+    """Calculate Birth Number / Psychic Number (Mulank / Driver) from day of birth (1-31).
+    In Vedic/Cheiro tradition, this is the root day reduction (1-9) representing innate psychic disposition.
+    """
+    parts = birth_date.strip().split("-")
+    day = int(parts[2])
+    
+    reduced, steps = reduce_number_steps(day, preserve_master=False)
+    master_reduced, _ = reduce_number_steps(day, preserve_master=True)
+
+    method_str = f"Birth day ({day}) -> {' -> '.join(steps)}"
+    detail_data = {
+        "raw_day": day,
+        "reduced_value": reduced,
+        "master_value": master_reduced,
+        "is_master": master_reduced in (11, 22),
+        "reduction_steps": steps,
+        "planet": get_ruling_planet(reduced),
+    }
+    return reduced, method_str, detail_data
+
+
+def calculate_birthday_number(birth_date: str) -> Tuple[int, str]:
+    """Calculate Birthday number from day of birth (1-31), preserving master numbers 11 and 22."""
+    day = int(birth_date.strip().split("-")[2])
+    b_num = reduce_number(day, preserve_master=True)
+    method_str = f"Birth day {day} reduced to {b_num}"
+    return b_num, method_str
+
+
+def calculate_life_path_detailed(birth_date: str) -> Dict[str, Any]:
+    """Calculate Life Path number with full breakdown of both Period reduction and Full-sum methods."""
     parts = birth_date.strip().split("-")
     year = int(parts[0])
     month = int(parts[1])
     day = int(parts[2])
 
-    r_month = reduce_number(month, preserve_master=True)
-    r_day = reduce_number(day, preserve_master=True)
-    r_year = reduce_number(sum(int(d) for d in str(year)), preserve_master=True)
+    r_month, month_steps = reduce_number_steps(month, preserve_master=True)
+    r_day, day_steps = reduce_number_steps(day, preserve_master=True)
+    r_year, year_steps = reduce_number_steps(sum(int(d) for d in str(year)), preserve_master=True)
 
-    total = r_month + r_day + r_year
-    lp = reduce_number(total, preserve_master=True)
-    method_str = f"Reduced Month ({r_month}) + Reduced Day ({r_day}) + Reduced Year ({r_year}) = {total} -> {lp}"
-    return lp, method_str
+    period_total = r_month + r_day + r_year
+    lp_period, period_reduction_steps = reduce_number_steps(period_total, preserve_master=True)
+
+    # Full sum of all digits (DD/MM/YYYY)
+    all_digits = [int(d) for d in re.sub(r"\D", "", birth_date)]
+    full_sum = sum(all_digits)
+    lp_full, full_sum_steps = reduce_number_steps(full_sum, preserve_master=True)
+
+    method_str = (
+        f"Period Method: Reduced Month ({r_month}) + Reduced Day ({r_day}) + Reduced Year ({r_year}) "
+        f"= {period_total} -> {lp_period}"
+    )
+
+    return {
+        "life_path": lp_period,
+        "method_str": method_str,
+        "compound_period_total": period_total,
+        "period_breakdown": {
+            "month": {"raw": month, "reduced": r_month, "steps": month_steps},
+            "day": {"raw": day, "reduced": r_day, "steps": day_steps},
+            "year": {"raw": year, "reduced": r_year, "steps": year_steps},
+            "period_total": period_total,
+            "reduction_steps": period_reduction_steps,
+        },
+        "full_sum_breakdown": {
+            "digits": all_digits,
+            "sum": full_sum,
+            "reduced": lp_full,
+            "steps": full_sum_steps,
+        },
+    }
 
 
-def calculate_birthday_number(birth_date: str) -> Tuple[int, str]:
-    """Calculate Birthday number from day of birth (1-31)."""
-    day = int(birth_date.strip().split("-")[2])
-    # Preserves 11 and 22 master numbers
-    b_num = reduce_number(day, preserve_master=True)
-    method_str = f"Birth day {day} reduced to {b_num}"
-    return b_num, method_str
+def calculate_life_path(birth_date: str) -> Tuple[int, str]:
+    """Calculate Life Path number from YYYY-MM-DD birthdate (maintains backward compatibility)."""
+    res = calculate_life_path_detailed(birth_date)
+    return res["life_path"], res["method_str"]
 
 
 def calculate_attitude_number(birth_date: str) -> Tuple[int, str]:
@@ -106,7 +262,7 @@ def calculate_attitude_number(birth_date: str) -> Tuple[int, str]:
     parts = birth_date.strip().split("-")
     month = int(parts[1])
     day = int(parts[2])
-    att = reduce_number(month + day, preserve_master=True)
+    att, steps = reduce_number_steps(month + day, preserve_master=True)
     method_str = f"Month ({month}) + Day ({day}) = {month + day} -> {att}"
     return att, method_str
 
@@ -119,37 +275,77 @@ def calculate_personal_year(birth_date: str, target_year: int = 2026) -> Tuple[i
     r_month = reduce_number(month, False)
     r_day = reduce_number(day, False)
     r_year = reduce_number(target_year, False)
-    py = reduce_number(r_month + r_day + r_year, preserve_master=True)
-    method_str = f"Month ({r_month}) + Day ({r_day}) + Current Year {target_year} ({r_year}) -> {py}"
+    total = r_month + r_day + r_year
+    py, steps = reduce_number_steps(total, preserve_master=True)
+    method_str = f"Month ({r_month}) + Day ({r_day}) + Target Year {target_year} ({r_year}) = {total} -> {py}"
     return py, method_str
 
 
 def calculate_name_numbers(name: str, convention: str = "pythagorean") -> Dict[str, Any]:
-    """Calculate Expression, Soul Urge, Personality, Karmic Lessons, and Hidden Passion."""
-    clean_name = normalize_text(name)
+    """Calculate Expression, Soul Urge, Personality, Karmic Lessons, and Hidden Passion with transparent letter steps."""
+    normalized = normalize_text(name)
+    words = re.split(r"[\s\-_]+", normalized)
+
+    letter_mappings: List[Dict[str, Any]] = []
+    word_breakdowns: List[Dict[str, Any]] = []
+
     all_vals: List[int] = []
     vowel_vals: List[int] = []
     consonant_vals: List[int] = []
 
-    for char in clean_name:
-        val = get_letter_value(char, convention)
-        all_vals.append(val)
-        if char in VOWELS:
-            vowel_vals.append(val)
-        else:
-            consonant_vals.append(val)
+    for raw_word in words:
+        word = raw_word.strip(".'\",:;!()[]{}/\\")
+        if not word:
+            continue
+        w_all: List[int] = []
+        w_vowels: List[int] = []
+        w_consonants: List[int] = []
 
-    # Expression / Destiny
+        # Iterate over characters in word, ignoring punctuation dots/apostrophes
+        for char in word:
+            if char in ".'\",:;!()[]{}/\\":
+                continue
+            val, is_vowel, is_valid = get_letter_info(char, convention)
+            if not is_valid:
+                continue
+
+            letter_mappings.append({
+                "char": char,
+                "value": val,
+                "is_vowel": is_vowel,
+                "word": word,
+            })
+            w_all.append(val)
+            all_vals.append(val)
+            if is_vowel:
+                w_vowels.append(val)
+                vowel_vals.append(val)
+            else:
+                w_consonants.append(val)
+                consonant_vals.append(val)
+
+        if w_all:
+            word_sum = sum(w_all)
+            word_vowel_sum = sum(w_vowels)
+            word_consonant_sum = sum(w_consonants)
+            w_red, _ = reduce_number_steps(word_sum, preserve_master=True)
+            word_breakdowns.append({
+                "word": word,
+                "letter_sum": word_sum,
+                "vowel_sum": word_vowel_sum,
+                "consonant_sum": word_consonant_sum,
+                "reduced_expression": w_red,
+            })
+
+    # If no valid characters, fallback to safe 0
     sum_expr = sum(all_vals)
-    expr = reduce_number(sum_expr, preserve_master=True)
+    expr, expr_steps = reduce_number_steps(sum_expr, preserve_master=True)
 
-    # Soul Urge (Vowels)
     sum_soul = sum(vowel_vals)
-    soul = reduce_number(sum_soul, preserve_master=True)
+    soul, soul_steps = reduce_number_steps(sum_soul, preserve_master=True)
 
-    # Personality (Consonants)
     sum_pers = sum(consonant_vals)
-    pers = reduce_number(sum_pers, preserve_master=True)
+    pers, pers_steps = reduce_number_steps(sum_pers, preserve_master=True)
 
     # Frequency analysis for Karmic Lessons & Hidden Passion
     freq: Dict[int, int] = {i: 0 for i in range(1, 10)}
@@ -164,11 +360,19 @@ def calculate_name_numbers(name: str, convention: str = "pythagorean") -> Dict[s
 
     return {
         "expression": expr,
-        "expression_method": f"Sum of letters ({sum_expr}) reduced under {convention.title()} -> {expr}",
+        "compound_expression": sum_expr,
+        "expression_method": f"Sum of letters ({sum_expr}) reduced under {convention.title()} -> {' -> '.join(expr_steps)}",
+        "expression_steps": expr_steps,
         "soul_urge": soul,
-        "soul_urge_method": f"Sum of vowels ({sum_soul}) reduced -> {soul}",
+        "compound_soul_urge": sum_soul,
+        "soul_urge_method": f"Sum of vowels ({sum_soul}) reduced -> {' -> '.join(soul_steps)}",
+        "soul_urge_steps": soul_steps,
         "personality": pers,
-        "personality_method": f"Sum of consonants ({sum_pers}) reduced -> {pers}",
+        "compound_personality": sum_pers,
+        "personality_method": f"Sum of consonants ({sum_pers}) reduced -> {' -> '.join(pers_steps)}",
+        "personality_steps": pers_steps,
+        "letter_mappings": letter_mappings,
+        "word_breakdowns": word_breakdowns,
         "karmic_lessons": karmic_lessons,
         "hidden_passion": hidden_passion,
     }
@@ -176,13 +380,138 @@ def calculate_name_numbers(name: str, convention: str = "pythagorean") -> Dict[s
 
 def calculate_maturity_number(life_path: int, expression: int) -> Tuple[int, str]:
     """Calculate Maturity / Divine Purpose number = Life Path + Expression."""
-    mat = reduce_number(life_path + expression, preserve_master=True)
-    method_str = f"Life Path ({life_path}) + Expression ({expression}) = {life_path + expression} -> {mat}"
+    total = life_path + expression
+    mat, steps = reduce_number_steps(total, preserve_master=True)
+    method_str = f"Life Path ({life_path}) + Expression ({expression}) = {total} -> {mat}"
     return mat, method_str
 
 
 # ------------------------------------------------------------------------------
-# 4. Verified Interpretations Database (Bilingual English & Tamil)
+# 4. Karmic Debt Detection (13, 14, 16, 19)
+# ------------------------------------------------------------------------------
+
+KARMIC_DEBT_CATALOG: Dict[int, Dict[str, str]] = {
+    13: {
+        "title_en": "Karmic Debt 13/4: Discipline, Order & Perseverance",
+        "title_ta": "கர்ம கடன் 13/4: ஒழுக்கம் மற்றும் கடின உழைப்பின் கடன்",
+        "desc_en": "Points to past-life tendency toward shortcuts or procrastination. Requires steadfast, methodical work without cutting corners. True fulfillment arrives through structured order.",
+        "desc_ta": "குறுக்கு வழிகளைத் தவிர்த்து, ஒழுக்கமான உழைப்பினால் மட்டுமே நிலையான வெற்றியை அடைய முடியும். அசைக்க முடியாத விடாமுயற்சி உங்கள் வாழ்வின் பாடம்.",
+        "remedy_en": "Maintain consistent daily schedules, embrace detail-oriented responsibilities, and avoid complaining about hard work.",
+        "remedy_ta": "தினசரி திட்டமிடல், சோம்பலைத் தவிர்த்தல் மற்றும் நேர்மையான தொடர் உழைப்பை வழக்கமாக்குங்கள்.",
+    },
+    14: {
+        "title_en": "Karmic Debt 14/5: Freedom, Moderation & Temperance",
+        "title_ta": "கர்ம கடன் 14/5: சுதந்திரம், சுயக்கட்டுப்பாடு மற்றும் மிதவாதம்",
+        "desc_en": "Originates from past misuse of personal liberty, sensory indulgence, or escapism. Demands internal moderation amidst life's constant fluctuations.",
+        "desc_ta": "சுதந்திரத்தை தவறாகப் பயன்படுத்தாமல் சுயக்கட்டுப்பாட்டோடு வாழ வேண்டும். அதீத ஆசைகளையும் சலனங்களையும் கட்டுப்படுத்துவது அவசியம்.",
+        "remedy_en": "Practice mindfulness, guard against restless impulsive changes, and establish stable emotional and physical commitments.",
+        "remedy_ta": "தியானம், உணர்ச்சி சமநிலை மற்றும் நிலையான கொள்கைகளை பின்பற்றுங்கள்.",
+    },
+    16: {
+        "title_en": "Karmic Debt 16/7: Ego Dissolution, Humility & Spiritual Rebirth",
+        "title_ta": "கர்ம கடன் 16/7: அகந்தை அழிவு, ஆன்மீகப் பணிவு மற்றும் மறுமலர்ச்சி",
+        "desc_en": "The 'Fallen Tower' vibration. Challenges false pride, emotional grandiosity, or self-centered attachments. When external structures crumble, genuine spiritual wisdom is born.",
+        "desc_ta": "போலி கர்வத்தை கைவிட்டு ஆன்மீக பணிவுடன் வாழ வேண்டும். மாயையான வெளிப்புற தோற்றங்களை விட உள்ளுணர்வின் தூய்மையே சாஸ்வதமானது.",
+        "remedy_en": "Cultivate deep self-awareness, practice unpretentious humility, and choose spiritual growth over superficial status.",
+        "remedy_ta": "பணிவு, பிறரிடம் அன்பு பாராட்டுதல் மற்றும் ஆன்மீக தேடலில் ஈடுபடுதல் நலம் பயக்கும்.",
+    },
+    19: {
+        "title_en": "Karmic Debt 19/1: Interdependence, Mutual Respect & True Leadership",
+        "title_ta": "கர்ம கடன் 19/1: கூட்டுறவு, பரஸ்பர மரியாதை மற்றும் தூய தலைமை",
+        "desc_en": "Points to past misuse of authority or refusal to accept assistance. Teaches that solitary stubbornness leads to isolation, whereas true power lies in receptive cooperation.",
+        "desc_ta": "சர்வாதிகாரப் போக்கை கைவிட்டு மற்றவர்களின் ஆலோசனையையும் ஆதரவையும் மதித்து அனைவருடனும் இணைந்து வாழ வேண்டும்.",
+        "remedy_en": "Ask for and accept help gracefully, listen attentively to others' perspectives, and lead with empathy rather than domination.",
+        "remedy_ta": "மற்றவர்களின் தேவைகளை உணர்ந்து, ஆதரவை ஏற்றுக்கொண்டு தோழமையுடன் வழிநடத்துங்கள்.",
+    },
+}
+
+
+def detect_karmic_debts(
+    birth_date: str,
+    name: str,
+    lang: str = "en",
+    lp_compound: Optional[int] = None,
+    expr_compound: Optional[int] = None,
+    soul_compound: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """Detect karmic debt numbers 13, 14, 16, and 19 across Day of Birth, Life Path, Expression, and Soul Urge."""
+    debts: List[Dict[str, Any]] = []
+    seen: set = set()
+    is_ta = (lang == "ta")
+
+    # 1. Day of Birth
+    day = int(birth_date.strip().split("-")[2])
+    if day in KARMIC_DEBT_CATALOG:
+        cat = KARMIC_DEBT_CATALOG[day]
+        debts.append({
+            "number": day,
+            "source": f"Day of Birth ({day})",
+            "title": cat["title_ta"] if is_ta else cat["title_en"],
+            "description": cat["desc_ta"] if is_ta else cat["desc_en"],
+            "remedy_focus": cat["remedy_ta"] if is_ta else cat["remedy_en"],
+        })
+        seen.add((day, "day"))
+
+    # 2. Life Path compound
+    if lp_compound and lp_compound in KARMIC_DEBT_CATALOG and (lp_compound, "lp") not in seen:
+        cat = KARMIC_DEBT_CATALOG[lp_compound]
+        debts.append({
+            "number": lp_compound,
+            "source": f"Life Path Compound Total ({lp_compound})",
+            "title": cat["title_ta"] if is_ta else cat["title_en"],
+            "description": cat["desc_ta"] if is_ta else cat["desc_en"],
+            "remedy_focus": cat["remedy_ta"] if is_ta else cat["remedy_en"],
+        })
+        seen.add((lp_compound, "lp"))
+
+    # 3. Expression compound
+    if expr_compound and expr_compound in KARMIC_DEBT_CATALOG and (expr_compound, "expr") not in seen:
+        cat = KARMIC_DEBT_CATALOG[expr_compound]
+        debts.append({
+            "number": expr_compound,
+            "source": f"Expression Name Total ({expr_compound})",
+            "title": cat["title_ta"] if is_ta else cat["title_en"],
+            "description": cat["desc_ta"] if is_ta else cat["desc_en"],
+            "remedy_focus": cat["remedy_ta"] if is_ta else cat["remedy_en"],
+        })
+        seen.add((expr_compound, "expr"))
+
+    # 4. Soul Urge compound
+    if soul_compound and soul_compound in KARMIC_DEBT_CATALOG and (soul_compound, "soul") not in seen:
+        cat = KARMIC_DEBT_CATALOG[soul_compound]
+        debts.append({
+            "number": soul_compound,
+            "source": f"Soul Urge Vowels Total ({soul_compound})",
+            "title": cat["title_ta"] if is_ta else cat["title_en"],
+            "description": cat["desc_ta"] if is_ta else cat["desc_en"],
+            "remedy_focus": cat["remedy_ta"] if is_ta else cat["remedy_en"],
+        })
+        seen.add((soul_compound, "soul"))
+
+    return debts
+
+
+def get_ruling_planet(num: int) -> Dict[str, str]:
+    """Map root number to Vedic and Western planetary ruler."""
+    planets = {
+        1: {"en": "Sun (Surya)", "ta": "சூரியன் (Surya)"},
+        2: {"en": "Moon (Chandra)", "ta": "சந்திரன் (Chandra)"},
+        3: {"en": "Jupiter (Guru)", "ta": "குரு / வியாழன் (Guru)"},
+        4: {"en": "Rahu / Uranus", "ta": "ராகு (Rahu)"},
+        5: {"en": "Mercury (Budha)", "ta": "புதன் (Budha)"},
+        6: {"en": "Venus (Shukra)", "ta": "சுக்கிரன் (Shukra)"},
+        7: {"en": "Ketu / Neptune", "ta": "கேது (Ketu)"},
+        8: {"en": "Saturn (Shani)", "ta": "சனி (Shani)"},
+        9: {"en": "Mars (Mangala)", "ta": "செவ்வாய் (Mangala)"},
+        11: {"en": "Moon / Neptune (Master Intuition)", "ta": "சந்திரன் / நெப்டியூன்"},
+        22: {"en": "Rahu / Pluto (Master Architect)", "ta": "ராகு / புளூட்டோ"},
+        33: {"en": "Jupiter / Venus (Master Teacher)", "ta": "குரு / சுக்கிரன்"},
+    }
+    return planets.get(num, planets[1])
+
+
+# ------------------------------------------------------------------------------
+# 5. Verified Interpretations Database (Bilingual English & Tamil)
 # ------------------------------------------------------------------------------
 
 INTERPRETATIONS: Dict[str, Dict[int, Dict[str, Any]]] = {
@@ -322,8 +651,7 @@ def generate_synthesized_reports(
 ) -> Dict[str, Any]:
     """Synthesizes strengths, challenges, career, finance, and love themes deterministically."""
     is_ta = (lang == "ta")
-    
-    # Deterministic synthesis matrices based on core combinations
+
     strengths_map = {
         1: ("Decisive leadership and pioneering courage", "துணிச்சலான தலைமை மற்றும் முன்னோடி தைரியம்"),
         2: ("Diplomatic mediation and deep empathy", "அமைதியான பேச்சுவார்த்தை மற்றும் இரக்க குணம்"),

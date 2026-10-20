@@ -4,7 +4,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
-import { calculateAdvancedAnalysis, saveNumerologyReport } from "@/lib/api";
+import {
+  calculateAdvancedAnalysis,
+  saveNumerologyReport,
+  downloadNumerologyReportPdf,
+  exportNumerologyPdf,
+} from "@/lib/api";
 import {
   AdvancedAnalysisResponse,
   SavedNumerologyReportResponse,
@@ -40,6 +45,8 @@ export default function AdvancedAnalysisPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AdvancedAnalysisResponse | null>(null);
   const [savedRecord, setSavedRecord] = useState<SavedNumerologyReportResponse | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +120,48 @@ export default function AdvancedAnalysisPage() {
     setResult(null);
     setSavedRecord(null);
     setError(null);
+    setPdfError(null);
+  };
+
+  const handleDownloadPdf = async (lang: "en" | "ta" = "en") => {
+    if (!result) return;
+    setPdfDownloading(true);
+    setPdfError(null);
+    try {
+      let blob: Blob;
+      if (savedRecord?.id && session?.access_token) {
+        blob = await downloadNumerologyReportPdf(savedRecord.id, lang, session.access_token);
+      } else {
+        blob = await exportNumerologyPdf(
+          {
+            person_name: result.full_name || "Advanced Subject",
+            birth_date: result.birth_date,
+            method: "advanced",
+            system_convention: "lo_shu_grid",
+            language: lang,
+            calculation_data: result as any,
+            interpretation_data: {
+              overall_synthesis: "Advanced Yuan and Lo Shu numerology reading completed successfully.",
+            },
+            display_number: savedRecord?.display_number,
+          },
+          session?.access_token
+        );
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (result.full_name || "Subject").replace(/\s+/g, "_");
+      a.download = `Advanced_LoShu_${safeName}_${lang}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setPdfError(err?.message || "Failed to download Advanced Numerology PDF report.");
+    } finally {
+      setPdfDownloading(false);
+    }
   };
 
   return (
@@ -301,6 +350,13 @@ export default function AdvancedAnalysisPage() {
             </div>
           )}
 
+          {pdfError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{pdfError}</span>
+            </div>
+          )}
+
           {/* Full Report View */}
           <NumerologyReportView
             title={`Advanced Numerology Analysis for ${result.full_name}`}
@@ -310,6 +366,9 @@ export default function AdvancedAnalysisPage() {
             birthDate={result.birth_date}
             displayNumber={savedRecord?.display_number}
             engineVersion={result.engine_version}
+            reportId={savedRecord?.id}
+            onDownloadPdf={handleDownloadPdf}
+            isDownloadingPdf={pdfDownloading}
             coreSummaryCards={[
               {
                 title: "Unicode Vibration Number",

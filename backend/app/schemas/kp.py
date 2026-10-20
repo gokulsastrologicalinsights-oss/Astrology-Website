@@ -177,6 +177,12 @@ class SaveKpChartRequest(BaseModel):
     house_system_id: int = Field(2, description="2 = Placidus")
     calculation_result: Dict[str, Any] = Field(..., description="Full calculation snapshot")
     saved_horoscope_id: Optional[str] = None
+    customer_full_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    country_code: Optional[str] = "+91"
+    customer_id: Optional[str] = None
+    normalized_phone: Optional[str] = None
+    whatsapp_number: Optional[str] = None
 
 
 class SavedKpChartItem(BaseModel):
@@ -200,6 +206,11 @@ class SavedKpChartItem(BaseModel):
     engine_version: str
     calculation_result: Dict[str, Any]
     saved_horoscope_id: Optional[str] = None
+    customer_id: Optional[str] = None
+    customer_phone: Optional[str] = None
+    country_code: Optional[str] = None
+    normalized_phone: Optional[str] = None
+    whatsapp_number: Optional[str] = None
     created_at: str
     updated_at: str
 

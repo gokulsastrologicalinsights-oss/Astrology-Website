@@ -33,7 +33,7 @@ from app.schemas.horoscope import HoroscopeRequest
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.kp_service import calculate_kp_chart
 from app.services.ephemeris import calculate_full_horoscope
-from app.services.dasa_service import _convert_node
+from app.services.dasa_service import _convert_node, generate_vimshottari_hierarchy
 from app.services.timezone_utils import resolve_birth_datetime
 import xalen
 
@@ -278,8 +278,13 @@ def analyze_saved_horoscope(
         bt_obj = dt_time.fromisoformat(str(b_time).strip()) if isinstance(b_time, str) else b_time
         local_dt, utc_dt, jd, _, offset_hours = resolve_birth_datetime(bd_obj, bt_obj, tz_str)
         moon_pos = xalen.planet_position(jd, 1, True, ayan_id)
-        raw_tree = xalen.vimshottari_dasha(moon_pos["longitude"], jd, 2)
-        dasa_tree = [_convert_node(node, birth_date=local_dt.date(), utc_offset_hours=offset_hours) for node in raw_tree]
+        dasa_tree, _ = generate_vimshottari_hierarchy(
+            moon_lon=moon_pos["longitude"],
+            birth_jd=jd,
+            birth_date=local_dt.date(),
+            utc_offset_hours=offset_hours,
+            depth=2,
+        )
         periods_list = extract_periods_from_dasa_response({"dasa_tree": dasa_tree})
 
     # Extract Lagna, Significators, CSL, Retrograde

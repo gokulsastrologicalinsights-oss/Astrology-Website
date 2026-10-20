@@ -1473,28 +1473,29 @@ def list_vastu_reports(
     user_id: str, is_admin: bool = False, limit: int = 50, offset: int = 0
 ) -> Tuple[List[Dict[str, Any]], int]:
     """Retrieves paginated saved Vastu reports for the authenticated user, or all for admins."""
+    reports: List[Dict[str, Any]] = []
+    seen_ids = set()
     supabase = get_supabase_client()
     if supabase:
         try:
             query = supabase.table("saved_vastu_reports").select("*", count="exact")
             if not is_admin:
                 query = query.eq("user_id", user_id)
-            res = query.order("display_number", desc=True).range(offset, offset + limit - 1).execute()
-            if res.data is not None:
-                reports = res.data or []
-                count = res.count if hasattr(res, "count") and res.count is not None else len(reports)
-                return reports, count
+            res = query.order("display_number", desc=True).execute()
+            if res.data:
+                reports = res.data
+                seen_ids = {r["id"] for r in reports}
         except Exception:
             pass
 
-    # Local fallback
-    matched = [
-        r for r in _LOCAL_VASTU_REPORTS.values()
-        if is_admin or r["user_id"] == user_id
-    ]
-    matched.sort(key=lambda x: x["display_number"], reverse=True)
-    total_count = len(matched)
-    return matched[offset:offset + limit], total_count
+    # Merge local fallback reports not present in remote
+    for r in _LOCAL_VASTU_REPORTS.values():
+        if (is_admin or r.get("user_id") == user_id) and r.get("id") not in seen_ids:
+            reports.append(r)
+
+    reports.sort(key=lambda x: x.get("display_number", 0), reverse=True)
+    total_count = len(reports)
+    return reports[offset:offset + limit], total_count
 
 
 def get_vastu_report(

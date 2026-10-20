@@ -8,6 +8,8 @@ import { formatDm } from "@/lib/formatters";
 
 interface NorthIndianChartProps {
   horoscope: HoroscopeResponse;
+  transitPlanets?: PlanetInfo[];
+  showTransits?: boolean;
 }
 
 interface HouseLayout {
@@ -19,7 +21,27 @@ interface HouseLayout {
   planetsY: number;
 }
 
-export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
+// Outer perimeter coordinates for 12 houses when transits are enabled
+const NORTH_TRANSIT_ANCHORS: Record<number, { x: number; y: number }> = {
+  1: { x: 200, y: -26 },   // Top apex (House 1)
+  2: { x: 90, y: -26 },    // Top left (House 2)
+  3: { x: -26, y: 90 },    // Left upper (House 3)
+  4: { x: -26, y: 200 },   // Left apex (House 4)
+  5: { x: -26, y: 310 },   // Left lower (House 5)
+  6: { x: 90, y: 426 },    // Bottom left (House 6)
+  7: { x: 200, y: 426 },   // Bottom apex (House 7)
+  8: { x: 310, y: 426 },   // Bottom right (House 8)
+  9: { x: 426, y: 310 },   // Right lower (House 9)
+  10: { x: 426, y: 200 },  // Right apex (House 10)
+  11: { x: 426, y: 90 },   // Right upper (House 11)
+  12: { x: 310, y: -26 },  // Top right (House 12)
+};
+
+export function NorthIndianChart({
+  horoscope,
+  transitPlanets,
+  showTransits = false,
+}: NorthIndianChartProps) {
   const { language } = useLanguage();
   const { ascendant, planets, metadata } = horoscope;
 
@@ -30,7 +52,7 @@ export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
     return ((ascSign - 1 + (h - 1)) % 12) + 1;
   };
 
-  // Group planets by sign_index
+  // Group natal planets by sign_index
   const planetsBySign: Record<number, PlanetInfo[]> = {};
   for (let s = 1; s <= 12; s++) {
     planetsBySign[s] = [];
@@ -38,6 +60,19 @@ export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
   for (const p of planets) {
     if (planetsBySign[p.sign_index]) {
       planetsBySign[p.sign_index].push(p);
+    }
+  }
+
+  // Group transit planets by sign_index
+  const transitsBySign: Record<number, PlanetInfo[]> = {};
+  for (let s = 1; s <= 12; s++) {
+    transitsBySign[s] = [];
+  }
+  if (showTransits && transitPlanets) {
+    for (const tp of transitPlanets) {
+      if (transitsBySign[tp.sign_index]) {
+        transitsBySign[tp.sign_index].push(tp);
+      }
     }
   }
 
@@ -57,16 +92,46 @@ export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
     { houseNumber: 12, signIndex: getHouseSign(12), labelX: 260, labelY: 80, planetsX: 300, planetsY: 45 },
   ];
 
+  const viewBox = showTransits ? "-55 -55 510 510" : "0 0 400 400";
+
   return (
-    <div className="w-full max-w-xl mx-auto select-none">
+    <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl mx-auto select-none">
       <div className="border-2 border-[#B8860B]/70 bg-[#FAF7F0] rounded-lg shadow-sm p-2 sm:p-3 overflow-hidden">
-        <div className="aspect-square w-full relative bg-[#FFFDF9] border border-[#B8860B]/60 rounded">
+        <div className="aspect-square w-full relative bg-[#FFFDF9] border border-[#B8860B]/60 rounded overflow-hidden">
           <svg
-            viewBox="0 0 400 400"
+            viewBox={viewBox}
             className="w-full h-full"
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
-            {/* Background */}
+            {showTransits && (
+              <>
+                {/* Outer Perimeter Ring for Live Transits */}
+                <rect
+                  x="-50"
+                  y="-50"
+                  width="500"
+                  height="500"
+                  rx="10"
+                  fill="#FAF8F2"
+                  stroke="#D8BD80"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+                {/* Outer Corner Badges */}
+                <text
+                  x="-42"
+                  y="-36"
+                  fill="#8C6D23"
+                  fontSize="8"
+                  fontWeight="bold"
+                  className="font-mono select-none"
+                >
+                  🪐 TR
+                </text>
+              </>
+            )}
+
+            {/* Natal Chart Background */}
             <rect x="0" y="0" width="400" height="400" fill="#FFFDF9" />
 
             {/* Geometric Lines */}
@@ -91,7 +156,7 @@ export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
               strokeWidth="1.5"
             />
 
-            {/* Render Each House Content */}
+            {/* Render Each Natal House Content */}
             {houses.map((h) => {
               const occupants = planetsBySign[h.signIndex] || [];
               const isH1 = h.houseNumber === 1;
@@ -127,7 +192,7 @@ export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
                     </text>
                   )}
 
-                  {/* Occupant Planets */}
+                  {/* Occupant Natal Planets */}
                   {occupants.map((p, idx) => {
                     const shortName = getGrahaShort(p.name, language);
                     const retro = p.is_retrograde
@@ -160,6 +225,68 @@ export function NorthIndianChart({ horoscope }: NorthIndianChartProps) {
                 </g>
               );
             })}
+
+            {/* Render Outer Transit Overlays */}
+            {showTransits &&
+              houses.map((h) => {
+                const transits = transitsBySign[h.signIndex] || [];
+                const anchor = NORTH_TRANSIT_ANCHORS[h.houseNumber];
+                if (!anchor) return null;
+
+                if (transits.length === 0) {
+                  return (
+                    <circle
+                      key={`tr-empty-${h.houseNumber}`}
+                      cx={anchor.x}
+                      cy={anchor.y}
+                      r="1.8"
+                      fill="#D8BD80"
+                      opacity="0.6"
+                    />
+                  );
+                }
+
+                return (
+                  <g key={`tr-group-${h.houseNumber}`}>
+                    {transits.map((p, idx) => {
+                      const shortName = getGrahaShort(p.name, language);
+                      const degInt = Math.floor(p.degree_in_sign || 0);
+                      const retro = p.is_retrograde
+                        ? language === "ta"
+                          ? "(வ)"
+                          : "(R)"
+                        : "";
+                      const yOffset = (idx - (transits.length - 1) / 2) * 14;
+                      return (
+                        <g key={`tr-p-${p.name}`}>
+                          <rect
+                            x={anchor.x - 32}
+                            y={anchor.y + yOffset - 7.5}
+                            width="64"
+                            height="15"
+                            rx="3"
+                            fill="#FAF2DE"
+                            stroke="#B8862B"
+                            strokeWidth="0.8"
+                          />
+                          <text
+                            x={anchor.x}
+                            y={anchor.y + yOffset}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#8C6D23"
+                            fontSize="8"
+                            fontWeight="bold"
+                            className="font-mono select-none"
+                          >
+                            TR {shortName} {degInt}° {retro}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
+              })}
           </svg>
         </div>
       </div>

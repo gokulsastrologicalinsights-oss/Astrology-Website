@@ -196,18 +196,19 @@ def evaluate_raja_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
 
             # Criteria 1: Dispositor of debilitated sign is in Kendra from Lagna or Moon
             c1_lagna = disp_house in KENDRA_HOUSES if disp_house else False
-            c1_moon = (count_houses_inclusive(moon_house, disp_house) in {1, 4, 7, 10}) if (moon_house and disp_house) else False
+            c1_moon = (count_houses_inclusive(moon_house, disp_house) in {1, 4, 7, 10}) if (moon_house and disp_house and dispositor != "Moon") else False
             c1 = c1_lagna or c1_moon
 
             # Criteria 2: Exalted ruler of the debilitation sign is in Kendra from Lagna or Moon
             c2_lagna = exalt_planet_house in KENDRA_HOUSES if exalt_planet_house else False
-            c2_moon = (count_houses_inclusive(moon_house, exalt_planet_house) in {1, 4, 7, 10}) if (moon_house and exalt_planet_house) else False
+            c2_moon = (count_houses_inclusive(moon_house, exalt_planet_house) in {1, 4, 7, 10}) if (moon_house and exalt_planet_house and exalt_planet != "Moon") else False
             c2 = c2_lagna or c2_moon
 
             # Criteria 3: Lord of exaltation sign of debilitated planet is in Kendra from Lagna or Moon
             c3_lagna = own_ex_lord_house in KENDRA_HOUSES if own_ex_lord_house else False
-            c3_moon = (count_houses_inclusive(moon_house, own_ex_lord_house) in {1, 4, 7, 10}) if (moon_house and own_ex_lord_house) else False
+            c3_moon = (count_houses_inclusive(moon_house, own_ex_lord_house) in {1, 4, 7, 10}) if (moon_house and own_ex_lord_house and own_ex_lord != "Moon") else False
             c3 = c3_lagna or c3_moon
+
 
             # Criteria 4: Debilitated planet itself is in a Kendra from Lagna or Moon
             c4_lagna = deb_planet_house in KENDRA_HOUSES
@@ -217,18 +218,53 @@ def evaluate_raja_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             # Criteria 5: Debilitated planet is aspected by its dispositor
             c5 = ctx.planet_aspects_planet(dispositor, deb_planet)
 
-            # Criteria 6 (Navamsha): Debilitated planet in D1 is exalted in Navamsha (D9)
+            # Criteria 6 (Navamsha Exaltation / Vargottama): Debilitated planet in D1 is exalted in Navamsha (D9) or Vargottama
             deb_nav_sign = ctx.planet_navamsa_sign.get(deb_planet)
-            c6 = (deb_nav_sign == own_ex_sign) if (deb_nav_sign and own_ex_sign) else False
+            c6_exalt = (deb_nav_sign == own_ex_sign) if (deb_nav_sign and own_ex_sign) else False
+            c6_vargottama = ctx.is_vargottama(deb_planet)
+            c6 = c6_exalt or c6_vargottama
 
-            nbry_qualifies = c1 or c2 or c3 or c4 or c5 or c6
+            # Criteria 7: Mutual aspect between two debilitated planets (e.g. Sun in Libra and Saturn in Aries)
+            c7 = False
+            partner_deb = None
+            for other_p, other_deb_s in DEBILITATION_SIGNS.items():
+                if other_p != deb_planet and ctx.planet_sign.get(other_p) == other_deb_s:
+                    if ctx.are_mutually_aspecting(deb_planet, other_p):
+                        c7 = True
+                        partner_deb = other_p
+                        break
+
+            bhanga_satisfied = c1 or c2 or c3 or c4 or c5 or c6 or c7
             qualifying_criteria = []
             if c1: qualifying_criteria.append(f"Dispositor {dispositor} in Kendra from Lagna/Moon (House {disp_house})")
             if c2: qualifying_criteria.append(f"Exalted lord {exalt_planet} in Kendra from Lagna/Moon (House {exalt_planet_house})")
             if c3: qualifying_criteria.append(f"Exaltation sign ruler {own_ex_lord} in Kendra from Lagna/Moon (House {own_ex_lord_house})")
             if c4: qualifying_criteria.append(f"{deb_planet} itself is in a Kendra (House {deb_planet_house})")
             if c5: qualifying_criteria.append(f"{deb_planet} is aspected by dispositor {dispositor}")
-            if c6: qualifying_criteria.append(f"{deb_planet} is exalted in Navamsha D9 ({SIGN_NAMES_EN.get(deb_nav_sign, '')})")
+            if c6_exalt: qualifying_criteria.append(f"{deb_planet} is exalted in Navamsha D9 ({SIGN_NAMES_EN.get(deb_nav_sign, '')})")
+            if c6_vargottama: qualifying_criteria.append(f"{deb_planet} is Vargottama (D1 and D9 in {SIGN_NAMES_EN.get(deb_sign, '')}), acting like own-sign")
+            if c7 and partner_deb: qualifying_criteria.append(f"{deb_planet} mutually aspects debilitated {partner_deb}")
+
+            # Check for Combustion (Asta) - a classical impediment that cancels/destroys Raja Yoga potency
+            is_combust, sep_deg, orb_limit = ctx.get_combustion_details(deb_planet)
+            combustion_impediment = is_combust and (deb_planet != "Sun")
+
+            if bhanga_satisfied:
+                if combustion_impediment:
+                    status_str = "Cancelled"
+                    is_qual = False
+                    cancellation_reason = (
+                        f"{deb_planet} debilitation cancellation is neutralized: {deb_planet} is combust (Asta) by Sun "
+                        f"({sep_deg:.1f}° separation <= {orb_limit:.1f}° orb), destroying Raja Yoga fruit per Phaladeepika Ch. 6."
+                    )
+                else:
+                    status_str = "Qualifying"
+                    is_qual = True
+                    cancellation_reason = None
+            else:
+                status_str = "Not Qualifying"
+                is_qual = False
+                cancellation_reason = None
 
             results.append(
                 YogaDetail(
@@ -236,8 +272,8 @@ def evaluate_raja_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
                     name=f"Neecha Bhanga Raja Yoga ({deb_planet})",
                     name_tamil=f"நீச பங்க ராஜ யோகம் ({deb_planet})",
                     category="Raja Yoga",
-                    status="Qualifying" if nbry_qualifies else "Not Qualifying",
-                    is_qualifying=nbry_qualifies,
+                    status=status_str,
+                    is_qualifying=is_qual,
                     planets_involved=[deb_planet, dispositor] + ([exalt_planet] if exalt_planet and c2 else []),
                     relevant_houses=[deb_planet_house] + ([disp_house] if disp_house else []),
                     conditions=[
@@ -247,17 +283,33 @@ def evaluate_raja_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
                             detail=f"{deb_planet} occupies {SIGN_NAMES_EN[deb_sign]} (House {deb_planet_house})."
                         ),
                         YogaConditionItem(
-                            condition="At least one classical Parashari Neecha Bhanga cancellation rule is satisfied",
-                            passed=nbry_qualifies,
+                            condition="Classical Parashari Neecha Bhanga cancellation rule is satisfied",
+                            passed=bhanga_satisfied,
                             detail="; ".join(qualifying_criteria) if qualifying_criteria else "No cancellation conditions satisfied."
+                        ),
+                        YogaConditionItem(
+                            condition="Free from Combustion (Asta) impediment",
+                            passed=not combustion_impediment,
+                            detail=(
+                                f"{deb_planet} is combust ({sep_deg:.1f}° from Sun, orb {orb_limit:.1f}°)."
+                                if combustion_impediment else
+                                f"{deb_planet} is free from combustion ({sep_deg:.1f}° from Sun)."
+                            )
                         )
                     ],
                     short_interpretation=(
                         f"Initial hurdles transformed into phenomenal success; {deb_planet}'s cancellation creates sovereign power, resilience, and renown."
+                        if is_qual else
+                        (
+                            f"Neecha Bhanga Raja Yoga cancelled by combustion of {deb_planet}."
+                            if status_str == "Cancelled" else
+                            f"{deb_planet} remains debilitated without classical cancellation."
+                        )
                     ),
-                    classical_definition="A debilitated planet whose debilitation is cancelled by its dispositor, exaltation ruler, or Kendra placement.",
-                    classical_reference="Phaladeepika Ch. 6, verses 26-30; Brihat Parashara Hora Shastra; 300 Important Combinations #46",
-                    verification_status="Classical Independent Implementation"
+                    classical_definition="A debilitated planet whose debilitation is cancelled by its dispositor, exaltation ruler, Kendra placement, or Navamsha dignity, without combustion.",
+                    classical_reference="Phaladeepika Ch. 6, verses 26-30; Brihat Parashara Hora Shastra Ch. 39; 300 Important Combinations #46",
+                    verification_status="Classical Independent Implementation",
+                    cancellation_reason=cancellation_reason,
                 )
             )
 

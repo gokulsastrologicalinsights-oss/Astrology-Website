@@ -4,6 +4,8 @@ Deterministic, rule-based Vedic and KP astrology backend powered by XALEN epheme
 Zero AI / LLM dependencies.
 """
 
+import logging
+import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +13,8 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.config import settings
+
+logger = logging.getLogger("gai.api")
 from app.routers import (
     health,
     metadata,
@@ -23,7 +27,13 @@ from app.routers import (
     muhurta,
     vedic_extensions,
     kp_events,
+    kp_prediction,
     vastu,
+    remedies,
+    pdf_reports,
+    unified_prediction,
+    marriage_compatibility,
+    horoscope_writing,
 )
 
 
@@ -57,8 +67,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
 )
 
 
@@ -106,11 +116,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # 4. Global fallback exception handler (no internal stack-trace leaks)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    req_id = str(uuid.uuid4())[:8]
+    logger.exception(f"Unhandled exception [req_id={req_id}] on {request.method} {request.url.path}: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "error": "Internal Server Error",
-            "detail": "An unexpected error occurred during calculation.",
+            "detail": f"An unexpected error occurred during calculation. (Request ID: {req_id})",
+            "request_id": req_id,
         },
     )
 
@@ -140,6 +153,13 @@ app.include_router(numerology.router)
 app.include_router(muhurta.router)
 app.include_router(vedic_extensions.router)
 app.include_router(kp_events.router)
+app.include_router(kp_prediction.router)
 app.include_router(vastu.router)
+app.include_router(remedies.router)
+app.include_router(pdf_reports.router)
+app.include_router(unified_prediction.router)
+app.include_router(marriage_compatibility.router, prefix="/api/v1/marriage-compatibility")
+app.include_router(marriage_compatibility.router, prefix="/api/marriage-compatibility")
+app.include_router(horoscope_writing.router)
 
 

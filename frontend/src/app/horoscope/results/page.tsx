@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { getActiveCalculation, saveActiveCalculation } from "@/lib/storage";
-import { FullHoroscopeResult, HoroscopeResponse } from "@/lib/types";
+import { FullHoroscopeResult, HoroscopeResponse, LiveTransitsResponse } from "@/lib/types";
 import {
   formatSerialNumber,
   formatBirthDate,
@@ -23,7 +23,10 @@ import { HousesTable } from "@/components/results/HousesTable";
 import { DasaTimeline } from "@/components/results/DasaTimeline";
 import { KpSection } from "@/components/results/KpSection";
 import { PanchangCard } from "@/components/results/PanchangCard";
+import { HoroscopeFactsPanel, FactCategory } from "@/components/results/HoroscopeFactsPanel";
 import { VedicYogaSection } from "@/components/results/VedicYogaSection";
+import { MedicalAstrologySection } from "@/components/results/MedicalAstrologySection";
+import { DoshaSection } from "@/components/results/DoshaSection";
 import { NabhashaSection } from "@/components/results/NabhashaSection";
 import { AshtakavargaSection } from "@/components/results/AshtakavargaSection";
 import { DestinyCard } from "@/components/results/DestinyCard";
@@ -32,9 +35,13 @@ import {
   calculateAshtakavarga,
   calculateVedicYogas,
   calculateVargaD1D9,
+  calculateDoshas,
+  calculateShadbala,
+  calculateMedicalAstrology,
+  getLiveTransits,
 } from "@/lib/api";
 import { buildPlanetContexts, enrichDasaTreeWithBenefitBhavas } from "@/lib/benefit-bhavas";
-import { buildNavamsaHoroscope, buildBhavaHoroscope } from "@/lib/chart-transforms";
+import { buildNavamsaHoroscope } from "@/lib/chart-transforms";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   Compass,
@@ -64,6 +71,7 @@ import {
   Award,
   Layers,
   Star,
+  Radio,
 } from "lucide-react";
 
 function HoroscopeResultsContent() {
@@ -90,13 +98,16 @@ function HoroscopeResultsContent() {
   // Main Tabs: "horoscope" (ஜாதகம்) | "consultation" (ஆலோசனை) | "reports" (அறிக்கைகள் மற்றும் பதிவிறக்கங்கள்)
   const [mainTab, setMainTab] = useState<"horoscope" | "consultation" | "reports">("horoscope");
 
-  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "destiny-card"
+  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "destiny-card"
   const [secondaryTab, setSecondaryTab] = useState<
-    "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "destiny-card"
+    "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "destiny-card"
   >(() => {
-    const validSecondary = ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "destiny-card"];
+    const validSecondary = ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "medical", "doshas", "destiny-card"];
     if (tabParam && validSecondary.includes(tabParam)) {
       return tabParam as any;
+    }
+    if (searchParams.get("category")) {
+      return "facts";
     }
     if (tabParam === "kp") {
       return "chart";
@@ -106,6 +117,57 @@ function HoroscopeResultsContent() {
 
   // Chart Style Switcher: South Indian vs North Indian
   const [chartMode, setChartMode] = useState<"south" | "north">("south");
+
+  // Live Transits state
+  const [showTransits, setShowTransits] = useState<boolean>(false);
+  const [liveTransitsData, setLiveTransitsData] = useState<LiveTransitsResponse | null>(null);
+  const [isLoadingTransits, setIsLoadingTransits] = useState<boolean>(false);
+  const [transitsError, setTransitsError] = useState<string | null>(null);
+  const [transitsDevError, setTransitsDevError] = useState<string | null>(null);
+  const [showTransitTable, setShowTransitTable] = useState<boolean>(false);
+
+  // Live transits fetcher
+  const fetchLiveTransits = useCallback(async () => {
+    setIsLoadingTransits(true);
+    setTransitsError(null);
+    setTransitsDevError(null);
+    try {
+      const tz = result?.clientInputs?.timezone || result?.horoscope?.metadata?.local_timezone || "Asia/Kolkata";
+      const lat = result?.clientInputs?.latitude ?? result?.horoscope?.metadata?.coordinates?.latitude ?? 13.0827;
+      const lon = result?.clientInputs?.longitude ?? result?.horoscope?.metadata?.coordinates?.longitude ?? 80.2707;
+      const aya = result?.clientInputs?.ayanamsaId ?? result?.horoscope?.metadata?.ayanamsa_id ?? 0;
+      const res = await getLiveTransits({
+        timezone: tz,
+        latitude: lat,
+        longitude: lon,
+        ayanamsa: aya,
+      });
+      setLiveTransitsData(res);
+    } catch (err: unknown) {
+      console.error("[Live Transits Error]", err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStatus = (err as any)?.statusCode ? ` (HTTP ${(err as any).statusCode})` : "";
+      const errDetail = (err as any)?.data?.detail || errMsg;
+      setTransitsError(
+        language === "ta"
+          ? "கோசார கணக்கீடு தற்போது கிடைக்கவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+          : "Live ephemeris transit calculation is currently unavailable. Please check your connection and retry."
+      );
+      setTransitsDevError(`${errDetail}${errStatus}`);
+    } finally {
+      setIsLoadingTransits(false);
+    }
+  }, [result?.clientInputs, result?.horoscope?.metadata, language]);
+
+
+  const handleToggleTransits = () => {
+    const nextState = !showTransits;
+    setShowTransits(nextState);
+    if (nextState && !liveTransitsData && !isLoadingTransits) {
+      fetchLiveTransits();
+    }
+  };
+
 
   // Notes Modal state
   const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
@@ -130,13 +192,15 @@ function HoroscopeResultsContent() {
       setMainTab("consultation");
     } else if (tabParam === "reports") {
       setMainTab("reports");
-    } else if (tabParam && ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "destiny-card"].includes(tabParam)) {
+    } else if (tabParam && ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "doshas", "destiny-card"].includes(tabParam)) {
       setMainTab("horoscope");
       setSecondaryTab(tabParam as any);
     }
   }, [tabParam]);
 
   const [isCalculatingExtensions, setIsCalculatingExtensions] = useState(false);
+  const [isCalculatingLegacyDoshas, setIsCalculatingLegacyDoshas] = useState(false);
+  const calculatedLegacyDoshasRef = useRef<Set<string>>(new Set());
 
   const handleCalculateVedicExtensions = async () => {
     if (!result || isCalculatingExtensions) return;
@@ -151,7 +215,7 @@ function HoroscopeResultsContent() {
         ayanamsa: result.clientInputs.ayanamsaId,
       };
 
-      const [nabhashaRes, ashtakavargaRes, vedicYogaRes, vargaRes] = await Promise.all([
+      const [nabhashaRes, ashtakavargaRes, vedicYogaRes, vargaRes, doshasRes, shadbalaRes, medicalRes] = await Promise.all([
         calculateNabhasha(birthInput).catch((e) => {
           console.warn("Nabhasha calculation failed:", e);
           return null;
@@ -168,6 +232,18 @@ function HoroscopeResultsContent() {
           console.warn("Varga D1/D9 calculation failed:", e);
           return null;
         }),
+        calculateDoshas(birthInput).catch((e) => {
+          console.warn("Dosha calculation failed:", e);
+          return null;
+        }),
+        calculateShadbala(birthInput).catch((e) => {
+          console.warn("Shadbala calculation failed:", e);
+          return null;
+        }),
+        calculateMedicalAstrology(birthInput).catch((e) => {
+          console.warn("Medical astrology calculation failed:", e);
+          return null;
+        }),
       ]);
 
       const updatedHoroscope = {
@@ -176,6 +252,9 @@ function HoroscopeResultsContent() {
         ashtakavarga: ashtakavargaRes || result.horoscope.ashtakavarga,
         vedic_yogas: vedicYogaRes || result.horoscope.vedic_yogas,
         varga_d1_d9: vargaRes || result.horoscope.varga_d1_d9,
+        doshas: doshasRes || result.horoscope.doshas,
+        shadbala: shadbalaRes || (result.horoscope as any).shadbala,
+        medical_astrology: medicalRes || result.horoscope.medical_astrology,
       };
 
       const updatedResult: FullHoroscopeResult = {
@@ -184,10 +263,31 @@ function HoroscopeResultsContent() {
         nabhasha: nabhashaRes || result.nabhasha,
         ashtakavarga: ashtakavargaRes || result.ashtakavarga,
         vedic_yogas: vedicYogaRes || result.vedic_yogas,
+        doshas: doshasRes || (result as any).doshas,
+        shadbala: shadbalaRes || result.shadbala,
+        medical_astrology: medicalRes || result.medical_astrology,
       };
 
       setResult(updatedResult);
       saveActiveCalculation(updatedResult);
+
+      // Fix 3: Persist newly calculated extensions to database if this horoscope is saved
+      const targetSavedId = result.savedId || idParam;
+      if (targetSavedId) {
+        const idempotencyKey =
+          result.idempotencyKey ||
+          (result as any).calculation_result?.idempotency_key ||
+          `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const snapshot = prepareCalculationSnapshot(updatedResult, idempotencyKey);
+
+        fetch(`/api/horoscopes/${targetSavedId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ calculation_result: snapshot }),
+        }).catch((persistErr) => {
+          console.warn("Failed to persist updated calculation snapshot to database:", persistErr);
+        });
+      }
     } catch (err) {
       console.error("Failed to compute Vedic extensions:", err);
     } finally {
@@ -227,13 +327,18 @@ function HoroscopeResultsContent() {
             }
           }
 
+          const existingDoshas = calc.horoscope?.doshas || calc.doshas;
           const unpackedResult: FullHoroscopeResult = {
-            horoscope: calc.horoscope,
+            horoscope: {
+              ...calc.horoscope,
+              doshas: existingDoshas,
+            },
             dasa: calc.dasa,
             kp: calc.kp,
             nabhasha: calc.horoscope?.nabhasha_yogas || calc.nabhasha,
             ashtakavarga: calc.horoscope?.ashtakavarga || calc.ashtakavarga,
             vedic_yogas: calc.horoscope?.vedic_yogas || calc.vedic_yogas,
+            doshas: existingDoshas,
             calculatedAt: calc.calculatedAt || item.created_at,
             savedId: item.id,
             displayNumber: item.display_number,
@@ -283,6 +388,57 @@ function HoroscopeResultsContent() {
               })
               .catch((e) => {
                 console.warn("Auto-calculation of Vedic Yogas failed:", e);
+              });
+          }
+
+          // Fix 2: If doshas is missing from legacy saved snapshot, auto-calculate in background once
+          if (!existingDoshas && item.id && !calculatedLegacyDoshasRef.current.has(item.id)) {
+            calculatedLegacyDoshasRef.current.add(item.id);
+            setIsCalculatingLegacyDoshas(true);
+            calculateDoshas({
+              birth_date: item.birth_date,
+              birth_time: item.birth_time,
+              timezone: item.timezone,
+              latitude: item.latitude,
+              longitude: item.longitude,
+              ayanamsa: item.ayanamsa_id,
+              house_system: item.house_system_id,
+            })
+              .then((doshaRes) => {
+                setResult((prev) => {
+                  if (!prev) return null;
+                  const updated: FullHoroscopeResult = {
+                    ...prev,
+                    doshas: doshaRes,
+                    horoscope: {
+                      ...prev.horoscope,
+                      doshas: doshaRes,
+                    },
+                  };
+                  saveActiveCalculation(updated);
+
+                  // Persist to database so subsequent reloads restore immediately
+                  const idempotencyKey =
+                    updated.idempotencyKey ||
+                    (updated as any).calculation_result?.idempotency_key ||
+                    `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                  const snapshot = prepareCalculationSnapshot(updated, idempotencyKey);
+                  fetch(`/api/horoscopes/${item.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ calculation_result: snapshot }),
+                  }).catch((err) => {
+                    console.warn("Failed to persist auto-calculated doshas to database:", err);
+                  });
+
+                  return updated;
+                });
+              })
+              .catch((e) => {
+                console.warn("Auto-calculation of Vedic Doshas failed:", e);
+              })
+              .finally(() => {
+                setIsCalculatingLegacyDoshas(false);
               });
           }
         })
@@ -375,16 +531,12 @@ function HoroscopeResultsContent() {
     }, 400);
   };
 
-  // Derive Navamsa D9 and Bhava Chakra horoscopes
+  // Derive Navamsa D9 horoscope
   const d9Horoscope = useMemo(() => {
     if (!result?.horoscope) return null;
     return buildNavamsaHoroscope(result.horoscope);
   }, [result?.horoscope]);
 
-  const bhavaHoroscope = useMemo(() => {
-    if (!result?.horoscope) return null;
-    return buildBhavaHoroscope(result.horoscope);
-  }, [result?.horoscope]);
 
   if (isLoadingSaved) {
     return (
@@ -820,14 +972,30 @@ function HoroscopeResultsContent() {
 
                 <button
                   type="button"
+                  onClick={() => setSecondaryTab("medical")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap ${secondaryTab === "medical" ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold" : "text-[#52667E] hover:text-[#183047]"}`}
+                >
+                  {t.tabMedicalAstrology}
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSecondaryTab("yogas")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap ${secondaryTab === "yogas" ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold" : "text-[#52667E] hover:text-[#183047]"}`}
+                >
+                  {language === "ta" ? "யோகங்கள்" : "Yogas"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSecondaryTab("doshas")}
                   className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap ${
-                    secondaryTab === "yogas"
+                    secondaryTab === "doshas"
                       ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold"
                       : "text-[#52667E] hover:text-[#183047]"
                   }`}
                 >
-                  {language === "ta" ? "யோகங்கள்" : "Yogas"}
+                  {language === "ta" ? "தோஷங்கள்" : "Doshas"}
                 </button>
 
                 <button
@@ -844,73 +1012,240 @@ function HoroscopeResultsContent() {
                 </button>
               </div>
 
-              {/* Sub-Tab 1: CHARTS (Screenshot 3 Reference - 3 Charts Side-by-Side: Rasi, Navamsa, Bhava) */}
+              {/* Sub-Tab 1: CHARTS - 2 Classical Charts (Rasi D1 & Navamsa D9) with Live Planetary Transits */}
               {secondaryTab === "chart" && (
                 <div className="space-y-6">
-                  {/* Style Switcher Bar: South vs North Indian */}
-                  <div className="flex items-center justify-between">
+                  {/* Style Switcher Bar & Live Transit Toggle */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="text-xs text-[#8190A6]">
                       {language === "ta"
-                        ? "பாரம்பரிய தென்னிந்திய முறைப்படி ராசி, நவாம்சம் மற்றும் பாவக கட்டங்கள்."
-                        : "Classical charts: Rasi (D1), Navamsa (D9), and Bhava Chakra."}
+                        ? "பாரம்பரிய முறைப்படி ராசி (D1) மற்றும் நவாம்ச (D9) கட்டங்கள்."
+                        : "Classical charts: Rasi (D1) and Navamsa (D9)."}
                     </div>
 
-                    <div className="flex items-center gap-1.5 p-1 rounded-lg bg-white border border-[#D9DEE7] text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Show Live Transits Toggle Button */}
                       <button
                         type="button"
-                        onClick={() => setChartMode("south")}
-                        className={`px-2.5 py-1 rounded font-bold transition-all cursor-pointer ${
-                          chartMode === "south"
-                            ? "bg-[#153F6B] text-white shadow-2xs"
-                            : "text-[#52667E] hover:text-[#183047]"
+                        onClick={handleToggleTransits}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          showTransits
+                            ? "bg-[#FAF2DE] text-[#8C6D23] border border-[#B8862B] shadow-2xs"
+                            : "bg-white text-[#52667E] border border-[#D9DEE7] hover:bg-[#F8FAFC]"
                         }`}
+                        title={
+                          showTransits
+                            ? (language === "ta" ? "கோசார மேலடுக்கை மறை" : "Hide live transit overlay")
+                            : (language === "ta" ? "நேரலை கோசார கிரகங்களை காட்டு" : "Show live planetary transits around Rasi chart")
+                        }
                       >
-                        {t.chartSouthIndian}
+                        <Radio className={`w-3.5 h-3.5 ${showTransits ? "text-[#B8862B] animate-pulse" : "text-[#8190A6]"}`} />
+                        <span>{language === "ta" ? "நேரலை கோசாரம்" : "Show Live Transits"}</span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartMode("north")}
-                        className={`px-2.5 py-1 rounded font-bold transition-all cursor-pointer ${
-                          chartMode === "north"
-                            ? "bg-[#153F6B] text-white shadow-2xs"
-                            : "text-[#52667E] hover:text-[#183047]"
-                        }`}
-                      >
-                        {t.chartNorthIndian}
-                      </button>
+
+                      {/* South vs North Indian Chart Selector */}
+                      <div className="flex items-center gap-1.5 p-1 rounded-lg bg-white border border-[#D9DEE7] text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setChartMode("south")}
+                          className={`px-2.5 py-1 rounded font-bold transition-all cursor-pointer ${
+                            chartMode === "south"
+                              ? "bg-[#153F6B] text-white shadow-2xs"
+                              : "text-[#52667E] hover:text-[#183047]"
+                          }`}
+                        >
+                          {t.chartSouthIndian}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setChartMode("north")}
+                          className={`px-2.5 py-1 rounded font-bold transition-all cursor-pointer ${
+                            chartMode === "north"
+                              ? "bg-[#153F6B] text-white shadow-2xs"
+                              : "text-[#52667E] hover:text-[#183047]"
+                          }`}
+                        >
+                          {t.chartNorthIndian}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 3 Charts Responsive Grid (Screenshot 3 Reference) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
-                    {/* Chart 1: Rasi (D1) */}
-                    <div className="bg-white rounded-xl border border-[#D9DEE7] p-3.5 sm:p-4 shadow-2xs flex flex-col items-center">
-                      <div className="w-full text-center pb-2 mb-2 border-b border-[#F2F3F5]">
-                        <h3 className="font-bold text-xs sm:text-sm text-[#183047]">
+                  {/* 2 Charts Responsive Grid: Equal / Balanced Widths on Desktop, Stacked on Mobile */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    {/* Chart 1: Rasi (D1) – Physical & General (with Live Transits Overlay) */}
+                    <div className="bg-white rounded-xl border border-[#D9DEE7] p-3.5 sm:p-5 shadow-2xs flex flex-col items-center w-full">
+                      <div className="w-full text-center pb-2 mb-2 border-b border-[#F2F3F5] flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-mono text-[#8190A6] hidden sm:inline">D1</span>
+                        <h3 className="font-bold text-xs sm:text-sm text-[#183047] flex-1 text-center">
                           {language === "ta"
                             ? "ராசி (D1) - உடல் மற்றும் பொதுவானவை"
                             : "Rasi (D1) - Physical & General"}
                         </h3>
+                        <span className="text-[11px] font-mono text-[#8C6D23] font-semibold hidden sm:inline">
+                          {horoscope.metadata?.ayanamsa_name || "Lahiri"}
+                        </span>
                       </div>
+
+                      {/* Live Transits Status Banner & Controls */}
+                      {showTransits && (
+                        <div className="w-full mb-3 space-y-2">
+                          <div className="w-full bg-[#FAF8F2] border border-[#D8BD80]/60 rounded-lg p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span className="font-semibold text-[#8C6D23]">
+                                {language === "ta" ? "நேரலை கோசாரம்" : "Live Transits"}
+                              </span>
+                              {liveTransitsData && (
+                                <span className="text-[#8190A6] text-[11px] font-mono">
+                                  {new Date(liveTransitsData.calculated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} ({liveTransitsData.timezone})
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                              <button
+                                type="button"
+                                onClick={fetchLiveTransits}
+                                disabled={isLoadingTransits}
+                                title={language === "ta" ? "கோசார நிலைகளை புதுப்பி" : "Recalculate live transits"}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white border border-[#D8BD80] text-[11px] font-bold text-[#8C6D23] hover:bg-[#FAF2DE] disabled:opacity-50 transition-colors cursor-pointer shadow-2xs"
+                              >
+                                <RefreshCw className={`w-3 h-3 ${isLoadingTransits ? "animate-spin text-[#B8862B]" : ""}`} />
+                                <span>{language === "ta" ? "புதுப்பி" : "Refresh"}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setShowTransitTable((p) => !p)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border border-[#D9DEE7] text-[11px] font-medium text-[#52667E] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                              >
+                                <span>{showTransitTable ? (language === "ta" ? "அட்டவணை மறை" : "Hide Details") : (language === "ta" ? "அட்டவணை" : "Details")}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Graceful Error State with Diagnostics */}
+                          {transitsError && (
+                            <div className="w-full p-2.5 rounded-lg border border-rose-300 bg-rose-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-rose-800">
+                              <div className="flex items-start sm:items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5 sm:mt-0" />
+                                <div>
+                                  <span>{transitsError}</span>
+                                  {process.env.NODE_ENV !== "production" && transitsDevError && (
+                                    <span className="block text-[10px] text-rose-600 font-mono mt-0.5">
+                                      Debug: {transitsDevError}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={fetchLiveTransits}
+                                disabled={isLoadingTransits}
+                                className="self-end sm:self-auto px-2.5 py-1 bg-rose-700 text-white font-bold rounded text-[11px] hover:bg-rose-800 transition-colors cursor-pointer"
+                              >
+                                {language === "ta" ? "மீண்டும் முயற்சி" : "Retry"}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Legend distinguishing Natal vs Live Transit planets */}
+                          <div className="w-full flex items-center justify-center gap-4 py-1.5 px-2 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[11px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#153F6B]" />
+                              <span className="font-semibold text-[#183047]">
+                                {language === "ta" ? "பிறப்பு நிலைகள் (மையம்)" : "Natal Planets (Center)"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#B8862B]" />
+                              <span className="font-bold text-[#8C6D23] font-mono">
+                                {language === "ta" ? "கோசாரம் TR (வெளிச்சுற்று)" : "Live Transits TR (Perimeter)"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Rasi Chart Visualization */}
                       {chartMode === "south" ? (
                         <SouthIndianChart
                           horoscope={horoscope}
                           centerLabel={language === "ta" ? "ராசி" : "Rasi"}
                           centerNumber="(1)"
+                          transitPlanets={liveTransitsData?.planets}
+                          showTransits={showTransits}
                         />
                       ) : (
-                        <NorthIndianChart horoscope={horoscope} />
+                        <NorthIndianChart
+                          horoscope={horoscope}
+                          transitPlanets={liveTransitsData?.planets}
+                          showTransits={showTransits}
+                        />
+                      )}
+
+                      {/* Compact Transit Table for Details */}
+                      {showTransits && showTransitTable && liveTransitsData && (
+                        <div className="w-full mt-4 pt-3 border-t border-[#F2F3F5] space-y-2">
+                          <h4 className="text-xs font-bold text-[#183047]">
+                            {language === "ta" ? "கோசார கிரக நிலைகள் அட்டவணை" : "Live Planetary Transits Breakdown"}
+                          </h4>
+                          <div className="overflow-x-auto rounded border border-[#E2E8F0]">
+                            <table className="w-full text-[11px] text-left">
+                              <thead className="bg-[#FAF8F2] text-[#8C6D23] font-semibold border-b border-[#E2E8F0]">
+                                <tr>
+                                  <th className="p-1.5">{language === "ta" ? "கிரகம்" : "Planet"}</th>
+                                  <th className="p-1.5">{language === "ta" ? "ராசி" : "Sign"}</th>
+                                  <th className="p-1.5 font-mono">{language === "ta" ? "பாகை" : "Degree"}</th>
+                                  <th className="p-1.5">{language === "ta" ? "லக்னத்திலிருந்து" : "From Lagna"}</th>
+                                  <th className="p-1.5">{language === "ta" ? "நட்சத்திரம்" : "Star"}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#F2F3F5]">
+                                {liveTransitsData.planets.slice(0, 9).map((tp) => {
+                                  const houseFromLagna =
+                                    ((tp.sign_index - horoscope.ascendant.sign_index + 12) % 12) + 1;
+                                  return (
+                                    <tr key={`tbl-tr-${tp.name}`} className="hover:bg-[#FAF8F2]/40">
+                                      <td className="p-1.5 font-semibold text-[#183047] flex items-center gap-1">
+                                        <span>{language === "ta" ? tp.sign_name_tamil : tp.name}</span>
+                                        {tp.is_retrograde && (
+                                          <span className="text-red-600 font-bold font-mono text-[9px]">(R)</span>
+                                        )}
+                                      </td>
+                                      <td className="p-1.5 text-[#52667E]">
+                                        {language === "ta" ? tp.sign_name_tamil : tp.sign_name}
+                                      </td>
+                                      <td className="p-1.5 font-mono text-[#183047]">
+                                        {tp.degree_in_sign.toFixed(2)}°
+                                      </td>
+                                      <td className="p-1.5 font-mono text-[#8C6D23] font-semibold">
+                                        H{houseFromLagna}
+                                      </td>
+                                      <td className="p-1.5 text-[#52667E]">
+                                        {tp.nakshatra?.name || "-"} ({tp.nakshatra?.pada || "-"})
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       )}
                     </div>
 
-                    {/* Chart 2: Navamsa (D9) */}
-                    <div className="bg-white rounded-xl border border-[#D9DEE7] p-3.5 sm:p-4 shadow-2xs flex flex-col items-center">
-                      <div className="w-full text-center pb-2 mb-2 border-b border-[#F2F3F5]">
-                        <h3 className="font-bold text-xs sm:text-sm text-[#183047]">
+                    {/* Chart 2: Navamsa (D9) – Strength & Spouse */}
+                    <div className="bg-white rounded-xl border border-[#D9DEE7] p-3.5 sm:p-5 shadow-2xs flex flex-col items-center w-full">
+                      <div className="w-full text-center pb-2 mb-2 border-b border-[#F2F3F5] flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-mono text-[#8190A6] hidden sm:inline">D9</span>
+                        <h3 className="font-bold text-xs sm:text-sm text-[#183047] flex-1 text-center">
                           {language === "ta"
                             ? "நவாம்சம் (D9) - வாழ்க்கைத் துணை மற்றும் பலம்"
                             : "Navamsa (D9) - Strength & Spouse"}
                         </h3>
+                        <span className="text-[11px] font-mono text-[#8190A6] hidden sm:inline">Navamsha</span>
                       </div>
                       {d9Horoscope && (
                         chartMode === "south" ? (
@@ -921,26 +1256,6 @@ function HoroscopeResultsContent() {
                           />
                         ) : (
                           <NorthIndianChart horoscope={d9Horoscope} />
-                        )
-                      )}
-                    </div>
-
-                    {/* Chart 3: Bhava Chakra */}
-                    <div className="bg-white rounded-xl border border-[#D9DEE7] p-3.5 sm:p-4 shadow-2xs flex flex-col items-center md:col-span-2 lg:col-span-1">
-                      <div className="w-full text-center pb-2 mb-2 border-b border-[#F2F3F5]">
-                        <h3 className="font-bold text-xs sm:text-sm text-[#183047]">
-                          {language === "ta" ? "பாவக சக்கரம்" : "Bhava Chakra (House Cusps)"}
-                        </h3>
-                      </div>
-                      {bhavaHoroscope && (
-                        chartMode === "south" ? (
-                          <SouthIndianChart
-                            horoscope={bhavaHoroscope}
-                            centerLabel={language === "ta" ? "பாவகம்" : "Bhava"}
-                            centerNumber="(B)"
-                          />
-                        ) : (
-                          <NorthIndianChart horoscope={bhavaHoroscope} />
                         )
                       )}
                     </div>
@@ -994,17 +1309,14 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 2: FACTS & PANCHANG */}
+              {/* Sub-Tab 2: FACTS & PANCHANG (ஜாதக விவரங்கள் / உண்மைகள் - 6 Categories Dashboard) */}
               {secondaryTab === "facts" && (
-                <div className="space-y-5">
-                  <PanchangCard panchang={horoscope.panchang} />
-                  <div className="bg-white rounded-xl border border-[#D9DEE7] p-4 sm:p-5 shadow-2xs space-y-3">
-                    <h3 className="font-serif text-base font-bold text-[#183047]">
-                      {t.tabHouses}
-                    </h3>
-                    <HousesTable houses={horoscope.houses} />
-                  </div>
-                </div>
+                <HoroscopeFactsPanel
+                  result={result}
+                  onCalculateExtensions={handleCalculateVedicExtensions}
+                  isCalculatingExtensions={isCalculatingExtensions}
+                  initialCategory={(searchParams.get("category") as FactCategory) || "basic"}
+                />
               )}
 
               {/* Sub-Tab 3: PLANETARY POSITIONS */}
@@ -1061,7 +1373,32 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 7: DESTINY CARD */}
+              {/* Sub-Tab 6b: MEDICAL ASTROLOGY (Classical Vedic & KP Research) */}
+              {secondaryTab === "medical" && (
+                <div className="space-y-5">
+                  <MedicalAstrologySection
+                    horoscope={horoscope}
+                    kp={kp}
+                    dasa={dasa}
+                    liveTransits={liveTransitsData}
+                    clientInputs={clientInputs}
+                    savedHoroscopeId={result.savedId || idParam || undefined}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 7: DOSHAS */}
+              {secondaryTab === "doshas" && (
+                <div className="space-y-5">
+                  <DoshaSection
+                    doshas={horoscope.doshas || (result as any).doshas}
+                    onCalculate={handleCalculateVedicExtensions}
+                    isCalculating={isCalculatingExtensions || isCalculatingLegacyDoshas}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 8: DESTINY CARD */}
               {secondaryTab === "destiny-card" && (
                 <div className="space-y-4">
                   <DestinyCard result={result} />

@@ -1,0 +1,38 @@
+[
+  {
+    "customer_id": "cust_1792324707868_e15d3gp",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_user_1792324706795",
+    "sent_at": "2026-10-18T11:58:33.985Z"
+  },
+  {
+    "customer_id": "cust_1792324765997_eotioyq",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_user_1792324764874",
+    "sent_at": "2026-10-18T11:59:32.118Z"
+  },
+  {
+    "customer_id": "cust_1792325975360_6d6y6qa",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_user_1792325974221",
+    "sent_at": "2026-10-18T12:19:43.894Z"
+  },
+  {
+    "customer_id": "cust_1792325999627_3o3y31x",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_opt_1792325995524",
+    "sent_at": "2026-10-18T12:20:08.562Z"
+  },
+  {
+    "customer_id": "cust_1792338264477_uklz1ig",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_user_1792338263066",
+    "sent_at": "2026-10-18T15:44:32.027Z"
+  },
+  {
+    "customer_id": "cust_1792338287285_3s1qy5q",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_opt_1792338283313",
+    "sent_at": "2026-10-18T15:44:55.202Z"
+  }
+]

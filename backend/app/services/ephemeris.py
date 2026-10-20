@@ -262,6 +262,7 @@ def calculate_full_horoscope(
     include_ashtakavarga: bool = True,
     include_vedic_yogas: bool = True,
     include_varga: bool = True,
+    include_doshas: bool = False,
     gender: str = "male",
 ) -> HoroscopeResponse:
     """Calculate full horoscope including planetary positions, houses, panchang, Nabhasha Yogas, Ashtakavarga, and Vedic Yogas."""
@@ -271,6 +272,7 @@ def calculate_full_horoscope(
     from app.services.ashtakavarga_engine import calculate_ashtakavarga
     from app.services.yoga_engine import calculate_vedic_yogas
     from app.services.varga_engine import calculate_varga_d1_d9
+    from app.services.dosha_engine import calculate_unified_doshas
 
     local_dt, utc_dt, jd, tz_name, offset_hours = resolve_birth_datetime(
         birth_date,
@@ -332,6 +334,14 @@ def calculate_full_horoscope(
         metadata=metadata,
     ) if include_varga else None
 
+    doshas = calculate_unified_doshas(
+        planets=planets,
+        ascendant_sign_idx=ascendant.sign_index,
+        houses=houses,
+        ayanamsa_id=ayanamsa_id,
+        metadata=metadata,
+    ) if include_doshas else None
+
     return HoroscopeResponse(
         metadata=metadata,
         ascendant=ascendant,
@@ -343,5 +353,6 @@ def calculate_full_horoscope(
         ashtakavarga=ashtakavarga,
         vedic_yogas=vedic_yogas,
         varga_d1_d9=varga_d1_d9,
+        doshas=doshas,
     )
 

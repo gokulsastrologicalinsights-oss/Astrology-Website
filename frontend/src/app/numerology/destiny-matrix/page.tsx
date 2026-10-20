@@ -4,7 +4,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
-import { calculateDestinyMatrix, saveNumerologyReport } from "@/lib/api";
+import {
+  calculateDestinyMatrix,
+  saveNumerologyReport,
+  downloadNumerologyReportPdf,
+  exportNumerologyPdf,
+} from "@/lib/api";
 import {
   DestinyMatrixResponse,
   SavedNumerologyReportResponse,
@@ -41,6 +46,8 @@ export default function DestinyMatrixPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DestinyMatrixResponse | null>(null);
   const [savedRecord, setSavedRecord] = useState<SavedNumerologyReportResponse | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +132,48 @@ export default function DestinyMatrixPage() {
     setResult(null);
     setSavedRecord(null);
     setError(null);
+    setPdfError(null);
+  };
+
+  const handleDownloadPdf = async (lang: "en" | "ta" = "en") => {
+    if (!result) return;
+    setPdfDownloading(true);
+    setPdfError(null);
+    try {
+      let blob: Blob;
+      if (savedRecord?.id && session?.access_token) {
+        blob = await downloadNumerologyReportPdf(savedRecord.id, lang, session.access_token);
+      } else {
+        blob = await exportNumerologyPdf(
+          {
+            person_name: result.person_name || "Destiny Matrix Subject",
+            birth_date: result.birth_date,
+            method: "destiny_matrix",
+            system_convention: "22_arcana",
+            language: lang,
+            calculation_data: result as any,
+            interpretation_data: {
+              overall_synthesis: "Destiny Matrix 22 Major Arcana reading completed successfully.",
+            },
+            display_number: savedRecord?.display_number,
+          },
+          session?.access_token
+        );
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (result.person_name || "Subject").replace(/\s+/g, "_");
+      a.download = `Destiny_Matrix_${safeName}_${lang}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setPdfError(err?.message || "Failed to download Destiny Matrix PDF report.");
+    } finally {
+      setPdfDownloading(false);
+    }
   };
 
   return (
@@ -332,6 +381,13 @@ export default function DestinyMatrixPage() {
             </button>
           </div>
 
+          {pdfError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{pdfError}</span>
+            </div>
+          )}
+
           <NumerologyReportView
             title={`Destiny Matrix for ${result.person_name || "Birth Date " + result.birth_date}`}
             methodName="Destiny Matrix (22 Arcana)"
@@ -340,6 +396,9 @@ export default function DestinyMatrixPage() {
             birthDate={result.birth_date}
             displayNumber={savedRecord?.display_number}
             engineVersion={result.engine_version}
+            reportId={savedRecord?.id}
+            onDownloadPdf={handleDownloadPdf}
+            isDownloadingPdf={pdfDownloading}
             chartComponent={<DestinyMatrixChart matrix={result} />}
             coreSummaryCards={[
               {

@@ -48,7 +48,7 @@ const STATIC_FEATURES: FeatureItem[] = [
     titleTa: "சேமிக்கப்பட்ட ஜாதகங்கள்",
     categoryEn: "Horoscope / KP System",
     categoryTa: "ஜாதகம் மற்றும் கே.பி. ஜோதிடம்",
-    href: "/tools/horoscope?tab=saved",
+    href: "/tools/horoscope",
     icon: Database,
     color: "text-[#B8862B] bg-[#FAF2DE]",
   },
@@ -141,6 +141,16 @@ const STATIC_FEATURES: FeatureItem[] = [
     href: "/tools/numerology?tab=compatibility",
     icon: Heart,
     color: "text-[#3478F6] bg-[#EBF2FE]",
+  },
+  {
+    id: "marriage-prediction",
+    titleEn: "Marriage Prediction (KP & Vedic)",
+    titleTa: "திருமண கணிப்பு (கே.பி & வேத)",
+    categoryEn: "Predictions / Tools",
+    categoryTa: "நிகழ்வு கணிப்பு மற்றும் கருவிகள்",
+    href: "/tools/marriage-prediction",
+    icon: Heart,
+    color: "text-rose-600 bg-rose-50",
   },
 ];
 

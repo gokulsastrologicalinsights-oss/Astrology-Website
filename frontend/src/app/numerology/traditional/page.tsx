@@ -4,7 +4,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
-import { calculateTraditionalNumerology, saveNumerologyReport } from "@/lib/api";
+import {
+  calculateTraditionalNumerology,
+  saveNumerologyReport,
+  downloadNumerologyReportPdf,
+  exportNumerologyPdf,
+} from "@/lib/api";
 import {
   TraditionalNumerologyResponse,
   SavedNumerologyReportResponse,
@@ -37,6 +42,8 @@ export default function TraditionalNumerologyPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TraditionalNumerologyResponse | null>(null);
   const [savedRecord, setSavedRecord] = useState<SavedNumerologyReportResponse | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +84,7 @@ export default function TraditionalNumerologyPage() {
               method: "traditional",
               system_convention: res.system_convention,
               calculation_data: {
+                birth_psychic_number: res.birth_psychic_number,
                 life_path: res.life_path,
                 expression_destiny: res.expression_destiny,
                 soul_urge: res.soul_urge,
@@ -85,6 +93,8 @@ export default function TraditionalNumerologyPage() {
                 attitude_number: res.attitude_number,
                 maturity_number: res.maturity_number,
                 personal_year: res.personal_year,
+                karmic_debts: res.karmic_debts,
+                calculation_breakdown: res.calculation_breakdown,
                 karmic_lessons: res.karmic_lessons,
                 hidden_passion: res.hidden_passion,
               },
@@ -115,6 +125,53 @@ export default function TraditionalNumerologyPage() {
     setResult(null);
     setSavedRecord(null);
     setError(null);
+    setPdfError(null);
+  };
+
+  const handleDownloadPdf = async (lang: "en" | "ta" = "en") => {
+    if (!result) return;
+    setPdfDownloading(true);
+    setPdfError(null);
+    try {
+      let blob: Blob;
+      if (savedRecord?.id && session?.access_token) {
+        blob = await downloadNumerologyReportPdf(savedRecord.id, lang, session.access_token);
+      } else {
+        blob = await exportNumerologyPdf(
+          {
+            person_name: result.person_name,
+            birth_date: result.birth_date,
+            method: "traditional",
+            system_convention: result.system_convention,
+            language: lang,
+            calculation_data: result as any,
+            interpretation_data: {
+              strengths: result.strengths,
+              challenges: result.challenges,
+              career_tendencies: result.career_tendencies,
+              financial_tendencies: result.financial_tendencies,
+              love_themes: result.love_themes,
+              overall_synthesis: result.overall_synthesis,
+            },
+            display_number: savedRecord?.display_number,
+          },
+          session?.access_token
+        );
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (result.person_name || "Traditional").replace(/\s+/g, "_");
+      a.download = `Numerology_Traditional_${safeName}_${lang}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      setPdfError(err?.message || "Failed to download PDF report.");
+    } finally {
+      setPdfDownloading(false);
+    }
   };
 
   return (
@@ -288,6 +345,13 @@ export default function TraditionalNumerologyPage() {
             </button>
           </div>
 
+          {pdfError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{pdfError}</span>
+            </div>
+          )}
+
           <NumerologyReportView
             title={`Traditional Numerology Reading for ${result.person_name}`}
             methodName="Traditional Numerology"
@@ -296,7 +360,20 @@ export default function TraditionalNumerologyPage() {
             birthDate={result.birth_date}
             displayNumber={savedRecord?.display_number}
             engineVersion={result.engine_version}
+            reportId={savedRecord?.id}
+            onDownloadPdf={handleDownloadPdf}
+            isDownloadingPdf={pdfDownloading}
             coreSummaryCards={[
+              ...(result.birth_psychic_number
+                ? [
+                    {
+                      title: "Birth / Psychic (Mulank)",
+                      value: result.birth_psychic_number.number_value,
+                      subtitle: result.birth_psychic_number.short_interpretation,
+                      isMaster: result.birth_psychic_number.is_master,
+                    },
+                  ]
+                : []),
               {
                 title: "Life Path",
                 value: result.life_path.number_value,
@@ -347,6 +424,17 @@ export default function TraditionalNumerologyPage() {
               },
             ]}
             detailedCalculations={[
+              ...(result.birth_psychic_number
+                ? [
+                    {
+                      name: result.birth_psychic_number.number_name,
+                      value: result.birth_psychic_number.number_value,
+                      method: result.birth_psychic_number.calculation_method,
+                      interpretation: result.birth_psychic_number.detailed_interpretation,
+                      attributes: result.birth_psychic_number.key_attributes,
+                    },
+                  ]
+                : []),
               {
                 name: result.life_path.number_name,
                 value: result.life_path.number_value,
@@ -404,6 +492,8 @@ export default function TraditionalNumerologyPage() {
                 attributes: result.personal_year.key_attributes,
               },
             ]}
+            karmicDebts={result.karmic_debts}
+            calculationBreakdown={result.calculation_breakdown}
             strengths={result.strengths}
             challenges={result.challenges}
             careerTendencies={result.career_tendencies}

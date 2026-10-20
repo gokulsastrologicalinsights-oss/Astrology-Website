@@ -67,12 +67,17 @@ def get_metadata() -> MetadataResponse:
             name="Multi-Tradition Visualizations",
             description="Support for South Indian (fixed-sign) and North Indian (diamond/fixed-house) formats.",
         ),
+        ChartCapability(
+            id="shadbala_planetary_strength",
+            name="Shadbala (Six-fold Planetary Strength)",
+            description="Six-fold planetary strength evaluation per BPHS Ch. 23 (Sthana, Dig, Kala, Cheshta, Naisargika, Drik).",
+        ),
     ]
 
     limitations = [
         "Astrological calculations are deterministic mathematical models based on traditional canons.",
         "They are not scientifically validated predictive claims and do not replace professional advice.",
-        "Complex marriage cancellations and Shadbala calculations are currently in draft status.",
+        "Complex marriage cancellations are currently in draft status.",
         "Historical daylight saving time for dates prior to 1970 requires validated timezone database lookup.",
     ]
 

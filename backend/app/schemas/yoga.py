@@ -52,6 +52,8 @@ class YogaSummary(BaseModel):
     vipareeta_yogas_count: int = Field(..., description="Count of qualifying Vipareeta Raja Yogas")
     other_classical_count: int = Field(..., description="Count of other qualifying classical yogas")
     cancelled_count: int = Field(..., description="Count of yogas cancelled by classical Bhanga rules")
+    arishta_bhanga_count: Optional[int] = Field(0, description="Count of qualifying Arishta Bhanga yogas")
+
 
 
 class VedicYogaResponse(BaseModel):

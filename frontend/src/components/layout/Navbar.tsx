@@ -35,6 +35,7 @@ import {
   Database,
   User,
   Home,
+  Heart,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 
@@ -121,6 +122,11 @@ export function Navbar() {
           icon: Compass,
         },
         {
+          title: language === "ta" ? "பாரம்பரிய தமிழ் ஜாதகக் குறிப்பு" : "Horoscope Writing",
+          href: "/tools/horoscope-writing",
+          icon: BookOpen,
+        },
+        {
           title: language === "ta" ? "உயர்நிலை கே.பி. முறை" : "Advanced KP System",
           href: "/tools/advanced-kp",
           icon: Layers,
@@ -134,6 +140,11 @@ export function Navbar() {
           title: language === "ta" ? "கே.பி. நிகழ்வு கணிப்பு" : "KP Events & Prediction",
           href: "/tools/kp-events-prediction",
           icon: Sparkles,
+        },
+        {
+          title: language === "ta" ? "திருமண கணிப்பு" : "Marriage Prediction",
+          href: "/tools/marriage-prediction",
+          icon: Heart,
         },
         {
           title: language === "ta" ? "D1 ராசி & D9 நவாம்சம்" : "D1 Rasi & D9 Navamsa",

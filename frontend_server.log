@@ -1,0 +1,70 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.4.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.16.0.2:3000
+- Environments: .env.local
+✓ Ready in 664ms
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of e:\GAI\Astrology Website\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * e:\GAI\Astrology Website\frontend\package-lock.json
+
+✓ Running next.config.ts took 49ms
+Creating turbopack project { dir: 'e:\\GAI\\Astrology Website\\frontend', testMode: true }
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+- Cache Components enabled
+- Partial Prefetching enabled
+
+⚠ Slow filesystem detected. The benchmark took 271ms. If \\?\E:\GAI\Astrology Website\frontend\.next\dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+ GET /login 200 in 762ms (next.js: 467ms, proxy.ts: 3ms, application-code: 293ms)
+ GET /login 200 in 59ms (next.js: 8ms, proxy.ts: 4ms, application-code: 48ms)
+ GET /login 200 in 102ms (next.js: 11ms, proxy.ts: 5ms, application-code: 86ms)
+ GET /api/auth/me 200 in 177ms (next.js: 129ms, proxy.ts: 5ms, application-code: 43ms)
+ GET /api/auth/me 200 in 186ms (next.js: 161ms, proxy.ts: 5ms, application-code: 21ms)
+ POST /api/auth/login 200 in 1026ms (next.js: 50ms, proxy.ts: 5ms, application-code: 972ms)
+ GET /api/auth/me 200 in 1031ms (next.js: 8ms, proxy.ts: 353ms, application-code: 670ms)
+ GET /dashboard 200 in 795ms (next.js: 38ms, proxy.ts: 721ms, application-code: 35ms)
+ GET /dashboard 200 in 716ms (next.js: 23ms, proxy.ts: 643ms, application-code: 49ms)
+ GET /api/horoscopes?page=1&limit=1 200 in 780ms (next.js: 7ms, proxy.ts: 431ms, application-code: 341ms)
+ GET /api/horoscopes?page=1&limit=10 200 in 764ms (next.js: 10ms, proxy.ts: 554ms, application-code: 200ms)
+ GET /api/customers/birthdays?lang=en 200 in 2.4s (next.js: 56ms, proxy.ts: 327ms, application-code: 2.0s)
+ GET /api/horoscopes?page=1&limit=1 200 in 762ms (next.js: 14ms, proxy.ts: 413ms, application-code: 335ms)
+ GET /api/horoscopes?page=1&limit=10 200 in 784ms (next.js: 96ms, proxy.ts: 318ms, application-code: 370ms)
+ GET /tools/advanced-kp 200 in 835ms (next.js: 64ms, proxy.ts: 683ms, application-code: 88ms)
+ GET /api/auth/me 200 in 976ms (next.js: 9ms, proxy.ts: 310ms, application-code: 657ms)
+ GET /api/auth/me 200 in 1067ms (next.js: 4ms, proxy.ts: 386ms, application-code: 676ms)
+ GET /api/customers 200 in 3.0s (next.js: 86ms, proxy.ts: 319ms, application-code: 2.6s)
+ GET /api/customers/birthdays?lang=en 200 in 4.4s (next.js: 19ms, proxy.ts: 318ms, application-code: 4.1s)
+ GET /tools/advanced-kp?tab=saved_records 200 in 791ms (next.js: 16ms, proxy.ts: 721ms, application-code: 54ms)
+ GET /api/auth/me 200 in 1036ms (next.js: 23ms, proxy.ts: 331ms, application-code: 682ms)
+ GET /api/auth/me 200 in 1081ms (next.js: 7ms, proxy.ts: 387ms, application-code: 687ms)
+ GET /api/customers 200 in 3.1s (next.js: 18ms, proxy.ts: 318ms, application-code: 2.8s)
+ GET /api/customers/birthdays?lang=en 200 in 3.7s (next.js: 30ms, proxy.ts: 327ms, application-code: 3.4s)
+ GET /login 200 in 132ms (next.js: 55ms, proxy.ts: 5ms, application-code: 72ms)
+ GET /api/auth/me 200 in 50ms (next.js: 20ms, proxy.ts: 4ms, application-code: 26ms)
+ GET /api/auth/me 200 in 47ms (next.js: 27ms, proxy.ts: 5ms, application-code: 15ms)
+ POST /api/auth/login 200 in 1767ms (next.js: 11ms, proxy.ts: 4ms, application-code: 1753ms)
+ GET /api/auth/me 200 in 986ms (next.js: 23ms, proxy.ts: 321ms, application-code: 642ms)
+ GET /dashboard 200 in 780ms (next.js: 16ms, proxy.ts: 731ms, application-code: 33ms)
+ GET /dashboard 200 in 674ms (next.js: 7ms, proxy.ts: 638ms, application-code: 28ms)
+ GET /api/horoscopes?page=1&limit=1 200 in 771ms (next.js: 13ms, proxy.ts: 369ms, application-code: 389ms)
+ GET /api/horoscopes?page=1&limit=10 200 in 792ms (next.js: 10ms, proxy.ts: 317ms, application-code: 465ms)
+ GET /api/horoscopes?page=1&limit=1 200 in 787ms (next.js: 9ms, proxy.ts: 381ms, application-code: 397ms)
+ GET /api/customers/birthdays?lang=en 200 in 2.4s (next.js: 16ms, proxy.ts: 323ms, application-code: 2.0s)
+ GET /api/horoscopes?page=1&limit=10 200 in 775ms (next.js: 5ms, proxy.ts: 394ms, application-code: 376ms)
+ GET /tools/marriage-prediction 200 in 803ms (next.js: 65ms, proxy.ts: 637ms, application-code: 100ms)
+ GET /api/auth/me 200 in 967ms (next.js: 7ms, proxy.ts: 317ms, application-code: 643ms)
+ GET /api/auth/me 200 in 1042ms (next.js: 13ms, proxy.ts: 357ms, application-code: 672ms)
+ GET /api/customers/birthdays?lang=en 200 in 3.3s (next.js: 16ms, proxy.ts: 321ms, application-code: 3.0s)
+ GET /api/horoscopes?limit=50 200 in 3.5s (next.js: 7ms, proxy.ts: 314ms, application-code: 3.2s)

@@ -28,14 +28,25 @@ def test_dasa_valid_chart():
     assert 0.0 < data["birth_balance_years"] <= 6.0  # Sun total period is 6 years
     assert "Years" in data["birth_balance_formatted"]
 
+    # Birth Dasa balance check
+    bal = data.get("birth_dasa_balance")
+    assert bal is not None
+    assert bal["starting_mahadasha_lord"] == "Sun"
+    assert bal["starting_bhukti_lord"] == "Jupiter"
+    assert bal["next_dasa_transition_date"] == "1994-01-06"
+
     # 9 Mahadashas returned
     tree = data["dasa_tree"]
     assert len(tree) == 9
     assert tree[0]["lord"] == "Sun"
     assert tree[0]["level"] == "Mahadasha"
+    assert tree[0]["is_active_at_birth"] is True
 
-    # Depth 2 check: each Mahadasha has 9 Antardashas
-    for md in tree:
+    # Depth 2 check: opening Mahadasha starts at active Bhukti (Jupiter), subsequent have 9 Bhuktis
+    assert len(tree[0]["sub_periods"]) == 5
+    assert tree[0]["sub_periods"][0]["lord"] == "Jupiter"
+    assert tree[0]["sub_periods"][0]["is_active_at_birth"] is True
+    for md in tree[1:]:
         assert len(md["sub_periods"]) == 9
         for ad in md["sub_periods"]:
             assert ad["level"] == "Antardasha"
@@ -60,7 +71,8 @@ def test_dasa_depth_boundaries():
     res_d3 = client.post("/api/v1/horoscope/dasa", json={**VALID_DASA_PAYLOAD, "depth": 3})
     assert res_d3.status_code == 200
     d3_data = res_d3.json()
-    assert len(d3_data["dasa_tree"][0]["sub_periods"][0]["sub_periods"]) == 9
+    assert len(d3_data["dasa_tree"][0]["sub_periods"][0]["sub_periods"]) > 0
+    assert len(d3_data["dasa_tree"][1]["sub_periods"][0]["sub_periods"]) == 9
     assert d3_data["active_period"]["pratyantardasha"] == "Rahu"
 
     # Depth = 4 (up to Sookshma)

@@ -1,0 +1,217 @@
+[
+  {
+    "id": "f23f88ab-b7f8-4489-ab35-ebd45928b8a6",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-20T04:55:00.782248+00:00",
+    "updated_at": "2026-10-20T04:55:00.782248+00:00"
+  },
+  {
+    "id": "cf452bc4-c1a0-440a-8fbb-e247d34b4b6d",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T11:19:51.390641+00:00",
+    "updated_at": "2026-10-19T11:19:51.390641+00:00"
+  },
+  {
+    "id": "8340732d-06ab-406e-9d30-31ad1ee5dcfe",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T11:06:17.056155+00:00",
+    "updated_at": "2026-10-19T11:06:17.056155+00:00"
+  },
+  {
+    "id": "eaa2d6b2-71f1-4a58-afc9-9fda25c7d3ec",
+    "user_id": "8eca9bde-b024-43c3-9882-de2df4390bd0",
+    "horoscope_id": null,
+    "person_name": "Cloud Audit Native",
+    "birth_date": "1993-07-15",
+    "birth_time": "09:30:00",
+    "birth_place": "Tiruchirappalli",
+    "latitude": 10.7905,
+    "longitude": 78.7047,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "page1_birth_details": {
+        "tamil_year": "ஸ்ரீமுக"
+      }
+    },
+    "overrides": {
+      "lucky_day": "Thursday"
+    },
+    "created_at": "2026-10-19T11:05:13.471654+00:00",
+    "updated_at": "2026-10-19T11:05:13.471654+00:00"
+  },
+  {
+    "id": "69289417-185e-4691-91c9-232f344b7f5f",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:59:31.240933+00:00",
+    "updated_at": "2026-10-19T10:59:31.240933+00:00"
+  },
+  {
+    "id": "43e4f8c7-b3cd-46fa-852d-bf6751b3fef7",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:42:09.923609+00:00",
+    "updated_at": "2026-10-19T10:42:09.923609+00:00"
+  },
+  {
+    "id": "1235167d-1879-4d6f-9743-a8f4a7de2097",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:35:33.428533+00:00",
+    "updated_at": "2026-10-19T10:35:33.428533+00:00"
+  },
+  {
+    "id": "3ef9cd2d-f680-426a-a3ea-0ae1cc998f3b",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:35:27.984428+00:00",
+    "updated_at": "2026-10-19T10:35:27.984428+00:00"
+  },
+  {
+    "id": "1c93ce3d-3127-49b6-be4d-50aaff46929c",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:24:02.221629+00:00",
+    "updated_at": "2026-10-19T10:24:02.221629+00:00"
+  },
+  {
+    "id": "97a08215-188f-44a9-9a0b-b0a0c57ee166",
+    "user_id": "11111111-1111-4111-a111-111111111111",
+    "horoscope_id": null,
+    "person_name": "User A Record",
+    "birth_date": "1998-04-14",
+    "birth_time": "06:30:00",
+    "birth_place": "Madurai",
+    "latitude": 9.9252,
+    "longitude": 78.1198,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "page1_birth_details": {
+        "tamil_year": "பிரபவ"
+      }
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:23:43.004780+00:00",
+    "updated_at": "2026-10-19T10:23:43.004780+00:00"
+  },
+  {
+    "id": "fbccb50a-afa1-4190-a88d-186c0604e5ff",
+    "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "horoscope_id": null,
+    "person_name": "Test Native",
+    "birth_date": "1995-05-15",
+    "birth_time": "14:30:00",
+    "birth_place": "Chennai",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "timezone": "Asia/Kolkata",
+    "panchanga_system": "thirukanitha",
+    "calculated_data": {
+      "test": "data"
+    },
+    "overrides": {},
+    "created_at": "2026-10-19T10:23:42.198374+00:00",
+    "updated_at": "2026-10-19T10:23:42.198374+00:00"
+  }
+]

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "cust_1792337440637_6qk4xgi",
+    "user_id": "test_opt_1792337439814",
+    "full_name": "Vedic Client Without Phone",
+    "birth_date": "1994-06-20",
+    "country_code": "+91",
+    "phone_number": "",
+    "normalized_phone": "",
+    "whatsapp_number": "",
+    "created_at": "2026-10-18T15:30:39.862Z",
+    "updated_at": "2026-10-18T15:30:39.862Z",
+    "is_legacy_without_phone": true
+  },
+  {
+    "id": "cust_1792337441366_muqb8vy",
+    "user_id": "test_opt_1792337439814",
+    "full_name": "KP Querent Without Phone",
+    "birth_date": "1988-12-14",
+    "country_code": "+91",
+    "phone_number": "",
+    "normalized_phone": "",
+    "whatsapp_number": "",
+    "created_at": "2026-10-18T15:30:40.723Z",
+    "updated_at": "2026-10-18T15:30:40.723Z",
+    "is_legacy_without_phone": true
+  },
+  {
+    "id": "cust_1792337442377_43lrgxo",
+    "user_id": "test_opt_1792337439814",
+    "full_name": "Ramanathan Narayanan",
+    "birth_date": "1995-10-18",
+    "country_code": "+91",
+    "phone_number": "9876543210",
+    "normalized_phone": "+919876543210",
+    "whatsapp_number": "919876543210",
+    "created_at": "2026-10-18T15:30:41.367Z",
+    "updated_at": "2026-10-18T15:30:41.367Z",
+    "is_legacy_without_phone": false
+  },
+  {
+    "id": "cust_1792337444068_gdz04yu",
+    "user_id": "test_opt_1792337439814",
+    "full_name": "Divya Lakshmi",
+    "birth_date": "1995-10-18",
+    "country_code": "+91",
+    "phone_number": "9876543288",
+    "normalized_phone": "+919876543288",
+    "whatsapp_number": "919876543288",
+    "created_at": "2026-10-18T15:30:43.390Z",
+    "updated_at": "2026-10-18T15:30:49.898Z",
+    "is_legacy_without_phone": false
+  },
+  {
+    "id": "legacy_legacy archive client_1995-10-18",
+    "user_id": "test_opt_1792337439814",
+    "full_name": "Legacy Archive Client",
+    "birth_date": "1995-10-18",
+    "country_code": "+91",
+    "phone_number": "",
+    "normalized_phone": "",
+    "whatsapp_number": "",
+    "created_at": "2026-10-18T15:30:48.282Z",
+    "updated_at": "2026-10-18T15:30:48.282Z",
+    "is_legacy_without_phone": true
+  },
+  {
+    "id": "cust_1792337463547_grvugi3",
+    "user_id": "test_user_1792337462398",
+    "full_name": "Karthik Subramanian",
+    "birth_date": "1992-10-18",
+    "country_code": "+91",
+    "phone_number": "9876543299",
+    "normalized_phone": "+919876543299",
+    "whatsapp_number": "919876543299",
+    "created_at": "2026-10-18T15:31:02.435Z",
+    "updated_at": "2026-10-18T15:31:07.028Z",
+    "is_legacy_without_phone": false
+  },
+  {
+    "id": "cust_1792337470996_9vmg3qw",
+    "user_id": "test_user_1792337462398",
+    "full_name": "Priya Senthil",
+    "birth_date": "1992-10-18",
+    "country_code": "+91",
+    "phone_number": "",
+    "normalized_phone": "",
+    "whatsapp_number": "",
+    "created_at": "2026-10-18T15:31:10.335Z",
+    "updated_at": "2026-10-18T15:31:10.335Z",
+    "is_legacy_without_phone": true
+  }
+]

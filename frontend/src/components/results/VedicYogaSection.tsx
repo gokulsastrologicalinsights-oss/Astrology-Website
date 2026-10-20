@@ -430,9 +430,9 @@ export function VedicYogaSection({
                       <td className="py-3 px-3">
                         <div className="flex flex-wrap gap-1">
                           {yoga.relevant_houses.length > 0 ? (
-                            yoga.relevant_houses.map((h) => (
+                            yoga.relevant_houses.map((h, hIdx) => (
                               <span
-                                key={h}
+                                key={`${h}-${hIdx}`}
                                 className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-[10px] font-bold"
                               >
                                 H{h}

@@ -88,7 +88,10 @@ export function SavedHoroscopeCard({
   };
 
   return (
-    <div className="rounded-2xl border border-[#D9DEE7] hover:border-[#B4872B] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+    <div
+      data-testid="saved-horoscope-card"
+      className="rounded-2xl border border-[#D9DEE7] hover:border-[#B4872B] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+    >
       <div>
         {/* Top Section: Avatar, ID, Name, Language Badge */}
         <div className="flex items-start justify-between gap-3 mb-3">

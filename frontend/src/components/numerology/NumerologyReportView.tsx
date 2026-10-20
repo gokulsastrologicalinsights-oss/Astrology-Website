@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Printer,
   Download,
+  Loader2,
   Calendar,
   User,
   ShieldCheck,
@@ -15,6 +16,7 @@ import {
   AlertCircle,
   Clock,
   Layers,
+  Flame,
 } from "lucide-react";
 
 interface Props {
@@ -51,6 +53,27 @@ interface Props {
     loveHarmony?: number;
     synthesis?: string;
   } | null;
+  karmicDebts?: Array<{
+    number: number;
+    source: string;
+    title: string;
+    description: string;
+    remedy_focus: string;
+  }>;
+  calculationBreakdown?: {
+    system_convention: string;
+    source_birth_date: string;
+    birth_date_digits: number[];
+    life_path_period_reduction: Record<string, any>;
+    life_path_full_sum: Record<string, any>;
+    birth_number_reduction: Record<string, any>;
+    letter_mappings: Array<{ char: string; value: number; is_vowel: boolean; word: string }>;
+    word_breakdowns: Array<{ word: string; letter_sum: number; vowel_sum: number; consonant_sum: number; reduced_expression: number }>;
+    expression_reduction: string[];
+    soul_urge_reduction: string[];
+    personality_reduction: string[];
+    maturity_reduction: string[];
+  };
   cyclesOrForecast?: Array<{
     label: string;
     value: string | number;
@@ -58,6 +81,9 @@ interface Props {
   }>;
   overallSynthesis: string;
   chartComponent?: React.ReactNode;
+  reportId?: string;
+  onDownloadPdf?: (lang: "en" | "ta") => Promise<void>;
+  isDownloadingPdf?: boolean;
 }
 
 export function NumerologyReportView({
@@ -70,6 +96,8 @@ export function NumerologyReportView({
   engineVersion,
   coreSummaryCards,
   detailedCalculations,
+  karmicDebts,
+  calculationBreakdown,
   strengths,
   challenges,
   careerTendencies,
@@ -79,16 +107,27 @@ export function NumerologyReportView({
   cyclesOrForecast,
   overallSynthesis,
   chartComponent,
+  reportId,
+  onDownloadPdf,
+  isDownloadingPdf = false,
 }: Props) {
+  const [selectedLang, setSelectedLang] = useState<"en" | "ta">("en");
+
   const handlePrint = () => {
     if (typeof window !== "undefined") {
       window.print();
     }
   };
 
+  const handlePdfClick = () => {
+    if (onDownloadPdf) {
+      onDownloadPdf(selectedLang);
+    }
+  };
+
   return (
     <div className="space-y-8 print:space-y-4">
-      {/* Top Header & Print Bar */}
+      {/* Top Header & Print / Download Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E2DCD5] print:border-b-2">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#B8860B]">
@@ -108,7 +147,50 @@ export function NumerologyReportView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 print:hidden">
+        <div className="flex flex-wrap items-center gap-2.5 print:hidden">
+          {onDownloadPdf && (
+            <div className="inline-flex items-center rounded-xl border border-[#CBD5E1] bg-white p-0.5 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedLang("en")}
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+                  selectedLang === "en"
+                    ? "bg-[#0F172A] text-white font-bold"
+                    : "text-[#64748B] hover:text-[#0F172A]"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedLang("ta")}
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+                  selectedLang === "ta"
+                    ? "bg-[#0F172A] text-white font-bold"
+                    : "text-[#64748B] hover:text-[#0F172A]"
+                }`}
+              >
+                தமிழ்
+              </button>
+            </div>
+          )}
+
+          {onDownloadPdf && (
+            <button
+              type="button"
+              onClick={handlePdfClick}
+              disabled={isDownloadingPdf}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#B8860B] bg-[#FAF2DE] hover:bg-[#F3E5C2] text-xs font-semibold text-[#8C6D23] shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isDownloadingPdf ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[#B8860B]" />
+              ) : (
+                <Download className="w-4 h-4 text-[#B8860B]" />
+              )}
+              <span>{isDownloadingPdf ? "Compiling PDF..." : "Download PDF"}</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handlePrint}
@@ -262,7 +344,167 @@ export function NumerologyReportView({
         </div>
       )}
 
-      {/* Sections 5 & 6: Strengths & Growth Challenges */}
+      {/* Karmic Debt Vibrations (13, 14, 16, 19) */}
+      {karmicDebts && karmicDebts.length > 0 && (
+        <div className="p-6 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-rose-200/80">
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-rose-600" />
+              <h3 className="font-serif text-lg font-bold text-rose-950">
+                Karmic Debt Vibrations Identified
+              </h3>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+              {karmicDebts.length} Active {karmicDebts.length === 1 ? "Lesson" : "Lessons"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {karmicDebts.map((debt, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-xl bg-white border border-rose-200 shadow-2xs space-y-2 text-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-rose-900 text-sm">
+                    {debt.title}
+                  </span>
+                  <span className="w-7 h-7 rounded-lg bg-rose-100 border border-rose-300 text-rose-800 font-bold font-serif flex items-center justify-center">
+                    {debt.number}
+                  </span>
+                </div>
+                <div className="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md">
+                  Source: {debt.source}
+                </div>
+                <p className="text-[#334155] leading-relaxed">
+                  {debt.description}
+                </p>
+                <div className="pt-2 border-t border-rose-100">
+                  <span className="font-bold text-rose-900 block mb-0.5">
+                    Recommended Remedial Focus:
+                  </span>
+                  <p className="text-[#475569]">{debt.remedy_focus}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Transparent Calculation Breakdown & Letter Mapping */}
+      {calculationBreakdown && (
+        <div className="p-6 rounded-2xl border border-[#DDE5F0] bg-white shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#DDE5F0]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[#3478F6]" />
+                <h3 className="font-serif text-lg font-bold text-[#102A4C]">
+                  Transparent Calculation Steps &amp; Letter Mappings
+                </h3>
+              </div>
+              <p className="text-xs text-[#52667E] mt-0.5">
+                Exact letter assignments, word subtotals, and reduction formulas under the{" "}
+                <strong className="capitalize">{calculationBreakdown.system_convention}</strong> tradition.
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#EBF2FE] text-[#3478F6] border border-[#BFDBFE] self-start sm:self-auto capitalize">
+              {calculationBreakdown.system_convention} Tradition
+            </span>
+          </div>
+
+          {/* Letter by Letter Mapping Table */}
+          {calculationBreakdown.letter_mappings && calculationBreakdown.letter_mappings.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#52667E]">
+                1. Letter Vibrational Assignments
+              </h4>
+              <div className="flex flex-wrap gap-2 p-4 rounded-xl bg-[#FAF8F5] border border-[#E2DCD5]">
+                {calculationBreakdown.letter_mappings.map((m, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex flex-col items-center justify-center w-11 h-13 rounded-lg border text-center shadow-2xs ${
+                      m.is_vowel
+                        ? "bg-[#FAF2DE] border-[#D8BD80] text-[#B8860B]"
+                        : "bg-white border-[#CBD5E1] text-[#0F172A]"
+                    }`}
+                  >
+                    <span className="text-xs font-bold">{m.char}</span>
+                    <span className="text-[10px] font-mono font-semibold">{m.value}</span>
+                    <span className="text-[8px] uppercase tracking-tighter opacity-70">
+                      {m.is_vowel ? "vow" : "con"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Word by Word Subtotals */}
+          {calculationBreakdown.word_breakdowns && calculationBreakdown.word_breakdowns.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#52667E]">
+                2. Word Vibrational Totals
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {calculationBreakdown.word_breakdowns.map((wb, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl border border-[#DDE5F0] bg-[#F8FAFC] text-xs space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between font-bold text-[#102A4C]">
+                      <span>{wb.word}</span>
+                      <span className="px-2 py-0.5 rounded-md bg-[#EBF2FE] text-[#3478F6] font-mono">
+                        Sum: {wb.letter_sum}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[11px] text-[#64748B]">
+                      <span>Vowels (Soul): <strong>{wb.vowel_sum}</strong></span>
+                      <span>Consonants (Outer): <strong>{wb.consonant_sum}</strong></span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step-by-Step Reduction Sequences */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="p-4 rounded-xl border border-[#DDE5F0] bg-[#FAF8F5] text-xs space-y-2">
+              <span className="font-bold text-[#102A4C] block">
+                Expression / Destiny Reduction:
+              </span>
+              <div className="font-mono text-[11px] text-[#52667E] space-y-0.5">
+                {calculationBreakdown.expression_reduction?.map((step, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <span className="text-[#94A3B8]">{idx + 1}.</span>
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-[#DDE5F0] bg-[#FAF8F5] text-xs space-y-2">
+              <span className="font-bold text-[#102A4C] block">
+                Life Path Reduction Methods:
+              </span>
+              <div className="text-[11px] text-[#52667E] space-y-1 font-mono">
+                <div>
+                  <strong>Period Method:</strong> Month (
+                  {calculationBreakdown.life_path_period_reduction?.month?.reduced}) + Day (
+                  {calculationBreakdown.life_path_period_reduction?.day?.reduced}) + Year (
+                  {calculationBreakdown.life_path_period_reduction?.year?.reduced}) ={" "}
+                  {calculationBreakdown.life_path_period_reduction?.period_total}
+                </div>
+                <div>
+                  <strong>Full Sum Method:</strong> Digits sum ={" "}
+                  {calculationBreakdown.life_path_full_sum?.sum} &rarr;{" "}
+                  {calculationBreakdown.life_path_full_sum?.reduced}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="p-5 rounded-2xl border border-emerald-200/70 bg-emerald-50/40 text-xs shadow-xs space-y-3">
           <div className="flex items-center gap-2 font-serif text-base font-bold text-emerald-900 pb-2 border-b border-emerald-200">

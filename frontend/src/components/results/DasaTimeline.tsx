@@ -8,18 +8,18 @@ import {
   KpResponse,
   KpEventAnalysisResponse,
   PeriodAnalysisResult,
+  BirthDasaBalance,
 } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
-import { getLordName, getGrahaShort, GRAHAS, TranslationDictionary } from "@/lib/translations";
+import { getLordName, getGrahaShort, TranslationDictionary } from "@/lib/translations";
 import { analyzeKpEvents } from "@/lib/api";
 import {
   jdToCalendarDateTime,
   calculateCalendarAge,
   formatCalendarAge,
-  formatPeriodDuration,
   findActiveHierarchy,
-  getLevelMetadata,
   ActiveHierarchy,
+  generateChildSubPeriods,
 } from "@/lib/dasa-helpers";
 import {
   buildPlanetContexts,
@@ -33,9 +33,13 @@ import {
   Calendar,
   Sparkles,
   ChevronsUp,
-  Filter,
+  ChevronsDown,
   Plus,
   Minus,
+  Info,
+  Compass,
+  Layers,
+  CheckCircle2,
 } from "lucide-react";
 
 interface DasaTimelineProps {
@@ -68,9 +72,139 @@ function dateToJd(isoDateStr: string): number {
   );
 }
 
+function formatMoonLon(deg: number): string {
+  const norm = ((deg % 360) + 360) % 360;
+  const d = Math.floor(norm);
+  const m = Math.floor((norm - d) * 60);
+  const s = Math.round(((norm - d) * 60 - m) * 60);
+  return `${d}° ${String(m).padStart(2, "0")}' ${String(s).padStart(2, "0")}" (${norm.toFixed(4)}°)`;
+}
+
+function formatDateStr(isoStr?: string, jd?: number, offsetHours: number = 0, isSubDaily: boolean = false): string {
+  if (isoStr) {
+    const parts = isoStr.split("T");
+    if (parts[0]) {
+      const [y, m, d] = parts[0].split("-");
+      const dmy = `${d}/${m}/${y}`;
+      if (isSubDaily && parts[1]) {
+        return `${dmy} ${parts[1].slice(0, 8)}`;
+      }
+      return dmy;
+    }
+  }
+  if (jd) {
+    const dt = jdToCalendarDateTime(jd, offsetHours);
+    if (dt) {
+      const d = String(dt.day).padStart(2, "0");
+      const m = String(dt.month).padStart(2, "0");
+      const dmy = `${d}/${m}/${dt.year}`;
+      if (isSubDaily) {
+        const h = String(dt.hour).padStart(2, "0");
+        const min = String(dt.minute).padStart(2, "0");
+        const s = String(dt.second).padStart(2, "0");
+        return `${dmy} ${h}:${min}:${s}`;
+      }
+      return dmy;
+    }
+  }
+  return "—";
+}
+
+function formatDurationShort(node: DasaPeriodNode): string {
+  if (node.duration_years >= 1.0) {
+    const y = Math.floor(node.duration_years);
+    const remDays = (node.duration_years - y) * 365.25;
+    const m = Math.floor(remDays / 30.4375);
+    const d = Math.round(remDays - m * 30.4375);
+    return `${y}y ${m}m ${d}d`;
+  }
+  if (node.duration_days >= 30.0) {
+    const m = Math.floor(node.duration_days / 30.4375);
+    const d = Math.round(node.duration_days - m * 30.4375);
+    return `${m}m ${d}d`;
+  }
+  if (node.duration_days >= 1.0) {
+    return `${node.duration_days.toFixed(1)}d`;
+  }
+  const hrs = node.duration_days * 24.0;
+  if (hrs >= 1.0) {
+    return `${hrs.toFixed(1)}h`;
+  }
+  const mins = hrs * 60.0;
+  return `${mins.toFixed(0)}m`;
+}
+
+interface LevelConfig {
+  name: string;
+  nameTamil: string;
+  badgeLabel: string;
+  badgeLabelTamil: string;
+  badgeColor: string;
+  rowIndent: string;
+  levelNumber: number;
+}
+
+function getLevelConfig(level: string): LevelConfig {
+  const norm = level.toLowerCase();
+  if (norm.includes("maha")) {
+    return {
+      name: "Dasa",
+      nameTamil: "மகாதசை",
+      badgeLabel: "Dasa",
+      badgeLabelTamil: "தசை",
+      badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
+      rowIndent: "pl-2 sm:pl-3",
+      levelNumber: 1,
+    };
+  }
+  if (norm.includes("antar") && !norm.includes("praty")) {
+    return {
+      name: "Bhukti",
+      nameTamil: "புக்தி",
+      badgeLabel: "Bhukti",
+      badgeLabelTamil: "புக்தி",
+      badgeColor: "bg-blue-100 text-blue-900 border-blue-300",
+      rowIndent: "pl-6 sm:pl-8",
+      levelNumber: 2,
+    };
+  }
+  if (norm.includes("praty")) {
+    return {
+      name: "Antharam",
+      nameTamil: "அந்தரம்",
+      badgeLabel: "Antharam",
+      badgeLabelTamil: "அந்தரம்",
+      badgeColor: "bg-emerald-100 text-emerald-900 border-emerald-300",
+      rowIndent: "pl-10 sm:pl-14",
+      levelNumber: 3,
+    };
+  }
+  if (norm.includes("sookshma")) {
+    return {
+      name: "Sookshamam",
+      nameTamil: "சூட்சுமம்",
+      badgeLabel: "Sookshamam",
+      badgeLabelTamil: "சூட்சுமம்",
+      badgeColor: "bg-purple-100 text-purple-900 border-purple-300",
+      rowIndent: "pl-14 sm:pl-20",
+      levelNumber: 4,
+    };
+  }
+  return {
+    name: "Pranam",
+    nameTamil: "பிராணம்",
+    badgeLabel: "Pranam",
+    badgeLabelTamil: "பிராணம்",
+    badgeColor: "bg-rose-100 text-rose-900 border-rose-300",
+    rowIndent: "pl-18 sm:pl-26",
+    levelNumber: 5,
+  };
+}
+
 export function DasaTimeline({
   dasa,
   birthDate: propBirthDate,
+  birthTime: propBirthTime,
   timezone: propTimezone,
   horoscope,
   kp,
@@ -80,8 +214,6 @@ export function DasaTimeline({
 
   // KP Event Predictions Integration state
   const [internalKpAnalysis, setInternalKpAnalysis] = useState<KpEventAnalysisResponse | null>(null);
-  const [showKpEvents, setShowKpEvents] = useState<boolean>(true);
-  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all");
 
   // Auto-load KP event predictions if kp is present and kpEventAnalysis is not provided
   useEffect(() => {
@@ -155,44 +287,15 @@ export function DasaTimeline({
     };
   }, [kp, dasa, horoscope, propTimezone, kpEventAnalysis]);
 
-  const effectiveKpAnalysis = kpEventAnalysis || internalKpAnalysis;
-
-  // Build key -> PeriodAnalysisResult map
-  const eventPredictionsMap = useMemo(() => {
-    const map: Record<string, PeriodAnalysisResult> = {};
-    if (!effectiveKpAnalysis?.periods) return map;
-    for (const p of effectiveKpAnalysis.periods) {
-      const key = p.period.toLowerCase();
-      map[key] = p;
-      const parts = p.period.split("-");
-      if (parts.length >= 2) {
-        map[`${parts[0]}-${parts[1]}`.toLowerCase()] = p;
-      }
-    }
-    return map;
-  }, [effectiveKpAnalysis]);
-
-  // Extract distinct event names for filter
-  const allDistinctEventNames = useMemo(() => {
-    const set = new Set<string>();
-    if (effectiveKpAnalysis?.periods) {
-      for (const p of effectiveKpAnalysis.periods) {
-        for (const ev of p.events) {
-          set.add(ev.event);
-        }
-      }
-    }
-    return Array.from(set).sort();
-  }, [effectiveKpAnalysis]);
-
   const planetContexts = useMemo(() => {
     if (!horoscope?.planets || !horoscope?.ascendant) return null;
     return buildPlanetContexts(horoscope.planets, horoscope.ascendant, horoscope.houses);
   }, [horoscope]);
 
-  // Resolve birth date from props or dasa metadata or first node
+  // Resolve birth date & time from props or dasa metadata or first node
   const resolvedBirthDate = useMemo(() => {
     if (propBirthDate) return propBirthDate;
+    if (dasa?.birth_dasa_balance?.birth_date) return dasa.birth_dasa_balance.birth_date;
     if (dasa?.metadata?.birth_utc_iso) {
       return dasa.metadata.birth_utc_iso.split("T")[0];
     }
@@ -202,6 +305,20 @@ export function DasaTimeline({
     }
     return "";
   }, [propBirthDate, dasa]);
+
+  const resolvedBirthTime = useMemo(() => {
+    if (propBirthTime) return propBirthTime;
+    if (dasa?.birth_dasa_balance?.birth_time) return dasa.birth_dasa_balance.birth_time;
+    if (dasa?.metadata?.birth_utc_iso) {
+      const parts = dasa.metadata.birth_utc_iso.split("T");
+      if (parts[1]) return parts[1].slice(0, 8);
+    }
+    return "—";
+  }, [propBirthTime, dasa]);
+
+  const resolvedTimezone = useMemo(() => {
+    return propTimezone || dasa?.metadata?.local_timezone || "Asia/Kolkata";
+  }, [propTimezone, dasa]);
 
   const utcOffsetHours = dasa?.metadata?.utc_offset_hours || 0;
 
@@ -214,29 +331,30 @@ export function DasaTimeline({
   }, [dasa]);
 
   const [selectedDate, setSelectedDate] = useState<string>(defaultTargetDate);
+  const [showLegend, setShowLegend] = useState<boolean>(false);
 
   // Expanded nodes mapping
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>(() => {
-    // By default expand first two Mahadashas and active Mahadasha
-    return { "maha-0": true, "maha-1": true };
+    // By default expand first Mahadasha (balance dasha)
+    return { "node-0": true };
   });
 
   // Compute active hierarchy and person's age on selected date
-  const { activeHierarchy, selectedDateAge, isDateOutOfRange } = useMemo(() => {
+  const { activeHierarchy, selectedDateAge, targetJd } = useMemo(() => {
     if (!dasa?.dasa_tree || dasa.dasa_tree.length === 0 || !selectedDate) {
-      return { activeHierarchy: null, selectedDateAge: null, isDateOutOfRange: false };
+      return { activeHierarchy: null, selectedDateAge: null, targetJd: 0 };
     }
 
-    const targetJd = dateToJd(selectedDate);
+    const tJd = dateToJd(selectedDate);
     const tree = dasa.dasa_tree;
     const startJd = tree[0].start_jd;
     const endJd = tree[tree.length - 1].end_jd;
 
-    if (targetJd < startJd || targetJd >= endJd) {
-      return { activeHierarchy: null, selectedDateAge: null, isDateOutOfRange: true };
+    if (tJd < startJd || tJd >= endJd) {
+      return { activeHierarchy: null, selectedDateAge: null, targetJd: tJd };
     }
 
-    const hierarchy = findActiveHierarchy(tree, targetJd);
+    const hierarchy = findActiveHierarchy(tree, tJd);
 
     let ageStr: string | null = null;
     if (resolvedBirthDate) {
@@ -246,46 +364,85 @@ export function DasaTimeline({
       ageStr = formatCalendarAge(ageObj, language);
     }
 
-    return { activeHierarchy: hierarchy, selectedDateAge: ageStr, isDateOutOfRange: false };
+    return { activeHierarchy: hierarchy, selectedDateAge: ageStr, targetJd: tJd };
   }, [dasa, selectedDate, resolvedBirthDate, language]);
-
-  // Keep active Mahadasha auto-expanded
-  useEffect(() => {
-    if (activeHierarchy?.mahadasha && dasa?.dasa_tree) {
-      const activeIdx = dasa.dasa_tree.findIndex(
-        (m) => m.lord.toLowerCase() === activeHierarchy.mahadasha?.lord.toLowerCase()
-      );
-      if (activeIdx !== -1) {
-        setExpandedKeys((prev) => ({
-          ...prev,
-          [`maha-${activeIdx}`]: true,
-        }));
-      }
-    }
-  }, [activeHierarchy, dasa]);
 
   const toggleExpand = (key: string) => {
     setExpandedKeys((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const expandAllMaha = () => {
+  const expandAllLevel1 = () => {
     if (!dasa?.dasa_tree) return;
     const map: Record<string, boolean> = {};
     dasa.dasa_tree.forEach((_, idx) => {
-      map[`maha-${idx}`] = true;
+      map[`node-${idx}`] = true;
     });
     setExpandedKeys(map);
   };
 
-  const expandToAntaram = () => {
+  const expandToLevel2 = () => {
     if (!dasa?.dasa_tree) return;
     const map: Record<string, boolean> = {};
     dasa.dasa_tree.forEach((m, mIdx) => {
-      map[`maha-${mIdx}`] = true;
-      m.sub_periods?.forEach((b, bIdx) => {
-        map[`maha-${mIdx}-bhukti-${bIdx}`] = true;
+      map[`node-${mIdx}`] = true;
+    });
+    setExpandedKeys(map);
+  };
+
+  const expandToLevel3 = () => {
+    if (!dasa?.dasa_tree) return;
+    const map: Record<string, boolean> = {};
+    dasa.dasa_tree.forEach((m, mIdx) => {
+      map[`node-${mIdx}`] = true;
+      const bChildren = m.sub_periods && m.sub_periods.length > 0
+        ? m.sub_periods
+        : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
+      bChildren.forEach((_, bIdx) => {
+        map[`node-${mIdx}-${bIdx}`] = true;
       });
     });
+    setExpandedKeys(map);
+  };
+
+  const expandToLevel4 = () => {
+    if (!dasa?.dasa_tree) return;
+    const map: Record<string, boolean> = {};
+    dasa.dasa_tree.forEach((m, mIdx) => {
+      map[`node-${mIdx}`] = true;
+      const bChildren = m.sub_periods && m.sub_periods.length > 0
+        ? m.sub_periods
+        : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
+      bChildren.forEach((b, bIdx) => {
+        map[`node-${mIdx}-${bIdx}`] = true;
+        const pChildren = b.sub_periods && b.sub_periods.length > 0
+          ? b.sub_periods
+          : generateChildSubPeriods(b, utcOffsetHours, resolvedBirthDate);
+        pChildren.forEach((_, pIdx) => {
+          map[`node-${mIdx}-${bIdx}-${pIdx}`] = true;
+        });
+      });
+    });
+    setExpandedKeys(map);
+  };
+
+  const expandAllFiveLevels = () => {
+    if (!dasa?.dasa_tree) return;
+    const map: Record<string, boolean> = {};
+    const recurse = (nodes: DasaPeriodNode[], prefix: string, currDepth: number) => {
+      nodes.forEach((n, idx) => {
+        const k = prefix ? `${prefix}-${idx}` : `node-${idx}`;
+        map[k] = true;
+        if (currDepth < 5) {
+          const ch = n.sub_periods && n.sub_periods.length > 0
+            ? n.sub_periods
+            : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
+          if (ch.length > 0) {
+            recurse(ch, k, currDepth + 1);
+          }
+        }
+      });
+    };
+    recurse(dasa.dasa_tree, "", 1);
     setExpandedKeys(map);
   };
 
@@ -294,27 +451,89 @@ export function DasaTimeline({
   };
 
   const expandActivePath = () => {
-    if (!activeHierarchy || !dasa?.dasa_tree) return;
+    if (!dasa?.dasa_tree) return;
     const map: Record<string, boolean> = {};
-    const { mahadasha, antardasha, pratyantardasha } = activeHierarchy;
-
-    dasa.dasa_tree.forEach((m, mIdx) => {
-      if (mahadasha && m.lord.toLowerCase() === mahadasha.lord.toLowerCase()) {
-        map[`maha-${mIdx}`] = true;
-        m.sub_periods?.forEach((b, bIdx) => {
-          if (antardasha && b.lord.toLowerCase() === antardasha.lord.toLowerCase()) {
-            map[`maha-${mIdx}-bhukti-${bIdx}`] = true;
-            b.sub_periods?.forEach((p, pIdx) => {
-              if (pratyantardasha && p.lord.toLowerCase() === pratyantardasha.lord.toLowerCase()) {
-                map[`maha-${mIdx}-bhukti-${bIdx}-antar-${pIdx}`] = true;
-              }
-            });
+    const recurseActive = (nodes: DasaPeriodNode[], prefix: string, currDepth: number) => {
+      nodes.forEach((n, idx) => {
+        const k = prefix ? `${prefix}-${idx}` : `node-${idx}`;
+        if (targetJd >= n.start_jd && targetJd < n.end_jd) {
+          map[k] = true;
+          if (currDepth < 5) {
+            const ch = n.sub_periods && n.sub_periods.length > 0
+              ? n.sub_periods
+              : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
+            if (ch.length > 0) {
+              recurseActive(ch, k, currDepth + 1);
+            }
           }
-        });
-      }
-    });
+        }
+      });
+    };
+    recurseActive(dasa.dasa_tree, "", 1);
     setExpandedKeys((prev) => ({ ...prev, ...map }));
   };
+
+  // Derive or extract authoritative Birth Dasa Balance
+  const birthBalance = useMemo(() => {
+    if (dasa?.birth_dasa_balance) {
+      return dasa.birth_dasa_balance;
+    }
+    // Fallback: reconstruct from dasa properties
+    if (!dasa?.dasa_tree || dasa.dasa_tree.length === 0) return null;
+    const firstMaha = dasa.dasa_tree[0];
+    const firstBhukti = firstMaha.sub_periods && firstMaha.sub_periods.length > 0 ? firstMaha.sub_periods[0] : null;
+
+    const fullYears = 6.0; // conservative fallback
+    const remDays = firstMaha.duration_days;
+    const fullDays = firstMaha.duration_years * 365.25;
+
+    return {
+      birth_date: resolvedBirthDate,
+      birth_time: resolvedBirthTime,
+      moon_sidereal_deg: dasa.moon_sidereal_deg,
+      nakshatra_name: dasa.nakshatra?.name || "—",
+      nakshatra_pada: dasa.nakshatra?.pada || 1,
+      nakshatra_lord: dasa.nakshatra?.lord || firstMaha.lord,
+      starting_mahadasha_lord: firstMaha.lord,
+      mahadasha_full_duration: {
+        years: Math.round(firstMaha.duration_years),
+        months: 0,
+        days: 0,
+        total_days: fullDays,
+        total_years: firstMaha.duration_years,
+        formatted: `${firstMaha.duration_years.toFixed(2)} Years`,
+      },
+      elapsed_duration: {
+        years: 0,
+        months: 0,
+        days: 0,
+        total_days: 0,
+        total_years: 0,
+        formatted: "—",
+      },
+      remaining_balance: {
+        years: Math.floor(firstMaha.duration_years),
+        months: Math.floor(((firstMaha.duration_years % 1) * 365.25) / 30.4375),
+        days: Math.round(((firstMaha.duration_years % 1) * 365.25) % 30.4375),
+        total_days: remDays,
+        total_years: firstMaha.duration_years,
+        formatted: dasa.birth_balance_formatted,
+      },
+      starting_bhukti_lord: firstBhukti?.lord,
+      starting_bhukti_remaining: firstBhukti
+        ? {
+            years: Math.floor(firstBhukti.duration_years),
+            months: Math.floor(((firstBhukti.duration_years % 1) * 365.25) / 30.4375),
+            days: Math.round(((firstBhukti.duration_years % 1) * 365.25) % 30.4375),
+            total_days: firstBhukti.duration_days,
+            total_years: firstBhukti.duration_years,
+            formatted: formatDurationShort(firstBhukti),
+          }
+        : undefined,
+      next_dasa_transition_date: formatDateStr(firstMaha.end_date_iso, firstMaha.end_jd, utcOffsetHours),
+      next_dasa_transition_jd: firstMaha.end_jd,
+    } as BirthDasaBalance;
+  }, [dasa, resolvedBirthDate, resolvedBirthTime, utcOffsetHours]);
 
   if (!dasa || !dasa.dasa_tree || dasa.dasa_tree.length === 0) {
     return (
@@ -325,503 +544,581 @@ export function DasaTimeline({
   }
 
   return (
-    <div className="space-y-5">
-      {/* 1. Header Toolbar & Quick Controls */}
-      <div className="bg-white rounded-2xl border border-[#D9DEE7] p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left: Active Period Overview */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#153F6B]" />
-            <h3 className="font-bold text-sm text-[#183047]">
-              {language === "ta" ? "விம்சோத்தரி தசா-புக்தி அட்டவணை" : "Vimshottari Dasa-Bhukti Schedule"}
-            </h3>
-          </div>
-          {activeHierarchy?.mahadasha && (
-            <div className="text-xs text-[#8190A6] flex items-center gap-2 flex-wrap">
+    <div className="space-y-6">
+      {/* ========================================================================= */}
+      {/* 1. Birth-Time Dasa Balance (தசா இருப்பு) Section - Mandatory Specification */}
+      {/* ========================================================================= */}
+      {birthBalance && (
+        <div className="rounded-2xl border-2 border-[#D8BD80] bg-[#FAF6EC] shadow-sm overflow-hidden">
+          {/* Section Header */}
+          <div className="px-5 py-4 bg-[#FAF2DE] border-b border-[#D8BD80] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#B4872B]" />
+                <h2 className="text-base sm:text-lg font-bold font-serif text-[#183047]">
+                  {language === "ta" ? "தசா இருப்பு" : "Vimshottari Dasa Balance at Birth"}
+                </h2>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#153F6B] text-white">
+                  {language === "ta" ? "பிறப்பு இருப்பு" : "At Birth"}
+                </span>
+              </div>
+              <p className="text-xs text-[#8C6D23] font-medium">
+                {language === "ta"
+                  ? "விம்சோத்தரி தசா-புக்தி இருப்பு கால அளவு (Vimshottari Dasa Balance at Birth)"
+                  : "Authoritative Vimshottari Dasa-Bhukti duration remaining at the exact moment of birth"}
+              </p>
+            </div>
+
+            <div className="text-xs text-[#153F6B] font-mono bg-white/70 px-3 py-1.5 rounded-lg border border-[#D8BD80]/60 flex items-center gap-2 self-start sm:self-auto">
+              <Clock className="w-3.5 h-3.5 text-[#B4872B]" />
               <span>
-                {language === "ta" ? "நடப்பு தசா:" : "Current Dasa:"}{" "}
-                <strong className="text-[#153F6B]">
-                  {getLordName(activeHierarchy.mahadasha.lord, language)}
-                </strong>
+                {birthBalance.birth_date} • {birthBalance.birth_time} ({resolvedTimezone})
               </span>
-              {activeHierarchy.antardasha && (
+            </div>
+          </div>
+
+          {/* Section Grid: 9 Essential Authoritative Facts */}
+          <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
+            {/* Card 1: Moon Sidereal Longitude */}
+            <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
+              <div className="text-[11px] font-semibold text-[#8190A6] flex items-center justify-between">
+                <span>{language === "ta" ? "பிறப்பு சந்திரன் பாகை" : "Birth Moon's Longitude"}</span>
+                <Compass className="w-3.5 h-3.5 text-[#153F6B]" />
+              </div>
+              <div className="font-mono font-bold text-sm text-[#183047]">
+                {formatMoonLon(birthBalance.moon_sidereal_deg)}
+              </div>
+              <div className="text-[10px] text-[#52667E]">
+                {language === "ta" ? "நிரயண சயன முறை (Sidereal)" : "Sidereal Zodiac"}
+              </div>
+            </div>
+
+            {/* Card 2: Birth Nakshatra & Pada */}
+            <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
+              <div className="text-[11px] font-semibold text-[#8190A6] flex items-center justify-between">
+                <span>{language === "ta" ? "பிறப்பு நட்சத்திரம் & பாதம்" : "Birth Nakshatra & Pada"}</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#B4872B]" />
+              </div>
+              <div className="font-bold text-sm text-[#183047]">
+                {birthBalance.nakshatra_name}{" "}
+                <span className="text-[#153F6B]">
+                  • {language === "ta" ? "பாதம்" : "Pada"} {birthBalance.nakshatra_pada}
+                </span>
+              </div>
+              <div className="text-[10px] text-[#52667E]">
+                {language === "ta" ? "நட்சத்திர அதிபதி:" : "Star Lord:"}{" "}
+                <strong>{getLordName(birthBalance.nakshatra_lord, language)}</strong>
+              </div>
+            </div>
+
+            {/* Card 3: Starting Mahadasha Lord */}
+            <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
+              <div className="text-[11px] font-semibold text-[#8190A6] flex items-center justify-between">
+                <span>{language === "ta" ? "ஆரம்ப மகாதசா அதிபதி" : "Starting Mahadasha Lord"}</span>
+                <Layers className="w-3.5 h-3.5 text-[#153F6B]" />
+              </div>
+              <div className="font-bold text-sm text-[#153F6B]">
+                {getLordName(birthBalance.starting_mahadasha_lord, language)} (
+                {birthBalance.starting_mahadasha_lord})
+              </div>
+              <div className="text-[10px] text-[#52667E]">
+                {language === "ta" ? "முழு கால அளவு:" : "Full Duration:"}{" "}
+                <strong>{birthBalance.mahadasha_full_duration.formatted}</strong> (
+                {birthBalance.mahadasha_full_duration.total_days.toFixed(1)}d)
+              </div>
+            </div>
+
+            {/* Card 4: Elapsed Mahadasha at Birth */}
+            <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
+              <div className="text-[11px] font-semibold text-[#8190A6]">
+                {language === "ta" ? "பிறப்பில் சென்ற தசா காலம்" : "Elapsed Dasa Duration at Birth"}
+              </div>
+              <div className="font-bold text-sm text-[#52667E]">
+                {birthBalance.elapsed_duration.formatted}
+              </div>
+              <div className="text-[10px] font-mono text-[#8190A6]">
+                {birthBalance.elapsed_duration.total_days.toFixed(2)} {language === "ta" ? "நாட்கள்" : "Days"} (
+                {birthBalance.elapsed_duration.total_years.toFixed(4)}y)
+              </div>
+            </div>
+
+            {/* Card 5: Remaining Dasa Balance at Birth (The Core Balance) */}
+            <div className="p-3 rounded-xl bg-[#FAF2DE] border border-[#D8BD80] space-y-1 shadow-2xs sm:col-span-2 lg:col-span-1">
+              <div className="text-[11px] font-bold text-[#8C6D23] flex items-center justify-between">
+                <span>{language === "ta" ? "பிறப்பில் தசா இருப்பு (மீதம்)" : "Remaining Dasa Balance at Birth"}</span>
+                <CheckCircle2 className="w-4 h-4 text-[#B4872B]" />
+              </div>
+              <div className="font-bold text-base text-[#153F6B]">
+                {birthBalance.remaining_balance.formatted}
+              </div>
+              <div className="text-[10px] font-mono text-[#8C6D23]">
+                {birthBalance.remaining_balance.total_days.toFixed(2)} {language === "ta" ? "நாட்கள்" : "Days"} (
+                {birthBalance.remaining_balance.total_years.toFixed(6)}y)
+              </div>
+            </div>
+
+            {/* Card 6: Starting Bhukti & Remaining */}
+            <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
+              <div className="text-[11px] font-semibold text-[#8190A6]">
+                {language === "ta" ? "பிறப்பில் நடப்பு புக்தி இருப்பு" : "Starting Bhukti & Balance at Birth"}
+              </div>
+              <div className="font-bold text-sm text-[#183047]">
+                {birthBalance.starting_bhukti_lord
+                  ? getLordName(birthBalance.starting_bhukti_lord, language)
+                  : "—"}
+              </div>
+              <div className="text-[10px] text-[#52667E]">
+                {birthBalance.starting_bhukti_remaining
+                  ? `${birthBalance.starting_bhukti_remaining.formatted} (${birthBalance.starting_bhukti_remaining.total_days.toFixed(1)}d)`
+                  : "—"}
+              </div>
+            </div>
+
+            {/* Card 7: Next Dasa Transition Date */}
+            <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs sm:col-span-2 lg:col-span-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <div className="text-[11px] font-bold text-[#153F6B]">
+                    {language === "ta"
+                      ? "அடுத்த மகாதசை துவங்கும் தேதி (Next Dasa Transition Date):"
+                      : "Next Dasa Transition Date:"}
+                  </div>
+                  <div className="text-xs text-[#52667E]">
+                    {language === "ta"
+                      ? "பிறப்பு தசா இருப்பின்படி முதல் தசை நிறைவுறும் சரியான நாள்"
+                      : "Exact date calculated from birth balance when opening Mahadasha transitions to subsequent Dasa"}
+                  </div>
+                </div>
+                <div className="font-mono font-bold text-sm text-[#153F6B] bg-[#EBF2FE] px-3 py-1.5 rounded-lg border border-[#BFDBFE] self-start sm:self-auto">
+                  {birthBalance.next_dasa_transition_date}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. Dasa-Bhukti Schedule Header & Quick Controls */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-2xl border border-[#D9DEE7] p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left: Active Period Summary */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#153F6B]" />
+              <h3 className="font-bold text-sm sm:text-base text-[#183047]">
+                {language === "ta"
+                  ? "முழு 5-அடுக்கு விம்சோத்தரி தசா-புக்தி அட்டவணை"
+                  : "Complete 5-Level Vimshottari Dasa–Bhukti Table"}
+              </h3>
+            </div>
+            {activeHierarchy?.mahadasha && (
+              <div className="text-xs text-[#52667E] flex items-center gap-2 flex-wrap">
                 <span>
-                  / புக்தி:{" "}
-                  <strong className="text-[#B4872B]">
-                    {getLordName(activeHierarchy.antardasha.lord, language)}
+                  {language === "ta" ? "நடப்பு தசா:" : "Active Dasa:"}{" "}
+                  <strong className="text-[#153F6B]">
+                    {getLordName(activeHierarchy.mahadasha.lord, language)}
                   </strong>
                 </span>
-              )}
-              {selectedDateAge && <span>• வயது: {selectedDateAge}</span>}
-            </div>
-          )}
-        </div>
-
-        {/* Right: Expand / Collapse Actions & Filter */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          {/* Target Date Picker */}
-          <div className="flex items-center gap-1 bg-[#F2F3F5] px-2 py-1 rounded-lg border border-[#D9DEE7]">
-            <Calendar className="w-3.5 h-3.5 text-[#8190A6]" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent text-xs text-[#183047] font-semibold outline-none cursor-pointer"
-            />
+                {activeHierarchy.antardasha && (
+                  <span>
+                    / புக்தி:{" "}
+                    <strong className="text-[#B4872B]">
+                      {getLordName(activeHierarchy.antardasha.lord, language)}
+                    </strong>
+                  </span>
+                )}
+                {activeHierarchy.pratyantardasha && (
+                  <span>
+                    / அந்தரம்:{" "}
+                    <strong className="text-emerald-700">
+                      {getLordName(activeHierarchy.pratyantardasha.lord, language)}
+                    </strong>
+                  </span>
+                )}
+                {selectedDateAge && <span>• {language === "ta" ? "வயது:" : "Age:"} {selectedDateAge}</span>}
+              </div>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={expandAllMaha}
-            className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer"
-          >
-            {language === "ta" ? "அனைத்து தசா" : "All Maha"}
-          </button>
+          {/* Right: Expand / Collapse Actions & Date Picker */}
+          <div className="flex items-center gap-1.5 flex-wrap text-xs">
+            {/* Target Date Picker */}
+            <div className="flex items-center gap-1 bg-[#F2F3F5] px-2 py-1 rounded-lg border border-[#D9DEE7]">
+              <Calendar className="w-3.5 h-3.5 text-[#8190A6]" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent text-xs text-[#183047] font-semibold outline-none cursor-pointer"
+                title={language === "ta" ? "தேதி தேர்வு செய்க" : "Select target date"}
+              />
+            </div>
 
-          <button
-            type="button"
-            onClick={expandActivePath}
-            className="px-2.5 py-1 rounded-lg border border-[#B4872B] bg-[#FAF2DE] text-[#8C6D23] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <Sparkles className="w-3 h-3 text-[#B4872B]" />
-            <span>{language === "ta" ? "நடப்பு தசை" : "Active Dasa"}</span>
-          </button>
+            <button
+              type="button"
+              onClick={expandActivePath}
+              className="px-2.5 py-1 rounded-lg border border-[#B4872B] bg-[#FAF2DE] text-[#8C6D23] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer hover:bg-[#F2E5C5]"
+            >
+              <Sparkles className="w-3 h-3 text-[#B4872B]" />
+              <span>{language === "ta" ? "நடப்பு பாதை" : "Active Path"}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={collapseAll}
-            className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#8190A6] hover:text-[#183047] font-medium transition-colors cursor-pointer"
-            title={t.dasaCollapseAll}
-          >
-            <ChevronsUp className="w-3.5 h-3.5 inline mr-0.5" />
-            <span>{language === "ta" ? "சுருக்குக" : "Collapse"}</span>
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={expandAllLevel1}
+              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer"
+            >
+              {language === "ta" ? "மகாதசை" : "Dasa"}
+            </button>
 
-      {/* 2. Responsive 2-Column Grid of Mahadasha Cards matching Screenshot 4 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {dasa.dasa_tree.map((maha, mIdx) => {
-          const mKey = `maha-${mIdx}`;
-          const isMahaExpanded = !!expandedKeys[mKey];
-          const isMahaActive =
-            activeHierarchy?.mahadasha?.lord.toLowerCase() === maha.lord.toLowerCase();
+            <button
+              type="button"
+              onClick={expandToLevel2}
+              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer"
+            >
+              {language === "ta" ? "புக்தி வரை" : "Bhukti"}
+            </button>
 
-          return (
-            <MahadashaCard
-              key={mKey}
-              maha={maha}
-              mIdx={mIdx}
-              isExpanded={isMahaExpanded}
-              isActive={isMahaActive}
-              onToggleMaha={() => toggleExpand(mKey)}
-              expandedKeys={expandedKeys}
-              onToggleKey={toggleExpand}
-              activeHierarchy={activeHierarchy}
-              resolvedBirthDate={resolvedBirthDate}
-              utcOffsetHours={utcOffsetHours}
-              planetContexts={planetContexts}
-              language={language}
-              t={t}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+            <button
+              type="button"
+              onClick={expandToLevel3}
+              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer hidden sm:inline-block"
+            >
+              {language === "ta" ? "அந்தரம் வரை" : "Antharam"}
+            </button>
 
-// ---------------------------------------------------------------------------
-// Mahadasha Card Component matching Screenshot 4
-// ---------------------------------------------------------------------------
+            <button
+              type="button"
+              onClick={expandToLevel4}
+              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer hidden md:inline-block"
+            >
+              {language === "ta" ? "சூட்சுமம் வரை" : "Sookshamam"}
+            </button>
 
-interface MahadashaCardProps {
-  maha: DasaPeriodNode;
-  mIdx: number;
-  isExpanded: boolean;
-  isActive: boolean;
-  onToggleMaha: () => void;
-  expandedKeys: Record<string, boolean>;
-  onToggleKey: (key: string) => void;
-  activeHierarchy: ActiveHierarchy | null;
-  resolvedBirthDate: string;
-  utcOffsetHours: number;
-  planetContexts: Record<string, PlanetContext> | null;
-  language: "en" | "ta";
-  t: TranslationDictionary;
-}
+            <button
+              type="button"
+              onClick={expandAllFiveLevels}
+              className="px-2.5 py-1 rounded-lg border border-[#153F6B] bg-[#EBF2FE] text-[#153F6B] font-bold transition-colors cursor-pointer hover:bg-[#DBEAFE]"
+            >
+              <ChevronsDown className="w-3.5 h-3.5 inline mr-0.5" />
+              <span>{language === "ta" ? "அனைத்தும் (5)" : "Expand (5)"}</span>
+            </button>
 
-function MahadashaCard({
-  maha,
-  mIdx,
-  isExpanded,
-  isActive,
-  onToggleMaha,
-  expandedKeys,
-  onToggleKey,
-  activeHierarchy,
-  resolvedBirthDate,
-  utcOffsetHours,
-  planetContexts,
-  language,
-  t,
-}: MahadashaCardProps) {
-  // Dates in DD/MM/YYYY
-  const sDt = jdToCalendarDateTime(maha.start_jd, utcOffsetHours);
-  const eDt = jdToCalendarDateTime(maha.end_jd, utcOffsetHours);
-  const sDateStr = sDt
-    ? `${String(sDt.day).padStart(2, "0")}/${String(sDt.month).padStart(2, "0")}/${sDt.year}`
-    : "—";
-  const eDateStr = eDt
-    ? `${String(eDt.day).padStart(2, "0")}/${String(eDt.month).padStart(2, "0")}/${eDt.year}`
-    : "—";
+            <button
+              type="button"
+              onClick={collapseAll}
+              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#8190A6] hover:text-[#183047] font-medium transition-colors cursor-pointer"
+              title="Collapse all"
+            >
+              <ChevronsUp className="w-3.5 h-3.5 inline mr-0.5" />
+              <span>{language === "ta" ? "சுருக்குக" : "Collapse"}</span>
+            </button>
 
-  // Label: Lord name with Star Lord in parentheses (e.g. சந் (சந்), குரு (சந்), செ (பு))
-  const starLordName = useMemo(() => {
-    if (planetContexts && maha.lord) {
-      return calculateBenefitBhavas(maha.lord, planetContexts).starLord;
-    }
-    return maha.star_lord || maha.lord;
-  }, [maha.lord, maha.star_lord, planetContexts]);
-
-  const mahaTitle = useMemo(() => {
-    if (language === "ta") {
-      const lShort = getGrahaShort(maha.lord, "ta");
-      const sShort = getGrahaShort(starLordName, "ta");
-      return `${lShort} (${sShort})`;
-    }
-    return `${maha.lord} (${starLordName?.slice(0, 3) || "Star"})`;
-  }, [maha.lord, starLordName, language]);
-
-  return (
-    <div className="rounded-xl border border-[#D9DEE7] bg-white shadow-2xs overflow-hidden flex flex-col justify-start">
-      {/* Mahadasha Card Header matching Screenshot 4 */}
-      <div
-        onClick={onToggleMaha}
-        className={`px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm font-bold transition-colors cursor-pointer select-none ${
-          isActive
-            ? "bg-[#153F6B] text-white"
-            : "bg-[#E2E8F0] text-[#183047] hover:bg-[#D9DEE7]"
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          {/* Toggle Button [-] / [+] */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleMaha();
-            }}
-            className={`w-4 h-4 rounded-full flex items-center justify-center font-bold text-xs border ${
-              isActive
-                ? "border-white/50 text-white bg-white/20"
-                : "border-[#183047]/40 text-[#183047] bg-white"
-            }`}
-          >
-            {isExpanded ? <Minus className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
-          </button>
-          <span>{mahaTitle}</span>
+            <button
+              type="button"
+              onClick={() => setShowLegend(!showLegend)}
+              className={`p-1 rounded-lg border transition-colors cursor-pointer ${
+                showLegend ? "bg-[#153F6B] text-white border-[#153F6B]" : "bg-white text-[#8190A6] border-[#D9DEE7] hover:text-[#183047]"
+              }`}
+              title={language === "ta" ? "பயன் தரும் பாவங்கள் விளக்கம்" : "Benefit Bhavas Legend"}
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
-        {/* Date Range: DD/MM/YYYY - DD/MM/YYYY */}
-        <div className={`font-mono text-xs ${isActive ? "text-white" : "text-[#52667E]"}`}>
-          {sDateStr} - {eDateStr}
-        </div>
+        {/* Benefit Bhavas Legend & Guide */}
+        {showLegend && (
+          <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] text-xs text-[#334155] space-y-1.5 transition-all">
+            <div className="font-bold text-[#153F6B] flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-[#153F6B]" />
+              <span>{language === "ta" ? "பயன் தரும் பாவங்கள் (Benefit Bhavas) 4 அடுக்கு வரிசை:" : "Benefit Bhavas Four-Category Logical Order:"}</span>
+            </div>
+            <div className="font-mono text-[11px] bg-white p-2 rounded-lg border border-[#E2E8F0] space-y-0.5">
+              <div>
+                <strong>[1] Star-lord house:</strong> நின்ற நட்சத்திர அதிபதி நின்ற பாவம்
+              </div>
+              <div>
+                <strong>[2] Star lord's own house:</strong> நின்ற நட்சத்திர அதிபதியின் சொந்த வீடுகள் (ராசி ஆதிப்பத்தியம்)
+              </div>
+              <div>
+                <strong>[3] Planet's placement house:</strong> தசா/புக்தி/அந்தர அதிபதி நின்ற பாவம்
+              </div>
+              <div>
+                <strong>[4] Planet-owned houses:</strong> தசா/புக்தி/அந்தர அதிபதியின் சொந்த வீடுகள்
+              </div>
+              <div className="text-[10px] text-[#B4872B] pt-1 italic">
+                * ராகு / கேதுவுக்கு சொந்த வீடுகள் கிடையாது என்பதால், 2-வது அல்லது 4-வது அடுக்கு விடுபடும்.
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Inner Bhukti Table matching Screenshot 4 */}
-      {isExpanded && maha.sub_periods && maha.sub_periods.length > 0 && (
+      {/* ========================================================================= */}
+      {/* 3. The 5-Level Vimshottari Table with Indentation & Benefit Bhavas */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-2xl border border-[#D9DEE7] shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-[#FAF2DE] text-[#183047] font-bold border-b border-[#D8BD80]">
               <tr>
-                <th className="py-2 px-3 text-left">Bukthi</th>
-                <th className="py-2 px-3 text-left">From</th>
-                <th className="py-2 px-3 text-left">To</th>
-                <th className="py-2 px-3 text-left">Duration</th>
-                <th className="py-2 px-3 text-left">Benefit Bhavas</th>
+                <th className="py-2.5 px-3 text-left w-36">
+                  {language === "ta" ? "நிலை" : "Level"}
+                </th>
+                <th className="py-2.5 px-3 text-left">
+                  {language === "ta" ? "கிரகம் / அதிபதி" : "Planet"}
+                </th>
+                <th className="py-2.5 px-3 text-left">
+                  {language === "ta" ? "தொடக்க தேதி" : "Start Date"}
+                </th>
+                <th className="py-2.5 px-3 text-left">
+                  {language === "ta" ? "முடிவு தேதி" : "End Date"}
+                </th>
+                <th className="py-2.5 px-3 text-left">
+                  {language === "ta" ? "கால அளவு" : "Duration"}
+                </th>
+                <th className="py-2.5 px-3 text-left">
+                  <div className="flex items-center gap-1">
+                    <span>{language === "ta" ? "பயன் தரும் பாவங்கள்" : "Benefit Bhavas"}</span>
+                    <span className="text-[10px] text-[#8C6D23] font-normal hidden lg:inline">
+                      (SL Occ | SL Own | PL Occ | PL Own)
+                    </span>
+                  </div>
+                </th>
+                <th className="py-2.5 px-3 text-right">
+                  {language === "ta" ? "நிலை" : "Status"}
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#F2F3F5] text-[#183047]">
-              {maha.sub_periods.map((bhukti, bIdx) => {
-                const bKey = `maha-${mIdx}-bhukti-${bIdx}`;
-                const isBhuktiExpanded = !!expandedKeys[bKey];
-                const isBhuktiActive =
-                  isActive &&
-                  activeHierarchy?.antardasha?.lord.toLowerCase() === bhukti.lord.toLowerCase();
-
-                return (
-                  <React.Fragment key={bKey}>
-                    <BhuktiRow
-                      bhukti={bhukti}
-                      mIdx={mIdx}
-                      bIdx={bIdx}
-                      bKey={bKey}
-                      isExpanded={isBhuktiExpanded}
-                      isActive={isBhuktiActive}
-                      onToggle={() => onToggleKey(bKey)}
-                      resolvedBirthDate={resolvedBirthDate}
-                      utcOffsetHours={utcOffsetHours}
-                      planetContexts={planetContexts}
-                      language={language}
-                      t={t}
-                    />
-
-                    {/* Sub-Periods: Antardashas when expanded */}
-                    {isBhuktiExpanded && bhukti.sub_periods && bhukti.sub_periods.length > 0 && (
-                      <tr className="bg-[#F8FAFC]">
-                        <td colSpan={5} className="p-2 sm:p-3">
-                          <div className="pl-4 border-l-2 border-[#153F6B]/30 space-y-1">
-                            <div className="text-[11px] font-bold text-[#153F6B] uppercase tracking-wider mb-1">
-                              {language === "ta" ? "அந்தர காலங்கள்" : "Antardasha Periods"}
-                            </div>
-                            <div className="divide-y divide-[#E2E8F0] bg-white rounded-lg border border-[#D9DEE7] overflow-hidden">
-                              {bhukti.sub_periods.map((antar, aIdx) => {
-                                const aKey = `${bKey}-antar-${aIdx}`;
-                                const isAntarExpanded = !!expandedKeys[aKey];
-                                const isAntarActive =
-                                  isBhuktiActive &&
-                                  activeHierarchy?.pratyantardasha?.lord.toLowerCase() ===
-                                    antar.lord.toLowerCase();
-
-                                return (
-                                  <AntardashaRow
-                                    key={aKey}
-                                    antar={antar}
-                                    aKey={aKey}
-                                    isExpanded={isAntarExpanded}
-                                    isActive={isAntarActive}
-                                    onToggle={() => onToggleKey(aKey)}
-                                    resolvedBirthDate={resolvedBirthDate}
-                                    utcOffsetHours={utcOffsetHours}
-                                    planetContexts={planetContexts}
-                                    language={language}
-                                    t={t}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
+            <tbody className="divide-y divide-[#E2E8F0]">
+              {dasa.dasa_tree.map((node, idx) => (
+                <HierarchicalDasaRow
+                  key={`node-${idx}`}
+                  node={node}
+                  rowKey={`node-${idx}`}
+                  depth={1}
+                  expandedKeys={expandedKeys}
+                  onToggleExpand={toggleExpand}
+                  targetJd={targetJd}
+                  utcOffsetHours={utcOffsetHours}
+                  planetContexts={planetContexts}
+                  language={language}
+                  birthDate={resolvedBirthDate}
+                />
+              ))}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Bhukti Row Component matching Screenshot 4
+// Hierarchical Recursive Row Component for All 5 Levels
 // ---------------------------------------------------------------------------
 
-interface BhuktiRowProps {
-  bhukti: DasaPeriodNode;
-  mIdx: number;
-  bIdx: number;
-  bKey: string;
-  isExpanded: boolean;
-  isActive: boolean;
-  onToggle: () => void;
-  resolvedBirthDate: string;
+interface HierarchicalDasaRowProps {
+  node: DasaPeriodNode;
+  rowKey: string;
+  depth: number;
+  expandedKeys: Record<string, boolean>;
+  onToggleExpand: (key: string) => void;
+  targetJd: number;
   utcOffsetHours: number;
   planetContexts: Record<string, PlanetContext> | null;
   language: "en" | "ta";
-  t: TranslationDictionary;
+  birthDate?: string;
 }
 
-function BhuktiRow({
-  bhukti,
-  bKey,
-  isExpanded,
-  isActive,
-  onToggle,
-  resolvedBirthDate,
+function HierarchicalDasaRow({
+  node,
+  rowKey,
+  depth,
+  expandedKeys,
+  onToggleExpand,
+  targetJd,
   utcOffsetHours,
   planetContexts,
   language,
-}: BhuktiRowProps) {
-  // Start & End Dates
-  const sDt = jdToCalendarDateTime(bhukti.start_jd, utcOffsetHours);
-  const eDt = jdToCalendarDateTime(bhukti.end_jd, utcOffsetHours);
-  const sDateStr = sDt
-    ? `${String(sDt.day).padStart(2, "0")}/${String(sDt.month).padStart(2, "0")}/${sDt.year}`
-    : "—";
-  const eDateStr = eDt
-    ? `${String(eDt.day).padStart(2, "0")}/${String(eDt.month).padStart(2, "0")}/${eDt.year}`
-    : "—";
+  birthDate,
+}: HierarchicalDasaRowProps) {
+  const isExpanded = !!expandedKeys[rowKey];
 
-  // Duration decimal (Y.M.D)
-  const durationYmd = useMemo(() => {
-    if (!sDt || !eDt) return "—";
-    const diff = calculateCalendarAge(sDt.year, sDt.month, sDt.day, eDt.year, eDt.month, eDt.day);
-    if (!diff) return "—";
-    return `${diff.years}.${diff.months}.${diff.days}`;
-  }, [sDt, eDt]);
+  const cfg = getLevelConfig(node.level);
+  const depthLevel = cfg.levelNumber;
+  const canHaveChildren = depthLevel < 5;
 
-  // Age duration in period e.g. (0Y 4M) or (1Y 10M)
-  const periodAgeStr = useMemo(() => {
-    if (!resolvedBirthDate || !sDt || !eDt) return "";
-    const [by, bm, bd] = resolvedBirthDate.split("-").map(Number);
-    const ageAtStart = calculateCalendarAge(by, bm, bd, sDt.year, sDt.month, sDt.day);
-    if (!ageAtStart) return "";
-    return `(${ageAtStart.years}Y ${ageAtStart.months}M)`;
-  }, [resolvedBirthDate, sDt, eDt]);
+  // Resolve children: use pre-existing sub_periods or generate dynamically with canonical Vimshottari math
+  const subPeriods = useMemo(() => {
+    if (node.sub_periods && node.sub_periods.length > 0) {
+      return node.sub_periods;
+    }
+    if (canHaveChildren) {
+      return generateChildSubPeriods(node, utcOffsetHours, birthDate);
+    }
+    return [];
+  }, [node, canHaveChildren, utcOffsetHours, birthDate]);
 
-  // Benefit Bhavas
+  const hasChildren = subPeriods.length > 0;
+
+  const isSubDaily = depth >= 4;
+
+  const sDateStr = formatDateStr(node.start_date_iso, node.start_jd, utcOffsetHours, isSubDaily);
+  const eDateStr = formatDateStr(node.end_date_iso, node.end_jd, utcOffsetHours, isSubDaily);
+  const durationStr = formatDurationShort(node);
+
+  // Active status detection
+  const isCurrentlyActive = targetJd >= node.start_jd && targetJd < node.end_jd;
+  const isAtBirth = Boolean(node.is_active_at_birth);
+  const isCompleted = targetJd >= node.end_jd;
+
+  // Benefit Bhavas resolution
   const { starLordName, benefitBhavas } = useMemo(() => {
-    if (planetContexts && bhukti.lord) {
-      const res = calculateBenefitBhavas(bhukti.lord, planetContexts);
+    if (planetContexts && node.lord) {
+      const res = calculateBenefitBhavas(node.lord, planetContexts);
       return {
         starLordName: res.starLord,
         benefitBhavas: res.formatted,
       };
     }
     return {
-      starLordName: bhukti.star_lord || bhukti.lord,
-      benefitBhavas: bhukti.benefit_bhavas || "—",
+      starLordName: node.star_lord || node.lord,
+      benefitBhavas: node.benefit_bhavas || "—",
     };
-  }, [bhukti.lord, bhukti.star_lord, bhukti.benefit_bhavas, planetContexts]);
+  }, [node.lord, node.star_lord, node.benefit_bhavas, planetContexts]);
 
-  // Label: e.g. சுக் (பு)
-  const bhuktiLabel = useMemo(() => {
+  // Planet display label with star lord in parentheses
+  const planetLabel = useMemo(() => {
+    const lName = getLordName(node.lord, language);
+    const sName = getLordName(starLordName, language);
     if (language === "ta") {
-      const lShort = getGrahaShort(bhukti.lord, "ta");
+      const lShort = getGrahaShort(node.lord, "ta");
       const sShort = getGrahaShort(starLordName, "ta");
-      return `${lShort} (${sShort})`;
+      return `${lName} (${sShort})`;
     }
-    return `${bhukti.lord?.slice(0, 3)} (${starLordName?.slice(0, 3)})`;
-  }, [bhukti.lord, starLordName, language]);
-
-  const hasSub = bhukti.sub_periods && bhukti.sub_periods.length > 0;
+    return `${node.lord} (${starLordName?.slice(0, 3) || "Star"})`;
+  }, [node.lord, starLordName, language]);
 
   return (
-    <tr className={`hover:bg-[#F2F3F5] transition-colors ${isActive ? "bg-[#FAF2DE]/50 font-bold" : ""}`}>
-      {/* Col 1: Bukthi */}
-      <td className="py-2 px-3 font-semibold text-[#183047]">
-        <div className="flex items-center gap-1.5">
-          {hasSub ? (
-            <button
-              type="button"
-              onClick={onToggle}
-              className="w-3.5 h-3.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center justify-center text-[10px] text-slate-700 cursor-pointer"
+    <>
+      <tr
+        onClick={() => hasChildren && onToggleExpand(rowKey)}
+        className={`transition-colors text-xs select-none ${
+          hasChildren ? "cursor-pointer" : ""
+        } ${
+          isCurrentlyActive
+            ? "bg-[#FAF2DE]/70 font-bold border-l-4 border-l-[#B4872B]"
+            : isAtBirth
+            ? "bg-[#EBF2FE]/40"
+            : depth % 2 === 0
+            ? "bg-[#F8FAFC]/50 hover:bg-[#F2F3F5]"
+            : "bg-white hover:bg-[#F2F3F5]"
+        }`}
+      >
+        {/* Col 1: Level Badge + Indentation */}
+        <td className="py-2 px-3 whitespace-nowrap">
+          <div className={`flex items-center gap-1.5 ${cfg.rowIndent}`}>
+            {hasChildren ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleExpand(rowKey);
+                }}
+                className="w-4 h-4 rounded flex items-center justify-center border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 cursor-pointer shadow-2xs"
+              >
+                {isExpanded ? <Minus className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
+              </button>
+            ) : (
+              <span className="w-4 inline-block" />
+            )}
+            <span
+              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.badgeColor}`}
             >
-              {isExpanded ? <Minus className="w-2 h-2" /> : <Plus className="w-2 h-2" />}
-            </button>
-          ) : (
-            <span className="w-3.5 inline-block" />
-          )}
-          <span>{bhuktiLabel}</span>
-          {isActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#B4872B] inline-block shrink-0" />
-          )}
-        </div>
-      </td>
+              {language === "ta" ? cfg.badgeLabelTamil : cfg.badgeLabel}
+            </span>
+          </div>
+        </td>
 
-      {/* Col 2: From */}
-      <td className="py-2 px-3 font-mono text-[11px] text-[#52667E] whitespace-nowrap">
-        {sDateStr}
-      </td>
+        {/* Col 2: Planet Name + Star Lord */}
+        <td className="py-2 px-3 font-semibold text-[#183047] whitespace-nowrap">
+          <div className="flex items-center gap-1.5">
+            <span>{planetLabel}</span>
+            {isCurrentlyActive && (
+              <span className="w-2 h-2 rounded-full bg-[#B4872B] inline-block shrink-0 animate-pulse" />
+            )}
+          </div>
+        </td>
 
-      {/* Col 3: To */}
-      <td className="py-2 px-3 font-mono text-[11px] text-[#52667E] whitespace-nowrap">
-        <span>{eDateStr}</span>
-        {periodAgeStr && (
-          <span className="text-amber-700 ml-1 text-[10px] font-sans font-normal">
-            {periodAgeStr}
+        {/* Col 3: Start Date */}
+        <td className="py-2 px-3 font-mono text-[11px] text-[#52667E] whitespace-nowrap">
+          {sDateStr}
+        </td>
+
+        {/* Col 4: End Date */}
+        <td className="py-2 px-3 font-mono text-[11px] text-[#52667E] whitespace-nowrap">
+          {eDateStr}
+        </td>
+
+        {/* Col 5: Duration */}
+        <td className="py-2 px-3 font-mono text-[11px] font-semibold text-[#183047] whitespace-nowrap">
+          {durationStr}
+        </td>
+
+        {/* Col 6: Benefit Bhavas */}
+        <td className="py-2 px-3 font-mono text-[11px] font-bold text-[#153F6B] whitespace-nowrap">
+          <span
+            className="px-2 py-0.5 rounded bg-slate-100/80 border border-slate-200 inline-block hover:bg-amber-50 hover:border-amber-300 transition-colors"
+            title={`Star Lord Occupied | Star Lord Owned | Planet Occupied | Planet Owned: ${benefitBhavas}`}
+          >
+            {benefitBhavas}
           </span>
-        )}
-      </td>
+        </td>
 
-      {/* Col 4: Duration */}
-      <td className="py-2 px-3 font-mono text-[11px] text-[#183047] whitespace-nowrap">
-        {durationYmd}
-      </td>
+        {/* Col 7: Status */}
+        <td className="py-2 px-3 text-right whitespace-nowrap">
+          {isCurrentlyActive ? (
+            <span className="px-2 py-0.5 rounded-full bg-[#B4872B] text-white text-[10px] font-bold">
+              {language === "ta" ? "நடப்பு" : "Active"}
+            </span>
+          ) : isAtBirth ? (
+            <span className="px-2 py-0.5 rounded-full bg-[#153F6B] text-white text-[10px] font-semibold">
+              {language === "ta" ? "பிறப்பில்" : "At Birth"}
+            </span>
+          ) : isCompleted ? (
+            <span className="text-[10px] text-[#8190A6]">
+              {language === "ta" ? "முடிந்தது" : "Past"}
+            </span>
+          ) : (
+            <span className="text-[10px] text-[#52667E]">
+              {language === "ta" ? "வருவது" : "Upcoming"}
+            </span>
+          )}
+        </td>
+      </tr>
 
-      {/* Col 5: Benefit Bhavas */}
-      <td className="py-2 px-3 font-mono text-[11px] font-semibold text-[#183047]">
-        {benefitBhavas}
-      </td>
-    </tr>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Antardasha Row Component (for level 3 hierarchy inside Bhukti)
-// ---------------------------------------------------------------------------
-
-interface AntardashaRowProps {
-  antar: DasaPeriodNode;
-  aKey: string;
-  isExpanded: boolean;
-  isActive: boolean;
-  onToggle: () => void;
-  resolvedBirthDate: string;
-  utcOffsetHours: number;
-  planetContexts: Record<string, PlanetContext> | null;
-  language: "en" | "ta";
-  t: TranslationDictionary;
-}
-
-function AntardashaRow({
-  antar,
-  isExpanded,
-  isActive,
-  onToggle,
-  utcOffsetHours,
-  planetContexts,
-  language,
-}: AntardashaRowProps) {
-  const sDt = jdToCalendarDateTime(antar.start_jd, utcOffsetHours);
-  const eDt = jdToCalendarDateTime(antar.end_jd, utcOffsetHours);
-  const sDateStr = sDt
-    ? `${String(sDt.day).padStart(2, "0")}/${String(sDt.month).padStart(2, "0")}/${sDt.year}`
-    : "—";
-  const eDateStr = eDt
-    ? `${String(eDt.day).padStart(2, "0")}/${String(eDt.month).padStart(2, "0")}/${eDt.year}`
-    : "—";
-
-  const durationYmd = useMemo(() => {
-    if (!sDt || !eDt) return "—";
-    const diff = calculateCalendarAge(sDt.year, sDt.month, sDt.day, eDt.year, eDt.month, eDt.day);
-    if (!diff) return "—";
-    return `${diff.years}.${diff.months}.${diff.days}`;
-  }, [sDt, eDt]);
-
-  const starLordName = useMemo(() => {
-    if (planetContexts && antar.lord) {
-      return calculateBenefitBhavas(antar.lord, planetContexts).starLord;
-    }
-    return antar.star_lord || antar.lord;
-  }, [antar.lord, antar.star_lord, planetContexts]);
-
-  const antarLabel = useMemo(() => {
-    if (language === "ta") {
-      const lShort = getGrahaShort(antar.lord, "ta");
-      const sShort = getGrahaShort(starLordName, "ta");
-      return `${lShort} (${sShort})`;
-    }
-    return `${antar.lord?.slice(0, 3)} (${starLordName?.slice(0, 3)})`;
-  }, [antar.lord, starLordName, language]);
-
-  return (
-    <div className={`p-2 flex items-center justify-between text-[11px] hover:bg-slate-50 ${isActive ? "bg-amber-50 font-bold" : ""}`}>
-      <div className="flex items-center gap-2">
-        <span className="px-1.5 py-0.2 rounded text-[9px] bg-slate-100 font-bold text-slate-700">
-          Antar
-        </span>
-        <span className="font-semibold text-[#183047]">{antarLabel}</span>
-      </div>
-
-      <div className="flex items-center gap-3 font-mono text-[10px] text-[#52667E]">
-        <span>{sDateStr} → {eDateStr}</span>
-        <span className="font-bold text-[#183047]">{durationYmd}</span>
-      </div>
-    </div>
+      {/* Recursive Children Rows */}
+      {isExpanded &&
+        hasChildren &&
+        subPeriods.map((sub, sIdx) => (
+          <HierarchicalDasaRow
+            key={`${rowKey}-${sIdx}`}
+            node={sub}
+            rowKey={`${rowKey}-${sIdx}`}
+            depth={depth + 1}
+            expandedKeys={expandedKeys}
+            onToggleExpand={onToggleExpand}
+            targetJd={targetJd}
+            utcOffsetHours={utcOffsetHours}
+            planetContexts={planetContexts}
+            language={language}
+            birthDate={birthDate}
+          />
+        ))}
+    </>
   );
 }

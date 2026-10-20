@@ -281,3 +281,47 @@ class YogaChartContext:
         if diff > 180.0:
             diff = 360.0 - diff
         return diff <= orb_limit
+
+    def is_vargottama(self, planet: str) -> bool:
+        """Check if planet is Vargottama (occupies the same zodiac sign in D1 Rasi and D9 Navamsha).
+
+        Per Phaladeepika Ch. 3, v. 12 and BPHS Ch. 45, a planet in Vargottama acts as if in its own sign,
+        substantially elevating its strength and auspiciousness.
+        """
+        r_sign = self.planet_sign.get(planet)
+        d9_sign = self.planet_navamsa_sign.get(planet)
+        return bool(r_sign and d9_sign and r_sign == d9_sign)
+
+    def get_combustion_details(
+        self, planet: str, combustion_orbs: Optional[Dict[str, float]] = None
+    ) -> Tuple[bool, float, float]:
+        """Return (is_combust, actual_separation_degrees, orb_limit_degrees)."""
+        if planet in ("Sun", "Rahu", "Ketu"):
+            return False, 999.0, 0.0
+        sun_lon = self.planet_longitude.get("Sun")
+        planet_lon = self.planet_longitude.get(planet)
+        if sun_lon is None or planet_lon is None:
+            conjoined = self.are_conjoined("Sun", planet)
+            return conjoined, 0.0, 30.0
+
+        default_orbs = {
+            "Moon": 12.0,
+            "Mars": 17.0,
+            "Mercury": 14.0,
+            "Jupiter": 11.0,
+            "Venus": 10.0,
+            "Saturn": 15.0,
+        }
+        orbs = combustion_orbs or default_orbs
+        orb_limit = orbs.get(planet, 12.0)
+        if self.planet_is_retrograde.get(planet, False):
+            if planet == "Mercury":
+                orb_limit = 12.0
+            elif planet == "Venus":
+                orb_limit = 8.0
+
+        diff = abs(sun_lon - planet_lon)
+        if diff > 180.0:
+            diff = 360.0 - diff
+        return (diff <= orb_limit), round(diff, 4), orb_limit
+

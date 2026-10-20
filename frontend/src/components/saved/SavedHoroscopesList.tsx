@@ -6,7 +6,7 @@ import { useLanguage } from "@/lib/i18n";
 import { SavedHoroscopeItem, SavedHoroscopesListResponse } from "@/lib/types";
 import { SavedHoroscopeCard } from "./SavedHoroscopeCard";
 import { SavedHoroscopeEditModal } from "./SavedHoroscopeEditModal";
-import { formatHoroscopeSequence } from "@/lib/horoscope-storage-utils";
+import { formatHoroscopeSequence, exportHoroscopesToCsv } from "@/lib/horoscope-storage-utils";
 import { formatBirthDate, formatBirthTime } from "@/lib/formatters";
 import {
   Search,
@@ -33,6 +33,7 @@ import {
   Download,
   Filter,
   Crown,
+  Plus,
 } from "lucide-react";
 
 interface SavedHoroscopesListProps {
@@ -106,22 +107,11 @@ export function SavedHoroscopesList({
   // Export to CSV
   const handleExportCsv = () => {
     if (horoscopes.length === 0) return;
-    const headers = ["Serial", "Name", "Birth Date", "Birth Time", "Birthplace", "Ayanamsa", "Created At"];
-    const rows = horoscopes.map((h) => [
-      h.display_number,
-      `"${(h.person_name || "").replace(/"/g, '""')}"`,
-      h.birth_date,
-      h.birth_time,
-      `"${(h.birthplace || "").replace(/"/g, '""')}"`,
-      h.ayanamsa_id === 1 ? "KP" : h.ayanamsa_id === 2 ? "Raman" : "Lahiri",
-      h.created_at,
-    ]);
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = exportHoroscopesToCsv(horoscopes);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute(
       "download",
       `horoscopes_export_${new Date().toISOString().split("T")[0]}.csv`
@@ -129,6 +119,7 @@ export function SavedHoroscopesList({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Fetch horoscopes from API
@@ -254,7 +245,7 @@ export function SavedHoroscopesList({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#153F6B] hover:bg-[#0F3155] shadow-xs transition-colors"
           >
             <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
-            <span>{language === "ta" ? "+ புதிய ஜாதகம்" : "+ Create Horoscope"}</span>
+            <span>{language === "ta" ? "+ புதிய ஜாதகம்" : "+ Create New Horoscope"}</span>
           </Link>
         </div>
       )}
@@ -282,129 +273,131 @@ export function SavedHoroscopesList({
       )}
 
       {/* 2. Compact Search & Pagination Toolbar matching Screenshot 2 */}
-      <div className="rounded-xl border border-[#D9DEE7] bg-white p-2.5 sm:p-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Left Side: Search input + கண்டுபிடி Button + Filter */}
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-              placeholder={language === "ta" ? "தேடுக..." : "Search..."}
-              className="w-full px-3 py-1.5 text-xs text-[#183047] placeholder-[#8190A6] border border-[#D9DEE7] rounded-lg focus:outline-hidden focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B]/20 transition-all bg-white"
-            />
-            {searchTerm && (
+      {(totalCount > 0 || debouncedSearch || isLoading) && (
+        <div className="rounded-xl border border-[#D9DEE7] bg-white p-2.5 sm:p-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Left Side: Search input + கண்டுபிடி Button + Filter */}
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+                placeholder={language === "ta" ? "தேடுக..." : "Search..."}
+                className="w-full px-3 py-1.5 text-xs text-[#183047] placeholder-[#8190A6] border border-[#D9DEE7] rounded-lg focus:outline-hidden focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B]/20 transition-all bg-white"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-[#8190A6] hover:text-[#183047]"
+                  title={t.clearSearch}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleManualSearch}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>{language === "ta" ? "கண்டுபிடி" : "Search"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fetchHoroscopes(currentPage, debouncedSearch, pageSize, true)}
+              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] transition-colors cursor-pointer shrink-0"
+              title={language === "ta" ? "வடிகட்டி / புதுப்பி" : "Filter / Refresh"}
+            >
+              <Filter className="w-3.5 h-3.5 text-[#8190A6]" />
+            </button>
+          </div>
+
+          {/* Right Side: Export + Record Counter + Pagination + Page Size */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-between md:justify-end text-xs text-[#8190A6]">
+            {/* Download / Export */}
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={horoscopes.length === 0}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#183047] transition-colors cursor-pointer disabled:opacity-40"
+              title={language === "ta" ? "தரவிறக்கம்" : "Export CSV"}
+            >
+              <Download className="w-3.5 h-3.5 text-[#153F6B]" />
+              <span>{language === "ta" ? "பதிவிறக்கம்" : "Export"}</span>
+            </button>
+
+            {/* Record Counter: 1 to 12 of 693 */}
+            <span className="text-xs font-medium text-[#183047] whitespace-nowrap">
+              {startItem} to {endItem} of {totalCount}
+            </span>
+
+            {/* Pagination Controls << < > >> */}
+            <div className="inline-flex items-center gap-1">
               <button
                 type="button"
-                onClick={handleClearSearch}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-[#8190A6] hover:text-[#183047]"
-                title={t.clearSearch}
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage <= 1}
+                className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                title="First Page"
               >
-                <X className="w-3.5 h-3.5" />
+                <ChevronsLeft className="w-3.5 h-3.5" />
               </button>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                title="Previous Page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                title="Next Page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage >= totalPages}
+                className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                title="Last Page"
+              >
+                <ChevronsRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-          <button
-            type="button"
-            onClick={handleManualSearch}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "கண்டுபிடி" : "Search"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fetchHoroscopes(currentPage, debouncedSearch, pageSize, true)}
-            className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] transition-colors cursor-pointer shrink-0"
-            title={language === "ta" ? "வடிகட்டி / புதுப்பி" : "Filter / Refresh"}
-          >
-            <Filter className="w-3.5 h-3.5 text-[#8190A6]" />
-          </button>
-        </div>
-
-        {/* Right Side: Export + Record Counter + Pagination + Page Size */}
-        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-between md:justify-end text-xs text-[#8190A6]">
-          {/* Download / Export */}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={horoscopes.length === 0}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#183047] transition-colors cursor-pointer disabled:opacity-40"
-            title={language === "ta" ? "தரவிறக்கம்" : "Export CSV"}
-          >
-            <Download className="w-3.5 h-3.5 text-[#153F6B]" />
-            <span>{language === "ta" ? "பதிவிறக்கம்" : "Export"}</span>
-          </button>
-
-          {/* Record Counter: 1 to 12 of 693 */}
-          <span className="text-xs font-medium text-[#183047] whitespace-nowrap">
-            {startItem} to {endItem} of {totalCount}
-          </span>
-
-          {/* Pagination Controls << < > >> */}
-          <div className="inline-flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage <= 1}
-              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              title="First Page"
-            >
-              <ChevronsLeft className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
-              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              title="Previous Page"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              title="Next Page"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage >= totalPages}
-              className="p-1.5 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              title="Last Page"
-            >
-              <ChevronsRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Page Size Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-[#8190A6] hidden sm:inline">
-              {language === "ta" ? "பக்க அளவு" : "Page Size"}
-            </span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="px-2 py-1 text-xs border border-[#D9DEE7] rounded-lg bg-white text-[#183047] font-semibold focus:outline-hidden cursor-pointer"
-            >
-              <option value={6}>6</option>
-              <option value={12}>12</option>
-              <option value={24}>24</option>
-              <option value={48}>48</option>
-            </select>
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-[#8190A6] hidden sm:inline">
+                {language === "ta" ? "பக்க அளவு" : "Page Size"}
+              </span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 text-xs border border-[#D9DEE7] rounded-lg bg-white text-[#183047] font-semibold focus:outline-hidden cursor-pointer"
+              >
+                <option value={6}>6</option>
+                <option value={12}>12</option>
+                <option value={24}>24</option>
+                <option value={48}>48</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 3. Loading State */}
       {isLoading && (
@@ -438,7 +431,7 @@ export function SavedHoroscopesList({
             <Compass className="w-7 h-7" />
           </div>
           <h3 className="font-serif text-base sm:text-lg font-bold text-[#183047]">
-            {t.noSavedHoroscopes}
+            {language === "ta" ? t.noSavedHoroscopes : "No saved horoscopes yet."}
           </h3>
           <p className="mt-1.5 text-xs text-[#8190A6] max-w-md mx-auto leading-relaxed">
             {t.noSavedHoroscopesDesc}
@@ -448,8 +441,8 @@ export function SavedHoroscopesList({
               href="/horoscope"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#153F6B] hover:bg-[#0F3155] shadow-xs transition-colors"
             >
-              <span>{language === "ta" ? "+ புதிய ஜாதகம் கணிக்க" : "+ Calculate Horoscope"}</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#B4872B]" />
+              <Plus className="w-3.5 h-3.5 text-[#B4872B]" />
+              <span>{language === "ta" ? "+ புதிய ஜாதகம்" : "+ Create New Horoscope"}</span>
             </Link>
           </div>
         </div>

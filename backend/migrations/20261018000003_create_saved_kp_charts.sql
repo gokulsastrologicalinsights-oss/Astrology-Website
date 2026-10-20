@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS public.saved_kp_charts (
     -- Optional foreign key linking to an existing saved horoscope
     saved_horoscope_id UUID REFERENCES public.saved_horoscopes(id) ON DELETE SET NULL,
 
+    -- Optional customer integration columns (matches backend schemas and CRM)
+    customer_id UUID NULL,
+    customer_phone TEXT NULL,
+    country_code TEXT NULL DEFAULT '+91',
+    normalized_phone TEXT NULL,
+    whatsapp_number TEXT NULL,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_saved_kp_charts_user_display UNIQUE (user_id, display_number)
@@ -42,6 +49,7 @@ CREATE TABLE IF NOT EXISTS public.saved_kp_charts (
 CREATE INDEX IF NOT EXISTS idx_saved_kp_charts_user_id ON public.saved_kp_charts (user_id);
 CREATE INDEX IF NOT EXISTS idx_saved_kp_charts_created_at ON public.saved_kp_charts (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_saved_kp_charts_chart_type ON public.saved_kp_charts (chart_type);
+CREATE INDEX IF NOT EXISTS idx_saved_kp_charts_customer_id ON public.saved_kp_charts (customer_id);
 
 -- Concurrency-Safe Transactional Sequential Numbering Mechanism
 -- Uses a transaction-level advisory lock scoped to the user_id to prevent numbering collisions
@@ -51,16 +59,30 @@ RETURNS TRIGGER AS $$
 DECLARE
     next_num INTEGER;
 BEGIN
-    IF NEW.display_number IS NULL OR NEW.display_number <= 0 THEN
-        PERFORM pg_advisory_xact_lock(hashtext('saved_kp_charts_' || NEW.user_id::text));
+    -- Check if an explicit positive display_number was provided
+    IF NEW.display_number IS NOT NULL AND NEW.display_number > 0 THEN
+        -- Allow service_role unconditionally for administrative imports, backups, and migrations
+        IF auth.role() = 'service_role' THEN
+            RETURN NEW;
+        END IF;
 
-        SELECT COALESCE(MAX(display_number), 0) + 1
-        INTO next_num
-        FROM public.saved_kp_charts
-        WHERE user_id = NEW.user_id;
-
-        NEW.display_number := next_num;
+        -- For authenticated users, allow only if confirmed as an administrator
+        IF auth.role() = 'authenticated' AND public.is_admin() THEN
+            RETURN NEW;
+        END IF;
     END IF;
+
+    -- For all normal user saves, unauthenticated callers, or whenever
+    -- display_number is omitted, NULL, zero, or negative, calculate the next
+    -- sequential number under a transaction-level advisory lock scoped to user_id.
+    PERFORM pg_advisory_xact_lock(hashtext('saved_kp_charts_' || NEW.user_id::text));
+
+    SELECT COALESCE(MAX(display_number), 0) + 1
+    INTO next_num
+    FROM public.saved_kp_charts
+    WHERE user_id = NEW.user_id;
+
+    NEW.display_number := next_num;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -73,6 +95,11 @@ EXECUTE FUNCTION public.set_saved_kp_chart_display_number();
 
 -- Row Level Security (RLS) Configuration
 ALTER TABLE public.saved_kp_charts ENABLE ROW LEVEL SECURITY;
+
+-- Least-Privilege Grants: Strip unauthenticated access; grant DML to authenticated; full access to service_role
+REVOKE ALL ON TABLE public.saved_kp_charts FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.saved_kp_charts TO authenticated;
+GRANT ALL ON TABLE public.saved_kp_charts TO service_role;
 
 DROP POLICY IF EXISTS "saved_kp_charts_select_policy" ON public.saved_kp_charts;
 DROP POLICY IF EXISTS "saved_kp_charts_insert_policy" ON public.saved_kp_charts;

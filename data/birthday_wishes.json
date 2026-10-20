@@ -1,0 +1,14 @@
+[
+  {
+    "customer_id": "cust_1792337444068_gdz04yu",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_opt_1792337439814",
+    "sent_at": "2026-10-18T15:30:53.590Z"
+  },
+  {
+    "customer_id": "cust_1792337463547_grvugi3",
+    "wish_date": "2026-10-18",
+    "sent_by": "test_user_1792337462398",
+    "sent_at": "2026-10-18T15:31:12.626Z"
+  }
+]

@@ -669,6 +669,8 @@ VERIFIED_REMEDIES: List[Dict[str, Any]] = [
     },
 ]
 
+REMEDIES_BY_CODE: Dict[str, Dict[str, Any]] = {r["code"]: r for r in VERIFIED_REMEDIES}
+
 
 # ─── Repository Functions ───────────────────────────────────────────────────
 
@@ -725,6 +727,12 @@ def list_remedies(
                 query = query.contains("problem_slugs", [problem_slug])
             res = query.order("code").execute()
             if res.data and len(res.data) > 0:
+                for row in res.data:
+                    local = REMEDIES_BY_CODE.get(row.get("code"))
+                    if local:
+                        for k, v in local.items():
+                            if row.get(k) is None:
+                                row[k] = v
                 return res.data
         except Exception:
             pass
@@ -748,7 +756,13 @@ def get_remedy_by_code(code: str) -> Optional[Dict[str, Any]]:
         try:
             res = supabase.table("remedies_catalog").select("*").eq("code", code).execute()
             if res.data and len(res.data) > 0:
-                return res.data[0]
+                row = res.data[0]
+                local = REMEDIES_BY_CODE.get(row.get("code"))
+                if local:
+                    for k, v in local.items():
+                        if row.get(k) is None:
+                            row[k] = v
+                return row
         except Exception:
             pass
 
@@ -898,7 +912,8 @@ def list_report_records(
     horoscope_id: Optional[str] = None,
     is_admin: bool = False,
 ) -> List[Dict[str, Any]]:
-    """List remedy reports for user or specific horoscope."""
+    """List remedy reports for user or specific horoscope with fallback store merging."""
+    combined_reports: Dict[str, Dict[str, Any]] = dict(IN_MEMORY_REMEDY_REPORTS)
     supabase = get_supabase_client()
     if supabase:
         try:
@@ -908,17 +923,18 @@ def list_report_records(
             if horoscope_id:
                 query = query.eq("horoscope_id", str(horoscope_id))
             res = query.order("created_at", desc=True).execute()
-            if res.data is not None:
-                return res.data
+            if res.data:
+                for row in res.data:
+                    combined_reports[row["id"]] = row
         except Exception as err:
             logger.warning(
                 "Supabase list query for 'remedy_reports' failed (%s); listing from in-memory fallback store.",
                 err,
             )
 
-    # Fallback to in-memory records
+    # Filter and sort matching records
     results = []
-    for r in IN_MEMORY_REMEDY_REPORTS.values():
+    for r in combined_reports.values():
         if not is_admin and str(r.get("user_id")) != str(user_id):
             continue
         if horoscope_id and str(r.get("horoscope_id")) != str(horoscope_id):

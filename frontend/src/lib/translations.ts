@@ -94,6 +94,8 @@ export interface TranslationDictionary {
   tabNabhasha: string;
   tabAshtakavarga: string;
   tabVedicYogas: string;
+  tabMedicalAstrology: string;
+  tabDoshas: string;
   tabDestinyCard: string;
   destinyCardTitle: string;
   destinyCardSubtitle: string;
@@ -140,6 +142,37 @@ export interface TranslationDictionary {
   vedicYogasModalReference: string;
   vedicYogasModalVerification: string;
   vedicYogasModalCancellation: string;
+  doshasTitle: string;
+  doshasSubtitle: string;
+  doshasTotalEvaluated: string;
+  doshasPresent: string;
+  doshasMitigated: string;
+  doshasAbsent: string;
+  doshasIndeterminate: string;
+  doshasFilterAll: string;
+  doshasFilterPresent: string;
+  doshasFilterMitigated: string;
+  doshasFilterAbsent: string;
+  doshasFilterIndeterminate: string;
+  doshasSearchPlaceholder: string;
+  doshasColSNo: string;
+  doshasColName: string;
+  doshasColCategory: string;
+  doshasColStatus: string;
+  doshasColPlanets: string;
+  doshasColReference: string;
+  doshasColConditions: string;
+  doshasColAction: string;
+  doshasModalTitle: string;
+  doshasModalFormation: string;
+  doshasModalCancellation: string;
+  doshasModalInterpretation: string;
+  doshasModalRemedies: string;
+  doshasModalReference: string;
+  doshasModalMissingPrereq: string;
+  doshasMissingNotice: string;
+  doshasCalculateButton: string;
+  doshasCalculating: string;
   nabhashaTitle: string;
   nabhashaSubtitle: string;
   nabhashaPrimaryYoga: string;
@@ -308,6 +341,8 @@ export interface TranslationDictionary {
   memberSince: string;
 
   // Saved Horoscopes UI (Task 3)
+  myHoroscopes: string;
+  createNewHoroscope: string;
   serialNumberLabel: string;
   birthDateLabel: string;
   birthTimeLabel: string;
@@ -479,6 +514,8 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabNabhasha: "Nabhasha Yogas",
     tabAshtakavarga: "Ashtakavarga",
     tabVedicYogas: "Vedic Yogas",
+    tabMedicalAstrology: "Medical Astrology",
+    tabDoshas: "Doshas",
     tabDestinyCard: "Destiny Card",
     destinyCardTitle: "Vedic Destiny Card",
     destinyCardSubtitle:
@@ -528,6 +565,37 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     vedicYogasModalReference: "Textual Authority",
     vedicYogasModalVerification: "Rule Verification Status",
     vedicYogasModalCancellation: "Cancellation Analysis (Bhanga)",
+    doshasTitle: "Vedic Dosha Analysis",
+    doshasSubtitle: "Rule-based evaluation of classical afflictions, conjunction doshas, and mitigations based on authoritative planetary positions.",
+    doshasTotalEvaluated: "Total Rules Evaluated",
+    doshasPresent: "Active Doshas",
+    doshasMitigated: "Mitigated / Cancelled",
+    doshasAbsent: "Absent / Non-Afflicted",
+    doshasIndeterminate: "Indeterminate / Requires Data",
+    doshasFilterAll: "All Doshas",
+    doshasFilterPresent: "Active Only",
+    doshasFilterMitigated: "Mitigated Only",
+    doshasFilterAbsent: "Absent Only",
+    doshasFilterIndeterminate: "Indeterminate Only",
+    doshasSearchPlaceholder: "Search dosha by name, planet, or category...",
+    doshasColSNo: "#",
+    doshasColName: "Dosha Name",
+    doshasColCategory: "Category",
+    doshasColStatus: "Status",
+    doshasColPlanets: "Planets & Degrees",
+    doshasColReference: "Reference Basis",
+    doshasColConditions: "Formation Summary",
+    doshasColAction: "Details",
+    doshasModalTitle: "Vedic Dosha Analytical Inspector",
+    doshasModalFormation: "Formation Conditions Evaluated",
+    doshasModalCancellation: "Cancellation & Mitigation Analysis",
+    doshasModalInterpretation: "Traditional Interpretation",
+    doshasModalRemedies: "Verified Classical Remedies",
+    doshasModalReference: "Textual Authority & Rule-set",
+    doshasModalMissingPrereq: "Missing Prerequisite Notice",
+    doshasMissingNotice: "Dosha analysis has not yet been computed for this chart.",
+    doshasCalculateButton: "Calculate Vedic Doshas",
+    doshasCalculating: "Evaluating 30 Classical Dosha Rules...",
     nabhashaTitle: "Classical Nabhasha Yogas",
     nabhashaSubtitle: "Celestial pattern yogas formed by the spatial distribution of the 7 classical planets (BPHS Ch. 35).",
     nabhashaPrimaryYoga: "Primary Operative Yoga",
@@ -704,6 +772,8 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     memberSince: "Member Since",
 
     // Saved Horoscopes UI (Task 3)
+    myHoroscopes: "My Horoscopes",
+    createNewHoroscope: "+ Create New Horoscope",
     serialNumberLabel: "Serial #",
     birthDateLabel: "Birth Date",
     birthTimeLabel: "Birth Time",
@@ -711,7 +781,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     actionEdit: "Edit",
     actionOpenHoroscope: "Open Horoscope",
     searchHoroscopesPlaceholder: "Search by birth name...",
-    noSavedHoroscopes: "No Saved Horoscopes Yet",
+    noSavedHoroscopes: "No saved horoscopes yet.",
     noSavedHoroscopesDesc:
       "Generate and compute your first Vedic & KP horoscope to view and manage it here.",
     noSearchResults: "No horoscopes matched your search criteria.",
@@ -884,6 +954,8 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabNabhasha: "நபச யோகங்கள்",
     tabAshtakavarga: "அஷ்டகவர்க்கம்",
     tabVedicYogas: "வேத யோகங்கள்",
+    tabMedicalAstrology: "மருத்துவ ஜோதிடம்",
+    tabDoshas: "தோஷங்கள்",
     tabDestinyCard: "விதி அட்டை",
     destinyCardTitle: "வேத விதி அட்டை",
     destinyCardSubtitle:
@@ -933,6 +1005,37 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     vedicYogasModalReference: "சாஸ்திர ஆதாரம்",
     vedicYogasModalVerification: "விதி சரிபார்ப்பு நிலை",
     vedicYogasModalCancellation: "பங்க பகுப்பாய்வு (ரத்து விவரம்)",
+    doshasTitle: "வேத தோஷ பகுப்பாய்வு",
+    doshasSubtitle: "துல்லியமான கிரக நிலைகள், திருக்கணித விதிகள் மற்றும் பரிகார/பங்க அமைப்புகளின் அடிப்படையில் கணக்கிடப்பட்ட பாரம்பரிய தோஷங்கள்.",
+    doshasTotalEvaluated: "ஆய்வு செய்யப்பட்ட விதிகள்",
+    doshasPresent: "உள்ள தோஷங்கள்",
+    doshasMitigated: "பங்கமடைந்தவை / நிவர்த்தி",
+    doshasAbsent: "தோஷமில்லை",
+    doshasIndeterminate: "கூடுதல் தரவு தேவை",
+    doshasFilterAll: "அனைத்து தோஷங்கள்",
+    doshasFilterPresent: "உள்ளவை மட்டும்",
+    doshasFilterMitigated: "நிவர்த்தியானவை மட்டும்",
+    doshasFilterAbsent: "இல்லாதவை மட்டும்",
+    doshasFilterIndeterminate: "தரவு தேவைப்படுபவை",
+    doshasSearchPlaceholder: "தோஷப் பெயர், கிரகம் அல்லது வகையைத் தேடுக...",
+    doshasColSNo: "எண்",
+    doshasColName: "தோஷப் பெயர்",
+    doshasColCategory: "பிரிவு",
+    doshasColStatus: "நிலை",
+    doshasColPlanets: "கிரகங்கள் & பாகைகள்",
+    doshasColReference: "ஆதார மையம்",
+    doshasColConditions: "அமைப்பு விவரம்",
+    doshasColAction: "விவரம்",
+    doshasModalTitle: "தோஷ ஆய்வுக் கண்ணோட்டம்",
+    doshasModalFormation: "ஆய்வு செய்யப்பட்ட தோஷ விதிகள்",
+    doshasModalCancellation: "பங்க மற்றும் நிவர்த்தி ஆய்வு",
+    doshasModalInterpretation: "பாரம்பரிய பலன் விளக்கம்",
+    doshasModalRemedies: "சாஸ்திர பரிகார முறைகள்",
+    doshasModalReference: "சாஸ்திர ஆதாரம் & விதித்தொகுப்பு",
+    doshasModalMissingPrereq: "முன்நிபந்தனை தகவல்",
+    doshasMissingNotice: "இந்த ஜாதகத்திற்கு வேத தோஷ பகுப்பாய்வு இன்னும் கணக்கிடப்படவில்லை.",
+    doshasCalculateButton: "வேத தோஷங்களை கணக்கிடுக",
+    doshasCalculating: "30 பாரம்பரிய தோஷ விதிகள் கணக்கிடப்படுகின்றன...",
     nabhashaTitle: "பாரம்பரிய நபச யோகங்கள்",
     nabhashaSubtitle: "7 பாரம்பரிய கிரகங்களின் ராசி/பாவக அமைப்பால் உருவாகும் விண்வெளி வடிவ யோகங்கள் (பராசரர் ஹோரா சாஸ்திரம் அத்தியாயம் 35).",
     nabhashaPrimaryYoga: "முதன்மைச் செயல் யோகம்",
@@ -1109,6 +1212,8 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     memberSince: "இணைந்த தேதி",
 
     // Saved Horoscopes UI (Task 3)
+    myHoroscopes: "எனது ஜாதகங்கள்",
+    createNewHoroscope: "+ புதிய ஜாதகம்",
     serialNumberLabel: "வரிசை எண் #",
     birthDateLabel: "பிறந்த தேதி",
     birthTimeLabel: "பிறந்த நேரம்",

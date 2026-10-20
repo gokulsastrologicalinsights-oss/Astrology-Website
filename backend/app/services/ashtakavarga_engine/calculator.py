@@ -17,21 +17,26 @@ from app.services.ashtakavarga_engine.shodhana import (
     apply_ekadhipatya_shodhana,
     compute_shodhya_pinda,
 )
+from app.services.ashtakavarga_engine.prastara import compute_all_prastara_matrices
+from app.services.ashtakavarga_engine.kaksha import build_all_kaksha_grids
 
 
 def calculate_ashtakavarga(
     planets: List[Any],
     ascendant_sign_idx: int,
     apply_shodhana: bool = True,
+    include_prastara: bool = True,
+    include_kaksha: bool = True,
 ) -> AshtakavargaResponse:
     """Compute Bhinnashtakavarga (BAV) for 7 planets, aggregate Sarvashtakavarga (SAV),
-
-    and calculate Trikona Shodhana, Ekadhipatya Shodhana, and Shodhya Pinda.
+    calculate Shodhana reductions, and optionally generate Prastara matrices and Kaksha grids.
 
     Parameters:
     - planets: list of planet objects or dicts having 'name' and 'sign_index' (1-12)
     - ascendant_sign_idx: Ascendant sign index (1-12)
     - apply_shodhana: whether to compute reductions and pindas (default: True)
+    - include_prastara: whether to compute complete 8x12 Prastara matrices (default: True)
+    - include_kaksha: whether to compute 96-Kaksha transit grids (default: True)
     """
     # 1. Map positions of the 7 planets and Lagna
     contributor_signs: Dict[str, int] = {}
@@ -120,9 +125,22 @@ def calculate_ashtakavarga(
         inauspicious_signs=[s for s in range(1, 13) if sav_sign_totals[s] < 28],
     )
 
+    # 4. Optional Prastara & Kaksha calculations
+    prastara_data = None
+    kaksha_data = None
+    if include_prastara or include_kaksha:
+        prastara_data = compute_all_prastara_matrices(contributor_signs)
+        if include_kaksha:
+            kaksha_data = build_all_kaksha_grids(prastara_data)
+        if not include_prastara:
+            prastara_data = None
+
     return AshtakavargaResponse(
         bhinnashtakavarga=bav_dict,
         sarvashtakavarga=sav_detail,
         lagna_sign_index=ascendant_sign_idx,
         validation_status=validation_status,
+        prastara=prastara_data,
+        kaksha_grids=kaksha_data,
     )
+

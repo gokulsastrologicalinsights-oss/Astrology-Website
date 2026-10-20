@@ -191,7 +191,7 @@ export function HoraryPrashnaTab({ language, onSavedRecord }: HoraryPrashnaTabPr
           </button>
         </div>
 
-        <form onSubmit={handleCalculate} className="space-y-6">
+        <form onSubmit={handleCalculate} noValidate className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Horary Number Picker */}
             <div className="space-y-2">

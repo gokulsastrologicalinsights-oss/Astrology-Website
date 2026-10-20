@@ -207,3 +207,83 @@ def test_horoscope_invalid_timezone():
     res = client.post("/api/v1/horoscope/calculate", json=payload_bad_tz)
     assert res.status_code == 422
     assert "Unknown timezone" in res.json()["detail"]
+
+
+def test_horoscope_include_doshas_enabled():
+    """Verify include_doshas=True returns all 30 canonical Vedic Doshas in response."""
+    payload = {**VALID_PAYLOAD, "include_doshas": True}
+    res = client.post("/api/v1/horoscope/calculate", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+
+    assert "doshas" in data
+    assert data["doshas"] is not None
+    doshas = data["doshas"]
+
+    # Verify structural integrity
+    assert "kuja_dosha" in doshas
+    assert "kaal_sarp_dosha" in doshas
+    assert "sadesati" in doshas
+    assert "all_doshas" in doshas
+    assert len(doshas["all_doshas"]) == 30
+
+    # Verify summary counts
+    assert "summary" in doshas
+    summary = doshas["summary"]
+    assert summary["total_rules_evaluated"] == 30
+    assert summary["total_indeterminate"] == 4
+
+
+def test_horoscope_include_doshas_disabled():
+    """Verify include_doshas=False (default) returns doshas=None without overhead."""
+    payload = {**VALID_PAYLOAD, "include_doshas": False}
+    res = client.post("/api/v1/horoscope/calculate", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert data.get("doshas") is None
+
+    # Omitted field defaults to False
+    res_default = client.post("/api/v1/horoscope/calculate", json=VALID_PAYLOAD)
+    assert res_default.status_code == 200
+    assert res_default.json().get("doshas") is None
+
+
+def test_live_transits_get_endpoint():
+    """Verify GET /api/v1/horoscope/live-transits returns live ephemeris positions."""
+    res = client.get("/api/v1/horoscope/live-transits?timezone=Asia/Kolkata&ayanamsa=0")
+    assert res.status_code == 200
+    data = res.json()
+    assert "calculated_at" in data
+    assert data["timezone"] == "Asia/Kolkata"
+    assert data["ayanamsa_name"] == "Lahiri"
+    assert data["ayanamsa_id"] == 0
+    assert len(data["planets"]) == 12
+
+    names = [p["name"] for p in data["planets"]]
+    for expected in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]:
+        assert expected in names
+
+    # Verify planetary fields
+    sun = next(p for p in data["planets"] if p["name"] == "Sun")
+    assert 1 <= sun["sign_index"] <= 12
+    assert 0.0 <= sun["degree_in_sign"] <= 30.0
+    assert "nakshatra" in sun
+    assert 1 <= sun["nakshatra"]["pada"] <= 4
+
+
+def test_live_transits_post_endpoint():
+    """Verify POST /api/v1/horoscope/live-transits returns positions for target epoch."""
+    payload = {
+        "timezone": "Asia/Kolkata",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "ayanamsa": 0,
+        "target_datetime": "2026-10-19T12:00:00+05:30",
+    }
+    res = client.post("/api/v1/horoscope/live-transits", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["calculated_at"] == "2026-10-19T12:00:00+05:30"
+    assert len(data["planets"]) == 12
+
+

@@ -8,6 +8,7 @@ from app.services.yoga_engine.models import (
     get_nth_house,
     KENDRA_HOUSES,
     DUSTHANA_HOUSES,
+    SIGN_LORDS,
     SIGN_NAMES_EN,
 )
 
@@ -136,7 +137,18 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
     # 4. Benefic aspect on Moon (Jupiter, Venus)
     bhanga_c4 = ctx.planet_aspects_planet("Jupiter", "Moon") or ctx.planet_aspects_planet("Venus", "Moon")
 
-    is_kemadruma_cancelled = bhanga_c1 or bhanga_c2 or bhanga_c3 or bhanga_c4
+    # 5. Moon in Kendra from Lagna (1, 4, 7, 10) per Phaladeepika 6.9 and BPHS 36.31
+    bhanga_c5 = (moon_house in KENDRA_HOUSES) if moon_house else False
+
+    # 6. Moon is in Navamsha of an exalted planet or benefic (Jupiter, Venus, Mercury) and aspected by Jupiter
+    moon_nav_sign = ctx.planet_navamsa_sign.get("Moon")
+    bhanga_c6 = False
+    if moon_nav_sign:
+        nav_lord = SIGN_LORDS.get(moon_nav_sign)
+        if nav_lord in ("Jupiter", "Venus", "Mercury") and ctx.planet_aspects_planet("Jupiter", "Moon"):
+            bhanga_c6 = True
+
+    is_kemadruma_cancelled = bhanga_c1 or bhanga_c2 or bhanga_c3 or bhanga_c4 or bhanga_c5 or bhanga_c6
     kemadruma_operative = has_kemadruma_formation and not is_kemadruma_cancelled
 
     bhanga_reasons = []
@@ -144,6 +156,8 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
     if bhanga_c2: bhanga_reasons.append(f"Grahas in Kendras from Lagna ({', '.join(planets_in_lagna_kendras)})")
     if bhanga_c3: bhanga_reasons.append(f"Grahas in Kendras from Moon ({', '.join(planets_in_moon_kendras)})")
     if bhanga_c4: bhanga_reasons.append("Benefic drishti on Moon from Jupiter or Venus")
+    if bhanga_c5: bhanga_reasons.append("Moon in Kendra (1, 4, 7, 10) from Lagna")
+    if bhanga_c6: bhanga_reasons.append(f"Moon in benefic Navamsha ({SIGN_NAMES_EN.get(moon_nav_sign, '')}) with Jupiter aspect")
 
     cancellation_text = "; ".join(bhanga_reasons) if bhanga_reasons else None
 
@@ -184,6 +198,39 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             cancellation_reason=cancellation_text if is_kemadruma_cancelled else None
         )
     )
+
+    # 2.1 Kemadruma Bhanga Raja Yoga (Kalpadruma Yoga)
+    # When Kemadruma is cancelled, classical authorities state it converts into a powerful Raja Yoga
+    if has_kemadruma_formation and is_kemadruma_cancelled:
+        results.append(
+            YogaDetail(
+                id="kemadruma_bhanga_raja_yoga",
+                name="Kemadruma Bhanga Raja Yoga (Kalpadruma)",
+                name_tamil="கேமத்துரும பங்க ராஜ யோகம் (கல்ப்பதரும யோகம்)",
+                category="Raja Yoga",
+                status="Qualifying",
+                is_qualifying=True,
+                planets_involved=["Moon"] + [p for p in ("Jupiter", "Venus") if ctx.planet_aspects_planet(p, "Moon")],
+                relevant_houses=[moon_house] if moon_house else [],
+                conditions=[
+                    YogaConditionItem(
+                        condition="Kemadruma planetary formation occurred (Moon flanked by empty 2nd/12th houses)",
+                        passed=True,
+                        detail=f"Moon in House {moon_house} flanked by empty 2nd and 12th houses."
+                    ),
+                    YogaConditionItem(
+                        condition="Classical cancellation (Bhanga) satisfied, converting poverty into royal prosperity",
+                        passed=True,
+                        detail=cancellation_text or "Kemadruma cancelled by classical Kendra/aspect rules."
+                    )
+                ],
+                short_interpretation="Adversity transformed into lasting prosperity, high prestige, sovereign patronage, and enduring fortune.",
+                classical_definition="When Kemadruma Yoga is cancelled by planets in Kendras or benefic aspects, it elevates the native into royal stature.",
+                classical_reference="Phaladeepika Ch. 6, v. 11; Brihat Parashara Hora Shastra Ch. 36; 300 Important Combinations #42",
+                verification_status="Classical Independent Implementation"
+            )
+        )
+
 
     # -------------------------------------------------------------
     # 3. Solar Yogas: Vesi, Vasi, Obhayachari
@@ -353,34 +400,220 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
         )
     )
 
-    # 5.2 Daridra Yoga: 11th lord in 6, 8, 12
+    # 5.2 Daridra Yoga (11th Lord in Dusthana) & Daridra Bhanga (Cancellation)
     l_11 = ctx.house_lords[11]
     h_l11 = ctx.planet_house.get(l_11)
-    daridra_qualifies = (h_l11 in DUSTHANA_HOUSES) if h_l11 else False
+    daridra_11_formed = (h_l11 in DUSTHANA_HOUSES) if h_l11 else False
+
+    # Classical cancellation (Daridra Bhanga):
+    # 1. 11th lord is in its own sign or exaltation sign in the Dusthana
+    # 2. 11th lord is aspected by Jupiter or Venus
+    # 3. Strong Jupiter or Venus occupies a Kendra from Lagna
+    daridra_11_bhanga_reasons = []
+    if daridra_11_formed and l_11:
+        if ctx.is_in_own_sign(l_11):
+            daridra_11_bhanga_reasons.append(f"11th lord {l_11} occupies its own sign")
+        if ctx.is_exalted(l_11):
+            daridra_11_bhanga_reasons.append(f"11th lord {l_11} is exalted")
+        if ctx.planet_aspects_planet("Jupiter", l_11) or ctx.planet_aspects_planet("Venus", l_11):
+            daridra_11_bhanga_reasons.append(f"{l_11} receives drishti of benefic Jupiter or Venus")
+        if ctx.is_in_kendra("Jupiter") or ctx.is_in_kendra("Venus"):
+            daridra_11_bhanga_reasons.append("Natural benefics (Jupiter/Venus) occupy Kendras from Lagna")
+
+    daridra_11_cancelled = len(daridra_11_bhanga_reasons) > 0
+    daridra_11_qualifies = daridra_11_formed and not daridra_11_cancelled
+    daridra_11_cancellation_text = "; ".join(daridra_11_bhanga_reasons) if daridra_11_cancelled else None
+
+    status_11_str = "Not Qualifying"
+    if daridra_11_formed:
+        status_11_str = "Cancelled" if daridra_11_cancelled else "Qualifying"
 
     results.append(
         YogaDetail(
             id="daridra_yoga",
-            name="Daridra Yoga",
-            name_tamil="தரித்திர யோகம்",
+            name="Daridra Yoga (11th Lord in Dusthana)",
+            name_tamil="தரித்திர யோகம் (11-ஆம் அதிபதி மறைவு)",
             category="Avayoga",
-            status="Qualifying" if daridra_qualifies else "Not Qualifying",
-            is_qualifying=daridra_qualifies,
-            planets_involved=[l_11],
+            status=status_11_str,
+            is_qualifying=daridra_11_qualifies,
+            planets_involved=[l_11] if l_11 else [],
             relevant_houses=[h_l11] if h_l11 else [],
             conditions=[
                 YogaConditionItem(
                     condition="11th house lord occupies a Dusthana (6th, 8th, or 12th house)",
-                    passed=daridra_qualifies,
-                    detail=f"11th Lord {l_11} occupies House {h_l11}."
+                    passed=daridra_11_formed,
+                    detail=f"11th Lord {l_11} occupies House {h_l11}." if l_11 else "11th lord unavailable."
+                ),
+                YogaConditionItem(
+                    condition="Free from Daridra Bhanga (cancellation by benefic aspect, own sign, or Kendra protection)",
+                    passed=not daridra_11_cancelled,
+                    detail=(
+                        f"Cancelled: {daridra_11_cancellation_text}"
+                        if daridra_11_cancelled else
+                        "No cancelling benefic aspects found."
+                    )
                 )
             ],
-            short_interpretation="Fluctuations in commercial gains, high financial drain, and unexpected liabilities; remedied by steady fiscal prudence.",
-            classical_definition="The lord of the 11th house occupies the 6th, 8th, or 12th house from Lagna.",
-            classical_reference="Phaladeepika Ch. 6, v. 68",
-            verification_status="Verified"
+            short_interpretation=(
+                "Fluctuations in commercial gains, high financial drain, and unexpected liabilities; remedied by steady fiscal prudence."
+                if daridra_11_qualifies else
+                (
+                    "Adverse financial afflictions neutralized by Daridra Bhanga; gains stabilize through timely effort."
+                    if status_11_str == "Cancelled" else
+                    "11th house lord is safely placed outside Dusthanas."
+                )
+            ),
+            classical_definition="The lord of the 11th house occupies the 6th, 8th, or 12th house from Lagna. Cancelled if aspected by benefics or in own/exalted sign.",
+            classical_reference="Phaladeepika Ch. 6, v. 68; Brihat Parashara Hora Shastra Ch. 42",
+            verification_status="Verified",
+            cancellation_reason=daridra_11_cancellation_text if daridra_11_cancelled else None,
         )
     )
+
+    # 5.3 Daridra Yoga (2nd Lord in Dusthana)
+    l_2 = ctx.house_lords[2]
+    h_l2 = ctx.planet_house.get(l_2)
+    daridra_2_formed = (h_l2 in DUSTHANA_HOUSES) if h_l2 else False
+
+    daridra_2_bhanga_reasons = []
+    if daridra_2_formed and l_2:
+        if ctx.is_in_own_sign(l_2):
+            daridra_2_bhanga_reasons.append(f"2nd lord {l_2} occupies its own sign")
+        if ctx.is_exalted(l_2):
+            daridra_2_bhanga_reasons.append(f"2nd lord {l_2} is exalted")
+        if ctx.planet_aspects_planet("Jupiter", l_2) or ctx.planet_aspects_planet("Venus", l_2):
+            daridra_2_bhanga_reasons.append(f"{l_2} receives aspect of Jupiter or Venus")
+        if ctx.is_in_kendra("Jupiter") or ctx.is_in_kendra("Venus"):
+            daridra_2_bhanga_reasons.append("Jupiter or Venus occupies a Kendra from Lagna")
+
+    daridra_2_cancelled = len(daridra_2_bhanga_reasons) > 0
+    daridra_2_qualifies = daridra_2_formed and not daridra_2_cancelled
+    daridra_2_cancellation_text = "; ".join(daridra_2_bhanga_reasons) if daridra_2_cancelled else None
+
+    status_2_str = "Not Qualifying"
+    if daridra_2_formed:
+        status_2_str = "Cancelled" if daridra_2_cancelled else "Qualifying"
+
+    results.append(
+        YogaDetail(
+            id="daridra_yoga_2nd_lord",
+            name="Daridra Yoga (2nd Lord in Dusthana)",
+            name_tamil="தரித்திர யோகம் (2-ஆம் அதிபதி மறைவு)",
+            category="Avayoga",
+            status=status_2_str,
+            is_qualifying=daridra_2_qualifies,
+            planets_involved=[l_2] if l_2 else [],
+            relevant_houses=[h_l2] if h_l2 else [],
+            conditions=[
+                YogaConditionItem(
+                    condition="2nd house lord (Dhanadhipati) occupies a Dusthana (6th, 8th, or 12th house)",
+                    passed=daridra_2_formed,
+                    detail=f"2nd Lord {l_2} occupies House {h_l2}." if l_2 else "2nd lord unavailable."
+                ),
+                YogaConditionItem(
+                    condition="Free from Daridra Bhanga (cancellation by benefic aspect, own sign, or Kendra benefics)",
+                    passed=not daridra_2_cancelled,
+                    detail=(
+                        f"Cancelled: {daridra_2_cancellation_text}"
+                        if daridra_2_cancelled else
+                        "No cancelling benefic factors found."
+                    )
+                )
+            ],
+            short_interpretation=(
+                "Difficulties in accumulation of liquid wealth, heavy household expenditures, and sudden financial drain."
+                if daridra_2_qualifies else
+                (
+                    "Financial leakage mitigated by Daridra Bhanga; savings recover via disciplined management."
+                    if status_2_str == "Cancelled" else
+                    "2nd lord of wealth is situated safely outside Dusthanas."
+                )
+            ),
+            classical_definition="The lord of the 2nd house is placed in the 6th, 8th, or 12th house from Lagna without benefic relief.",
+            classical_reference="Phaladeepika Ch. 6, v. 65; Brihat Parashara Hora Shastra Ch. 42, v. 1",
+            verification_status="Classical Independent Implementation",
+            cancellation_reason=daridra_2_cancellation_text if daridra_2_cancelled else None,
+        )
+    )
+
+    # 5.4 Daridra Yoga (Trikona Lords in Dusthana with Malefics)
+    l_5 = ctx.house_lords[5]
+    l_9 = ctx.house_lords[9]
+    h_l5 = ctx.planet_house.get(l_5)
+    h_l9 = ctx.planet_house.get(l_9)
+
+    t_in_dusthana = []
+    if h_l5 in (6, 8):
+        t_in_dusthana.append((5, l_5, h_l5))
+    if h_l9 in (6, 8):
+        t_in_dusthana.append((9, l_9, h_l9))
+
+    # Check for malefic association (conjunction or aspect with Sun, Mars, Saturn, Rahu, Ketu)
+    malefics = {"Sun", "Mars", "Saturn", "Rahu", "Ketu"}
+    t_afflicted = False
+    afflicted_lords = []
+    for h_num, l_name, h_pos in t_in_dusthana:
+        occupants_in_h = set(ctx.house_occupants.get(h_pos, []))
+        has_malefic_conj = len(occupants_in_h & malefics - {l_name}) > 0
+        has_malefic_aspect = any(
+            ctx.planet_aspects_planet(m, l_name) for m in ("Mars", "Saturn", "Sun") if m != l_name
+        )
+        if has_malefic_conj or has_malefic_aspect:
+            t_afflicted = True
+            afflicted_lords.append(f"{h_num}th lord {l_name} in House {h_pos}")
+
+    daridra_t_formed = t_afflicted
+    # Cancelled if Jupiter or Venus aspects the Trikona lord
+    daridra_t_cancelled = False
+    if daridra_t_formed:
+        for _, l_name, _ in t_in_dusthana:
+            if ctx.planet_aspects_planet("Jupiter", l_name) or ctx.planet_aspects_planet("Venus", l_name):
+                daridra_t_cancelled = True
+                break
+
+    daridra_t_qualifies = daridra_t_formed and not daridra_t_cancelled
+    status_t_str = "Not Qualifying"
+    if daridra_t_formed:
+        status_t_str = "Cancelled" if daridra_t_cancelled else "Qualifying"
+
+    results.append(
+        YogaDetail(
+            id="daridra_yoga_trikona_dusthana",
+            name="Daridra Yoga (Trikona Lords in Dusthana)",
+            name_tamil="தரித்திர யோகம் (திரிகோணாதிபதிகள் மறைவு)",
+            category="Avayoga",
+            status=status_t_str,
+            is_qualifying=daridra_t_qualifies,
+            planets_involved=[p for _, p, _ in t_in_dusthana],
+            relevant_houses=[h for _, _, h in t_in_dusthana],
+            conditions=[
+                YogaConditionItem(
+                    condition="5th or 9th house lord placed in 6th or 8th house and afflicted by malefics",
+                    passed=daridra_t_formed,
+                    detail="; ".join(afflicted_lords) if afflicted_lords else "Trikona lords free from 6th/8th malefic affliction."
+                ),
+                YogaConditionItem(
+                    condition="Free from Daridra Bhanga (cancellation by benefic aspect of Jupiter or Venus)",
+                    passed=not daridra_t_cancelled,
+                    detail="Cancelled by benefic drishti of Jupiter/Venus." if daridra_t_cancelled else "No benefic aspect present."
+                )
+            ],
+            short_interpretation=(
+                "Intermittent obstacles to luck, inheritance, or professional recognition; mitigated by righteous conduct and remedies."
+                if daridra_t_qualifies else
+                (
+                    "Adversity averted by benefic aspect; fortune restored through spiritual perseverance."
+                    if status_t_str == "Cancelled" else
+                    "Trikona lords are well-supported."
+                )
+            ),
+            classical_definition="The lord of the 5th or 9th house occupies the 6th or 8th house and is conjoined with or aspected by malefics.",
+            classical_reference="Brihat Parashara Hora Shastra Ch. 42, v. 8",
+            verification_status="Classical Independent Implementation",
+            cancellation_reason="Cancelled by benefic aspect of Jupiter or Venus." if daridra_t_cancelled else None,
+        )
+    )
+
 
     # 5.3 Sakata Yoga & Sakata Bhanga
     # Moon in 6, 8, 12 from Jupiter; cancelled if Moon in Kendra from Lagna
