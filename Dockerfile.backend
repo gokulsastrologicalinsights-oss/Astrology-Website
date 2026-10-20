@@ -1,0 +1,73 @@
+# ==============================================================================
+# Gokul's Astrological Insights - Production Backend Dockerfile
+# Multi-stage build compiling native Rust XALEN ephemeris and FastAPI ASGI server
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Stage 1: Build Rust XALEN ephemeris extension wheel
+# ------------------------------------------------------------------------------
+FROM python:3.12-slim-bookworm AS rust-builder
+
+WORKDIR /build
+
+# Install system build dependencies and Rust toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install maturin for PyO3 wheel compilation
+RUN pip install --no-cache-dir maturin>=1.7.0
+
+# Copy Rust ephemeris source
+COPY xalen-ephemeris /build/xalen-ephemeris
+
+# Build xalen wheel
+WORKDIR /build/xalen-ephemeris/crates/xalen-python
+RUN maturin build --release --out /build/wheels
+
+# ------------------------------------------------------------------------------
+# Stage 2: Runtime image
+# ------------------------------------------------------------------------------
+FROM python:3.12-slim-bookworm AS runtime
+
+WORKDIR /app
+
+# Install runtime C libraries required by Swiss Ephemeris and ReportLab/HarfBuzz
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libfreetype6 \
+    libharfbuzz0b \
+    libfribidi0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy backend requirements and install dependencies
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/requirements.txt
+
+# Install the pre-compiled XALEN wheel from Stage 1
+COPY --from=rust-builder /build/wheels /tmp/wheels
+RUN pip install --no-cache-dir /tmp/wheels/*.whl && rm -rf /tmp/wheels
+
+# Copy backend application source and font assets
+COPY backend/app /app/app
+
+# Set production environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PORT=8000
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Launch production ASGI server with multiple workers
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 2"]

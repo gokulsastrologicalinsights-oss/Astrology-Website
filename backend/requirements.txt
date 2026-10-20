@@ -1,0 +1,38 @@
+# ==============================================================================
+# Gokul's Astrological Insights - Backend Python Dependencies
+# ==============================================================================
+
+# Core Framework & ASGI Server
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+
+# Ephemeris & Astronomy
+pyswisseph>=2.10.3.2
+
+# PDF Report Generation & Tamil Typography
+reportlab>=4.2.0
+pillow>=10.0.0
+pypdf>=5.0.0
+pypdfium2>=4.30.0
+open-tamil>=1.1
+uharfbuzz>=0.40.0
+
+# Database & Supabase Authentication
+supabase>=2.8.0
+postgrest>=0.16.0
+pyjwt>=2.9.0
+psycopg[binary]>=3.2.0
+
+# HTTP Client & Utilities
+httpx>=0.27.0
+python-dateutil>=2.9.0
+tzdata>=2024.1
+
+# Rust PyO3 Extension Build Tool (for compiling xalen-ephemeris)
+maturin>=1.7.0
+
+# Testing & Quality Assurance
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+playwright>=1.46.0
