@@ -15,7 +15,10 @@ import {
   SavedHoroscopeItem,
   SavedMarriageReportDetail,
   SaveMarriageCompatibilityReportRequest,
+  HoroscopeResponse,
 } from "@/lib/types";
+import { SouthIndianChart } from "@/components/charts/SouthIndianChart";
+import { NorthIndianChart } from "@/components/charts/NorthIndianChart";
 import {
   analyzeMarriageCompatibility,
   saveMarriageCompatibilityReport,
@@ -50,6 +53,23 @@ import {
   History,
   Eye,
 } from "lucide-react";
+
+const ASHTAKOOTA_META_TA: Record<string, { nameTa: string; significanceTa: string }> = {
+  "ASHTA-01": { nameTa: "வர்ண கூடம்", significanceTa: "ஆன்ம சுபாவம், அக உணர்வு மற்றும் பரஸ்பர ஈகோ சமநிலை" },
+  "ASHTA-02": { nameTa: "வசிய கூடம்", significanceTa: "பரஸ்பர காந்த ஈர்ப்பு, வசீகரம் மற்றும் பிரியமான கட்டுப்பாடு" },
+  "ASHTA-03": { nameTa: "தார கூடம்", significanceTa: "நவதாரை பலன், ஆரோக்கியம், ஆயுள் பலம் மற்றும் நல்வாழ்வு" },
+  "ASHTA-04": { nameTa: "யோனி கூடம்", significanceTa: "உயிரியல் உடலமைவு, தாம்பத்திய ஈர்ப்பு மற்றும் மிருகப் பகை தவிர்த்தல்" },
+  "ASHTA-05": { nameTa: "கிரக மைத்ரி", significanceTa: "ராசிநாதர்களின் நட்பு, மன ஒற்றுமை மற்றும் சிந்தனை உடன்பாடு" },
+  "ASHTA-06": { nameTa: "கண கூடம்", significanceTa: "தேவ, மனுஷ, ராக்ஷஸ கண சுபாவம் மற்றும் நடத்தை பொருத்தம்" },
+  "ASHTA-07": { nameTa: "பகுட் கூடம்", significanceTa: "குடும்ப சந்தோஷம், வம்சம், மற்றும் 6/8 சஷ்டாஷ்டக தோஷ விலக்கு" },
+  "ASHTA-08": { nameTa: "நாடி கூடம்", significanceTa: "மரபணு, ரத்த ஓட்டம், நரம்பு மண்டலம் மற்றும் ஆரோக்கியமான சந்ததி" },
+};
+
+const SIGN_NAME_TO_IDX: Record<string, number> = {
+  Aries: 1, Taurus: 2, Gemini: 3, Cancer: 4,
+  Leo: 5, Virgo: 6, Libra: 7, Scorpio: 8,
+  Sagittarius: 9, Capricorn: 10, Aquarius: 11, Pisces: 12,
+};
 
 function getUserDefaultTimezone(): string {
   try {
@@ -122,8 +142,12 @@ function MarriageCompatibilityContent() {
 
   // Results Active Tab
   const [activeTab, setActiveTab] = useState<
-    "porutham" | "ashtakoota" | "doshas" | "vedic" | "synastry" | "kp" | "conflicts"
-  >("porutham");
+    "charts" | "porutham" | "ashtakoota" | "doshas" | "vedic" | "synastry" | "kp" | "conflicts"
+  >("charts");
+
+  // Dual Chart Switchers
+  const [partnerChartDivision, setPartnerChartDivision] = useState<"d1" | "d9">("d1");
+  const [partnerChartStyle, setPartnerChartStyle] = useState<"south" | "north">("south");
 
   // View Switcher: "analysis" | "saved_reports"
   const [activeView, setActiveView] = useState<"analysis" | "saved_reports">("analysis");
@@ -402,20 +426,25 @@ function MarriageCompatibilityContent() {
           />
           <div className="mt-3 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80] mb-2">
+                <HeartHandshake className="w-3.5 h-3.5 text-[#B8862B]" />
+                <span>Kundli Matching &amp; 36 Ashta Kuta Compatibility Studio</span>
+              </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#153F6B] flex items-center gap-3">
-                <HeartHandshake className="w-8 h-8 text-[#B4872B]" />
-                {language === "ta" ? "திருமணப் பொருத்த ஆய்வு" : "Marriage Compatibility Engine"}
+                {language === "ta"
+                  ? "திருமணப் பொருத்தம் & 36 அஷ்டகூட ஆய்வுக்கூடம்"
+                  : "Kundli Matching & 36 Ashta Kuta Compatibility Studio"}
               </h1>
               <p className="mt-1 text-sm text-slate-600 max-w-3xl">
                 {language === "ta"
-                  ? "தமிழ் 10 பொருத்தங்கள், வட இந்திய அஷ்டகூடம் (36 புள்ளிகள்), செவ்வாய் தோஷ சமதோஷம், பாபசாம்யம், மற்றும் கே.பி 7-ம் பாவ நிருபணம் ஆகியவற்றின் ஒருங்கிணைந்த ஆய்வு."
-                  : "Comprehensive multi-tradition synthesis: Tamil 10 Poruthams, 36-point Ashtakoota, Vedic D1/D9 houses, mutual Kuja & Papasamya doshas, cross-chart synastry, and KP 7th CSL promise."}
+                  ? "தமிழ் 10 பொருத்தங்கள் (தின, கண, மகேந்திர, ஸ்திரீ தீர்க்க, யோனி, ராசி, ராசி அதிபதி, வசிய, ரஜ்ஜு, வேத), வட இந்திய 36 அஷ்டகூடம் (வர்ண, வசிய, தார, யோனி, மைத்ரி, கண, பகுட், நாடி), செவ்வாய் தோஷ சமதோஷம், பாபசாம்யம் மற்றும் இருவர் D1/D9 சக்கரங்கள்."
+                  : "Comprehensive multi-tradition synastry: Tamil 10 Poruthams (Dina, Gana, Mahendra, Stree-Deergha, Yoni, Rasi, Rasyadhipati, Vasya, Rajju, Vedha), North Indian 36-Point Ashtakoota, Kuja / Manglik Samadosham, Papasamya, and side-by-side D1/D9 Kundli visualizer."}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#B4872B] border border-[#B4872B]/30">
                 <Sparkles className="w-3.5 h-3.5" />
-                Deterministic & Source-Backed
+                Deterministic &amp; Source-Backed
               </span>
             </div>
           </div>
@@ -1145,6 +1174,11 @@ function MarriageCompatibilityContent() {
               <div className="border-b border-slate-200 bg-slate-50/50 px-4 pt-3 flex flex-wrap gap-2">
                 {[
                   {
+                    id: "charts",
+                    labelEn: "Dual Kundli Charts (D1/D9)",
+                    labelTa: "இருவர் ஜாதகக் கட்டங்கள் (D1/D9)",
+                  },
+                  {
                     id: "porutham",
                     labelEn: `Tamil 10 Porutham (${response.tamil_porutham?.total_score || 0}/10)`,
                     labelTa: `10 பொருத்தங்கள் (${response.tamil_porutham?.total_score || 0}/10)`,
@@ -1183,9 +1217,9 @@ function MarriageCompatibilityContent() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition border-t border-l border-r ${
+                    className={`px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition border-t border-l border-r cursor-pointer ${
                       activeTab === tab.id
-                        ? "bg-white text-[#153F6B] border-slate-200 -mb-px"
+                        ? "bg-white text-[#153F6B] border-slate-200 -mb-px shadow-2xs"
                         : "text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60"
                     }`}
                   >
@@ -1195,6 +1229,251 @@ function MarriageCompatibilityContent() {
               </div>
 
               <div className="p-6">
+                {/* TAB 0: DUAL KUNDLI CHARTS (D1 / D9) */}
+                {activeTab === "charts" && (
+                  <div className="space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                      <div>
+                        <h4 className="font-bold text-sm text-[#153F6B] flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-[#B4872B]" />
+                          {language === "ta"
+                            ? "இருவர் ஜாதக கட்டங்கள் (D1 ராசி & D9 நவாம்சம்)"
+                            : "Dual Synastry Kundli Charts (D1 Rasi & D9 Navamsa)"}
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          {language === "ta"
+                            ? "மணமகன் மற்றும் மணமகள் ஜாதக கட்டங்களின் நேரடி ஒப்பீடு."
+                            : "Side-by-side planetary comparison of Groom and Bride birth and navamsa charts."}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        {/* Division Selector */}
+                        <div className="inline-flex p-1 rounded-xl bg-white border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() => setPartnerChartDivision("d1")}
+                            className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                              partnerChartDivision === "d1"
+                                ? "bg-[#153F6B] text-white shadow-2xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            D1 Rasi
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPartnerChartDivision("d9")}
+                            className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                              partnerChartDivision === "d9"
+                                ? "bg-[#153F6B] text-white shadow-2xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            D9 Navamsa
+                          </button>
+                        </div>
+
+                        {/* Style Selector */}
+                        <div className="inline-flex p-1 rounded-xl bg-white border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() => setPartnerChartStyle("south")}
+                            className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                              partnerChartStyle === "south"
+                                ? "bg-[#B4872B] text-white shadow-2xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            South Indian
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPartnerChartStyle("north")}
+                            className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                              partnerChartStyle === "north"
+                                ? "bg-[#B4872B] text-white shadow-2xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            North Indian
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dual Charts Grid */}
+                    {(() => {
+                      const groomChartPayload =
+                        (partnerChartDivision === "d1"
+                          ? response.groom_chart
+                          : response.groom_d9_chart) || {
+                          ascendant: {
+                            sign_index:
+                              partnerChartDivision === "d1"
+                                ? SIGN_NAME_TO_IDX[response.groom_profile.ascendant_sign] || 1
+                                : SIGN_NAME_TO_IDX[response.groom_profile.ascendant_navamsa_sign] || 1,
+                            sign_name:
+                              partnerChartDivision === "d1"
+                                ? response.groom_profile.ascendant_sign
+                                : response.groom_profile.ascendant_navamsa_sign,
+                            degree_in_sign: response.groom_profile.ascendant_degree % 30.0,
+                          },
+                          planets: [
+                            {
+                              name: "Moon",
+                              sign_index:
+                                partnerChartDivision === "d1"
+                                  ? SIGN_NAME_TO_IDX[response.groom_profile.moon_sign] || 1
+                                  : SIGN_NAME_TO_IDX[response.groom_profile.moon_navamsa_sign] || 1,
+                              degree_in_sign: response.groom_profile.moon_degree % 30.0,
+                            },
+                            {
+                              name: "Venus",
+                              sign_index: SIGN_NAME_TO_IDX[response.groom_profile.venus_sign] || 1,
+                              degree_in_sign: 0.0,
+                            },
+                            {
+                              name: "Mars",
+                              sign_index: SIGN_NAME_TO_IDX[response.groom_profile.mars_sign] || 1,
+                              degree_in_sign: 0.0,
+                            },
+                            {
+                              name: "Jupiter",
+                              sign_index: SIGN_NAME_TO_IDX[response.groom_profile.jupiter_sign] || 1,
+                              degree_in_sign: 0.0,
+                            },
+                          ],
+                        };
+
+                      const brideChartPayload =
+                        (partnerChartDivision === "d1"
+                          ? response.bride_chart
+                          : response.bride_d9_chart) || {
+                          ascendant: {
+                            sign_index:
+                              partnerChartDivision === "d1"
+                                ? SIGN_NAME_TO_IDX[response.bride_profile.ascendant_sign] || 1
+                                : SIGN_NAME_TO_IDX[response.bride_profile.ascendant_navamsa_sign] || 1,
+                            sign_name:
+                              partnerChartDivision === "d1"
+                                ? response.bride_profile.ascendant_sign
+                                : response.bride_profile.ascendant_navamsa_sign,
+                            degree_in_sign: response.bride_profile.ascendant_degree % 30.0,
+                          },
+                          planets: [
+                            {
+                              name: "Moon",
+                              sign_index:
+                                partnerChartDivision === "d1"
+                                  ? SIGN_NAME_TO_IDX[response.bride_profile.moon_sign] || 1
+                                  : SIGN_NAME_TO_IDX[response.bride_profile.moon_navamsa_sign] || 1,
+                              degree_in_sign: response.bride_profile.moon_degree % 30.0,
+                            },
+                            {
+                              name: "Venus",
+                              sign_index: SIGN_NAME_TO_IDX[response.bride_profile.venus_sign] || 1,
+                              degree_in_sign: 0.0,
+                            },
+                            {
+                              name: "Mars",
+                              sign_index: SIGN_NAME_TO_IDX[response.bride_profile.mars_sign] || 1,
+                              degree_in_sign: 0.0,
+                            },
+                            {
+                              name: "Jupiter",
+                              sign_index: SIGN_NAME_TO_IDX[response.bride_profile.jupiter_sign] || 1,
+                              degree_in_sign: 0.0,
+                            },
+                          ],
+                        };
+
+                      return (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                          {/* Groom Chart */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                              <div className="flex items-center gap-2">
+                                <User className="w-4 h-4 text-[#153F6B]" />
+                                <h5 className="font-bold text-sm text-[#153F6B]">
+                                  {response.groom_profile.name} ({partnerChartDivision === "d1" ? "D1 Rasi" : "D9 Navamsa"})
+                                </h5>
+                              </div>
+                              <span className="text-xs text-slate-500 font-mono">
+                                {partnerChartDivision === "d1"
+                                  ? `Lagna: ${response.groom_profile.ascendant_sign}`
+                                  : `Navamsa: ${response.groom_profile.ascendant_navamsa_sign}`}
+                              </span>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
+                              {partnerChartStyle === "south" ? (
+                                <SouthIndianChart horoscope={groomChartPayload as unknown as HoroscopeResponse} />
+                              ) : (
+                                <NorthIndianChart horoscope={groomChartPayload as unknown as HoroscopeResponse} />
+                              )}
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1 text-slate-700">
+                              <div>
+                                <span className="font-semibold text-slate-500">Moon Nakshatra:</span>{" "}
+                                {response.groom_profile.moon_nakshatra} (Pada {response.groom_profile.moon_pada})
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-500">Moon Sign:</span>{" "}
+                                {response.groom_profile.moon_sign} ({response.groom_profile.moon_sign_tamil})
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-500">Venus (Kalatra Karaka):</span>{" "}
+                                {response.groom_profile.venus_sign} • Mars: {response.groom_profile.mars_sign}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bride Chart */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                              <div className="flex items-center gap-2">
+                                <User className="w-4 h-4 text-[#B4872B]" />
+                                <h5 className="font-bold text-sm text-[#B4872B]">
+                                  {response.bride_profile.name} ({partnerChartDivision === "d1" ? "D1 Rasi" : "D9 Navamsa"})
+                                </h5>
+                              </div>
+                              <span className="text-xs text-slate-500 font-mono">
+                                {partnerChartDivision === "d1"
+                                  ? `Lagna: ${response.bride_profile.ascendant_sign}`
+                                  : `Navamsa: ${response.bride_profile.ascendant_navamsa_sign}`}
+                              </span>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
+                              {partnerChartStyle === "south" ? (
+                                <SouthIndianChart horoscope={brideChartPayload as unknown as HoroscopeResponse} />
+                              ) : (
+                                <NorthIndianChart horoscope={brideChartPayload as unknown as HoroscopeResponse} />
+                              )}
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1 text-slate-700">
+                              <div>
+                                <span className="font-semibold text-slate-500">Moon Nakshatra:</span>{" "}
+                                {response.bride_profile.moon_nakshatra} (Pada {response.bride_profile.moon_pada})
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-500">Moon Sign:</span>{" "}
+                                {response.bride_profile.moon_sign} ({response.bride_profile.moon_sign_tamil})
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-500">Jupiter (Pati Karaka):</span>{" "}
+                                {response.bride_profile.jupiter_sign} • Mars: {response.bride_profile.mars_sign}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
                 {/* TAB 1: TAMIL 10 PORUTHAMS */}
                 {activeTab === "porutham" && response.tamil_porutham && (
                   <div className="space-y-6">
@@ -1313,6 +1592,63 @@ function MarriageCompatibilityContent() {
                       </div>
                     </div>
 
+                    {/* Score Bar Meter */}
+                    <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-[#102A4C]">
+                          Ashtakoota Score Meter: {response.ashtakoota.total_points} / 36.0 (
+                          {((response.ashtakoota.total_points / 36.0) * 100).toFixed(0)}%)
+                        </span>
+                        <span
+                          className={`font-bold ${
+                            response.ashtakoota.total_points >= 28
+                              ? "text-emerald-700"
+                              : response.ashtakoota.total_points >= 18
+                              ? "text-amber-700"
+                              : "text-rose-700"
+                          }`}
+                        >
+                          {response.ashtakoota.total_points >= 28
+                            ? "Uthama (உத்தமம்) - Excellent"
+                            : response.ashtakoota.total_points >= 18
+                            ? "Madhyama (மத்திமம்) - Acceptable"
+                            : "Adhama (அதமம்) - Inauspicious"}
+                        </span>
+                      </div>
+                      <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden relative border border-slate-200">
+                        {/* 18-point threshold line at 50% */}
+                        <div
+                          className="absolute top-0 bottom-0 w-0.5 bg-slate-400 z-10"
+                          style={{ left: "50%" }}
+                          title="Minimum Pass Threshold (18 pts)"
+                        />
+                        {/* 28-point threshold line at 77.7% */}
+                        <div
+                          className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-10"
+                          style={{ left: "77.7%" }}
+                          title="Uthama Threshold (28 pts)"
+                        />
+                        <div
+                          className={`h-full transition-all duration-500 ${
+                            response.ashtakoota.total_points >= 28
+                              ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
+                              : response.ashtakoota.total_points >= 18
+                              ? "bg-gradient-to-r from-amber-400 to-[#B4872B]"
+                              : "bg-gradient-to-r from-rose-400 to-rose-600"
+                          }`}
+                          style={{
+                            width: `${Math.min(100, Math.max(0, (response.ashtakoota.total_points / 36.0) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                        <span>0 pts</span>
+                        <span>18 pts (Min Passing)</span>
+                        <span>28 pts (Uthama)</span>
+                        <span>36 pts</span>
+                      </div>
+                    </div>
+
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-slate-100 text-slate-600 uppercase font-semibold">
@@ -1326,7 +1662,15 @@ function MarriageCompatibilityContent() {
                         <tbody className="divide-y divide-slate-100">
                           {Object.values(response.ashtakoota.kootas).map((k) => (
                             <tr key={k.koota_id} className="hover:bg-slate-50/60">
-                              <td className="p-3 font-bold text-slate-900">{k.name_en}</td>
+                              <td className="p-3 font-bold text-slate-900">
+                                <div>{k.name_en}</div>
+                                <div className="text-[11px] text-[#B4872B] font-semibold">
+                                  {ASHTAKOOTA_META_TA[k.koota_id]?.nameTa || ""}
+                                </div>
+                                <span className="block text-[10px] text-slate-400 font-normal mt-0.5">
+                                  {k.classical_reference}
+                                </span>
+                              </td>
                               <td className="p-3 font-semibold text-[#153F6B]">
                                 {k.earned_points} / {k.max_points}
                               </td>
@@ -1343,8 +1687,13 @@ function MarriageCompatibilityContent() {
                               </td>
                               <td className="p-3 text-slate-700">
                                 <div>{k.description}</div>
+                                {language === "ta" && ASHTAKOOTA_META_TA[k.koota_id] && (
+                                  <div className="text-[11px] text-[#52667E] mt-0.5">
+                                    {ASHTAKOOTA_META_TA[k.koota_id].significanceTa}
+                                  </div>
+                                )}
                                 {k.cancellation_reason && (
-                                  <div className="text-[11px] text-amber-700 mt-1 font-medium">
+                                  <div className="text-[11px] text-amber-700 mt-1 font-medium bg-amber-50 p-1.5 rounded border border-amber-200">
                                     Mitigation: {k.cancellation_reason}
                                   </div>
                                 )}

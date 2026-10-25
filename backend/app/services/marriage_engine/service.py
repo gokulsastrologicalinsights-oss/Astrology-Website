@@ -241,6 +241,55 @@ def _build_profile_summary(ctx: MarriageChartContext) -> PersonProfileSummary:
     )
 
 
+def _build_chart_render_payload(ctx: MarriageChartContext, is_navamsa: bool = False) -> Dict[str, Any]:
+    """Build a chart rendering dictionary consumable by SouthIndianChart and NorthIndianChart."""
+    if not is_navamsa:
+        asc_sign = ctx.ascendant_sign_idx
+        asc_deg_in_sign = round(ctx.ascendant_degree % 30.0, 4) if ctx.ascendant_degree else 0.0
+        planets_list = []
+        for p in ctx.grahas.values():
+            planets_list.append({
+                "name": p.name,
+                "sign_index": p.sign_index,
+                "sign_name": p.sign_name,
+                "sign_name_tamil": p.sign_name_tamil,
+                "degree_in_sign": round(p.degree_in_sign, 4),
+                "is_retrograde": p.is_retrograde,
+            })
+        return {
+            "ascendant": {
+                "sign_index": asc_sign,
+                "sign_name": ctx.ascendant_sign_name,
+                "sign_name_tamil": ctx.ascendant_sign_name_tamil,
+                "degree_in_sign": asc_deg_in_sign,
+            },
+            "planets": planets_list,
+        }
+    else:
+        asc_nav_sign = ctx.ascendant_navamsa_sign_idx
+        asc_nav_name = SIGN_NAMES_EN.get(asc_nav_sign, "Aries")
+        planets_list = []
+        for p in ctx.grahas.values():
+            p_nav_name = SIGN_NAMES_EN.get(p.navamsa_sign_index, "Aries")
+            planets_list.append({
+                "name": p.name,
+                "sign_index": p.navamsa_sign_index,
+                "sign_name": p_nav_name,
+                "sign_name_tamil": "",
+                "degree_in_sign": 0.0,
+                "is_retrograde": p.is_retrograde,
+            })
+        return {
+            "ascendant": {
+                "sign_index": asc_nav_sign,
+                "sign_name": asc_nav_name,
+                "sign_name_tamil": "",
+                "degree_in_sign": 0.0,
+            },
+            "planets": planets_list,
+        }
+
+
 def run_marriage_compatibility_analysis(
     request: MarriageCompatibilityRequest,
     current_user: Optional[Dict[str, Any]] = None,
@@ -470,6 +519,11 @@ def run_marriage_compatibility_analysis(
         reproducibility_fingerprint=reproducibility_fp,
     )
 
+    groom_chart_dict = _build_chart_render_payload(groom_chart, is_navamsa=False)
+    bride_chart_dict = _build_chart_render_payload(bride_chart, is_navamsa=False)
+    groom_d9_chart_dict = _build_chart_render_payload(groom_chart, is_navamsa=True)
+    bride_d9_chart_dict = _build_chart_render_payload(bride_chart, is_navamsa=True)
+
     return MarriageCompatibilityResponse(
         metadata=meta,
         groom_profile=groom_prof,
@@ -482,5 +536,9 @@ def run_marriage_compatibility_analysis(
         kp_marriage=dataclasses.asdict(kp_marriage) if kp_marriage else None,
         groom_vedic=dataclasses.asdict(dual_vedic.groom_analysis),
         bride_vedic=dataclasses.asdict(dual_vedic.bride_analysis),
+        groom_chart=groom_chart_dict,
+        bride_chart=bride_chart_dict,
+        groom_d9_chart=groom_d9_chart_dict,
+        bride_d9_chart=bride_d9_chart_dict,
         final_assessment=fin_legacy,
     )

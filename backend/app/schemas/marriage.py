@@ -460,6 +460,10 @@ class MarriageCompatibilityResponse(BaseModel):
     timing_analysis: Optional[TimingAnalysisSummary] = None
     groom_vedic: Optional[Union[IndividualVedicAnalysisItem, Dict[str, Any]]] = None
     bride_vedic: Optional[Union[IndividualVedicAnalysisItem, Dict[str, Any]]] = None
+    groom_chart: Optional[Dict[str, Any]] = None
+    bride_chart: Optional[Dict[str, Any]] = None
+    groom_d9_chart: Optional[Dict[str, Any]] = None
+    bride_d9_chart: Optional[Dict[str, Any]] = None
     final_assessment: FinalAssessmentSummary
 
 

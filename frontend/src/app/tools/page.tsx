@@ -90,8 +90,8 @@ interface AstrologyToolCard {
     },
     {
       id: "marriage",
-      titleTa: "திருமணப் பொருத்தம்",
-      titleEn: "Porutham & Match",
+      titleTa: "திருமணப் பொருத்தம் (36 அஷ்டகூடம்)",
+      titleEn: "Kundli Matching & 36 Ashta Kuta",
       href: "/tools/marriage-compatibility",
       icon: HeartHandshake,
       color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",

@@ -3655,6 +3655,10 @@ export interface MarriageCompatibilityResponse {
   kp_marriage?: Record<string, any>;
   groom_vedic?: Record<string, any>;
   bride_vedic?: Record<string, any>;
+  groom_chart?: any;
+  bride_chart?: any;
+  groom_d9_chart?: any;
+  bride_d9_chart?: any;
   final_assessment: FinalAssessmentSummary;
 }
 
