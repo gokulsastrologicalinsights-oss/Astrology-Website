@@ -7,19 +7,19 @@ import {
   HoroscopeResponse,
   KpResponse,
   KpEventAnalysisResponse,
-  PeriodAnalysisResult,
   BirthDasaBalance,
+  DasaPeriodAgeDict,
 } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
-import { getLordName, getGrahaShort, TranslationDictionary } from "@/lib/translations";
+import { getLordName, getGrahaShort } from "@/lib/translations";
 import { analyzeKpEvents } from "@/lib/api";
 import {
   jdToCalendarDateTime,
   calculateCalendarAge,
   formatCalendarAge,
   findActiveHierarchy,
-  ActiveHierarchy,
   generateChildSubPeriods,
+  VIMSHOTTARI_YEARS,
 } from "@/lib/dasa-helpers";
 import {
   buildPlanetContexts,
@@ -27,8 +27,6 @@ import {
   PlanetContext,
 } from "@/lib/benefit-bhavas";
 import {
-  ChevronDown,
-  ChevronRight,
   Clock,
   Calendar,
   Sparkles,
@@ -80,14 +78,19 @@ function formatMoonLon(deg: number): string {
   return `${d}° ${String(m).padStart(2, "0")}' ${String(s).padStart(2, "0")}" (${norm.toFixed(4)}°)`;
 }
 
-function formatDateStr(isoStr?: string, jd?: number, offsetHours: number = 0, isSubDaily: boolean = false): string {
+function formatDateStr(
+  isoStr?: string,
+  jd?: number,
+  offsetHours: number = 0,
+  isSubDaily: boolean = false
+): string {
   if (isoStr) {
     const parts = isoStr.split("T");
     if (parts[0]) {
       const [y, m, d] = parts[0].split("-");
       const dmy = `${d}/${m}/${y}`;
       if (isSubDaily && parts[1]) {
-        return `${dmy} ${parts[1].slice(0, 8)}`;
+        return `${dmy} ${parts[1].slice(0, 5)}`;
       }
       return dmy;
     }
@@ -101,8 +104,7 @@ function formatDateStr(isoStr?: string, jd?: number, offsetHours: number = 0, is
       if (isSubDaily) {
         const h = String(dt.hour).padStart(2, "0");
         const min = String(dt.minute).padStart(2, "0");
-        const s = String(dt.second).padStart(2, "0");
-        return `${dmy} ${h}:${min}:${s}`;
+        return `${dmy} ${h}:${min}`;
       }
       return dmy;
     }
@@ -110,95 +112,271 @@ function formatDateStr(isoStr?: string, jd?: number, offsetHours: number = 0, is
   return "—";
 }
 
-function formatDurationShort(node: DasaPeriodNode): string {
-  if (node.duration_years >= 1.0) {
-    const y = Math.floor(node.duration_years);
-    const remDays = (node.duration_years - y) * 365.25;
-    const m = Math.floor(remDays / 30.4375);
-    const d = Math.round(remDays - m * 30.4375);
-    return `${y}y ${m}m ${d}d`;
+/**
+ * Format short planetary abbreviation matching the reference screenshot.
+ * In Tamil:
+ * Sun -> சூ, Moon -> சந், Mars -> செ, Mercury -> பு, Jupiter -> குரு,
+ * Venus -> சுக், Saturn -> சனி, Rahu -> ராகு, Ketu -> கேது
+ */
+function getPeriodPlanetShort(lordEn: string, lang: "en" | "ta"): string {
+  const norm = lordEn.trim().toLowerCase();
+  if (lang === "ta") {
+    switch (norm) {
+      case "sun":
+      case "surya":
+        return "சூ";
+      case "moon":
+      case "chandra":
+        return "சந்";
+      case "mars":
+      case "mangal":
+      case "mangala":
+      case "sevvai":
+        return "செ";
+      case "mercury":
+      case "budh":
+      case "budha":
+        return "பு";
+      case "jupiter":
+      case "guru":
+        return "குரு";
+      case "venus":
+      case "sukra":
+      case "shukra":
+        return "சுக்";
+      case "saturn":
+      case "shani":
+        return "சனி";
+      case "rahu":
+        return "ராகு";
+      case "ketu":
+        return "கேது";
+      default:
+        return getLordName(lordEn, lang);
+    }
   }
-  if (node.duration_days >= 30.0) {
-    const m = Math.floor(node.duration_days / 30.4375);
-    const d = Math.round(node.duration_days - m * 30.4375);
-    return `${m}m ${d}d`;
+  switch (norm) {
+    case "sun":
+      return "Sun";
+    case "moon":
+      return "Moo";
+    case "mars":
+      return "Mar";
+    case "mercury":
+      return "Mer";
+    case "jupiter":
+      return "Jup";
+    case "venus":
+      return "Ven";
+    case "saturn":
+      return "Sat";
+    case "rahu":
+      return "Rah";
+    case "ketu":
+      return "Ket";
+    default:
+      return lordEn.slice(0, 3);
   }
-  if (node.duration_days >= 1.0) {
-    return `${node.duration_days.toFixed(1)}d`;
-  }
-  const hrs = node.duration_days * 24.0;
-  if (hrs >= 1.0) {
-    return `${hrs.toFixed(1)}h`;
-  }
-  const mins = hrs * 60.0;
-  return `${mins.toFixed(0)}m`;
 }
 
-interface LevelConfig {
-  name: string;
-  nameTamil: string;
-  badgeLabel: string;
-  badgeLabelTamil: string;
-  badgeColor: string;
-  rowIndent: string;
-  levelNumber: number;
+/**
+ * Format Star Lord short label in parentheses matching the screenshot.
+ * e.g. (சு) for Venus, (சூ) for Sun, (ராகு) for Rahu, etc.
+ */
+function getStarLordShort(starLordEn: string, lang: "en" | "ta", parentLordEn?: string): string {
+  const norm = starLordEn.trim().toLowerCase();
+  if (lang === "ta") {
+    switch (norm) {
+      case "sun":
+      case "surya":
+        return "சூ";
+      case "moon":
+      case "chandra":
+        return "சந்";
+      case "mars":
+      case "mangal":
+      case "mangala":
+      case "sevvai":
+        return "செ";
+      case "mercury":
+      case "budh":
+      case "budha":
+        return "பு";
+      case "jupiter":
+      case "guru":
+        return "குரு";
+      case "venus":
+      case "sukra":
+      case "shukra": {
+        // In the reference screenshot:
+        // When parent is Sun "சூ (சு)" or Mercury "பு (சு)", Venus star lord is shortened to "சு".
+        // When parent is Rahu/Saturn "சனி (சுக்)", it shows "சுக்".
+        const pNorm = (parentLordEn || "").trim().toLowerCase();
+        if (pNorm === "sun" || pNorm === "surya" || pNorm === "mercury" || pNorm === "budh") {
+          return "சு";
+        }
+        return "சுக்";
+      }
+      case "saturn":
+      case "shani":
+        return "சனி";
+      case "rahu":
+        return "ராகு";
+      case "ketu":
+        return "கேது";
+      default:
+        return getGrahaShort(starLordEn, lang);
+    }
+  }
+  switch (norm) {
+    case "sun":
+      return "Sun";
+    case "moon":
+      return "Moo";
+    case "mars":
+      return "Mar";
+    case "mercury":
+      return "Mer";
+    case "jupiter":
+      return "Jup";
+    case "venus":
+      return "Ven";
+    case "saturn":
+      return "Sat";
+    case "rahu":
+      return "Rah";
+    case "ketu":
+      return "Ket";
+    default:
+      return starLordEn.slice(0, 3);
+  }
 }
 
-function getLevelConfig(level: string): LevelConfig {
-  const norm = level.toLowerCase();
-  if (norm.includes("maha")) {
-    return {
-      name: "Dasa",
-      nameTamil: "மகாதசை",
-      badgeLabel: "Dasa",
-      badgeLabelTamil: "தசை",
-      badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
-      rowIndent: "pl-2 sm:pl-3",
-      levelNumber: 1,
-    };
+function calculateVedicDifference(
+  sY: number,
+  sM: number,
+  sD: number,
+  eY: number,
+  eM: number,
+  eD: number
+): { years: number; months: number; days: number } | null {
+  if (eY < sY || (eY === sY && eM < sM) || (eY === sY && eM === sM && eD < sD)) {
+    return null;
   }
-  if (norm.includes("antar") && !norm.includes("praty")) {
-    return {
-      name: "Bhukti",
-      nameTamil: "புக்தி",
-      badgeLabel: "Bhukti",
-      badgeLabelTamil: "புக்தி",
-      badgeColor: "bg-blue-100 text-blue-900 border-blue-300",
-      rowIndent: "pl-6 sm:pl-8",
-      levelNumber: 2,
-    };
+  let d = eD - sD;
+  let m = eM - sM;
+  let y = eY - sY;
+
+  if (d < 0) {
+    d += 30; // standard 30-day Vedic month
+    m -= 1;
   }
-  if (norm.includes("praty")) {
-    return {
-      name: "Antharam",
-      nameTamil: "அந்தரம்",
-      badgeLabel: "Antharam",
-      badgeLabelTamil: "அந்தரம்",
-      badgeColor: "bg-emerald-100 text-emerald-900 border-emerald-300",
-      rowIndent: "pl-10 sm:pl-14",
-      levelNumber: 3,
-    };
+  if (m < 0) {
+    m += 12;
+    y -= 1;
   }
-  if (norm.includes("sookshma")) {
-    return {
-      name: "Sookshamam",
-      nameTamil: "சூட்சுமம்",
-      badgeLabel: "Sookshamam",
-      badgeLabelTamil: "சூட்சுமம்",
-      badgeColor: "bg-purple-100 text-purple-900 border-purple-300",
-      rowIndent: "pl-14 sm:pl-20",
-      levelNumber: 4,
-    };
+  return { years: y, months: m, days: d };
+}
+
+/**
+ * Format Duration as Years.Months.Days (Y.M.D) matching the reference screenshot.
+ * e.g. 0.6.18, 2.10.0, 0.10.6, 1.5.0, 0.4.27, 1.2.0, 0.2.0, 0.0.18, etc.
+ */
+function formatYmdDuration(
+  node: DasaPeriodNode,
+  parentFullYears?: number
+): string {
+  // If active at birth and dates exist, use 30-day Vedic calendar difference
+  if (node.is_active_at_birth && node.start_date_iso && node.end_date_iso) {
+    const sParts = node.start_date_iso.split("T")[0].split("-").map(Number);
+    const eParts = node.end_date_iso.split("T")[0].split("-").map(Number);
+    if (sParts.length === 3 && eParts.length === 3) {
+      const vDiff = calculateVedicDifference(
+        sParts[0],
+        sParts[1],
+        sParts[2],
+        eParts[0],
+        eParts[1],
+        eParts[2]
+      );
+      if (vDiff) {
+        return `${vDiff.years}.${vDiff.months}.${vDiff.days}`;
+      }
+    }
   }
-  return {
-    name: "Pranam",
-    nameTamil: "பிராணம்",
-    badgeLabel: "Pranam",
-    badgeLabelTamil: "பிராணம்",
-    badgeColor: "bg-rose-100 text-rose-900 border-rose-300",
-    rowIndent: "pl-18 sm:pl-26",
-    levelNumber: 5,
-  };
+
+  // Canonical Vimshottari arithmetic: (parentYears * lordYears) / 120
+  let yearsFloat: number | null = null;
+  if (parentFullYears && VIMSHOTTARI_YEARS[node.lord]) {
+    yearsFloat = (parentFullYears * VIMSHOTTARI_YEARS[node.lord]) / 120.0;
+  } else if (node.duration_years && node.duration_years > 0) {
+    yearsFloat = node.duration_years;
+  } else if (node.duration_days && node.duration_days > 0) {
+    yearsFloat = node.duration_days / 365.25;
+  }
+
+  if (yearsFloat === null || isNaN(yearsFloat)) {
+    return "0.0.0";
+  }
+
+  let y = Math.floor(yearsFloat + 1e-6);
+  let remMonths = (yearsFloat - y) * 12;
+  let m = Math.floor(remMonths + 1e-6);
+  let remDays = (remMonths - m) * 30;
+  let d = Math.round(remDays);
+  if (d >= 30) {
+    m += 1;
+    d = 0;
+  }
+  if (m >= 12) {
+    y += 1;
+    m = 0;
+  }
+  return `${y}.${m}.${d}`;
+}
+
+/**
+ * Format native's calendar age at the period's end date:
+ * e.g. "0Y 6M", "3Y 4M", "14Y 1M", "46Y 1M" matching the screenshot.
+ */
+function getPeriodAgeStr(
+  endIso?: string,
+  endJd?: number,
+  birthDate?: string,
+  utcOffsetHours: number = 0
+): string | null {
+  if (!birthDate) return null;
+  const [bY, bM, bD] = birthDate.split("-").map(Number);
+  if (!bY || !bM || !bD) return null;
+
+  let tY: number | undefined;
+  let tM: number | undefined;
+  let tD: number | undefined;
+
+  if (endIso) {
+    const parts = endIso.split("T")[0].split("-").map(Number);
+    if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+      tY = parts[0];
+      tM = parts[1];
+      tD = parts[2];
+    }
+  }
+
+  if (tY === undefined && endJd) {
+    const dt = jdToCalendarDateTime(endJd, utcOffsetHours);
+    if (dt) {
+      tY = dt.year;
+      tM = dt.month;
+      tD = dt.day;
+    }
+  }
+
+  if (tY === undefined || tM === undefined || tD === undefined) return null;
+
+  const age = calculateCalendarAge(bY, bM, bD, tY, tM, tD);
+  if (!age) return null;
+
+  return `${age.years}Y ${age.months}M`;
 }
 
 export function DasaTimeline({
@@ -333,12 +511,6 @@ export function DasaTimeline({
   const [selectedDate, setSelectedDate] = useState<string>(defaultTargetDate);
   const [showLegend, setShowLegend] = useState<boolean>(false);
 
-  // Expanded nodes mapping
-  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>(() => {
-    // By default expand first Mahadasha (balance dasha)
-    return { "node-0": true };
-  });
-
   // Compute active hierarchy and person's age on selected date
   const { activeHierarchy, selectedDateAge, targetJd } = useMemo(() => {
     if (!dasa?.dasa_tree || dasa.dasa_tree.length === 0 || !selectedDate) {
@@ -367,110 +539,154 @@ export function DasaTimeline({
     return { activeHierarchy: hierarchy, selectedDateAge: ageStr, targetJd: tJd };
   }, [dasa, selectedDate, resolvedBirthDate, language]);
 
-  const toggleExpand = (key: string) => {
-    setExpandedKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  // State 1: Expand/collapse state for each Mahadasha chart card
+  // By default, all Mahadasha cards are open so charts are shown side by side
+  const [expandedMahaKeys, setExpandedMahaKeys] = useState<Record<number, boolean>>(() => {
+    const map: Record<number, boolean> = {};
+    if (dasa?.dasa_tree) {
+      dasa.dasa_tree.forEach((_, idx) => {
+        map[idx] = true;
+      });
+    }
+    return map;
+  });
+
+  // State 2: Expand/collapse state for Bhukti and deeper rows
+  // By default, expand the currently active Bhukti row to reveal nested Pratyantardasa rows (as in screenshot)
+  const [expandedRowKeys, setExpandedRowKeys] = useState<Record<string, boolean>>(() => {
+    const map: Record<string, boolean> = {};
+    if (dasa?.dasa_tree) {
+      const tJd = defaultTargetDate ? dateToJd(defaultTargetDate) : 0;
+      dasa.dasa_tree.forEach((m, mIdx) => {
+        if (tJd >= m.start_jd && tJd < m.end_jd) {
+          const bList =
+            m.sub_periods && m.sub_periods.length > 0
+              ? m.sub_periods
+              : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
+          bList.forEach((b, bIdx) => {
+            if (tJd >= b.start_jd && tJd < b.end_jd) {
+              map[`${mIdx}-${bIdx}`] = true;
+            }
+          });
+        }
+      });
+    }
+    return map;
+  });
+
+  const toggleMaha = (idx: number) => {
+    setExpandedMahaKeys((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
-  const expandAllLevel1 = () => {
+  const toggleRow = (key: string) => {
+    setExpandedRowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const expandAllMahadashas = () => {
     if (!dasa?.dasa_tree) return;
-    const map: Record<string, boolean> = {};
+    const map: Record<number, boolean> = {};
     dasa.dasa_tree.forEach((_, idx) => {
-      map[`node-${idx}`] = true;
+      map[idx] = true;
     });
-    setExpandedKeys(map);
+    setExpandedMahaKeys(map);
+    setExpandedRowKeys({});
   };
 
-  const expandToLevel2 = () => {
+  const expandToAntharam = () => {
     if (!dasa?.dasa_tree) return;
-    const map: Record<string, boolean> = {};
+    const mahaMap: Record<number, boolean> = {};
+    const rowMap: Record<string, boolean> = {};
     dasa.dasa_tree.forEach((m, mIdx) => {
-      map[`node-${mIdx}`] = true;
-    });
-    setExpandedKeys(map);
-  };
-
-  const expandToLevel3 = () => {
-    if (!dasa?.dasa_tree) return;
-    const map: Record<string, boolean> = {};
-    dasa.dasa_tree.forEach((m, mIdx) => {
-      map[`node-${mIdx}`] = true;
-      const bChildren = m.sub_periods && m.sub_periods.length > 0
-        ? m.sub_periods
-        : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
+      mahaMap[mIdx] = true;
+      const bChildren =
+        m.sub_periods && m.sub_periods.length > 0
+          ? m.sub_periods
+          : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
       bChildren.forEach((_, bIdx) => {
-        map[`node-${mIdx}-${bIdx}`] = true;
+        rowMap[`${mIdx}-${bIdx}`] = true;
       });
     });
-    setExpandedKeys(map);
-  };
-
-  const expandToLevel4 = () => {
-    if (!dasa?.dasa_tree) return;
-    const map: Record<string, boolean> = {};
-    dasa.dasa_tree.forEach((m, mIdx) => {
-      map[`node-${mIdx}`] = true;
-      const bChildren = m.sub_periods && m.sub_periods.length > 0
-        ? m.sub_periods
-        : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
-      bChildren.forEach((b, bIdx) => {
-        map[`node-${mIdx}-${bIdx}`] = true;
-        const pChildren = b.sub_periods && b.sub_periods.length > 0
-          ? b.sub_periods
-          : generateChildSubPeriods(b, utcOffsetHours, resolvedBirthDate);
-        pChildren.forEach((_, pIdx) => {
-          map[`node-${mIdx}-${bIdx}-${pIdx}`] = true;
-        });
-      });
-    });
-    setExpandedKeys(map);
+    setExpandedMahaKeys(mahaMap);
+    setExpandedRowKeys(rowMap);
   };
 
   const expandAllFiveLevels = () => {
     if (!dasa?.dasa_tree) return;
-    const map: Record<string, boolean> = {};
+    const mahaMap: Record<number, boolean> = {};
+    const rowMap: Record<string, boolean> = {};
+
     const recurse = (nodes: DasaPeriodNode[], prefix: string, currDepth: number) => {
       nodes.forEach((n, idx) => {
-        const k = prefix ? `${prefix}-${idx}` : `node-${idx}`;
-        map[k] = true;
+        const k = prefix ? `${prefix}-${idx}` : `${idx}`;
+        rowMap[k] = true;
         if (currDepth < 5) {
-          const ch = n.sub_periods && n.sub_periods.length > 0
-            ? n.sub_periods
-            : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
+          const ch =
+            n.sub_periods && n.sub_periods.length > 0
+              ? n.sub_periods
+              : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
           if (ch.length > 0) {
             recurse(ch, k, currDepth + 1);
           }
         }
       });
     };
-    recurse(dasa.dasa_tree, "", 1);
-    setExpandedKeys(map);
+
+    dasa.dasa_tree.forEach((m, mIdx) => {
+      mahaMap[mIdx] = true;
+      const bList =
+        m.sub_periods && m.sub_periods.length > 0
+          ? m.sub_periods
+          : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
+      recurse(bList, `${mIdx}`, 2);
+    });
+
+    setExpandedMahaKeys(mahaMap);
+    setExpandedRowKeys(rowMap);
   };
 
   const collapseAll = () => {
-    setExpandedKeys({});
+    setExpandedRowKeys({});
   };
 
   const expandActivePath = () => {
     if (!dasa?.dasa_tree) return;
-    const map: Record<string, boolean> = {};
-    const recurseActive = (nodes: DasaPeriodNode[], prefix: string, currDepth: number) => {
-      nodes.forEach((n, idx) => {
-        const k = prefix ? `${prefix}-${idx}` : `node-${idx}`;
-        if (targetJd >= n.start_jd && targetJd < n.end_jd) {
-          map[k] = true;
-          if (currDepth < 5) {
-            const ch = n.sub_periods && n.sub_periods.length > 0
-              ? n.sub_periods
-              : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
-            if (ch.length > 0) {
-              recurseActive(ch, k, currDepth + 1);
+    const mahaMap: Record<number, boolean> = {};
+    const rowMap: Record<string, boolean> = {};
+
+    dasa.dasa_tree.forEach((m, mIdx) => {
+      if (targetJd >= m.start_jd && targetJd < m.end_jd) {
+        mahaMap[mIdx] = true;
+        const recurseActive = (
+          nodes: DasaPeriodNode[],
+          prefix: string,
+          currDepth: number
+        ) => {
+          nodes.forEach((n, idx) => {
+            const k = `${prefix}-${idx}`;
+            if (targetJd >= n.start_jd && targetJd < n.end_jd) {
+              rowMap[k] = true;
+              if (currDepth < 5) {
+                const ch =
+                  n.sub_periods && n.sub_periods.length > 0
+                    ? n.sub_periods
+                    : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
+                if (ch.length > 0) {
+                  recurseActive(ch, k, currDepth + 1);
+                }
+              }
             }
-          }
-        }
-      });
-    };
-    recurseActive(dasa.dasa_tree, "", 1);
-    setExpandedKeys((prev) => ({ ...prev, ...map }));
+          });
+        };
+        const bList =
+          m.sub_periods && m.sub_periods.length > 0
+            ? m.sub_periods
+            : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
+        recurseActive(bList, `${mIdx}`, 2);
+      }
+    });
+
+    setExpandedMahaKeys((prev) => ({ ...prev, ...mahaMap }));
+    setExpandedRowKeys((prev) => ({ ...prev, ...rowMap }));
   };
 
   // Derive or extract authoritative Birth Dasa Balance
@@ -478,12 +694,13 @@ export function DasaTimeline({
     if (dasa?.birth_dasa_balance) {
       return dasa.birth_dasa_balance;
     }
-    // Fallback: reconstruct from dasa properties
     if (!dasa?.dasa_tree || dasa.dasa_tree.length === 0) return null;
     const firstMaha = dasa.dasa_tree[0];
-    const firstBhukti = firstMaha.sub_periods && firstMaha.sub_periods.length > 0 ? firstMaha.sub_periods[0] : null;
+    const firstBhukti =
+      firstMaha.sub_periods && firstMaha.sub_periods.length > 0
+        ? firstMaha.sub_periods[0]
+        : null;
 
-    const fullYears = 6.0; // conservative fallback
     const remDays = firstMaha.duration_days;
     const fullDays = firstMaha.duration_years * 365.25;
 
@@ -527,10 +744,14 @@ export function DasaTimeline({
             days: Math.round(((firstBhukti.duration_years % 1) * 365.25) % 30.4375),
             total_days: firstBhukti.duration_days,
             total_years: firstBhukti.duration_years,
-            formatted: formatDurationShort(firstBhukti),
+            formatted: formatYmdDuration(firstBhukti),
           }
         : undefined,
-      next_dasa_transition_date: formatDateStr(firstMaha.end_date_iso, firstMaha.end_jd, utcOffsetHours),
+      next_dasa_transition_date: formatDateStr(
+        firstMaha.end_date_iso,
+        firstMaha.end_jd,
+        utcOffsetHours
+      ),
       next_dasa_transition_jd: firstMaha.end_jd,
     } as BirthDasaBalance;
   }, [dasa, resolvedBirthDate, resolvedBirthTime, utcOffsetHours]);
@@ -546,12 +767,12 @@ export function DasaTimeline({
   return (
     <div className="space-y-6">
       {/* ========================================================================= */}
-      {/* 1. Birth-Time Dasa Balance (தசா இருப்பு) Section - Mandatory Specification */}
+      {/* 1. Birth-Time Dasa Balance (தசா இருப்பு) Section */}
       {/* ========================================================================= */}
       {birthBalance && (
         <div className="rounded-2xl border-2 border-[#D8BD80] bg-[#FAF6EC] shadow-sm overflow-hidden">
           {/* Section Header */}
-          <div className="px-5 py-4 bg-[#FAF2DE] border-b border-[#D8BD80] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="px-5 py-3.5 bg-[#FAF2DE] border-b border-[#D8BD80] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#B4872B]" />
@@ -577,7 +798,7 @@ export function DasaTimeline({
             </div>
           </div>
 
-          {/* Section Grid: 9 Essential Authoritative Facts */}
+          {/* Section Grid: 7 Essential Facts */}
           <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
             {/* Card 1: Moon Sidereal Longitude */}
             <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
@@ -589,7 +810,7 @@ export function DasaTimeline({
                 {formatMoonLon(birthBalance.moon_sidereal_deg)}
               </div>
               <div className="text-[10px] text-[#52667E]">
-                {language === "ta" ? "நிரயண சயன முறை (Sidereal)" : "Sidereal Zodiac"}
+                {language === "ta" ? "நிரயண முறை (Sidereal)" : "Sidereal Zodiac"}
               </div>
             </div>
 
@@ -623,8 +844,7 @@ export function DasaTimeline({
               </div>
               <div className="text-[10px] text-[#52667E]">
                 {language === "ta" ? "முழு கால அளவு:" : "Full Duration:"}{" "}
-                <strong>{birthBalance.mahadasha_full_duration.formatted}</strong> (
-                {birthBalance.mahadasha_full_duration.total_days.toFixed(1)}d)
+                <strong>{birthBalance.mahadasha_full_duration.formatted}</strong>
               </div>
             </div>
 
@@ -637,12 +857,11 @@ export function DasaTimeline({
                 {birthBalance.elapsed_duration.formatted}
               </div>
               <div className="text-[10px] font-mono text-[#8190A6]">
-                {birthBalance.elapsed_duration.total_days.toFixed(2)} {language === "ta" ? "நாட்கள்" : "Days"} (
-                {birthBalance.elapsed_duration.total_years.toFixed(4)}y)
+                {birthBalance.elapsed_duration.total_days.toFixed(1)} {language === "ta" ? "நாட்கள்" : "Days"}
               </div>
             </div>
 
-            {/* Card 5: Remaining Dasa Balance at Birth (The Core Balance) */}
+            {/* Card 5: Remaining Dasa Balance at Birth */}
             <div className="p-3 rounded-xl bg-[#FAF2DE] border border-[#D8BD80] space-y-1 shadow-2xs sm:col-span-2 lg:col-span-1">
               <div className="text-[11px] font-bold text-[#8C6D23] flex items-center justify-between">
                 <span>{language === "ta" ? "பிறப்பில் தசா இருப்பு (மீதம்)" : "Remaining Dasa Balance at Birth"}</span>
@@ -652,12 +871,11 @@ export function DasaTimeline({
                 {birthBalance.remaining_balance.formatted}
               </div>
               <div className="text-[10px] font-mono text-[#8C6D23]">
-                {birthBalance.remaining_balance.total_days.toFixed(2)} {language === "ta" ? "நாட்கள்" : "Days"} (
-                {birthBalance.remaining_balance.total_years.toFixed(6)}y)
+                {birthBalance.remaining_balance.total_days.toFixed(1)} {language === "ta" ? "நாட்கள்" : "Days"}
               </div>
             </div>
 
-            {/* Card 6: Starting Bhukti & Remaining */}
+            {/* Card 6: Starting Bhukti */}
             <div className="p-3 rounded-xl bg-white border border-[#D9DEE7] space-y-1 shadow-2xs">
               <div className="text-[11px] font-semibold text-[#8190A6]">
                 {language === "ta" ? "பிறப்பில் நடப்பு புக்தி இருப்பு" : "Starting Bhukti & Balance at Birth"}
@@ -709,8 +927,8 @@ export function DasaTimeline({
               <span className="w-2.5 h-2.5 rounded-full bg-[#153F6B]" />
               <h3 className="font-bold text-sm sm:text-base text-[#183047]">
                 {language === "ta"
-                  ? "முழு 5-அடுக்கு விம்சோத்தரி தசா-புக்தி அட்டவணை"
-                  : "Complete 5-Level Vimshottari Dasa–Bhukti Table"}
+                  ? "விம்சோத்தரி தசா-புக்தி அட்டவணை"
+                  : "Vimshottari Dasa–Bhukti Schedule"}
               </h3>
             </div>
             {activeHierarchy?.mahadasha && (
@@ -737,7 +955,9 @@ export function DasaTimeline({
                     </strong>
                   </span>
                 )}
-                {selectedDateAge && <span>• {language === "ta" ? "வயது:" : "Age:"} {selectedDateAge}</span>}
+                {selectedDateAge && (
+                  <span>• {language === "ta" ? "வயது:" : "Age:"} {selectedDateAge}</span>
+                )}
               </div>
             )}
           </div>
@@ -767,7 +987,7 @@ export function DasaTimeline({
 
             <button
               type="button"
-              onClick={expandAllLevel1}
+              onClick={expandAllMahadashas}
               className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer"
             >
               {language === "ta" ? "மகாதசை" : "Dasa"}
@@ -775,26 +995,10 @@ export function DasaTimeline({
 
             <button
               type="button"
-              onClick={expandToLevel2}
+              onClick={expandToAntharam}
               className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer"
             >
-              {language === "ta" ? "புக்தி வரை" : "Bhukti"}
-            </button>
-
-            <button
-              type="button"
-              onClick={expandToLevel3}
-              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer hidden sm:inline-block"
-            >
               {language === "ta" ? "அந்தரம் வரை" : "Antharam"}
-            </button>
-
-            <button
-              type="button"
-              onClick={expandToLevel4}
-              className="px-2.5 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-[#183047] font-medium transition-colors cursor-pointer hidden md:inline-block"
-            >
-              {language === "ta" ? "சூட்சுமம் வரை" : "Sookshamam"}
             </button>
 
             <button
@@ -820,7 +1024,9 @@ export function DasaTimeline({
               type="button"
               onClick={() => setShowLegend(!showLegend)}
               className={`p-1 rounded-lg border transition-colors cursor-pointer ${
-                showLegend ? "bg-[#153F6B] text-white border-[#153F6B]" : "bg-white text-[#8190A6] border-[#D9DEE7] hover:text-[#183047]"
+                showLegend
+                  ? "bg-[#153F6B] text-white border-[#153F6B]"
+                  : "bg-white text-[#8190A6] border-[#D9DEE7] hover:text-[#183047]"
               }`}
               title={language === "ta" ? "பயன் தரும் பாவங்கள் விளக்கம்" : "Benefit Bhavas Legend"}
             >
@@ -834,14 +1040,18 @@ export function DasaTimeline({
           <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] text-xs text-[#334155] space-y-1.5 transition-all">
             <div className="font-bold text-[#153F6B] flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-[#153F6B]" />
-              <span>{language === "ta" ? "பயன் தரும் பாவங்கள் (Benefit Bhavas) 4 அடுக்கு வரிசை:" : "Benefit Bhavas Four-Category Logical Order:"}</span>
+              <span>
+                {language === "ta"
+                  ? "பயன் தரும் பாவங்கள் (Benefit Bhavas) 4 அடுக்கு வரிசை:"
+                  : "Benefit Bhavas Four-Category Logical Order:"}
+              </span>
             </div>
             <div className="font-mono text-[11px] bg-white p-2 rounded-lg border border-[#E2E8F0] space-y-0.5">
               <div>
                 <strong>[1] Star-lord house:</strong> நின்ற நட்சத்திர அதிபதி நின்ற பாவம்
               </div>
               <div>
-                <strong>[2] Star lord's own house:</strong> நின்ற நட்சத்திர அதிபதியின் சொந்த வீடுகள் (ராசி ஆதிப்பத்தியம்)
+                <strong>[2] Star lord's own house:</strong> நின்ற நட்சத்திர அதிபதியின் சொந்த வீடுகள்
               </div>
               <div>
                 <strong>[3] Planet's placement house:</strong> தசா/புக்தி/அந்தர அதிபதி நின்ற பாவம்
@@ -858,75 +1068,41 @@ export function DasaTimeline({
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. The 5-Level Vimshottari Table with Indentation & Benefit Bhavas */}
+      {/* 3. Side-by-Side Dasa Charts Grid (Reference Screenshot Layout) */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-2xl border border-[#D9DEE7] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-[#FAF2DE] text-[#183047] font-bold border-b border-[#D8BD80]">
-              <tr>
-                <th className="py-2.5 px-3 text-left w-36">
-                  {language === "ta" ? "நிலை" : "Level"}
-                </th>
-                <th className="py-2.5 px-3 text-left">
-                  {language === "ta" ? "கிரகம் / அதிபதி" : "Planet"}
-                </th>
-                <th className="py-2.5 px-3 text-left">
-                  {language === "ta" ? "தொடக்க தேதி" : "Start Date"}
-                </th>
-                <th className="py-2.5 px-3 text-left">
-                  {language === "ta" ? "முடிவு தேதி" : "End Date"}
-                </th>
-                <th className="py-2.5 px-3 text-left">
-                  {language === "ta" ? "கால அளவு" : "Duration"}
-                </th>
-                <th className="py-2.5 px-3 text-left">
-                  <div className="flex items-center gap-1">
-                    <span>{language === "ta" ? "பயன் தரும் பாவங்கள்" : "Benefit Bhavas"}</span>
-                    <span className="text-[10px] text-[#8C6D23] font-normal hidden lg:inline">
-                      (SL Occ | SL Own | PL Occ | PL Own)
-                    </span>
-                  </div>
-                </th>
-                <th className="py-2.5 px-3 text-right">
-                  {language === "ta" ? "நிலை" : "Status"}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E8F0]">
-              {dasa.dasa_tree.map((node, idx) => (
-                <HierarchicalDasaRow
-                  key={`node-${idx}`}
-                  node={node}
-                  rowKey={`node-${idx}`}
-                  depth={1}
-                  expandedKeys={expandedKeys}
-                  onToggleExpand={toggleExpand}
-                  targetJd={targetJd}
-                  utcOffsetHours={utcOffsetHours}
-                  planetContexts={planetContexts}
-                  language={language}
-                  birthDate={resolvedBirthDate}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 items-start">
+        {dasa.dasa_tree.map((mahaNode, mahaIdx) => (
+          <MahadashaCard
+            key={`maha-${mahaIdx}`}
+            mahaNode={mahaNode}
+            mahaIdx={mahaIdx}
+            isExpanded={Boolean(expandedMahaKeys[mahaIdx])}
+            onToggleMaha={toggleMaha}
+            expandedRowKeys={expandedRowKeys}
+            onToggleRow={toggleRow}
+            targetJd={targetJd}
+            utcOffsetHours={utcOffsetHours}
+            planetContexts={planetContexts}
+            language={language}
+            birthDate={resolvedBirthDate}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Hierarchical Recursive Row Component for All 5 Levels
+// Mahadasha Card Component (Independent Responsive Chart Box)
 // ---------------------------------------------------------------------------
 
-interface HierarchicalDasaRowProps {
-  node: DasaPeriodNode;
-  rowKey: string;
-  depth: number;
-  expandedKeys: Record<string, boolean>;
-  onToggleExpand: (key: string) => void;
+interface MahadashaCardProps {
+  mahaNode: DasaPeriodNode;
+  mahaIdx: number;
+  isExpanded: boolean;
+  onToggleMaha: (idx: number) => void;
+  expandedRowKeys: Record<string, boolean>;
+  onToggleRow: (key: string) => void;
   targetJd: number;
   utcOffsetHours: number;
   planetContexts: Record<string, PlanetContext> | null;
@@ -934,49 +1110,195 @@ interface HierarchicalDasaRowProps {
   birthDate?: string;
 }
 
-function HierarchicalDasaRow({
-  node,
-  rowKey,
-  depth,
-  expandedKeys,
-  onToggleExpand,
+function MahadashaCard({
+  mahaNode,
+  mahaIdx,
+  isExpanded,
+  onToggleMaha,
+  expandedRowKeys,
+  onToggleRow,
   targetJd,
   utcOffsetHours,
   planetContexts,
   language,
   birthDate,
-}: HierarchicalDasaRowProps) {
-  const isExpanded = !!expandedKeys[rowKey];
+}: MahadashaCardProps) {
+  // Check if this Mahadasha is the currently active one
+  const isMahaActive = targetJd >= mahaNode.start_jd && targetJd < mahaNode.end_jd;
 
-  const cfg = getLevelConfig(node.level);
-  const depthLevel = cfg.levelNumber;
-  const canHaveChildren = depthLevel < 5;
-
-  // Resolve children: use pre-existing sub_periods or generate dynamically with canonical Vimshottari math
-  const subPeriods = useMemo(() => {
-    if (node.sub_periods && node.sub_periods.length > 0) {
-      return node.sub_periods;
+  // Resolve star lord for the Mahadasha
+  const mahaStarLord = useMemo(() => {
+    if (planetContexts && mahaNode.lord) {
+      return calculateBenefitBhavas(mahaNode.lord, planetContexts).starLord;
     }
-    if (canHaveChildren) {
-      return generateChildSubPeriods(node, utcOffsetHours, birthDate);
+    return mahaNode.star_lord || mahaNode.lord;
+  }, [mahaNode.lord, mahaNode.star_lord, planetContexts]);
+
+  const pShort = getPeriodPlanetShort(mahaNode.lord, language);
+  const sShort = getStarLordShort(mahaStarLord, language, mahaNode.lord);
+
+  const startDateStr = formatDateStr(mahaNode.start_date_iso, mahaNode.start_jd, utcOffsetHours);
+  const endDateStr = formatDateStr(mahaNode.end_date_iso, mahaNode.end_jd, utcOffsetHours);
+
+  // Subperiods (Bhuktis)
+  const bhuktis = useMemo(() => {
+    if (mahaNode.sub_periods && mahaNode.sub_periods.length > 0) {
+      return mahaNode.sub_periods;
     }
-    return [];
-  }, [node, canHaveChildren, utcOffsetHours, birthDate]);
+    return generateChildSubPeriods(mahaNode, utcOffsetHours, birthDate);
+  }, [mahaNode, utcOffsetHours, birthDate]);
 
-  const hasChildren = subPeriods.length > 0;
+  const mahaFullYears = VIMSHOTTARI_YEARS[mahaNode.lord] || Math.round(mahaNode.duration_years) || 120;
 
-  const isSubDaily = depth >= 4;
+  return (
+    <div
+      className={`bg-white rounded-xl border overflow-hidden shadow-xs transition-shadow hover:shadow-md ${
+        isMahaActive
+          ? "border-[#103A60] ring-1 ring-[#103A60]/30"
+          : "border-[#D9DEE7]"
+      }`}
+    >
+      {/* Mahadasha Header Bar */}
+      <div
+        onClick={() => onToggleMaha(mahaIdx)}
+        className={`px-3.5 py-2.5 flex items-center justify-between cursor-pointer select-none transition-colors ${
+          isMahaActive
+            ? "bg-[#103A60] text-white"
+            : "bg-[#EEF2F6] hover:bg-[#E5EBF2] text-[#183047]"
+        }`}
+      >
+        {/* Left: Circle button with minus/plus and Planet + Star Lord */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleMaha(mahaIdx);
+            }}
+            aria-label={isExpanded ? "Collapse Mahadasha" : "Expand Mahadasha"}
+            className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 cursor-pointer transition-colors ${
+              isMahaActive
+                ? "bg-white/20 text-white hover:bg-white/30"
+                : "bg-[#CBD5E1] text-[#334155] hover:bg-[#94A3B8] hover:text-white"
+            }`}
+          >
+            {isExpanded ? (
+              <Minus className="w-2.5 h-2.5 stroke-[3]" />
+            ) : (
+              <Plus className="w-2.5 h-2.5 stroke-[3]" />
+            )}
+          </button>
 
-  const sDateStr = formatDateStr(node.start_date_iso, node.start_jd, utcOffsetHours, isSubDaily);
-  const eDateStr = formatDateStr(node.end_date_iso, node.end_jd, utcOffsetHours, isSubDaily);
-  const durationStr = formatDurationShort(node);
+          <div className="font-bold text-xs sm:text-sm flex items-center gap-1">
+            <span>{pShort}</span>
+            <span
+              className={`font-semibold ${
+                isMahaActive ? "text-sky-300" : "text-[#0284C7]"
+              }`}
+            >
+              ({sShort})
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Date Range */}
+        <div
+          className={`font-mono text-[11px] sm:text-xs font-medium tracking-tight ${
+            isMahaActive ? "text-sky-100" : "text-[#52667E]"
+          }`}
+        >
+          {startDateStr} - {endDateStr}
+        </div>
+      </div>
+
+      {/* Table of Bhuktis (Nested Hierarchy) */}
+      {isExpanded && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-[#FAF2DE] text-[#183047] font-bold border-b border-[#D8BD80]/80">
+              <tr>
+                <th className="py-2 px-2.5 text-left font-bold w-[28%] sm:w-[26%]">
+                  Bukthi
+                </th>
+                <th className="py-2 px-2 text-left font-bold w-[18%] sm:w-[17%]">
+                  From
+                </th>
+                <th className="py-2 px-2 text-left font-bold w-[26%] sm:w-[27%]">
+                  To
+                </th>
+                <th className="py-2 px-2 text-left font-bold w-[14%] sm:w-[13%]">
+                  Duration
+                </th>
+                <th className="py-2 px-2 text-left font-bold w-[14%] sm:w-[17%]">
+                  Benefit Bhavas
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E2E8F0]">
+              {bhuktis.map((bhuktiNode, bIdx) => {
+                const rowKey = `${mahaIdx}-${bIdx}`;
+                return (
+                  <DasaTableRow
+                    key={rowKey}
+                    node={bhuktiNode}
+                    rowKey={rowKey}
+                    depth={2}
+                    expandedRowKeys={expandedRowKeys}
+                    onToggleRow={onToggleRow}
+                    targetJd={targetJd}
+                    utcOffsetHours={utcOffsetHours}
+                    planetContexts={planetContexts}
+                    language={language}
+                    birthDate={birthDate}
+                    parentFullYears={mahaFullYears}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dasa Table Row Component (Recursive for Nested Sub-Periods)
+// ---------------------------------------------------------------------------
+
+interface DasaTableRowProps {
+  node: DasaPeriodNode;
+  rowKey: string;
+  depth: number;
+  expandedRowKeys: Record<string, boolean>;
+  onToggleRow: (key: string) => void;
+  targetJd: number;
+  utcOffsetHours: number;
+  planetContexts: Record<string, PlanetContext> | null;
+  language: "en" | "ta";
+  birthDate?: string;
+  parentFullYears?: number;
+}
+
+function DasaTableRow({
+  node,
+  rowKey,
+  depth,
+  expandedRowKeys,
+  onToggleRow,
+  targetJd,
+  utcOffsetHours,
+  planetContexts,
+  language,
+  birthDate,
+  parentFullYears,
+}: DasaTableRowProps) {
+  const isExpanded = Boolean(expandedRowKeys[rowKey]);
 
   // Active status detection
   const isCurrentlyActive = targetJd >= node.start_jd && targetJd < node.end_jd;
-  const isAtBirth = Boolean(node.is_active_at_birth);
-  const isCompleted = targetJd >= node.end_jd;
 
-  // Benefit Bhavas resolution
+  // Resolve star lord and Benefit Bhavas
   const { starLordName, benefitBhavas } = useMemo(() => {
     if (planetContexts && node.lord) {
       const res = calculateBenefitBhavas(node.lord, planetContexts);
@@ -991,134 +1313,182 @@ function HierarchicalDasaRow({
     };
   }, [node.lord, node.star_lord, node.benefit_bhavas, planetContexts]);
 
-  // Planet display label with star lord in parentheses
-  const planetLabel = useMemo(() => {
-    const lName = getLordName(node.lord, language);
-    const sName = getLordName(starLordName, language);
-    if (language === "ta") {
-      const lShort = getGrahaShort(node.lord, "ta");
-      const sShort = getGrahaShort(starLordName, "ta");
-      return `${lName} (${sShort})`;
+  const pShort = getPeriodPlanetShort(node.lord, language);
+  const sShort = getStarLordShort(starLordName, language, node.lord);
+
+  const isSubDaily = depth >= 4;
+  const sDateStr = formatDateStr(node.start_date_iso, node.start_jd, utcOffsetHours, isSubDaily);
+  const eDateStr = formatDateStr(node.end_date_iso, node.end_jd, utcOffsetHours, isSubDaily);
+
+  // Age string in the "To" column (e.g. "46Y 1M")
+  const ageStr = useMemo(() => {
+    return getPeriodAgeStr(node.end_date_iso, node.end_jd, birthDate, utcOffsetHours);
+  }, [node.end_date_iso, node.end_jd, birthDate, utcOffsetHours]);
+
+  // Duration in Y.M.D format matching the screenshot (e.g. 0.4.27, 1.2.0, 0.2.0)
+  const durationStr = useMemo(() => {
+    return formatYmdDuration(node, parentFullYears);
+  }, [node, parentFullYears]);
+
+  // Resolve child sub-periods if depth < 5
+  const canHaveChildren = depth < 5;
+  const subPeriods = useMemo(() => {
+    if (!canHaveChildren) return [];
+    if (node.sub_periods && node.sub_periods.length > 0) {
+      return node.sub_periods;
     }
-    return `${node.lord} (${starLordName?.slice(0, 3) || "Star"})`;
-  }, [node.lord, starLordName, language]);
+    return generateChildSubPeriods(node, utcOffsetHours, birthDate);
+  }, [node, canHaveChildren, utcOffsetHours, birthDate]);
+
+  const hasChildren = subPeriods.length > 0;
+
+  // Calculate full theoretical duration in years for child proportion calculations
+  const thisNodeFullYears = useMemo(() => {
+    if (parentFullYears && VIMSHOTTARI_YEARS[node.lord]) {
+      return (parentFullYears * VIMSHOTTARI_YEARS[node.lord]) / 120.0;
+    }
+    return node.duration_years || (node.duration_days ? node.duration_days / 365.25 : undefined);
+  }, [parentFullYears, node.lord, node.duration_years, node.duration_days]);
+
+  // Row styling
+  // In the screenshot:
+  // Active Bhukti row has a dark slate-grey background (#717A8A / #64748B) with white text.
+  // Inactive rows alternate between white and very light grey-blue (#F8FAFC).
+  // Child rows have left indentation on the first column.
+  const isDepth2 = depth === 2;
+  const isHighlightActive = isCurrentlyActive && isDepth2;
 
   return (
     <>
       <tr
-        onClick={() => hasChildren && onToggleExpand(rowKey)}
+        onClick={() => hasChildren && onToggleRow(rowKey)}
         className={`transition-colors text-xs select-none ${
           hasChildren ? "cursor-pointer" : ""
         } ${
-          isCurrentlyActive
-            ? "bg-[#FAF2DE]/70 font-bold border-l-4 border-l-[#B4872B]"
-            : isAtBirth
-            ? "bg-[#EBF2FE]/40"
+          isHighlightActive
+            ? "bg-[#717A8A] text-white font-bold"
             : depth % 2 === 0
-            ? "bg-[#F8FAFC]/50 hover:bg-[#F2F3F5]"
-            : "bg-white hover:bg-[#F2F3F5]"
+            ? "bg-white hover:bg-[#F2F4F8]"
+            : "bg-[#F8FAFC] hover:bg-[#F2F4F8]"
         }`}
       >
-        {/* Col 1: Level Badge + Indentation */}
-        <td className="py-2 px-3 whitespace-nowrap">
-          <div className={`flex items-center gap-1.5 ${cfg.rowIndent}`}>
+        {/* Col 1: Bukthi Name + Star Lord + Expand/Collapse Square Button */}
+        <td className="py-1.5 px-2.5 whitespace-nowrap">
+          <div
+            className={`flex items-center gap-1.5 ${
+              depth === 3 ? "pl-5 sm:pl-6" : depth === 4 ? "pl-9 sm:pl-10" : depth === 5 ? "pl-12 sm:pl-14" : ""
+            }`}
+          >
             {hasChildren ? (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleExpand(rowKey);
+                  onToggleRow(rowKey);
                 }}
-                className="w-4 h-4 rounded flex items-center justify-center border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 cursor-pointer shadow-2xs"
+                aria-label={isExpanded ? "Collapse" : "Expand"}
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-xs sm:rounded-sm flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition-colors ${
+                  isHighlightActive
+                    ? "bg-[#0F2942] text-white border border-white/30 hover:bg-[#081B2E]"
+                    : "bg-[#153F6B] hover:bg-[#0D2F4E] text-white"
+                }`}
               >
-                {isExpanded ? <Minus className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
+                {isExpanded ? (
+                  <Minus className="w-2.5 h-2.5 stroke-[3]" />
+                ) : (
+                  <Plus className="w-2.5 h-2.5 stroke-[3]" />
+                )}
               </button>
             ) : (
-              <span className="w-4 inline-block" />
+              <span className="w-3.5 sm:w-4 inline-block shrink-0" />
             )}
-            <span
-              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.badgeColor}`}
-            >
-              {language === "ta" ? cfg.badgeLabelTamil : cfg.badgeLabel}
-            </span>
+
+            <div className="flex items-center gap-1">
+              <span
+                className={`font-semibold ${
+                  isHighlightActive ? "text-white font-bold" : "text-[#183047]"
+                }`}
+              >
+                {pShort}
+              </span>
+              <span
+                className={`text-[11px] font-medium ${
+                  isHighlightActive ? "text-sky-200" : "text-[#0284C7]"
+                }`}
+              >
+                ({sShort})
+              </span>
+            </div>
           </div>
         </td>
 
-        {/* Col 2: Planet Name + Star Lord */}
-        <td className="py-2 px-3 font-semibold text-[#183047] whitespace-nowrap">
-          <div className="flex items-center gap-1.5">
-            <span>{planetLabel}</span>
-            {isCurrentlyActive && (
-              <span className="w-2 h-2 rounded-full bg-[#B4872B] inline-block shrink-0 animate-pulse" />
-            )}
-          </div>
-        </td>
-
-        {/* Col 3: Start Date */}
-        <td className="py-2 px-3 font-mono text-[11px] text-[#52667E] whitespace-nowrap">
+        {/* Col 2: From Date */}
+        <td
+          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${
+            isHighlightActive ? "text-white" : "text-[#334155]"
+          }`}
+        >
           {sDateStr}
         </td>
 
-        {/* Col 4: End Date */}
-        <td className="py-2 px-3 font-mono text-[11px] text-[#52667E] whitespace-nowrap">
-          {eDateStr}
-        </td>
-
-        {/* Col 5: Duration */}
-        <td className="py-2 px-3 font-mono text-[11px] font-semibold text-[#183047] whitespace-nowrap">
-          {durationStr}
-        </td>
-
-        {/* Col 6: Benefit Bhavas */}
-        <td className="py-2 px-3 font-mono text-[11px] font-bold text-[#153F6B] whitespace-nowrap">
-          <span
-            className="px-2 py-0.5 rounded bg-slate-100/80 border border-slate-200 inline-block hover:bg-amber-50 hover:border-amber-300 transition-colors"
-            title={`Star Lord Occupied | Star Lord Owned | Planet Occupied | Planet Owned: ${benefitBhavas}`}
-          >
-            {benefitBhavas}
+        {/* Col 3: To Date + Age (e.g. 09/04/1994 (14Y 1M)) */}
+        <td className="py-1.5 px-2 font-mono text-[11px] whitespace-nowrap">
+          <span className={isHighlightActive ? "text-white" : "text-[#334155]"}>
+            {eDateStr}
           </span>
-        </td>
-
-        {/* Col 7: Status */}
-        <td className="py-2 px-3 text-right whitespace-nowrap">
-          {isCurrentlyActive ? (
-            <span className="px-2 py-0.5 rounded-full bg-[#B4872B] text-white text-[10px] font-bold">
-              {language === "ta" ? "நடப்பு" : "Active"}
-            </span>
-          ) : isAtBirth ? (
-            <span className="px-2 py-0.5 rounded-full bg-[#153F6B] text-white text-[10px] font-semibold">
-              {language === "ta" ? "பிறப்பில்" : "At Birth"}
-            </span>
-          ) : isCompleted ? (
-            <span className="text-[10px] text-[#8190A6]">
-              {language === "ta" ? "முடிந்தது" : "Past"}
-            </span>
-          ) : (
-            <span className="text-[10px] text-[#52667E]">
-              {language === "ta" ? "வருவது" : "Upcoming"}
+          {ageStr && (
+            <span
+              className={`text-[10px] sm:text-[11px] ml-1 font-medium ${
+                isHighlightActive ? "text-amber-200 font-bold" : "text-[#D97706]"
+              }`}
+            >
+              ({ageStr})
             </span>
           )}
         </td>
+
+        {/* Col 4: Duration (e.g. 0.4.27, 1.2.0, 0.2.0) */}
+        <td
+          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${
+            isHighlightActive ? "text-white font-bold" : "text-[#183047] font-medium"
+          }`}
+        >
+          {durationStr}
+        </td>
+
+        {/* Col 5: Benefit Bhavas (e.g. 7 | 6 | 7 | 3, 8) */}
+        <td
+          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${
+            isHighlightActive ? "text-white font-bold" : "text-[#183047] font-semibold"
+          }`}
+          title={`Benefit Bhavas: ${benefitBhavas}`}
+        >
+          {benefitBhavas}
+        </td>
       </tr>
 
-      {/* Recursive Children Rows */}
+      {/* Recursive Children (Pratyantardasa / Sookshmadasha / Pranadasha) */}
       {isExpanded &&
         hasChildren &&
-        subPeriods.map((sub, sIdx) => (
-          <HierarchicalDasaRow
-            key={`${rowKey}-${sIdx}`}
-            node={sub}
-            rowKey={`${rowKey}-${sIdx}`}
-            depth={depth + 1}
-            expandedKeys={expandedKeys}
-            onToggleExpand={onToggleExpand}
-            targetJd={targetJd}
-            utcOffsetHours={utcOffsetHours}
-            planetContexts={planetContexts}
-            language={language}
-            birthDate={birthDate}
-          />
-        ))}
+        subPeriods.map((subNode, sIdx) => {
+          const subKey = `${rowKey}-${sIdx}`;
+          return (
+            <DasaTableRow
+              key={subKey}
+              node={subNode}
+              rowKey={subKey}
+              depth={depth + 1}
+              expandedRowKeys={expandedRowKeys}
+              onToggleRow={onToggleRow}
+              targetJd={targetJd}
+              utcOffsetHours={utcOffsetHours}
+              planetContexts={planetContexts}
+              language={language}
+              birthDate={birthDate}
+              parentFullYears={thisNodeFullYears}
+            />
+          );
+        })}
     </>
   );
 }

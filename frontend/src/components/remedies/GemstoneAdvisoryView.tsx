@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import {
   GemstoneAdvisoryResponse,
@@ -20,6 +21,8 @@ import {
   Compass,
   FileText,
   Lock,
+  ArrowRight,
+  Flame,
 } from "lucide-react";
 
 interface GemstoneAdvisoryViewProps {
@@ -99,21 +102,32 @@ export function GemstoneAdvisoryView({
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-stone-600">
-            {isTa ? "லக்னம் தெரிவு:" : "Ascendant (Lagna):"}
-          </label>
-          <select
-            value={selectedLagna}
-            onChange={(e) => setSelectedLagna(e.target.value)}
-            className="text-sm font-semibold text-[#153F6B] bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#153F6B]/30"
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-stone-600">
+              {isTa ? "லக்னம் தெரிவு:" : "Ascendant (Lagna):"}
+            </label>
+            <select
+              value={selectedLagna}
+              onChange={(e) => setSelectedLagna(e.target.value)}
+              className="text-sm font-semibold text-[#153F6B] bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#153F6B]/30"
+            >
+              {LAGNA_LIST.map((sign) => (
+                <option key={sign} value={sign}>
+                  {isTa ? LAGNA_TAMIL[sign] || sign : sign}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Link
+            href="/tools/gemstones-rudraksha"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#153F6B] text-white text-xs font-bold hover:bg-[#1E4D7B] transition-colors shadow-sm"
           >
-            {LAGNA_LIST.map((sign) => (
-              <option key={sign} value={sign}>
-                {isTa ? LAGNA_TAMIL[sign] || sign : sign}
-              </option>
-            ))}
-          </select>
+            <Sparkles className="w-3.5 h-3.5 text-[#DDA74F]" />
+            <span>{isTa ? "முழுமையான ருத்ராட்ச & ரத்தின மையம்" : "Full Gemstone & Rudraksha Studio"}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
 
@@ -169,6 +183,61 @@ export function GemstoneAdvisoryView({
               isTa={isTa}
             />
           </div>
+
+          {/* Optional 4th Pillar: Secondary Yogakaraka / Dasha Support */}
+          {advisory.secondary_support_stone && (
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-3xl p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <span className="text-2xs font-bold uppercase tracking-wider bg-purple-200 text-purple-900 px-3 py-1 rounded-full">
+                    {isTa ? "கூடுதல் ஆதரவு ரத்தினம் (யோககாரகன்)" : "Secondary Support Stone (Yogakaraka)"}
+                  </span>
+                  <h3 className="text-lg font-bold font-serif text-[#153F6B] mt-2">
+                    {isTa ? advisory.secondary_support_stone.primary_gem_ta : advisory.secondary_support_stone.primary_gem_en}{" "}
+                    <span className="text-xs font-mono font-normal text-stone-500">
+                      ({advisory.secondary_support_stone.primary_gem_sanskrit})
+                    </span>
+                  </h3>
+                  <p className="text-xs text-stone-600 mt-1 max-w-2xl">
+                    {isTa ? advisory.secondary_support_stone.governing_purpose_ta : advisory.secondary_support_stone.governing_purpose_en}
+                  </p>
+                </div>
+                <div className="text-xs bg-white p-3 rounded-2xl border border-purple-200 text-purple-950 font-medium shrink-0">
+                  <div><strong>{isTa ? "உலோகம்:" : "Metal:"}</strong> {isTa ? advisory.secondary_support_stone.prescribed_metal_ta : advisory.secondary_support_stone.prescribed_metal_en}</div>
+                  <div><strong>{isTa ? "விரல்:" : "Finger:"}</strong> {isTa ? advisory.secondary_support_stone.ideal_finger_ta : advisory.secondary_support_stone.ideal_finger_en}</div>
+                  <div><strong>{isTa ? "குறைந்தபட்ச எடை:" : "Min Weight:"}</strong> {advisory.secondary_support_stone.minimum_carats} Carats</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rudraksha Compatibility Quick Banner */}
+          {advisory.recommended_rudraksha && (
+            <div className="bg-gradient-to-r from-stone-900 via-[#153F6B] to-stone-900 text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-1.5">
+                <span className="text-2xs font-bold uppercase tracking-wider text-[#F4D068] bg-white/10 px-2.5 py-0.5 rounded-full">
+                  {isTa ? "பிரதிகூல சாந்தி: ருத்ராட்ச கவசம்" : "Pratikula Pacification: Rudraksha Shield"}
+                </span>
+                <h4 className="text-base font-bold font-serif">
+                  {isTa
+                    ? `${selectedLagna} லக்னத்திற்கு உகந்த ருத்ராட்சம்: ${advisory.recommended_rudraksha.primary_bead.name_ta}`
+                    : `Recommended Rudraksha for ${selectedLagna}: ${advisory.recommended_rudraksha.primary_bead.name_en}`}
+                </h4>
+                <p className="text-xs text-stone-300 max-w-2xl">
+                  {isTa
+                    ? advisory.recommended_rudraksha.personal_alignment_reason_ta
+                    : advisory.recommended_rudraksha.personal_alignment_reason_en}
+                </p>
+              </div>
+              <Link
+                href="/tools/gemstones-rudraksha"
+                className="px-4 py-2.5 rounded-xl bg-[#FAF2DE] text-[#8B6914] text-xs font-bold hover:bg-white transition-colors shrink-0 flex items-center gap-1.5"
+              >
+                <span>{isTa ? "1-14 முக அட்டவணை" : "Explore 1-14 Mukhi Matrix"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
 
           {/* Prohibited Gemstones Red-Flag Box */}
           {advisory.prohibited_gemstones.length > 0 && (
@@ -326,7 +395,10 @@ function GemstoneCard({
             </div>
             <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-100">
               <span className="text-stone-400 block">{isTa ? "குறைந்தபட்ச எடை:" : "Min Weight:"}</span>
-              <span className="font-bold text-stone-800">{rec.minimum_carats} Carats</span>
+              <span className="font-bold text-stone-800">
+                {rec.minimum_rattis ? `${rec.minimum_rattis} Ratti / ` : ""}
+                {rec.minimum_carats} Carats
+              </span>
             </div>
             <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-100">
               <span className="text-stone-400 block">{isTa ? "அணியும் நாள்:" : "Day & Time:"}</span>

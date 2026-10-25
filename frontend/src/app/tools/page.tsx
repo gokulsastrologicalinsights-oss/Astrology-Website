@@ -203,6 +203,16 @@ interface AstrologyToolCard {
       color: "text-amber-700 border-amber-300 bg-amber-50",
     },
     {
+      id: "gemstones-rudraksha",
+      titleTa: "ரத்தினம் & ருத்ராட்ச ஆலோசனை",
+      titleEn: "Gemstone & Rudraksha Studio",
+      descriptionTa: "அனுகூல vs பிரதிகூல சாஸ்திர விதி, யோககாரக ஆதரவு ரத்தினங்கள், 1-14 முக ருத்ராட்சப் பொருத்தம் மற்றும் உடல் எடையிலான சரியான ரட்டி அளவீடு.",
+      descriptionEn: "Authentic Anukula vs Pratikula Shastra, Yogakaraka support stones, 1-to-14 Mukhi Rudraksha matrix, and body weight formulas.",
+      href: "/tools/gemstones-rudraksha",
+      icon: Sparkles,
+      color: "text-amber-600 border-amber-300 bg-amber-50",
+    },
+    {
       id: "destiny-card",
       titleTa: "விதி அட்டை",
       titleEn: "Destiny Card Snapshot",

@@ -3582,10 +3582,62 @@ export interface PersonalizedPilgrimageRequest {
 }
 
 
-// ─── Astrological Gemstone (Ratna) Advisory Types ────────────────────────────
+// ─── Astrological Gemstone (Ratna) & Rudraksha Advisory Types ──────────────────
+
+export interface RudrakshaItem {
+  mukhi: number;
+  name_en: string;
+  name_ta: string;
+  ruling_deity_en: string;
+  ruling_deity_ta: string;
+  ruling_graha: string;
+  ruling_graha_en: string;
+  ruling_graha_ta: string;
+  chakra_en: string;
+  chakra_ta: string;
+  beeja_mantra_sanskrit: string;
+  beeja_mantra_en: string;
+  beeja_mantra_ta: string;
+  astrological_benefits_en: string;
+  astrological_benefits_ta: string;
+  doshas_mitigated_en: string[];
+  doshas_mitigated_ta: string[];
+  who_should_wear_en: string;
+  who_should_wear_ta: string;
+  wearing_protocol_en: string;
+  wearing_protocol_ta: string;
+  is_pratikula_remedy: boolean;
+}
+
+export interface RudrakshaRecommendationSummary {
+  primary_bead: RudrakshaItem;
+  secondary_bead?: RudrakshaItem | null;
+  universal_bead: RudrakshaItem;
+  personal_alignment_reason_en: string;
+  personal_alignment_reason_ta: string;
+  wearing_instructions_en: string[];
+  wearing_instructions_ta: string[];
+}
+
+export interface RudrakshaCatalogResponse {
+  total_beads: number;
+  items: RudrakshaItem[];
+}
+
+export interface RudrakshaRecommendationRequest {
+  ascendant_sign?: string;
+  moon_sign?: string;
+  running_mahadasha?: string;
+  running_bhukti?: string;
+  has_kuja_dosha?: boolean;
+  has_sade_sati?: boolean;
+  has_kaal_sarp?: boolean;
+  debilitated_planets?: string[];
+  combust_planets?: string[];
+}
 
 export interface GemstoneRecommendation {
-  category_code: "life_stone" | "lucky_stone" | "fortune_stone" | string;
+  category_code: "life_stone" | "lucky_stone" | "fortune_stone" | "secondary_support" | string;
   category_name_en: string;
   category_name_ta: string;
   governing_purpose_en: string;
@@ -3604,10 +3656,15 @@ export interface GemstoneRecommendation {
   ideal_finger_en: string;
   ideal_finger_ta: string;
   minimum_carats: number;
+  minimum_rattis?: number | null;
+  weight_guideline_formula_en?: string | null;
+  weight_guideline_formula_ta?: string | null;
   energization_day_en: string;
   energization_day_ta: string;
   consecration_mantra_sanskrit: string;
   consecration_mantra_ta: string;
+  gayatri_mantra_sanskrit?: string | null;
+  gayatri_mantra_ta?: string | null;
   cleansing_vidhi_en: string;
   cleansing_vidhi_ta: string;
   safety_status: "auspicious" | "caution_required" | "prohibited" | string;
@@ -3637,10 +3694,16 @@ export interface GemstoneAdvisoryResponse {
   moon_sign?: string | null;
   running_mahadasha?: string | null;
   running_bhukti?: string | null;
+  body_weight_kg?: number | null;
   life_stone: GemstoneRecommendation;
   lucky_stone: GemstoneRecommendation;
   fortune_stone: GemstoneRecommendation;
+  secondary_support_stone?: GemstoneRecommendation | null;
   prohibited_gemstones: ProhibitedGemstoneItem[];
+  anukula_vs_pratikula_doctrine_en?: Record<string, any> | null;
+  anukula_vs_pratikula_doctrine_ta?: Record<string, any> | null;
+  recommended_rudraksha?: RudrakshaRecommendationSummary | null;
+  rudraksha_catalog?: RudrakshaItem[];
   conflicting_combinations_warning_en: string[];
   conflicting_combinations_warning_ta: string[];
   general_wearing_rules_en: string[];
@@ -3658,6 +3721,7 @@ export interface GemstoneAdvisoryRequest {
   latitude?: number;
   longitude?: number;
   ayanamsa?: number;
+  body_weight_kg?: number;
   chart_snapshot?: Record<string, any>;
 }
 

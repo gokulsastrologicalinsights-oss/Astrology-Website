@@ -384,12 +384,47 @@ class PersonalizedPilgrimageRequest(BaseModel):
 
 
 # ==============================================================================
-# Astrological Gemstone (Ratna) Advisory & Safety Schemas
+# Astrological Gemstone (Ratna) & Rudraksha Advisory Schemas
 # ==============================================================================
+
+class RudrakshaItem(BaseModel):
+    mukhi: int
+    name_en: str
+    name_ta: str
+    ruling_deity_en: str
+    ruling_deity_ta: str
+    ruling_graha: str
+    ruling_graha_en: str
+    ruling_graha_ta: str
+    chakra_en: str
+    chakra_ta: str
+    beeja_mantra_sanskrit: str
+    beeja_mantra_en: str
+    beeja_mantra_ta: str
+    astrological_benefits_en: str
+    astrological_benefits_ta: str
+    doshas_mitigated_en: List[str]
+    doshas_mitigated_ta: List[str]
+    who_should_wear_en: str
+    who_should_wear_ta: str
+    wearing_protocol_en: str
+    wearing_protocol_ta: str
+    is_pratikula_remedy: bool = True
+
+
+class RudrakshaRecommendationSummary(BaseModel):
+    primary_bead: RudrakshaItem
+    secondary_bead: Optional[RudrakshaItem] = None
+    universal_bead: RudrakshaItem
+    personal_alignment_reason_en: str
+    personal_alignment_reason_ta: str
+    wearing_instructions_en: List[str] = Field(default_factory=list)
+    wearing_instructions_ta: List[str] = Field(default_factory=list)
+
 
 class GemstoneRecommendation(BaseModel):
     """Classical gemstone prescription for a specific auspicious house ruler."""
-    category_code: str  # "life_stone", "lucky_stone", "fortune_stone"
+    category_code: str  # "life_stone", "lucky_stone", "fortune_stone", "secondary_support"
     category_name_en: str
     category_name_ta: str
     governing_purpose_en: str
@@ -408,10 +443,15 @@ class GemstoneRecommendation(BaseModel):
     ideal_finger_en: str
     ideal_finger_ta: str
     minimum_carats: float
+    minimum_rattis: Optional[float] = None
+    weight_guideline_formula_en: Optional[str] = None
+    weight_guideline_formula_ta: Optional[str] = None
     energization_day_en: str
     energization_day_ta: str
     consecration_mantra_sanskrit: str
     consecration_mantra_ta: str
+    gayatri_mantra_sanskrit: Optional[str] = None
+    gayatri_mantra_ta: Optional[str] = None
     cleansing_vidhi_en: str
     cleansing_vidhi_ta: str
     safety_status: str  # "auspicious", "caution_required", "prohibited"
@@ -443,10 +483,16 @@ class GemstoneAdvisoryResponse(BaseModel):
     moon_sign: Optional[str] = None
     running_mahadasha: Optional[str] = None
     running_bhukti: Optional[str] = None
+    body_weight_kg: Optional[float] = None
     life_stone: GemstoneRecommendation
     lucky_stone: GemstoneRecommendation
     fortune_stone: GemstoneRecommendation
+    secondary_support_stone: Optional[GemstoneRecommendation] = None
     prohibited_gemstones: List[ProhibitedGemstoneItem] = Field(default_factory=list)
+    anukula_vs_pratikula_doctrine_en: Optional[Dict[str, Any]] = None
+    anukula_vs_pratikula_doctrine_ta: Optional[Dict[str, Any]] = None
+    recommended_rudraksha: Optional[RudrakshaRecommendationSummary] = None
+    rudraksha_catalog: List[RudrakshaItem] = Field(default_factory=list)
     conflicting_combinations_warning_en: List[str] = Field(default_factory=list)
     conflicting_combinations_warning_ta: List[str] = Field(default_factory=list)
     general_wearing_rules_en: List[str] = Field(default_factory=list)
@@ -465,6 +511,34 @@ class GemstoneAdvisoryRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     ayanamsa: Optional[int] = 0
+    body_weight_kg: Optional[float] = None
     chart_snapshot: Optional[Dict[str, Any]] = None
+
+
+class RudrakshaCatalogResponse(BaseModel):
+    """Response containing full 1-to-14 Mukhi Rudraksha catalogue."""
+    total_beads: int
+    items: List[RudrakshaItem]
+
+
+class RudrakshaRecommendationRequest(BaseModel):
+    """Request for personalized Rudraksha recommendations."""
+    ascendant_sign: Optional[str] = None
+    moon_sign: Optional[str] = None
+    running_mahadasha: Optional[str] = None
+    running_bhukti: Optional[str] = None
+    horoscope_id: Optional[str] = None
+    birth_date: Optional[str] = None
+    birth_time: Optional[str] = None
+    timezone: Optional[str] = "Asia/Kolkata"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    ayanamsa: Optional[int] = 0
+    has_kuja_dosha: bool = False
+    has_sade_sati: bool = False
+    has_kaal_sarp: bool = False
+    debilitated_planets: List[str] = Field(default_factory=list)
+    combust_planets: List[str] = Field(default_factory=list)
+
 
 

@@ -95,6 +95,9 @@ import {
   PersonalizedPilgrimageRequest,
   GemstoneAdvisoryResponse,
   GemstoneAdvisoryRequest,
+  RudrakshaCatalogResponse,
+  RudrakshaRecommendationRequest,
+  RudrakshaRecommendationSummary,
   UnifiedMarriageRequest,
   UnifiedMarriageResponse,
   MarriageCompatibilityRequest,
@@ -1551,6 +1554,32 @@ export async function getGemstoneAdvisory(
 ): Promise<GemstoneAdvisoryResponse> {
   const authHeaders = await resolveAuthHeaders(token);
   return request<GemstoneAdvisoryResponse>("/api/v1/remedies/gemstones/advisory", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getRudrakshaMatrix(
+  token?: string
+): Promise<RudrakshaCatalogResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<RudrakshaCatalogResponse>("/api/v1/remedies/rudraksha/matrix", {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+export async function getRudrakshaRecommendation(
+  req: RudrakshaRecommendationRequest,
+  token?: string
+): Promise<RudrakshaRecommendationSummary> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<RudrakshaRecommendationSummary>("/api/v1/remedies/rudraksha/recommendation", {
     method: "POST",
     headers: {
       ...authHeaders,

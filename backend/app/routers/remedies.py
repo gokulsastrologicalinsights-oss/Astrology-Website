@@ -35,6 +35,9 @@ from app.schemas.remedies import (
     PersonalizedPilgrimageRequest,
     GemstoneAdvisoryResponse,
     GemstoneAdvisoryRequest,
+    RudrakshaCatalogResponse,
+    RudrakshaRecommendationRequest,
+    RudrakshaRecommendationSummary,
 )
 from app.services.remedy_engine.repository import remedy_repository
 from app.services.remedy_engine.validation import RemedyValidator
@@ -42,6 +45,7 @@ from app.services.remedy_engine.eligibility import RemedyEligibilityEngine
 from app.services.remedy_engine.analysis import generate_remedy_analysis
 from app.services.remedy_engine.pilgrimage import PilgrimageCircuitEngine
 from app.services.remedy_engine.gemstone_advisory import GemstoneAdvisoryEngine
+from app.services.remedy_engine.rudraksha_advisory import RudrakshaAdvisoryEngine
 from datetime import date
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.ephemeris import calculate_full_horoscope
@@ -582,11 +586,16 @@ async def get_gemstone_advisory(
     request: GemstoneAdvisoryRequest,
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> GemstoneAdvisoryResponse:
-    """Evaluates 3-pillar gemstone recommendations (Life, Lucky, Fortune) and classical Dusthana prohibitions."""
+    """Evaluates 3-pillar gemstone recommendations (Life, Lucky, Fortune), secondary support, and classical Dusthana prohibitions."""
     lagna_sign = request.ascendant_sign
     moon_sign: Optional[str] = None
     mahadasha: Optional[str] = None
     bhukti: Optional[str] = None
+    debilitated: List[str] = []
+    combust: List[str] = []
+    has_kuja = False
+    has_sade = False
+    has_kaal = False
 
     if not lagna_sign and request.horoscope_id:
         clean_id = _validate_uuid(request.horoscope_id)
@@ -610,6 +619,19 @@ async def get_gemstone_advisory(
             if dasa_res.get("current_dasa"):
                 mahadasha = dasa_res["current_dasa"].get("lord")
                 bhukti = dasa_res["current_dasa"].get("bhukti_lord")
+            for p in horo.get("planets", []):
+                p_n = (p.get("name") or "").lower()
+                if p.get("is_debilitated"):
+                    debilitated.append(p_n)
+                if p.get("is_combust"):
+                    combust.append(p_n)
+            doshas = horo.get("doshas") or {}
+            if doshas.get("manglik") or doshas.get("kuja_dosha"):
+                has_kuja = True
+            if doshas.get("kaal_sarp") or doshas.get("kala_sarpa"):
+                has_kaal = True
+            if doshas.get("sade_sati"):
+                has_sade = True
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -628,6 +650,12 @@ async def get_gemstone_advisory(
         lagna_sign = computed.ascendant.sign_name
         moon_obj = next((p for p in computed.planets if p.name == "Moon"), None)
         moon_sign = moon_obj.sign_name if moon_obj else None
+        for p in computed.planets:
+            p_n = (p.name or "").lower()
+            if getattr(p, "is_debilitated", False):
+                debilitated.append(p_n)
+            if getattr(p, "is_combust", False):
+                combust.append(p_n)
         try:
             b_in = BirthInput(
                 birth_date=request.birth_date,
@@ -667,6 +695,57 @@ async def get_gemstone_advisory(
         moon_sign=moon_sign,
         running_mahadasha=mahadasha,
         running_bhukti=bhukti,
+        body_weight_kg=request.body_weight_kg,
+        debilitated_planets=debilitated,
+        combust_planets=combust,
+        has_kuja_dosha=has_kuja,
+        has_sade_sati=has_sade,
+        has_kaal_sarp=has_kaal,
     )
+
+
+# ------------------------------------------------------------------------------
+# 10. Rudraksha Shastra & Compatibility Endpoints
+# ------------------------------------------------------------------------------
+
+@router.get(
+    "/rudraksha/matrix",
+    response_model=RudrakshaCatalogResponse,
+    summary="Get 1-to-14 Mukhi Rudraksha Catalogue",
+)
+async def get_rudraksha_matrix() -> RudrakshaCatalogResponse:
+    """Returns the complete classical 1-to-14 Mukhi Rudraksha catalogue along with Gauri Shankar and Ganesh beads."""
+    beads = RudrakshaAdvisoryEngine.get_all_beads()
+    return RudrakshaCatalogResponse(
+        total_beads=len(beads),
+        items=beads,
+    )
+
+
+@router.post(
+    "/rudraksha/recommendation",
+    response_model=RudrakshaRecommendationSummary,
+    summary="Get Personalized Rudraksha Prescription",
+)
+async def get_rudraksha_recommendation(
+    request: RudrakshaRecommendationRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> RudrakshaRecommendationSummary:
+    """Evaluates planetary afflictions, Dasha periods, and Lagna to prescribe primary, secondary, and universal beads."""
+    lagna_sign = request.ascendant_sign or "Aries"
+    lagna_clean = lagna_sign.strip().capitalize()
+
+    return RudrakshaAdvisoryEngine.evaluate_rudraksha(
+        lagna_sign=lagna_clean,
+        moon_sign=request.moon_sign,
+        running_mahadasha=request.running_mahadasha,
+        running_bhukti=request.running_bhukti,
+        debilitated_planets=request.debilitated_planets,
+        combust_planets=request.combust_planets,
+        has_kuja_dosha=request.has_kuja_dosha,
+        has_sade_sati=request.has_sade_sati,
+        has_kaal_sarp=request.has_kaal_sarp,
+    )
+
 
 
