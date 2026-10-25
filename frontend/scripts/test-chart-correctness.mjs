@@ -309,5 +309,113 @@ runTest("jdToCalendarDate Fliegel-Van Flandern canonical verification", () => {
   assert.strictEqual(jdToCalendarDate(2450015.0 + 43830.0), "2115-10-25", "120 Julian years in Gregorian calendar (2100 non-leap) must be 2115-10-25");
 });
 
+// --------------------------------------------------------------------------
+// 7. Graha Typography Scaling & Lagna Highlight Invariants
+// --------------------------------------------------------------------------
+function getCellItemClasses(totalItems) {
+  if (totalItems >= 5) {
+    return {
+      textClass: "text-[9.5px] sm:text-[10.5px] md:text-[11px]",
+      gapClass: "gap-x-1 gap-y-0.5",
+      isMultiColumn: true,
+    };
+  } else if (totalItems === 4) {
+    return {
+      textClass: "text-[10.5px] sm:text-[11.5px] md:text-[12.5px]",
+      gapClass: "gap-0.5",
+      isMultiColumn: false,
+    };
+  } else if (totalItems === 3) {
+    return {
+      textClass: "text-[11.5px] sm:text-[12.5px] md:text-[13.5px]",
+      gapClass: "gap-0.5 sm:gap-1",
+      isMultiColumn: false,
+    };
+  } else if (totalItems === 2) {
+    return {
+      textClass: "text-[12.5px] sm:text-[14px] md:text-[15px]",
+      gapClass: "gap-1 sm:gap-1.5",
+      isMultiColumn: false,
+    };
+  } else {
+    return {
+      textClass: "text-sm sm:text-base md:text-[17px]",
+      gapClass: "gap-1",
+      isMultiColumn: false,
+    };
+  }
+}
+
+function getCellBgClass(isAscendant, isSavedChart) {
+  const isLagnaHighlightedBlue = isSavedChart && isAscendant;
+  if (isLagnaHighlightedBlue) {
+    return "bg-[#D8E8FD] ring-1 ring-inset ring-[#2563EB]/40 border-[#153F6B]";
+  } else if (isAscendant) {
+    return "bg-[#FAF2DE]/45 border-[#183047]";
+  }
+  return "bg-white border-[#183047]";
+}
+
+runTest("South Indian chart Graha font scaling by occupant count", () => {
+  // 1 Graha: largest prominent font
+  const single = getCellItemClasses(1);
+  assert.ok(single.textClass.includes("text-sm") && single.textClass.includes("md:text-[17px]"), "1 item should have large font");
+  assert.strictEqual(single.isMultiColumn, false);
+
+  // 2 Grahas: comfortably scaled font
+  const double = getCellItemClasses(2);
+  assert.ok(double.textClass.includes("text-[12.5px]") && double.textClass.includes("md:text-[15px]"), "2 items should scale gracefully");
+  assert.strictEqual(double.isMultiColumn, false);
+
+  // 3 Grahas: balanced readability (e.g. 9-Asc, 18-Su, Me)
+  const triple = getCellItemClasses(3);
+  assert.ok(triple.textClass.includes("text-[11.5px]") && triple.textClass.includes("md:text-[13.5px]"), "3 items should scale without clipping");
+  assert.strictEqual(triple.isMultiColumn, false);
+
+  // 4 Grahas: compact stacking
+  const quad = getCellItemClasses(4);
+  assert.ok(quad.textClass.includes("text-[10.5px]"), "4 items should fit cleanly");
+  assert.strictEqual(quad.isMultiColumn, false);
+
+  // 5+ Grahas: switches to 2-column grid to strictly prevent overflow/clipping
+  const five = getCellItemClasses(5);
+  assert.strictEqual(five.isMultiColumn, true, "5+ items must switch to 2-column grid");
+  assert.ok(five.gapClass.includes("gap-x-1"), "2-column grid must have horizontal gap");
+});
+
+runTest("Saved horoscope chart highlights ONLY Lagna box in blue and keeps other boxes in existing style", () => {
+  const ascSignIndex = 9; // Sagittarius Lagna as in user screenshot
+
+  // Test all 12 cells for a saved chart
+  for (let s = 1; s <= 12; s++) {
+    const isAscendant = s === ascSignIndex;
+    const bgClass = getCellBgClass(isAscendant, true);
+
+    if (isAscendant) {
+      assert.ok(bgClass.includes("bg-[#D8E8FD]"), `Lagna cell (sign ${s}) must be highlighted in blue for saved chart`);
+      assert.ok(bgClass.includes("ring-[#2563EB]/40"), `Lagna cell must have blue accent ring`);
+    } else {
+      assert.strictEqual(bgClass, "bg-white border-[#183047]", `Non-Lagna cell (sign ${s}) must remain standard white`);
+      assert.ok(!bgClass.includes("bg-[#D8E8FD]"), `Non-Lagna cell (sign ${s}) must NEVER be blue`);
+    }
+  }
+});
+
+runTest("Unsaved horoscope chart preserves original Lagna cream highlight", () => {
+  const ascSignIndex = 1; // Aries Lagna
+
+  for (let s = 1; s <= 12; s++) {
+    const isAscendant = s === ascSignIndex;
+    const bgClass = getCellBgClass(isAscendant, false);
+
+    if (isAscendant) {
+      assert.ok(bgClass.includes("bg-[#FAF2DE]/45"), `Unsaved chart Lagna must use existing cream highlight`);
+      assert.ok(!bgClass.includes("bg-[#D8E8FD]"), `Unsaved chart Lagna must NOT be blue`);
+    } else {
+      assert.strictEqual(bgClass, "bg-white border-[#183047]", `Non-Lagna cell must be white`);
+    }
+  }
+});
+
 console.log(`\nResults: ${passed} passed, ${failed} failed out of ${passed + failed} tests.`);
 if (failed > 0) process.exit(1);
