@@ -17,7 +17,7 @@ import {
   ShodashvargaChartItem,
   ShodashvargaPlanetEntry,
 } from "@/lib/types";
-import { calculateVargaD1D9, calculateShodashvarga } from "@/lib/api";
+import { calculateVargaD1D9, calculateShodashvarga, downloadShodashvargaPdf, triggerBlobDownload } from "@/lib/api";
 import { formatDm } from "@/lib/formatters";
 import {
   Compass,
@@ -41,6 +41,7 @@ import {
   ShieldCheck,
   Flame,
   Info,
+  Download,
 } from "lucide-react";
 
 interface SavedHoroItem {
@@ -218,6 +219,43 @@ function D1D9Content() {
       setErrorMsg(err.message || "Failed to calculate divisional charts.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadShodashvargaPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const token = session?.access_token;
+      const personName = inputMode === "saved"
+        ? (savedHoroscopes.find((h) => h.id === selectedHoroscopeId)?.person_name || "Native")
+        : "Native";
+      const payload: any = {
+        native_name: personName,
+        gender: "male",
+        language: language === "ta" ? "ta" : "en",
+        ayanamsa,
+      };
+
+      if (inputMode === "saved" && selectedHoroscopeId) {
+        payload.saved_horoscope_id = selectedHoroscopeId;
+      } else {
+        payload.birth_input = {
+          birth_date: birthDate,
+          birth_time: birthTime,
+          timezone,
+          latitude,
+          longitude,
+        };
+      }
+
+      const blob = await downloadShodashvargaPdf(payload, token);
+      triggerBlobDownload(blob, `Shodashvarga_Chart_Book_${personName.replace(/\s+/g, "_")}.pdf`);
+    } catch (err: any) {
+      alert(err?.message || "Failed to download Shodashvarga Chart Book PDF.");
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -506,63 +544,79 @@ function D1D9Content() {
       {/* Results Studio Workspace */}
       {vargaData && (
         <div className="space-y-8">
-          {/* Main Studio Navigation Tabs */}
-          <div className="flex border-b border-[#DDE5F0] overflow-x-auto gap-2 text-xs sm:text-sm">
-            <button
-              type="button"
-              onClick={() => setActiveTab("d1_d9")}
-              className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-                activeTab === "d1_d9"
-                  ? "border-[#B8862B] text-[#B8862B]"
-                  : "border-transparent text-[#64748B] hover:text-[#102A4C]"
-              }`}
-            >
-              <Columns className="w-4 h-4" />
-              <span>{language === "ta" ? "D1 & D9 ஒப்பீடு" : "D1 & D9 Comparison"}</span>
-            </button>
+          {/* Main Studio Navigation Tabs & PDF Export Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#DDE5F0] pb-2">
+            <div className="flex overflow-x-auto gap-2 text-xs sm:text-sm">
+              <button
+                type="button"
+                onClick={() => setActiveTab("d1_d9")}
+                className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  activeTab === "d1_d9"
+                    ? "border-[#B8862B] text-[#B8862B]"
+                    : "border-transparent text-[#64748B] hover:text-[#102A4C]"
+                }`}
+              >
+                <Columns className="w-4 h-4" />
+                <span>{language === "ta" ? "D1 & D9 ஒப்பீடு" : "D1 & D9 Comparison"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("shodashvarga")}
+                className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  activeTab === "shodashvarga"
+                    ? "border-[#B8862B] text-[#B8862B]"
+                    : "border-transparent text-[#64748B] hover:text-[#102A4C]"
+                }`}
+              >
+                <Grid className="w-4 h-4" />
+                <span>{language === "ta" ? "16 வர்க்க சக்கரங்கள்" : "16 Shodashvarga Charts"}</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#FAF2DE] text-[#8C6D23] font-mono">
+                  16
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("matrix")}
+                className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  activeTab === "matrix"
+                    ? "border-[#B8862B] text-[#B8862B]"
+                    : "border-transparent text-[#64748B] hover:text-[#102A4C]"
+                }`}
+              >
+                <Award className="w-4 h-4" />
+                <span>{language === "ta" ? "16 வர்க்க கிரக அணி (Varga-Bala)" : "16-Varga Planetary Matrix"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("d60_deities")}
+                className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  activeTab === "d60_deities"
+                    ? "border-[#B8862B] text-[#B8862B]"
+                    : "border-transparent text-[#64748B] hover:text-[#102A4C]"
+                }`}
+              >
+                <Flame className="w-4 h-4 text-amber-600" />
+                <span>{language === "ta" ? "D60 சஷ்டியாம்ச கர்மா தேவதைகள்" : "D60 Karma Deities"}</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-mono">
+                  60
+                </span>
+              </button>
+            </div>
 
             <button
               type="button"
-              onClick={() => setActiveTab("shodashvarga")}
-              className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-                activeTab === "shodashvarga"
-                  ? "border-[#B8862B] text-[#B8862B]"
-                  : "border-transparent text-[#64748B] hover:text-[#102A4C]"
-              }`}
+              onClick={handleDownloadShodashvargaPdf}
+              disabled={downloadingPdf}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8C6D23] hover:bg-[#735118] text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 self-start sm:self-auto"
             >
-              <Grid className="w-4 h-4" />
-              <span>{language === "ta" ? "16 வர்க்க சக்கரங்கள்" : "16 Shodashvarga Charts"}</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#FAF2DE] text-[#8C6D23] font-mono">
-                16
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("matrix")}
-              className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-                activeTab === "matrix"
-                  ? "border-[#B8862B] text-[#B8862B]"
-                  : "border-transparent text-[#64748B] hover:text-[#102A4C]"
-              }`}
-            >
-              <Award className="w-4 h-4" />
-              <span>{language === "ta" ? "16 வர்க்க கிரக அணி (Varga-Bala)" : "16-Varga Planetary Matrix"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("d60_deities")}
-              className={`flex items-center gap-2 py-3 px-4 font-bold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-                activeTab === "d60_deities"
-                  ? "border-[#B8862B] text-[#B8862B]"
-                  : "border-transparent text-[#64748B] hover:text-[#102A4C]"
-              }`}
-            >
-              <Flame className="w-4 h-4 text-amber-600" />
-              <span>{language === "ta" ? "D60 சஷ்டியாம்ச கர்மா தேவதைகள்" : "D60 Karma Deities"}</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-mono">
-                60
+              <Download className={`w-3.5 h-3.5 ${downloadingPdf ? "animate-spin" : ""}`} />
+              <span>
+                {downloadingPdf
+                  ? (language === "ta" ? "புத்தகம் தயாராகிறது..." : "Compiling Chart Book...")
+                  : (language === "ta" ? "16 வர்க்க கட்ட புத்தகம் PDF" : "Download 16-Varga Book PDF")}
               </span>
             </button>
           </div>

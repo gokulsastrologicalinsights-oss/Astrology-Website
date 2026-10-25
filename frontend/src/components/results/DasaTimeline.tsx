@@ -81,18 +81,13 @@ function formatMoonLon(deg: number): string {
 function formatDateStr(
   isoStr?: string,
   jd?: number,
-  offsetHours: number = 0,
-  isSubDaily: boolean = false
+  offsetHours: number = 0
 ): string {
   if (isoStr) {
     const parts = isoStr.split("T");
     if (parts[0]) {
       const [y, m, d] = parts[0].split("-");
-      const dmy = `${d}/${m}/${y}`;
-      if (isSubDaily && parts[1]) {
-        return `${dmy} ${parts[1].slice(0, 5)}`;
-      }
-      return dmy;
+      return `${d}/${m}/${y}`;
     }
   }
   if (jd) {
@@ -100,13 +95,7 @@ function formatDateStr(
     if (dt) {
       const d = String(dt.day).padStart(2, "0");
       const m = String(dt.month).padStart(2, "0");
-      const dmy = `${d}/${m}/${dt.year}`;
-      if (isSubDaily) {
-        const h = String(dt.hour).padStart(2, "0");
-        const min = String(dt.minute).padStart(2, "0");
-        return `${dmy} ${h}:${min}`;
-      }
-      return dmy;
+      return `${d}/${m}/${dt.year}`;
     }
   }
   return "—";
@@ -1316,9 +1305,8 @@ function DasaTableRow({
   const pShort = getPeriodPlanetShort(node.lord, language);
   const sShort = getStarLordShort(starLordName, language, node.lord);
 
-  const isSubDaily = depth >= 4;
-  const sDateStr = formatDateStr(node.start_date_iso, node.start_jd, utcOffsetHours, isSubDaily);
-  const eDateStr = formatDateStr(node.end_date_iso, node.end_jd, utcOffsetHours, isSubDaily);
+  const sDateStr = formatDateStr(node.start_date_iso, node.start_jd, utcOffsetHours);
+  const eDateStr = formatDateStr(node.end_date_iso, node.end_jd, utcOffsetHours);
 
   // Age string in the "To" column (e.g. "46Y 1M")
   const ageStr = useMemo(() => {

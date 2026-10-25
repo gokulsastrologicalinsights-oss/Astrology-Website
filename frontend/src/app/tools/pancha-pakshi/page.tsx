@@ -11,7 +11,7 @@ import {
   YamamSlot,
   BirdItem,
 } from "@/lib/types";
-import { calculatePanchaPakshi, getPanchaPakshiBirds } from "@/lib/api";
+import { calculatePanchaPakshi, getPanchaPakshiBirds, downloadPanchaPakshiPdf, triggerBlobDownload } from "@/lib/api";
 import {
   Sparkles,
   Clock,
@@ -35,6 +35,7 @@ import {
   Moon,
   ArrowRight,
   HelpCircle,
+  Download,
 } from "lucide-react";
 
 interface CityPreset {
@@ -116,6 +117,29 @@ function PanchaPakshiStudioInner() {
 
   // Live ticking clock
   const [nowTime, setNowTime] = useState<Date>(new Date());
+  const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
+
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const nakObj = NAKSHATRAS.find((n) => n.index === birthNakshatra);
+      const blob = await downloadPanchaPakshiPdf({
+        nakshatra: nakObj?.name_en || "Rohini",
+        paksha: birthPaksha,
+        target_date: dateStr,
+        latitude: latitude,
+        longitude: longitude,
+        location_name: selectedCity.name_en,
+        native_name: "Native",
+        language: language === "ta" ? "ta" : "en",
+      });
+      triggerBlobDownload(blob, `Agastya_Pancha_Pakshi_24Hr_${dateStr}.pdf`);
+    } catch (err: any) {
+      alert(err?.message || "Failed to download Pancha Pakshi PDF report.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -248,6 +272,20 @@ function PanchaPakshiStudioInner() {
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Download className={`w-3.5 h-3.5 ${downloadingPdf ? "animate-spin" : ""}`} />
+                <span>
+                  {downloadingPdf
+                    ? (language === "ta" ? "தயாராகிறது..." : "Compiling PDF...")
+                    : (language === "ta" ? "24-மணி நேர PDF அறிக்கை" : "Download 24-Hr PDF")}
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={fetchBioRhythms}

@@ -113,6 +113,10 @@ import {
   HoroscopeWritingResponse,
   HoroscopeWritingSaveResponse,
   SavedHoroscopeWritingItem,
+  ShodashvargaPdfReportRequest,
+  MuhurtaCertificatePdfRequest,
+  PanchaPakshiPdfReportRequest,
+  GemstoneRudrakshaPlaybookPdfRequest,
   SavedHoroscopeWritingListResponse,
 } from "./types";
 
@@ -2039,3 +2043,129 @@ export async function toggleRuleStatus(
     }
   );
 }
+
+// ==============================================================================
+// 45. Client-Facing Printable PDF Reports Engine
+// ==============================================================================
+
+/**
+ * Trigger browser file download from a Blob.
+ */
+export function triggerBlobDownload(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }, 100);
+}
+
+/**
+ * Download Comprehensive 16-Divisional Kundli & Shodashvarga Chart Book PDF (POST /api/v1/reports/shodashvarga/pdf)
+ */
+export async function downloadShodashvargaPdf(
+  req: ShodashvargaPdfReportRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/shodashvarga/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate Shodashvarga PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * Download Ceremonial Auspicious Muhurta Selection Certificate PDF (POST /api/v1/reports/muhurta-certificate/pdf)
+ */
+export async function downloadMuhurtaCertificatePdf(
+  req: MuhurtaCertificatePdfRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/muhurta-certificate/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate Muhurta Certificate PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * Download Agastya Pancha Pakshi 24-Hour Bio-Rhythm Chart PDF (POST /api/v1/reports/pancha-pakshi/pdf)
+ */
+export async function downloadPanchaPakshiPdf(
+  req: PanchaPakshiPdfReportRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/pancha-pakshi/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate Pancha Pakshi PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * Download Remedial Gemstone & Rudraksha Sanctification Playbook PDF (POST /api/v1/reports/gemstone-rudraksha/pdf)
+ */
+export async function downloadGemstoneRudrakshaPlaybookPdf(
+  req: GemstoneRudrakshaPlaybookPdfRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/gemstone-rudraksha/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate Gemstone & Rudraksha Playbook PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+

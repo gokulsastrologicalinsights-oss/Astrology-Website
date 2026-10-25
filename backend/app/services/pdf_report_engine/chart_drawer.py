@@ -92,9 +92,41 @@ def create_south_indian_chart(
     # 1. Outer Frame
     d.add(Rect(0, 0, size, size, fillColor=colors.white, strokeColor=colors.HexColor("#334155"), strokeWidth=1.5))
 
-    # Identify Ascendant sign
-    asc_sign = chart_data.get("ascendant_sign", 1)
-    asc_deg = chart_data.get("ascendant_degree", None)
+    # Identify Ascendant sign and degree
+    asc_raw = chart_data.get("ascendant", None)
+    if isinstance(asc_raw, dict):
+        asc_sign = asc_raw.get("sign_index", 1)
+        asc_deg = asc_raw.get("degree_in_sign", None)
+    elif hasattr(asc_raw, "sign_index"):
+        asc_sign = getattr(asc_raw, "sign_index", 1)
+        asc_deg = getattr(asc_raw, "degree_in_sign", None)
+    else:
+        asc_sign = chart_data.get("ascendant_sign", 1)
+        asc_deg = chart_data.get("ascendant_degree", None)
+
+    # Coerce asc_sign to int (1-12)
+    if isinstance(asc_sign, str):
+        if asc_sign.isdigit():
+            asc_sign = int(asc_sign)
+        else:
+            sign_names_lower = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"]
+            ta_sign_names = ["மேஷம்", "ரிஷபம்", "மிதுனம்", "கடகம்", "சிம்மம்", "கன்னி", "துலாம்", "விருச்சிகம்", "தனுசு", "மகரம்", "கும்பம்", "மீனம்"]
+            matched = False
+            for idx, sn in enumerate(sign_names_lower):
+                if sn in asc_sign.lower():
+                    asc_sign = idx + 1
+                    matched = True
+                    break
+            if not matched:
+                for idx, sn in enumerate(ta_sign_names):
+                    if sn in asc_sign:
+                        asc_sign = idx + 1
+                        matched = True
+                        break
+            if not matched:
+                asc_sign = 1
+    elif not isinstance(asc_sign, int):
+        asc_sign = 1
 
     # Group occupants by sign index (1-12)
     occupants: Dict[int, List[str]] = {i: [] for i in range(1, 13)}
@@ -109,7 +141,13 @@ def create_south_indian_chart(
         occupants[asc_sign].append(f"[ {asc_label} ]")
 
     # Add Planets
-    for p in chart_data.get("planets", []):
+    planets_data = chart_data.get("planets", [])
+    if not planets_data and chart_data.get("planets_by_sign"):
+        for s_i, p_names in chart_data["planets_by_sign"].items():
+            for p_n in p_names:
+                planets_data.append({"name": p_n, "sign_index": int(s_i)})
+
+    for p in planets_data:
         s_idx = p.get("sign_index", 1)
         if 1 <= s_idx <= 12:
             p_name = p.get("name", "")

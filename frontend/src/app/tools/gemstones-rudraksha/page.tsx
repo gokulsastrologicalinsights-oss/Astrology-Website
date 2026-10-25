@@ -10,7 +10,7 @@ import {
   RudrakshaItem,
   RudrakshaRecommendationSummary,
 } from "@/lib/types";
-import { getGemstoneAdvisory, getRudrakshaMatrix } from "@/lib/api";
+import { getGemstoneAdvisory, getRudrakshaMatrix, downloadGemstoneRudrakshaPlaybookPdf, triggerBlobDownload } from "@/lib/api";
 import {
   Sparkles,
   ShieldAlert,
@@ -32,6 +32,7 @@ import {
   Heart,
   Flame,
   Award,
+  Download,
 } from "lucide-react";
 
 const LAGNA_LIST = [
@@ -79,6 +80,24 @@ export default function GemstoneRudrakshaStudioPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedMantra, setCopiedMantra] = useState<string | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
+
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const blob = await downloadGemstoneRudrakshaPlaybookPdf({
+        ascendant_sign: selectedLagna,
+        native_name: "Native",
+        body_weight_kg: bodyWeight,
+        language: isTa ? "ta" : "en",
+      });
+      triggerBlobDownload(blob, `Gemstone_Rudraksha_Playbook_${selectedLagna}.pdf`);
+    } catch (err: any) {
+      alert(err?.message || "Failed to download Gemstone & Rudraksha Playbook PDF.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   // Rudraksha catalog filters
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -201,6 +220,22 @@ export default function GemstoneRudrakshaStudioPage() {
                   />
                   <span className="text-xs font-bold text-stone-500">kg</span>
                 </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#8B6914] hover:bg-[#735118] text-white text-xs font-bold shadow-xs transition-all cursor-pointer mt-4"
+                >
+                  <Download className={`w-4 h-4 ${downloadingPdf ? "animate-spin" : ""}`} />
+                  <span>
+                    {downloadingPdf
+                      ? (isTa ? "தயாராகிறது..." : "Compiling Playbook...")
+                      : (isTa ? "பரிந்துரை கையேடு PDF" : "Download Playbook PDF")}
+                  </span>
+                </button>
               </div>
             </div>
           </div>

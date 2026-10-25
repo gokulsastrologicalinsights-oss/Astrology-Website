@@ -10,8 +10,9 @@ import {
 import {
   getPredictionCategories,
   evaluatePredictionRules,
-  ApiError,
+  saveRuleDefinition,
 } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import {
   Compass,
   CheckCircle2,
@@ -29,7 +30,20 @@ import {
   ShieldAlert,
   ArrowRight,
   SlidersHorizontal,
-  ExternalLink,
+  Plus,
+  X,
+  Flame,
+  Heart,
+  Briefcase,
+  Crown,
+  Star,
+  Coins,
+  Baby,
+  Smile,
+  ShieldCheck,
+  Check,
+  Trash2,
+  Play,
 } from "lucide-react";
 
 interface AstrologicalPredictionsSectionProps {
@@ -37,19 +51,35 @@ interface AstrologicalPredictionsSectionProps {
   language: "en" | "ta";
 }
 
+// Quick filter categories requested by user
+const QUICK_FILTER_PILLS = [
+  { id: "all", label_en: "All Topics", label_ta: "அனைத்தும்", icon: Sparkles },
+  { id: "sexuality_intimacy", label_en: "Sexual Topics & Intimacy", label_ta: "தாம்பத்தியம் & காமம்", icon: Flame, isHighlight: true },
+  { id: "marriage", label_en: "Marriage (General)", label_ta: "திருமணம்", icon: Heart },
+  { id: "first_marriage", label_en: "1st Marriage", label_ta: "முதல் திருமணம்", icon: Heart },
+  { id: "second_marriage", label_en: "2nd Marriage", label_ta: "இரண்டாம் திருமணம்", icon: RefreshCw },
+  { id: "job", label_en: "Job & Career", label_ta: "வேலை & உத்தியோகம்", icon: Briefcase },
+  { id: "lagna", label_en: "Lagna Characters", label_ta: "லக்ன குணநலன்கள்", icon: Crown },
+  { id: "star", label_en: "Star Characteristics", label_ta: "நட்சத்திர குணங்கள்", icon: Star },
+  { id: "wealth_yogas", label_en: "Money & Wealth", label_ta: "தனம் & சொத்து", icon: Coins },
+  { id: "children_prospects", label_en: "Children & Family", label_ta: "புத்திர பாக்கியம்", icon: Baby },
+];
+
+const LOCAL_STORAGE_CUSTOM_RULES_KEY = "antigravity_custom_astrology_rules";
+
 export function AstrologicalPredictionsSection({
   horoscopeResult,
   language,
 }: AstrologicalPredictionsSectionProps) {
+  const { session } = useAuth();
+
   // Categories state
   const [categoryGroups, setCategoryGroups] = useState<PredictionCategoryGroup[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
   // Filter & Selection state
-  const [selectedGroupCode, setSelectedGroupCode] = useState<string>("all");
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>("marriage_prospects");
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("sexuality_intimacy");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [chartScope, setChartScope] = useState<"d1" | "d9" | "both">("both");
   const [astrologySystem, setAstrologySystem] = useState<"all" | "vedic" | "kp">("all");
@@ -60,10 +90,52 @@ export function AstrologicalPredictionsSection({
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [evaluationResults, setEvaluationResults] = useState<EvaluatedPredictionRule[] | null>(null);
   const [evaluatedAt, setEvaluatedAt] = useState<string | null>(null);
-  const [lastEvaluatedChartKey, setLastEvaluatedChartKey] = useState<string | null>(null);
+  const [lastEvaluatedKey, setLastEvaluatedKey] = useState<string | null>(null);
 
   // Expanded rule card IDs for detailed rationale
   const [expandedRuleIds, setExpandedRuleIds] = useState<Set<string>>(new Set());
+
+  // Custom User-Defined Rules (Stored in localStorage + passed to evaluate)
+  const [customRules, setCustomRules] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_CUSTOM_RULES_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  // Modal State for Manual Condition Builder
+  const [isAddRuleModalOpen, setIsAddRuleModalOpen] = useState<boolean>(false);
+  const [newRuleNameEn, setNewRuleNameEn] = useState<string>("");
+  const [newRuleNameTa, setNewRuleNameTa] = useState<string>("");
+  const [newRuleCategory, setNewRuleCategory] = useState<string>("sexuality_intimacy");
+  const [newRuleScope, setNewRuleScope] = useState<string>("d1");
+  const [newRuleSeverity, setNewRuleSeverity] = useState<string>("favorable");
+  const [newConditionType, setNewConditionType] = useState<string>("planet_conjunction");
+
+  // Specific parameters for condition types
+  const [condPlanet1, setCondPlanet1] = useState<string>("Venus");
+  const [condPlanet2, setCondPlanet2] = useState<string>("Rahu");
+  const [condHouse, setCondHouse] = useState<number>(7);
+  const [condPlacedInHouse, setCondPlacedInHouse] = useState<number>(7);
+  const [condSign, setCondSign] = useState<number>(1);
+  const [condNakshatra, setCondNakshatra] = useState<string>("Rohini");
+  const [condMaxOrb, setCondMaxOrb] = useState<number>(8.0);
+
+  // Descriptions & Reasons
+  const [newInterpretationEn, setNewInterpretationEn] = useState<string>("");
+  const [newInterpretationTa, setNewInterpretationTa] = useState<string>("");
+  const [newPrincipleEn, setNewPrincipleEn] = useState<string>("");
+  const [newPrincipleTa, setNewPrincipleTa] = useState<string>("");
+  const [newSourceRef, setNewSourceRef] = useState<string>("Classical Traditional Jyotish");
+
+  // Test inside modal state
+  const [isTestingNewRule, setIsTestingNewRule] = useState<boolean>(false);
+  const [testResultFeedback, setTestResultFeedback] = useState<{ matched: boolean; message: string } | null>(null);
 
   // Generate unique chart signature for cache/re-evaluation detection
   const chartIdentityKey = useMemo(() => {
@@ -71,8 +143,8 @@ export function AstrologicalPredictionsSection({
     const dt = horoscopeResult.clientInputs?.birthDate || horoscopeResult.horoscope?.metadata?.birth_utc_iso || "";
     const tm = horoscopeResult.clientInputs?.birthTime || "";
     const aya = horoscopeResult.horoscope?.metadata?.ayanamsa_id ?? 0;
-    return `${hid}-${dt}-${tm}-aya${aya}`;
-  }, [horoscopeResult]);
+    return `${hid}-${dt}-${tm}-aya${aya}-${customRules.length}`;
+  }, [horoscopeResult, customRules.length]);
 
   // Load category library on mount
   useEffect(() => {
@@ -84,10 +156,6 @@ export function AstrologicalPredictionsSection({
         const groups = await getPredictionCategories();
         if (isMounted) {
           setCategoryGroups(groups);
-          // Default to first subcategory if available
-          if (groups.length > 0 && groups[0].subcategories.length > 0) {
-            setSelectedCategorySlug(groups[0].subcategories[0].slug);
-          }
         }
       } catch (err: unknown) {
         if (isMounted) {
@@ -104,60 +172,29 @@ export function AstrologicalPredictionsSection({
     };
   }, []);
 
-  // Filtered subcategories based on selected group & search query
-  const availableSubcategories = useMemo(() => {
-    let list: (PredictionSubcategory & { group_code: string; group_name: string })[] = [];
-    categoryGroups.forEach((g) => {
-      if (selectedGroupCode === "all" || g.group_code === selectedGroupCode) {
-        g.subcategories.forEach((sub) => {
-          list.push({
-            ...sub,
-            group_code: g.group_code,
-            group_name: language === "ta" ? g.group_name_ta : g.group_name_en,
-          });
-        });
-      }
-    });
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter(
-        (item) =>
-          item.name_en.toLowerCase().includes(q) ||
-          item.name_ta.toLowerCase().includes(q) ||
-          item.description_en.toLowerCase().includes(q) ||
-          item.description_ta.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [categoryGroups, selectedGroupCode, searchQuery, language]);
-
   // Evaluator execution
   const executeEvaluation = useCallback(
-    async (evaluateAll: boolean = false) => {
+    async (categorySlugToQuery: string) => {
       setIsEvaluating(true);
       setEvaluationError(null);
 
       try {
-        const categoryToQuery = evaluateAll ? undefined : selectedCategorySlug;
-        const subcatToQuery = evaluateAll ? undefined : selectedSubcategory || undefined;
-
         const payload = {
           horoscope: horoscopeResult.horoscope,
           saved_horoscope_id: horoscopeResult.savedId,
-          category_slug: categoryToQuery,
-          subcategory: subcatToQuery,
+          category_slug: categorySlugToQuery === "all" ? undefined : categorySlugToQuery,
           chart_scope: chartScope,
           astrology_system: astrologySystem,
           language: language,
           dasa: horoscopeResult.dasa as any,
           kp: horoscopeResult.kp as any,
+          custom_rules: customRules.length > 0 ? customRules : undefined,
         };
 
         const resp = await evaluatePredictionRules(payload);
         setEvaluationResults(resp.results);
         setEvaluatedAt(new Date().toLocaleTimeString());
-        setLastEvaluatedChartKey(chartIdentityKey);
+        setLastEvaluatedKey(`${chartIdentityKey}-${categorySlugToQuery}`);
 
         // Auto-expand matched rules
         const matchedIds = new Set<string>();
@@ -174,21 +211,18 @@ export function AstrologicalPredictionsSection({
     },
     [
       horoscopeResult,
-      selectedCategorySlug,
-      selectedSubcategory,
       chartScope,
       astrologySystem,
       language,
       chartIdentityKey,
+      customRules,
     ]
   );
 
-  // Auto re-evaluate when chart identity changes if previously evaluated
+  // Auto-run evaluation on mount or when chart or active filter changes
   useEffect(() => {
-    if (lastEvaluatedChartKey && lastEvaluatedChartKey !== chartIdentityKey) {
-      executeEvaluation(false);
-    }
-  }, [chartIdentityKey, lastEvaluatedChartKey, executeEvaluation]);
+    executeEvaluation(activeCategoryFilter);
+  }, [activeCategoryFilter, chartScope, astrologySystem, chartIdentityKey, executeEvaluation]);
 
   // Toggle card expansion
   const toggleExpand = (ruleId: string) => {
@@ -203,114 +237,386 @@ export function AstrologicalPredictionsSection({
     });
   };
 
-  // Filtered displayed rules
+  // Filtered displayed rules with search
   const displayedRules = useMemo(() => {
     if (!evaluationResults) return [];
+    let list = evaluationResults;
+
     if (showOnlyMatched) {
-      return evaluationResults.filter((r) => r.matched);
+      list = list.filter((r) => r.matched);
     }
-    return evaluationResults;
-  }, [evaluationResults, showOnlyMatched]);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (r) =>
+          r.name_en?.toLowerCase().includes(q) ||
+          r.name_ta?.toLowerCase().includes(q) ||
+          r.interpretation_en?.toLowerCase().includes(q) ||
+          r.interpretation_ta?.toLowerCase().includes(q) ||
+          r.astrological_principle_en?.toLowerCase().includes(q) ||
+          r.astrological_principle_ta?.toLowerCase().includes(q) ||
+          r.rule_id?.toLowerCase().includes(q) ||
+          r.chart_evidence.some((ev) => ev.toLowerCase().includes(q))
+      );
+    }
+
+    return list;
+  }, [evaluationResults, showOnlyMatched, searchQuery]);
 
   const matchedCount = useMemo(() => {
     return evaluationResults ? evaluationResults.filter((r) => r.matched).length : 0;
   }, [evaluationResults]);
 
-  const unevaluableCount = useMemo(() => {
-    return evaluationResults ? evaluationResults.filter((r) => r.unevaluable).length : 0;
-  }, [evaluationResults]);
+  // Build declarative Condition Tree for custom rule builder
+  const buildCurrentConditionTree = () => {
+    switch (newConditionType) {
+      case "planet_conjunction":
+        return {
+          condition_type: "planet_conjunction",
+          planets: [condPlanet1, condPlanet2],
+          same_sign_only: true,
+          orb_degrees: Number(condMaxOrb) || 8.0,
+          chart: newRuleScope,
+        };
+      case "planet_house":
+        return {
+          condition_type: "planet_house",
+          planet: condPlanet1,
+          house: Number(condHouse),
+          chart: newRuleScope,
+        };
+      case "house_lord_placement":
+        return {
+          condition_type: "house_lord_placement",
+          house: Number(condHouse),
+          placed_in_house: Number(condPlacedInHouse),
+          chart: newRuleScope,
+        };
+      case "planet_nakshatra":
+        return {
+          condition_type: "planet_nakshatra",
+          planet: condPlanet1,
+          nakshatra: condNakshatra,
+          chart: newRuleScope,
+        };
+      case "lagna_sign":
+        return {
+          condition_type: "lagna_sign",
+          sign: Number(condSign),
+          chart: newRuleScope,
+        };
+      case "planet_aspect":
+        return {
+          condition_type: "planet_aspect",
+          aspecting_planet: condPlanet1,
+          target_type: "house",
+          target_value: Number(condHouse),
+          chart: newRuleScope,
+        };
+      default:
+        return {
+          condition_type: "planet_house",
+          planet: condPlanet1,
+          house: Number(condHouse),
+          chart: newRuleScope,
+        };
+    }
+  };
+
+  // Test proposed new condition against the currently open chart inside modal
+  const handleTestProposedCondition = async () => {
+    setIsTestingNewRule(true);
+    setTestResultFeedback(null);
+    try {
+      const tempRule = {
+        rule_id: `CUSTOM-TEST-${Date.now()}`,
+        version: 1,
+        name_en: newRuleNameEn || "Custom Proposed Rule",
+        name_ta: newRuleNameTa || "முன்மொழியப்பட்ட தனிப்பயன் விதி",
+        category_slug: newRuleCategory,
+        subcategory: newRuleCategory,
+        astrology_system: "vedic",
+        chart_scope: newRuleScope,
+        calculation_mode: "thirukanitha",
+        condition_tree: buildCurrentConditionTree(),
+        interpretation_en: newInterpretationEn || "Evaluation of custom astrological condition.",
+        interpretation_ta: newInterpretationTa || "தனிப்பயன் ஜோதிட விதியின் ஆய்வு.",
+        astrological_principle_en: newPrincipleEn || "Custom astrological principle.",
+        astrological_principle_ta: newPrincipleTa || "தனிப்பயன் ஜோதிட விதி விளக்கம்.",
+        source_reference: newSourceRef,
+        severity: newRuleSeverity,
+        is_enabled: true,
+      };
+
+      const testPayload = {
+        horoscope: horoscopeResult.horoscope,
+        saved_horoscope_id: horoscopeResult.savedId,
+        custom_rules: [tempRule],
+        category_slug: newRuleCategory,
+        chart_scope: newRuleScope,
+        language: language,
+      };
+
+      const resp = await evaluatePredictionRules(testPayload);
+      const testMatch = resp.results.find((r) => r.rule_id === tempRule.rule_id);
+
+      if (testMatch && testMatch.matched) {
+        setTestResultFeedback({
+          matched: true,
+          message:
+            language === "ta"
+              ? `பொருந்தியது! இந்த ஜாதகத்தில் சான்றுகள் காணப்படுகின்றன: ${testMatch.chart_evidence.join(", ")}`
+              : `MATCHED! Chart evidence found: ${testMatch.chart_evidence.join("; ")}`,
+        });
+      } else {
+        setTestResultFeedback({
+          matched: false,
+          message:
+            language === "ta"
+              ? "இந்த திறக்கப்பட்ட ஜாதகத்தில் இந்த விதி பொருந்தவில்லை (காரணம்: நிபந்தனைகள் பூர்த்தியாகவில்லை)."
+              : "Does NOT match this open chart (conditions not met by active planetary coordinates).",
+        });
+      }
+    } catch (err: any) {
+      setTestResultFeedback({
+        matched: false,
+        message: `Test evaluation error: ${err?.message || String(err)}`,
+      });
+    } finally {
+      setIsTestingNewRule(false);
+    }
+  };
+
+  // Save new custom condition
+  const handleSaveCustomCondition = async () => {
+    if (!newRuleNameEn.trim()) {
+      alert("Please enter a rule name in English.");
+      return;
+    }
+
+    const uniqueId = `CUSTOM-${Date.now().toString(36).toUpperCase()}`;
+    const newRuleDef = {
+      rule_id: uniqueId,
+      version: 1,
+      name_en: newRuleNameEn.trim(),
+      name_ta: newRuleNameTa.trim() || newRuleNameEn.trim(),
+      category_slug: newRuleCategory,
+      subcategory: newRuleCategory,
+      astrology_system: "vedic",
+      chart_scope: newRuleScope,
+      calculation_mode: "thirukanitha",
+      condition_tree: buildCurrentConditionTree(),
+      interpretation_en: newInterpretationEn.trim() || `${newRuleNameEn.trim()} manifests significant astrological influence in the horoscope.`,
+      interpretation_ta: newInterpretationTa.trim() || `${newRuleNameTa.trim() || newRuleNameEn.trim()} ஜாதகத்தில் குறிப்பிடத்தக்க பலனை ஏற்படுத்துகிறது.`,
+      astrological_principle_en: newPrincipleEn.trim() || "Classical principle linking planetary dignity, house rulership, and astrological aspects.",
+      astrological_principle_ta: newPrincipleTa.trim() || "பாரம்பரிய ஜோதிட விதிமுறைகளின்படி கிரக சேர்க்கை மற்றும் பாவக பலன்களின் தொடர்பு.",
+      source_reference: newSourceRef.trim() || "User-Defined Astrological Canon",
+      severity: newRuleSeverity,
+      is_enabled: true,
+    };
+
+    const updated = [...customRules, newRuleDef];
+    setCustomRules(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_CUSTOM_RULES_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to save custom rule to localStorage", e);
+      }
+    }
+
+    // Attempt server sync if session token exists
+    if (session?.access_token) {
+      try {
+        await saveRuleDefinition(newRuleDef, session.access_token);
+      } catch {
+        // LocalStorage copy suffices
+      }
+    }
+
+    setIsAddRuleModalOpen(false);
+    // Reset form
+    setNewRuleNameEn("");
+    setNewRuleNameTa("");
+    setNewInterpretationEn("");
+    setNewInterpretationTa("");
+    setNewPrincipleEn("");
+    setNewPrincipleTa("");
+    setTestResultFeedback(null);
+
+    // Switch to category and re-evaluate
+    setActiveCategoryFilter(newRuleCategory);
+  };
+
+  // Delete custom condition
+  const handleDeleteCustomRule = (ruleId: string) => {
+    const updated = customRules.filter((r) => r.rule_id !== ruleId);
+    setCustomRules(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_CUSTOM_RULES_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+  };
+
+  const planetOptions = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+  const nakshatraOptions = [
+    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
+    "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
+    "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
+    "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+  ];
+  const rashiOptions = [
+    { num: 1, name: "Mesha (Aries)" },
+    { num: 2, name: "Vrishabha (Taurus)" },
+    { num: 3, name: "Mithuna (Gemini)" },
+    { num: 4, name: "Kataka (Cancer)" },
+    { num: 5, name: "Simha (Leo)" },
+    { num: 6, name: "Kanya (Virgo)" },
+    { num: 7, name: "Thula (Libra)" },
+    { num: 8, name: "Vrishchika (Scorpio)" },
+    { num: 9, name: "Dhanus (Sagittarius)" },
+    { num: 10, name: "Makara (Capricorn)" },
+    { num: 11, name: "Kumbha (Aquarius)" },
+    { num: 12, name: "Meena (Pisces)" },
+  ];
 
   return (
     <section className="bg-white rounded-xl border border-[#D9DEE7] p-4 sm:p-6 shadow-2xs space-y-6">
-      {/* 1. Header with Badge & Overview */}
+      {/* 1. Header with Badge & Add Condition Button */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#F2F3F5] pb-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="w-8 h-8 rounded-lg bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B4872B] shrink-0">
               <Compass className="w-4 h-4" />
             </div>
             <h3 className="font-serif text-base sm:text-lg font-bold text-[#183047]">
               {language === "ta"
-                ? "ஜோதிட விதிகள் மற்றும் கணிப்புகள்"
-                : "Astrological Conditions & Predictions"}
+                ? "ஜோதிட விதிகள் மற்றும் பலன்கள் (கணிப்பு இயந்திரம்)"
+                : "Astrological Conditions & Prediction Engine"}
             </h3>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FAF8F2] text-[#8C6D23] border border-[#D8BD80]/60">
-              {language === "ta" ? "விதிமுறை இயந்திரம்" : "Rule Engine v1"}
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
+              70+ {language === "ta" ? "விதிகள்" : "Classical Rules"}
             </span>
           </div>
-          <p className="text-xs text-[#52667E] max-w-2xl">
+          <p className="text-xs text-[#52667E] max-w-3xl">
             {language === "ta"
-              ? "பாரம்பரிய வேத (பராசர) மற்றும் கே.பி விதிமுறைகளின்படி தற்போதைய ஜாதக அமைப்புகளை ஆராய்ந்து, சரியான சான்றுகளுடன் கூடிய கணிப்புகளை வழங்கும் பகுதி."
-              : "Deterministic rule-based evaluation of the active horoscope against classical Parashari, Vedic, and KP canons with traceable evidence."}
+              ? "சுக்கிரன்+ராகு, செவ்வாய் சேர்க்கை, லக்ன குணங்கள், நட்சத்திர பலன்கள், உத்தியோகம் மற்றும் திருமண விதிகள் போன்ற 70+ பாரம்பரிய விதிகளின்படி இந்த ஜாதகத்தை தானாக ஆராய்ந்து சான்றுகளுடன் பலன்களைப் பெறும் பகுதி."
+              : "Deterministic evaluation of active chart against 70+ classical rules across Marriage, 1st/2nd Marriage, Sexuality, Career, Lagna, and Stars with full textual evidence and reasons."}
           </p>
         </div>
 
-        {/* Global Action Button */}
+        {/* Action Controls: Refresh & Manual Add Button */}
         <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
           <button
             type="button"
-            onClick={() => executeEvaluation(false)}
+            onClick={() => executeEvaluation(activeCategoryFilter)}
             disabled={isEvaluating}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+            title={language === "ta" ? "மறுபரிசீலனை செய்" : "Re-evaluate"}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#F2F3F5] hover:bg-[#E2E8F0] border border-[#D9DEE7] text-xs font-semibold text-[#153F6B] transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isEvaluating ? "animate-spin" : ""}`} />
-            <span>
-              {language === "ta" ? "தேர்ந்தெடுத்ததை கணி" : "Evaluate Selected"}
+            <span className="hidden sm:inline">
+              {language === "ta" ? "புதுப்பி" : "Refresh"}
             </span>
           </button>
 
           <button
             type="button"
-            onClick={() => executeEvaluation(true)}
-            disabled={isEvaluating}
-            title={language === "ta" ? "அனைத்து விதிகளையும் கணக்கிடு" : "Evaluate all categories"}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-[#F2F3F5] hover:bg-[#E2E8F0] border border-[#D9DEE7] text-xs font-semibold text-[#153F6B] transition-colors cursor-pointer disabled:opacity-50"
+            onClick={() => setIsAddRuleModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer"
           >
-            <span>{language === "ta" ? "அனைத்தும்" : "Evaluate All"}</span>
+            <Plus className="w-4 h-4" />
+            <span>{language === "ta" ? "புதிய விதியைச் சேர்" : "+ Add Condition"}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Control Filters & Selectors */}
-      <div className="space-y-4 bg-[#F8FAFC] rounded-lg p-3.5 sm:p-4 border border-[#E2E8F0]">
-        {/* Row A: Category Groups & Search */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-          {/* Group Filter Dropdown */}
+      {/* 2. Top-Level Filter Pills (Direct One-Click Category Filter) */}
+      <div className="space-y-3 bg-[#F8FAFC] rounded-xl p-3.5 sm:p-4 border border-[#E2E8F0]">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#183047]">
+            <Filter className="w-3.5 h-3.5 text-[#B4872B]" />
+            <span>{language === "ta" ? "வடிகட்டும் தலைப்புகள் (தேர்வு செய்க):" : "Filter Categories (Click to Evaluate):"}</span>
+          </div>
+          {customRules.length > 0 && (
+            <span className="text-[11px] font-semibold text-[#8C6D23] bg-[#FAF2DE] px-2 py-0.5 rounded-full border border-[#D8BD80]">
+              {customRules.length} {language === "ta" ? "தனிப்பயன் விதிகள் சேர்க்கப்பட்டுள்ளன" : "custom conditions active"}
+            </span>
+          )}
+        </div>
+
+        {/* Quick Filter Pill Buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          {QUICK_FILTER_PILLS.map((pill) => {
+            const isSelected = activeCategoryFilter === pill.id;
+            const Icon = pill.icon;
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setActiveCategoryFilter(pill.id)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                  isSelected
+                    ? pill.isHighlight
+                      ? "bg-rose-700 text-white border-rose-800 shadow-sm"
+                      : "bg-[#153F6B] text-white border-[#153F6B] shadow-sm"
+                    : pill.isHighlight
+                    ? "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100"
+                    : "bg-white text-[#52667E] border-[#D9DEE7] hover:bg-[#F2F3F5] hover:text-[#183047]"
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-white" : pill.isHighlight ? "text-rose-600" : "text-[#B4872B]"}`} />
+                <span>{language === "ta" ? pill.label_ta : pill.label_en}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Secondary Row: More Specific Categories Dropdown, Search, and Options */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-[#E2E8F0] items-center">
+          {/* Detailed Subcategory Selector Dropdown */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[#52667E] uppercase tracking-wider">
-              {language === "ta" ? "பிரிவுத் தொகுப்பு" : "Category Group"}
+            <label className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider block">
+              {language === "ta" ? "கூடுதல் தலைப்புகள் (67+ பிரிவுகள்):" : "More Classical Topics (67+):"}
             </label>
             <select
-              value={selectedGroupCode}
-              onChange={(e) => {
-                setSelectedGroupCode(e.target.value);
-                setSelectedSubcategory("");
-              }}
-              className="w-full text-xs rounded-lg border border-[#D9DEE7] bg-white p-2 text-[#183047] font-medium focus:ring-1 focus:ring-[#B4872B] focus:border-[#B4872B]"
+              value={activeCategoryFilter}
+              onChange={(e) => setActiveCategoryFilter(e.target.value)}
+              className="w-full text-xs rounded-lg border border-[#D9DEE7] bg-white p-2 text-[#183047] font-semibold focus:ring-1 focus:ring-[#B4872B] focus:border-[#B4872B]"
             >
               <option value="all">
-                {language === "ta" ? "அனைத்து பிரிவுகள் (8 தொகுப்புகள்)" : "All Groups (8 Groups)"}
+                {language === "ta" ? "🌟 அனைத்து பிரிவுகள் (All 70+ Rules)" : "🌟 All Categories (All 70+ Rules)"}
               </option>
-              {categoryGroups.map((g) => (
-                <option key={g.group_code} value={g.group_code}>
-                  {language === "ta" ? g.group_name_ta : g.group_name_en}
-                </option>
+              {categoryGroups.map((group) => (
+                <optgroup
+                  key={group.group_code}
+                  label={language === "ta" ? group.group_name_ta : group.group_name_en}
+                >
+                  {group.subcategories.map((sub) => (
+                    <option key={sub.slug} value={sub.slug}>
+                      {language === "ta" ? sub.name_ta : sub.name_en}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
 
-          {/* Search Category Filter */}
-          <div className="space-y-1 md:col-span-2">
-            <label className="text-[11px] font-bold text-[#52667E] uppercase tracking-wider">
-              {language === "ta" ? "விதிகள் அல்லது தலைப்பை தேடு" : "Search Categories & Rules"}
+          {/* Keyword Search */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider block">
+              {language === "ta" ? "விதிகள் அல்லது கிரகங்களை தேடு:" : "Search Conditions / Planets:"}
             </label>
             <div className="relative">
               <input
                 type="text"
                 placeholder={
                   language === "ta"
-                    ? "திருமணம், வேலை, யோகம், நட்சத்திரம்..."
-                    : "Search marriage, career, lagna, wealth, intimacy..."
+                    ? "சுக்கிரன், ராகு, செவ்வாய், திருமணம்..."
+                    : "Search Venus, Rahu, Mars, 7th lord..."
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -328,92 +634,26 @@ export function AstrologicalPredictionsSection({
               )}
             </div>
           </div>
-        </div>
 
-        {/* Row B: Subcategory Pills Carousel */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-[#52667E] uppercase tracking-wider flex items-center justify-between">
-            <span>{language === "ta" ? "துணைப் பிரிவு" : "Subcategory"}</span>
-            <span className="text-[10px] font-mono text-[#8190A6]">
-              {availableSubcategories.length} {language === "ta" ? "கிடைக்கின்றன" : "available"}
-            </span>
-          </label>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            {availableSubcategories.slice(0, 15).map((sub) => {
-              const isSelected = selectedCategorySlug === sub.slug;
-              return (
+          {/* Scope & Matched Only Checkbox */}
+          <div className="flex items-center justify-between gap-2 pt-2 md:pt-4">
+            <div className="inline-flex rounded-lg bg-white border border-[#D9DEE7] p-0.5">
+              {(["both", "d1", "d9"] as const).map((s) => (
                 <button
-                  key={sub.slug}
+                  key={s}
                   type="button"
-                  onClick={() => {
-                    setSelectedCategorySlug(sub.slug);
-                    setSelectedSubcategory(sub.slug);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
-                    isSelected
-                      ? "bg-[#153F6B] text-white border-[#153F6B] shadow-2xs"
-                      : "bg-white text-[#52667E] border-[#D9DEE7] hover:bg-[#F2F3F5]"
+                  onClick={() => setChartScope(s)}
+                  className={`px-2 py-1 rounded text-[11px] font-bold uppercase transition-colors ${
+                    chartScope === s
+                      ? "bg-[#FAF2DE] text-[#8C6D23]"
+                      : "text-[#52667E] hover:text-[#183047]"
                   }`}
                 >
-                  {language === "ta" ? sub.name_ta : sub.name_en}
+                  {s === "both" ? "D1+D9" : s}
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Row C: Chart Scope & Astrology System Settings */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E2E8F0] text-xs">
-          <div className="flex items-center gap-4 flex-wrap">
-            {/* Scope Selection */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[#8190A6] font-medium">
-                {language === "ta" ? "சக்கரம்:" : "Scope:"}
-              </span>
-              <div className="inline-flex rounded-lg bg-white border border-[#D9DEE7] p-0.5">
-                {(["both", "d1", "d9"] as const).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setChartScope(s)}
-                    className={`px-2.5 py-1 rounded text-[11px] font-semibold uppercase ${
-                      chartScope === s
-                        ? "bg-[#FAF2DE] text-[#8C6D23] font-bold"
-                        : "text-[#52667E] hover:text-[#183047]"
-                    }`}
-                  >
-                    {s === "both" ? "D1 + D9" : s}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
 
-            {/* Astrology System Selection */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[#8190A6] font-medium">
-                {language === "ta" ? "முறைமை:" : "System:"}
-              </span>
-              <div className="inline-flex rounded-lg bg-white border border-[#D9DEE7] p-0.5">
-                {(["all", "vedic", "kp"] as const).map((sys) => (
-                  <button
-                    key={sys}
-                    type="button"
-                    onClick={() => setAstrologySystem(sys)}
-                    className={`px-2.5 py-1 rounded text-[11px] font-semibold capitalize ${
-                      astrologySystem === sys
-                        ? "bg-[#153F6B] text-white"
-                        : "text-[#52667E] hover:text-[#183047]"
-                    }`}
-                  >
-                    {sys === "all" ? (language === "ta" ? "அனைத்தும்" : "All") : sys}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Matched Only Toggle */}
-          <div className="flex items-center gap-2">
             <label className="inline-flex items-center gap-1.5 text-xs text-[#183047] cursor-pointer">
               <input
                 type="checkbox"
@@ -421,8 +661,8 @@ export function AstrologicalPredictionsSection({
                 onChange={(e) => setShowOnlyMatched(e.target.checked)}
                 className="rounded border-[#D9DEE7] text-[#B4872B] focus:ring-[#B4872B]"
               />
-              <span className="font-medium">
-                {language === "ta" ? "பொருந்தியவை மட்டும்" : "Show matched only"}
+              <span className="font-bold text-[11px]">
+                {language === "ta" ? "பொருந்தியவை மட்டும்" : "Matched only"}
               </span>
             </label>
           </div>
@@ -443,18 +683,13 @@ export function AstrologicalPredictionsSection({
       {evaluationResults && !isEvaluating && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-[#FAF8F2] border border-[#D8BD80]/50 text-xs text-[#8C6D23]">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-bold">
-              {matchedCount} {language === "ta" ? "விதிகள் பொருந்தியுள்ளன" : "Matching Rules Found"}
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold text-sm text-[#183047]">
+              {matchedCount} {language === "ta" ? "ஜோதிட விதிகள் இந்த ஜாதகத்தில் பொருந்தியுள்ளன" : "Conditions Matched in This Horoscope"}
             </span>
             <span className="text-[#8190A6]">
-              ({evaluationResults.length} {language === "ta" ? "ஆராயப்பட்டது" : "evaluated"})
+              ({evaluationResults.length} {language === "ta" ? "விதிகள் சோதிக்கப்பட்டன" : "evaluated"})
             </span>
-            {unevaluableCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-mono">
-                {unevaluableCount} unevaluable (data missing)
-              </span>
-            )}
           </div>
           {evaluatedAt && (
             <span className="text-[#8190A6] text-[11px] font-mono">
@@ -470,33 +705,9 @@ export function AstrologicalPredictionsSection({
           <RefreshCw className="w-7 h-7 text-[#B4872B] animate-spin" />
           <p className="text-xs font-semibold text-[#183047]">
             {language === "ta"
-              ? "ஜாதக தரவுகள் சோதிக்கப்படுகின்றன..."
+              ? "ஜாதக அமைப்புகள், ராசி மற்றும் நவாம்ச நிலைகள் சோதிக்கப்படுகின்றன..."
               : "Evaluating astrological conditions against chart evidence..."}
           </p>
-        </div>
-      ) : !evaluationResults ? (
-        <div className="py-10 text-center space-y-3 bg-[#FAF8F2]/40 rounded-xl border border-dashed border-[#D8BD80]/70 p-6">
-          <div className="w-10 h-10 rounded-full bg-[#FAF2DE] text-[#B4872B] mx-auto flex items-center justify-center">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div className="space-y-1">
-            <h4 className="font-bold text-sm text-[#183047]">
-              {language === "ta" ? "கணிப்புகளைத் தொடங்கவும்" : "Ready to Evaluate Predictions"}
-            </h4>
-            <p className="text-xs text-[#52667E] max-w-md mx-auto">
-              {language === "ta"
-                ? "ஒரு பிரிவை தேர்ந்தெடுத்து 'தேர்ந்தெடுத்ததை கணி' பொத்தானை அழுத்தவும். லக்னம், நவாம்சம் மற்றும் கிரக சேர்க்கைகள் ஆராயப்படும்."
-                : "Select a category above and click 'Evaluate Selected' to verify planetary placements, aspects, and lordships."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => executeEvaluation(false)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer"
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "இப்போதே கணி" : "Evaluate Predictions"}</span>
-          </button>
         </div>
       ) : displayedRules.length === 0 ? (
         <div className="py-10 text-center space-y-2 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-6">
@@ -508,14 +719,14 @@ export function AstrologicalPredictionsSection({
           </h4>
           <p className="text-xs text-[#8190A6] max-w-md mx-auto">
             {language === "ta"
-              ? "தற்போதைய ஜாதக அமைப்புகளுக்குரிய குறிப்பிட்ட நிபந்தனைகள் இதில் பூர்த்தியாகவில்லை."
+              ? "தற்போதைய ஜாதக அமைப்புகளுக்கு இந்த குறிப்பிட்ட நிபந்தனைகள் பூர்த்தியாகவில்லை."
               : "The planetary configurations in this horoscope do not meet the classical criteria for the selected category."}
           </p>
-          {showOnlyMatched && evaluationResults.length > 0 && (
+          {showOnlyMatched && evaluationResults && evaluationResults.length > 0 && (
             <button
               type="button"
               onClick={() => setShowOnlyMatched(false)}
-              className="text-xs font-semibold text-[#153F6B] hover:underline cursor-pointer pt-2"
+              className="text-xs font-bold text-[#153F6B] hover:underline cursor-pointer pt-2"
             >
               {language === "ta"
                 ? "பொருந்தாத விதிகளையும் காரணங்களுடன் காண்க"
@@ -527,6 +738,7 @@ export function AstrologicalPredictionsSection({
         <div className="space-y-4">
           {displayedRules.map((rule) => {
             const isExpanded = expandedRuleIds.has(rule.rule_id);
+            const isCustom = rule.rule_id.startsWith("CUSTOM-");
             const severityColor =
               rule.severity === "favorable"
                 ? "bg-emerald-50 text-emerald-800 border-emerald-300"
@@ -541,7 +753,7 @@ export function AstrologicalPredictionsSection({
                 key={rule.rule_id}
                 className={`rounded-xl border transition-all ${
                   rule.matched
-                    ? "bg-white border-[#D9DEE7] shadow-2xs hover:border-[#B4872B]"
+                    ? "bg-white border-[#D9DEE7] shadow-sm hover:border-[#B4872B]"
                     : "bg-[#F8FAFC] border-[#E2E8F0] opacity-80"
                 }`}
               >
@@ -550,137 +762,141 @@ export function AstrologicalPredictionsSection({
                   onClick={() => toggleExpand(rule.rule_id)}
                   className="p-3.5 sm:p-4 flex items-start justify-between gap-3 cursor-pointer select-none"
                 >
-                  <div className="space-y-1.5 flex-1">
+                  <div className="space-y-2 flex-1">
                     {/* Badges Row */}
                     <div className="flex items-center gap-2 flex-wrap text-[10px]">
-                      <span className="font-mono font-bold text-[#8190A6]">
-                        {rule.rule_id} v{rule.version}
-                      </span>
-                      <span className="px-2 py-0.5 rounded font-semibold bg-[#F2F3F5] text-[#153F6B] border border-[#D9DEE7]">
-                        {rule.astrology_system.toUpperCase()}
-                      </span>
-                      <span className="px-2 py-0.5 rounded font-semibold bg-[#F2F3F5] text-[#52667E] border border-[#D9DEE7] uppercase">
-                        {rule.chart_scope}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded font-bold border ${severityColor}`}
-                      >
-                        {rule.severity.toUpperCase()}
-                      </span>
-
                       {rule.matched ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>{language === "ta" ? "பொருந்தியது" : "Matched"}</span>
-                        </span>
-                      ) : rule.unevaluable ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300">
-                          <AlertCircle className="w-3 h-3 text-amber-600" />
-                          <span>{language === "ta" ? "தரவு இல்லை" : "Unevaluable"}</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300 shadow-2xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>{language === "ta" ? "✓ பொருந்திய விதி" : "✓ Matched Condition"}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium">
                           <span>{language === "ta" ? "பொருந்தவில்லை" : "Not Matched"}</span>
                         </span>
                       )}
+
+                      <span className="font-mono font-bold text-[#8190A6]">
+                        {rule.rule_id}
+                      </span>
+
+                      {isCustom && (
+                        <span className="px-2 py-0.5 rounded font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
+                          {language === "ta" ? "தனிப்பயன் விதி" : "Custom Added"}
+                        </span>
+                      )}
+
+                      <span className="px-2 py-0.5 rounded font-semibold bg-[#F2F3F5] text-[#153F6B] border border-[#D9DEE7]">
+                        {rule.astrology_system.toUpperCase()}
+                      </span>
+                      <span className="px-2 py-0.5 rounded font-semibold bg-[#F2F3F5] text-[#52667E] border border-[#D9DEE7] uppercase">
+                        {rule.chart_scope}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded font-bold border ${severityColor}`}>
+                        {rule.severity.toUpperCase()}
+                      </span>
                     </div>
 
-                    {/* Title */}
-                    <h4 className="text-xs sm:text-sm font-bold text-[#183047]">
-                      {language === "ta" && rule.name_ta ? rule.name_ta : rule.name_en}
+                    {/* Rule Title */}
+                    <h4 className="text-sm sm:text-base font-bold text-[#183047] flex items-center gap-2">
+                      <span>{language === "ta" && rule.name_ta ? rule.name_ta : rule.name_en}</span>
                     </h4>
 
-                    {/* Primary Interpretation Preview */}
-                    <p className="text-xs text-[#52667E] leading-relaxed">
-                      {language === "ta" && rule.interpretation_ta
-                        ? rule.interpretation_ta
-                        : rule.interpretation_en}
-                    </p>
+                    {/* Primary Prediction / Description */}
+                    <div className="bg-[#F8FAFC] rounded-lg p-3 border border-[#E2E8F0] space-y-1">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#153F6B] uppercase tracking-wider">
+                        <Sparkles className="w-3.5 h-3.5 text-[#B4872B]" />
+                        <span>{language === "ta" ? "பலன் மற்றும் விளக்கம் (Prediction):" : "Prediction Description:"}</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-[#183047] font-medium leading-relaxed">
+                        {language === "ta" && rule.interpretation_ta
+                          ? rule.interpretation_ta
+                          : rule.interpretation_en}
+                      </p>
+                    </div>
+
+                    {/* Astrological Reason Box */}
+                    <div className="bg-[#FAF8F2] rounded-lg p-3 border border-[#D8BD80]/50 space-y-1">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#8C6D23] uppercase tracking-wider">
+                        <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
+                        <span>{language === "ta" ? "ஜோதிடக் காரணம் & மூல விதிமுறை (Astrological Reason):" : "Astrological Reason & Principle:"}</span>
+                      </div>
+                      <p className="text-xs text-[#52667E] leading-relaxed">
+                        {language === "ta" && rule.astrological_principle_ta
+                          ? rule.astrological_principle_ta
+                          : rule.astrological_principle_en}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Expand / Collapse Chevron */}
                   <div className="pt-1 text-[#8190A6]">
                     {isExpanded ? (
-                      <ChevronUp className="w-4 h-4" />
+                      <ChevronUp className="w-5 h-5 text-[#183047]" />
                     ) : (
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className="w-5 h-5 text-[#8190A6]" />
                     )}
                   </div>
                 </div>
 
                 {/* Collapsible Details Drawer */}
                 {isExpanded && (
-                  <div className="p-3.5 sm:p-4 border-t border-[#F2F3F5] bg-[#FAF8F2]/30 space-y-3.5 text-xs">
-                    {/* 1. Exact Chart Evidence */}
-                    <div className="space-y-1.5 bg-white p-3 rounded-lg border border-[#D9DEE7]">
+                  <div className="p-3.5 sm:p-4 border-t border-[#F2F3F5] bg-white space-y-3.5 text-xs">
+                    {/* Exact Chart Evidence */}
+                    <div className="space-y-1.5 bg-[#F2F3F5]/60 p-3 rounded-lg border border-[#D9DEE7]">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#153F6B] uppercase tracking-wider">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#B4872B]" />
-                        <span>{language === "ta" ? "ஜாதக சான்றுகள்" : "Exact Chart Evidence"}</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{language === "ta" ? "ஜாதகத்தில் அமைந்த கிரக சான்றுகள் (Chart Evidence):" : "Exact Chart Evidence Found:"}</span>
                       </div>
                       {rule.chart_evidence.length > 0 ? (
-                        <ul className="space-y-1 pl-4 list-disc text-xs text-[#183047] font-medium">
+                        <ul className="space-y-1 pl-4 list-disc text-xs text-[#183047] font-mono">
                           {rule.chart_evidence.map((ev, idx) => (
-                            <li key={idx} className="font-mono text-[11px]">
+                            <li key={idx} className="font-semibold text-[11px]">
                               {ev}
                             </li>
                           ))}
                         </ul>
                       ) : (
                         <p className="text-[#8190A6] italic text-[11px]">
-                          {rule.unevaluable_reason || "No matching chart evidence found."}
+                          {rule.unevaluable_reason || "No matching chart evidence found for this placement."}
                         </p>
                       )}
                     </div>
 
-                    {/* 2. Astrological Principle & Reasoning */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1 bg-white p-3 rounded-lg border border-[#D9DEE7]">
-                        <span className="text-[11px] font-bold text-[#52667E] uppercase tracking-wider block">
-                          {language === "ta" ? "ஜோதிட தத்துவம்" : "Astrological Principle"}
-                        </span>
-                        <p className="text-xs text-[#52667E] leading-relaxed">
-                          {language === "ta" && rule.astrological_principle_ta
-                            ? rule.astrological_principle_ta
-                            : rule.astrological_principle_en}
-                        </p>
-                      </div>
-
-                      <div className="space-y-1 bg-white p-3 rounded-lg border border-[#D9DEE7]">
-                        <span className="text-[11px] font-bold text-[#52667E] uppercase tracking-wider block">
-                          {language === "ta" ? "காரணம் மற்றும் தர்க்கம்" : "Match Reasoning"}
-                        </span>
-                        <ul className="space-y-1 text-xs text-[#52667E]">
-                          {rule.match_reasons.map((r, i) => (
-                            <li key={i} className="flex items-start gap-1.5">
-                              <span className="text-[#B4872B] mt-0.5">•</span>
-                              <span>{r}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* 3. Source Reference & Limitations */}
+                    {/* Source Reference & Limitations */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#D9DEE7]/70 text-[11px] text-[#8190A6]">
                       {rule.source_reference && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <BookOpen className="w-3.5 h-3.5 text-[#B4872B] shrink-0" />
                           <span>
-                            <strong className="text-[#52667E]">Source:</strong>{" "}
+                            <strong className="text-[#52667E]">{language === "ta" ? "நூல் ஆதாரம்:" : "Classical Source:"}</strong>{" "}
                             {rule.source_reference}
                           </span>
                         </div>
                       )}
                       {(rule.limitations_en || rule.limitations_ta) && (
-                        <div className="flex items-center gap-1 text-[#8C6D23]">
+                        <div className="flex items-center gap-1.5 text-[#8C6D23]">
                           <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
                           <span>
-                            <strong className="text-[#8C6D23]">Caveat:</strong>{" "}
+                            <strong className="text-[#8C6D23]">{language === "ta" ? "குறிப்பு:" : "Notice:"}</strong>{" "}
                             {language === "ta" && rule.limitations_ta
                               ? rule.limitations_ta
                               : rule.limitations_en}
                           </span>
                         </div>
+                      )}
+                      {isCustom && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomRule(rule.rule_id);
+                          }}
+                          className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer ml-auto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{language === "ta" ? "விதியை நீக்கு" : "Delete Rule"}</span>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -688,6 +904,398 @@ export function AstrologicalPredictionsSection({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* 5. Modal Dialog: Add Condition Manually */}
+      {isAddRuleModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#D9DEE7] shadow-2xl p-5 sm:p-6 space-y-4">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#F2F3F5] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#FAF2DE] text-[#B4872B] flex items-center justify-center">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm sm:text-base text-[#183047]">
+                    {language === "ta" ? "புதிய ஜோதிட விதியைச் சேர்க்கவும்" : "Add New Astrological Condition"}
+                  </h4>
+                  <p className="text-[11px] text-[#8190A6]">
+                    {language === "ta"
+                      ? "சுக்கிரன்+ராகு சேர்க்கை, பாவக அதிபதிகள் நிலை போன்ற புதிய விதிகளை நீங்களே உருவாக்கலாம்."
+                      : "Define custom conditions (e.g. Venus+Rahu, planet in house, aspects) to evaluate on this chart."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddRuleModalOpen(false);
+                  setTestResultFeedback(null);
+                }}
+                className="text-[#8190A6] hover:text-[#183047] p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <div className="space-y-4 text-xs">
+              {/* Row 1: Rule Name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "விதியின் பெயர் (English)" : "Rule Name (English) *"}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Venus-Rahu Passion Arousal Yoga"
+                    value={newRuleNameEn}
+                    onChange={(e) => setNewRuleNameEn(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] focus:ring-1 focus:ring-[#B4872B]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "விதியின் பெயர் (தமிழ்)" : "Rule Name (Tamil)"}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="உதா: சுக்கிரன்-ராகு அதீத காம யோகம்"
+                    value={newRuleNameTa}
+                    onChange={(e) => setNewRuleNameTa(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] focus:ring-1 focus:ring-[#B4872B]"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Category & Chart Scope */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "பிரிவு (Category)" : "Category"}
+                  </label>
+                  <select
+                    value={newRuleCategory}
+                    onChange={(e) => setNewRuleCategory(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-semibold"
+                  >
+                    <option value="sexuality_intimacy">🔥 Sexual Topics & Intimacy</option>
+                    <option value="marriage_prospects">💍 Marriage Prospects</option>
+                    <option value="first_marriage">🌸 1st Marriage</option>
+                    <option value="second_marriage">🔄 2nd Marriage</option>
+                    <option value="job_prospects">💼 Job & Career</option>
+                    <option value="lagna_characteristics">👑 Lagna Characters</option>
+                    <option value="nakshatra_characteristics">✨ Star Characteristics</option>
+                    <option value="wealth_yogas">💰 Money & Wealth</option>
+                    <option value="children_prospects">👶 Children & Family</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "சக்கரம் (Scope)" : "Chart Scope"}
+                  </label>
+                  <select
+                    value={newRuleScope}
+                    onChange={(e) => setNewRuleScope(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-semibold"
+                  >
+                    <option value="d1">D1 (Rasi Chart)</option>
+                    <option value="d9">D9 (Navamsa Chart)</option>
+                    <option value="both">Both D1 & D9</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "தன்மை (Nature)" : "Severity / Nature"}
+                  </label>
+                  <select
+                    value={newRuleSeverity}
+                    onChange={(e) => setNewRuleSeverity(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-semibold"
+                  >
+                    <option value="favorable">Favorable (சுபம்)</option>
+                    <option value="unfavorable">Unfavorable (சவால்)</option>
+                    <option value="neutral">Neutral (சமநிலை)</option>
+                    <option value="mixed">Mixed (கலப்பு)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Condition Type Selector */}
+              <div className="space-y-2 bg-[#F8FAFC] p-3 rounded-xl border border-[#E2E8F0]">
+                <label className="font-bold text-[#183047] block">
+                  {language === "ta" ? "நிபந்தனை வகை (Condition Logic):" : "Condition Type:"}
+                </label>
+                <select
+                  value={newConditionType}
+                  onChange={(e) => setNewConditionType(e.target.value)}
+                  className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-bold bg-white"
+                >
+                  <option value="planet_conjunction">இரண்டு கிரகங்கள் சேர்க்கை (Planet Conjunction, e.g. Venus + Rahu)</option>
+                  <option value="planet_house">ஒரு கிரகம் குறிப்பிட்ட பாவத்தில் (Planet in House, e.g. Sun in 10)</option>
+                  <option value="house_lord_placement">பாவாதிபதி அமர்ந்த இடம் (House Lord in House, e.g. 7th Lord in 11th)</option>
+                  <option value="planet_nakshatra">கிரகம் நின்ற நட்சத்திரம் (Planet in Star, e.g. Moon in Rohini)</option>
+                  <option value="lagna_sign">லக்னம் அமைந்த ராசி (Ascendant Sign, e.g. Aries, Taurus)</option>
+                  <option value="planet_aspect">கிரகப் பார்வை (Planet Aspecting House, e.g. Jupiter aspects 7th)</option>
+                </select>
+
+                {/* Dynamic Parameter Fields based on Condition Type */}
+                <div className="pt-2">
+                  {newConditionType === "planet_conjunction" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Planet 1</label>
+                        <select
+                          value={condPlanet1}
+                          onChange={(e) => setCondPlanet1(e.target.value)}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {planetOptions.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Planet 2</label>
+                        <select
+                          value={condPlanet2}
+                          onChange={(e) => setCondPlanet2(e.target.value)}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {planetOptions.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Max Orb (Degrees)</label>
+                        <input
+                          type="number"
+                          value={condMaxOrb}
+                          onChange={(e) => setCondMaxOrb(Number(e.target.value))}
+                          step="0.5"
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {newConditionType === "planet_house" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                        <select
+                          value={condPlanet1}
+                          onChange={(e) => setCondPlanet1(e.target.value)}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {planetOptions.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">House (1 - 12)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={condHouse}
+                          onChange={(e) => setCondHouse(Number(e.target.value))}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {newConditionType === "house_lord_placement" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Lord of House (1 - 12)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={condHouse}
+                          onChange={(e) => setCondHouse(Number(e.target.value))}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Placed in House (1 - 12)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={condPlacedInHouse}
+                          onChange={(e) => setCondPlacedInHouse(Number(e.target.value))}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {newConditionType === "planet_nakshatra" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                        <select
+                          value={condPlanet1}
+                          onChange={(e) => setCondPlanet1(e.target.value)}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {planetOptions.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Nakshatra</label>
+                        <select
+                          value={condNakshatra}
+                          onChange={(e) => setCondNakshatra(e.target.value)}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {nakshatraOptions.map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {newConditionType === "lagna_sign" && (
+                    <div>
+                      <label className="text-[10px] font-bold text-[#8190A6]">Ascendant (Lagna) Sign</label>
+                      <select
+                        value={condSign}
+                        onChange={(e) => setCondSign(Number(e.target.value))}
+                        className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                      >
+                        {rashiOptions.map((r) => (
+                          <option key={r.num} value={r.num}>{r.num} - {r.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {newConditionType === "planet_aspect" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Aspecting Planet</label>
+                        <select
+                          value={condPlanet1}
+                          onChange={(e) => setCondPlanet1(e.target.value)}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {planetOptions.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Target House (1 - 12)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={condHouse}
+                          onChange={(e) => setCondHouse(Number(e.target.value))}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 4: Description & Astrological Reason */}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "பலன் மற்றும் விளக்கம் (Prediction Description)" : "Prediction Description"}
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. When Venus conjoins Rahu, it magnifies passionate desires and aesthetic attraction..."
+                    value={newInterpretationEn}
+                    onChange={(e) => setNewInterpretationEn(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "ஜோதிடக் காரணம் (Astrological Reason & Principle)" : "Astrological Principle & Reason"}
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Rahu amplifies the sensory qualities of Shukra, encouraging boundary-pushing romantic expression..."
+                    value={newPrincipleEn}
+                    onChange={(e) => setNewPrincipleEn(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
+                  />
+                </div>
+              </div>
+
+              {/* Live Test Feedback Banner */}
+              {testResultFeedback && (
+                <div
+                  className={`p-3 rounded-lg border text-xs font-semibold flex items-start gap-2 ${
+                    testResultFeedback.matched
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                      : "bg-amber-50 text-amber-800 border-amber-300"
+                  }`}
+                >
+                  {testResultFeedback.matched ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  )}
+                  <span>{testResultFeedback.message}</span>
+                </div>
+              )}
+
+              {/* Modal Action Buttons */}
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#F2F3F5] flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleTestProposedCondition}
+                  disabled={isTestingNewRule}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#F2F3F5] hover:bg-[#E2E8F0] text-[#153F6B] font-bold text-xs border border-[#D9DEE7] cursor-pointer"
+                >
+                  <Play className={`w-3.5 h-3.5 ${isTestingNewRule ? "animate-spin" : ""}`} />
+                  <span>{language === "ta" ? "இந்த ஜாதகத்தில் சோதித்துப் பார்" : "Test on Open Chart"}</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddRuleModalOpen(false);
+                      setTestResultFeedback(null);
+                    }}
+                    className="px-3 py-2 rounded-lg text-xs font-semibold text-[#8190A6] hover:text-[#183047]"
+                  >
+                    {language === "ta" ? "ரத்து" : "Cancel"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveCustomCondition}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white font-bold text-xs shadow-2xs cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>{language === "ta" ? "விதியைச் சேமி" : "Save Condition"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </section>

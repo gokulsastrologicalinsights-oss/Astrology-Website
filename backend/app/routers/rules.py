@@ -168,8 +168,15 @@ async def evaluate_rules(
     # Build context
     ctx = ChartContext(horoscope=horoscope_data, dasa_data=dasa_data, kp_data=kp_data)
 
-    # Filter applicable rules from registry
-    all_rules = RulesRegistry.get_all_rules()
+    # Filter applicable rules from registry + custom rules
+    all_rules = list(RulesRegistry.get_all_rules())
+    if request.custom_rules:
+        for cr in request.custom_rules:
+            try:
+                all_rules.append(AstrologicalRuleDefinition(**cr))
+            except Exception:
+                pass
+
     target_category = request.category_slug
     target_subcategory = request.subcategory
     target_scope = (request.chart_scope or "both").lower()
@@ -179,8 +186,21 @@ async def evaluate_rules(
     for r in all_rules:
         if not r.is_enabled:
             continue
-        if target_category and r.category_slug != target_category:
-            continue
+        if target_category and target_category != "all":
+            # Match category_slug, subcategory, or friendly aliases
+            cat_matches = (
+                r.category_slug == target_category
+                or r.subcategory == target_category
+                or (target_category in ("sexuality_intimacy", "sexual_topics", "sexual") and r.category_slug == "sexuality_intimacy")
+                or (target_category in ("marriage", "marriage_relationships") and r.category_slug in ("marriage_relationships", "delayed_marriage", "second_marriage"))
+                or (target_category in ("first_marriage", "1st_marriage") and r.subcategory == "first_marriage")
+                or (target_category in ("second_marriage", "2nd_marriage") and (r.subcategory == "second_marriage" or r.category_slug == "second_marriage"))
+                or (target_category in ("job", "career", "career_profession") and (r.category_slug == "career_profession" or r.subcategory in ("job_prospects", "government_employment", "business_entrepreneurship")))
+                or (target_category in ("lagna", "lagna_characteristics") and r.subcategory in ("lagna_characteristics", "ascendant_lord"))
+                or (target_category in ("star", "nakshatra", "nakshatra_characteristics") and r.subcategory in ("nakshatra_characteristics", "nakshatra_pada_characteristics"))
+            )
+            if not cat_matches:
+                continue
         if target_subcategory and r.subcategory and r.subcategory != target_subcategory:
             continue
         if target_scope != "both" and r.chart_scope != ChartScope.BOTH and r.chart_scope.value != target_scope:

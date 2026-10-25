@@ -223,4 +223,41 @@ def get_report_styles():
         alignment=0,
     ))
 
+    # Standard aliases & utility styles
+    styles.add(ParagraphStyle(
+        name="DocTitle",
+        fontName=font_bold,
+        fontSize=15,
+        leading=19,
+        textColor=GOLD_PRIMARY,
+        alignment=1, # Center
+        spaceAfter=4,
+    ))
+
+    styles.add(ParagraphStyle(
+        name="Subtitle",
+        fontName=font_name,
+        fontSize=9,
+        leading=13,
+        textColor=NAVY_SECONDARY,
+        alignment=1, # Center
+        spaceAfter=6,
+    ))
+
+    styles.add(ParagraphStyle(
+        name="TableCellBold",
+        fontName=font_bold,
+        fontSize=8,
+        leading=10,
+        textColor=NAVY_PRIMARY,
+    ))
+
+    styles.add(ParagraphStyle(
+        name="NormalSmall",
+        fontName=font_name,
+        fontSize=8,
+        leading=11,
+        textColor=NAVY_PRIMARY,
+    ))
+
     return styles

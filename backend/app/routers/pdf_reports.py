@@ -11,13 +11,24 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Security, Response, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.schemas.pdf_report import HoroscopePdfReportRequest, KpPdfReportRequest
+from app.schemas.pdf_report import (
+    HoroscopePdfReportRequest,
+    KpPdfReportRequest,
+    ShodashvargaPdfReportRequest,
+    MuhurtaCertificatePdfRequest,
+    PanchaPakshiPdfReportRequest,
+    GemstoneRudrakshaPlaybookPdfRequest,
+)
 from app.schemas.common import BirthInput
 from app.services.pdf_report_engine import (
     build_report_data,
     generate_horoscope_pdf_bytes,
     build_kp_report_data,
     generate_kp_pdf_bytes,
+    generate_shodashvarga_pdf_bytes,
+    generate_muhurta_certificate_pdf_bytes,
+    generate_pancha_pakshi_pdf_bytes,
+    generate_gemstone_rudraksha_playbook_pdf_bytes,
 )
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.kp_engine.kp_chart_repository import get_kp_chart
@@ -298,3 +309,127 @@ async def download_kp_pdf_by_id_endpoint(
         language=language,
     )
     return await generate_kp_pdf_endpoint(req, current_user=current_user)
+
+
+# -----------------------------------------------------------------------------
+# 3. Specialized Client-Facing PDF Reports Endpoints
+# -----------------------------------------------------------------------------
+studio_router = APIRouter(prefix="/api/v1/reports", tags=["Specialized PDF Reports"])
+
+
+@studio_router.post("/shodashvarga/pdf", summary="Generate a 7-page Shodashvarga 16-Divisional Chart Book PDF")
+async def generate_shodashvarga_pdf_endpoint(
+    request: ShodashvargaPdfReportRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Compiles a complete 16-divisional Shodashvarga Chart Book (D1 through D60) with Ashtakavarga and Dasha calendar."""
+    try:
+        birth_input: Optional[BirthInput] = None
+        if request.saved_horoscope_id:
+            clean_id = _validate_uuid(request.saved_horoscope_id)
+            supabase = get_supabase_client()
+            if not supabase:
+                raise HTTPException(status_code=503, detail="Database service unavailable.")
+            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+            if not resp.data:
+                raise HTTPException(status_code=404, detail="Saved horoscope not found.")
+            row = resp.data[0]
+            from datetime import date as d_cls, time as t_cls
+            b_date = d_cls.fromisoformat(row["birth_date"]) if isinstance(row["birth_date"], str) else row["birth_date"]
+            parts = row["birth_time"].split(":")
+            b_time = t_cls(int(parts[0]), int(parts[1]))
+            birth_input = BirthInput(
+                birth_date=b_date,
+                birth_time=b_time,
+                timezone=row.get("timezone", "Asia/Kolkata"),
+                latitude=float(row["latitude"]),
+                longitude=float(row["longitude"]),
+            )
+        elif request.birth_input:
+            birth_input = request.birth_input
+        else:
+            raise HTTPException(status_code=422, detail="Either birth_input or saved_horoscope_id required.")
+
+        pdf_bytes = generate_shodashvarga_pdf_bytes(request, birth_input)
+        filename = f"Shodashvarga_Book_{request.native_name.replace(' ', '_')}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error generating Shodashvarga PDF: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Shodashvarga PDF generation failed: {str(exc)}")
+
+
+@studio_router.post("/muhurta-certificate/pdf", summary="Generate a ceremonial Auspicious Muhurta Selection Certificate PDF")
+async def generate_muhurta_certificate_pdf_endpoint(
+    request: MuhurtaCertificatePdfRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Generates an auspicious ceremonial gold-bordered Muhurta Selection Certificate."""
+    try:
+        pdf_bytes = generate_muhurta_certificate_pdf_bytes(request)
+        occ_name = request.occasion.replace(" ", "_")
+        filename = f"Muhurta_Certificate_{occ_name}_{request.event_date}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except Exception as exc:
+        logger.error("Error generating Muhurta certificate PDF: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Muhurta certificate PDF generation failed: {str(exc)}")
+
+
+@studio_router.post("/pancha-pakshi/pdf", summary="Generate an Agastya Pancha Pakshi 24-Hour Bio-Rhythm Chart PDF")
+async def generate_pancha_pakshi_pdf_endpoint(
+    request: PanchaPakshiPdfReportRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Compiles an Agastya Pancha Pakshi 24-Hour Bio-Rhythm dossier detailing all 50 Antara windows and Golden/Padupakshi hours."""
+    try:
+        pdf_bytes = generate_pancha_pakshi_pdf_bytes(request)
+        filename = f"Pancha_Pakshi_24Hr_{request.nakshatra}_{request.target_date}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except Exception as exc:
+        logger.error("Error generating Pancha Pakshi PDF: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Pancha Pakshi PDF generation failed: {str(exc)}")
+
+
+@studio_router.post("/gemstone-rudraksha/pdf", summary="Generate Remedial Gemstone & Rudraksha Sanctification Playbook PDF")
+async def generate_gemstone_rudraksha_pdf_endpoint(
+    request: GemstoneRudrakshaPlaybookPdfRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Compiles a personalized Gemstone & Rudraksha Sanctification Playbook with weight formulas and mantras."""
+    try:
+        pdf_bytes = generate_gemstone_rudraksha_playbook_pdf_bytes(request)
+        filename = f"Gemstone_Rudraksha_Playbook_{request.ascendant_sign}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except Exception as exc:
+        logger.error("Error generating Gemstone & Rudraksha Playbook PDF: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Gemstone & Rudraksha PDF generation failed: {str(exc)}")
+

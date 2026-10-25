@@ -10,7 +10,7 @@ import {
   CandidateSlot,
   OccasionItem,
 } from "@/lib/types";
-import { findMuhurtas, getOccasions } from "@/lib/api";
+import { findMuhurtas, getOccasions, downloadMuhurtaCertificatePdf, triggerBlobDownload } from "@/lib/api";
 import {
   Calendar,
   Clock,
@@ -41,6 +41,7 @@ import {
   Compass,
   User,
   Users,
+  Download,
 } from "lucide-react";
 
 interface CityPreset {
@@ -169,6 +170,31 @@ function MuhurtaStudioInner() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pristine" | "advisories">("all");
   const [selectedCandidateModal, setSelectedCandidateModal] = useState<CandidateSlot | null>(null);
   const [savedSlots, setSavedSlots] = useState<CandidateSlot[]>([]);
+  const [downloadingCert, setDownloadingCert] = useState<boolean>(false);
+
+  const handleDownloadCertificate = async (slot: CandidateSlot) => {
+    setDownloadingCert(true);
+    try {
+      const occasionName = allOccasions.find((o) => o.code === selectedOccasionCode)?.name_en || "Marriage";
+      const blob = await downloadMuhurtaCertificatePdf({
+        occasion: occasionName,
+        primary_person_name: "Primary Native",
+        secondary_person_name: selectedOccasionCode === "marriage" ? "Partner" : undefined,
+        event_date: slot.event_date,
+        start_time: slot.start_time_local,
+        end_time: slot.end_time_local,
+        location_name: selectedCity.name_en,
+        latitude: latitude,
+        longitude: longitude,
+        language: language === "ta" ? "ta" : "en",
+      });
+      triggerBlobDownload(blob, `Muhurta_Certificate_${slot.event_date}_${slot.start_time_local.replace(":", "")}.pdf`);
+    } catch (err: any) {
+      alert(err?.message || "Failed to download Muhurta Certificate PDF.");
+    } finally {
+      setDownloadingCert(false);
+    }
+  };
 
   // Load occasions list
   useEffect(() => {
@@ -960,18 +986,31 @@ function MuhurtaStudioInner() {
                           </div>
 
                           {/* Card Footer Button */}
-                          <div className="flex items-center justify-between pt-2 text-xs">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 text-xs">
                             <span className="text-[#52667E]">
                               {slot.explanation}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedCandidateModal(slot)}
-                              className="inline-flex items-center gap-1 font-bold text-[#3478F6] hover:underline cursor-pointer"
-                            >
-                              <span>{language === "ta" ? "முழு கிரக நிலை காண்க" : "View Planetary Chart & Houses"}</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadCertificate(slot)}
+                                disabled={downloadingCert}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs cursor-pointer transition-colors"
+                                title="Download Muhurta Selection Certificate PDF"
+                              >
+                                <Download className="w-3.5 h-3.5 text-amber-700" />
+                                <span>{language === "ta" ? "சான்றிதழ் PDF" : "Certificate PDF"}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCandidateModal(slot)}
+                                className="inline-flex items-center gap-1 font-bold text-[#3478F6] hover:underline cursor-pointer"
+                              >
+                                <span>{language === "ta" ? "முழு கிரக நிலை காண்க" : "View Planetary Chart & Houses"}</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1220,11 +1259,25 @@ function MuhurtaStudioInner() {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => handleDownloadCertificate(selectedCandidateModal)}
+                disabled={downloadingCert}
+                className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer transition-colors inline-flex items-center justify-center gap-2 shadow-xs"
+              >
+                <Download className={`w-4 h-4 ${downloadingCert ? "animate-spin" : ""}`} />
+                <span>
+                  {downloadingCert
+                    ? (language === "ta" ? "சான்றிதழ் தயாராகிறது..." : "Compiling Certificate...")
+                    : (language === "ta" ? "முகூர்த்த சான்றிதழ் PDF பதிவிறக்கு" : "Download Muhurta Certificate PDF")}
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setSelectedCandidateModal(null)}
-                className="w-full py-2.5 rounded-xl bg-[#102A4C] hover:bg-[#16365C] text-white font-bold text-xs cursor-pointer transition-colors"
+                className="py-2.5 px-6 rounded-xl bg-[#102A4C] hover:bg-[#16365C] text-white font-bold text-xs cursor-pointer transition-colors"
               >
                 Close
               </button>

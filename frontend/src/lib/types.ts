@@ -4621,6 +4621,7 @@ export interface EvaluatePredictionRulesRequest {
   language?: string;
   dasa?: Record<string, any>;
   kp?: Record<string, any>;
+  custom_rules?: any[];
 }
 
 export interface EvaluatePredictionRulesResponse {
@@ -4632,4 +4633,56 @@ export interface EvaluatePredictionRulesResponse {
   language: string;
   results: EvaluatedPredictionRule[];
 }
+
+export interface ShodashvargaPdfReportRequest {
+  birth_input?: BirthInput | null;
+  saved_horoscope_id?: string | null;
+  native_name?: string;
+  gender?: string;
+  language?: string;
+  ayanamsa?: number;
+}
+
+export interface MuhurtaCertificatePdfRequest {
+  occasion: string;
+  primary_person_name: string;
+  secondary_person_name?: string | null;
+  primary_gotra?: string | null;
+  secondary_gotra?: string | null;
+  primary_nakshatra?: string | null;
+  secondary_nakshatra?: string | null;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+  location_name?: string;
+  latitude?: number;
+  longitude?: number;
+  language?: string;
+  astrologer_name?: string;
+  special_notes?: string | null;
+}
+
+export interface PanchaPakshiPdfReportRequest {
+  nakshatra: string;
+  paksha: string;
+  target_date: string;
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
+  native_name?: string;
+  language?: string;
+}
+
+export interface GemstoneRudrakshaPlaybookPdfRequest {
+  ascendant_sign: string;
+  native_name?: string;
+  body_weight_kg?: number;
+  moon_sign?: string | null;
+  running_mahadasha?: string | null;
+  has_kuja_dosha?: boolean;
+  has_sade_sati?: boolean;
+  has_rahu_ketu_dosha?: boolean;
+  language?: string;
+}
+
 

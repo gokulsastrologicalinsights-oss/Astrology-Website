@@ -62,6 +62,7 @@ class EvaluateRulesRequest(BaseModel):
     language: str = "en"  # "en" or "ta"
     dasa: Optional[Dict[str, Any]] = None
     kp: Optional[Dict[str, Any]] = None
+    custom_rules: Optional[List[Dict[str, Any]]] = None
 
 
 class EvaluateRulesResponse(BaseModel):
