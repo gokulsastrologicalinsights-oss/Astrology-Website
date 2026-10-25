@@ -167,10 +167,12 @@ interface AstrologyToolCard {
     },
     {
       id: "muhurta",
-      titleTa: "சுப முகூர்த்தம்",
-      titleEn: "Muhurta Finder",
-      href: "/muhurta",
-      icon: Calendar,
+      titleTa: "சுப முகூர்த்த அரங்கம்",
+      titleEn: "Muhurta Event Matching Studio",
+      descriptionTa: "திருமணம், கிரகப்பிரவேசம், வர்த்தகத் துவக்கம் மற்றும் வாகன முகூர்த்தங்களுக்கான சாஸ்திர தேர்வு இயந்திரம்.",
+      descriptionEn: "Multi-criteria candidate search and scoring engine for Marriage, Griha Pravesha, Business Launch, and Vehicle Purchase.",
+      href: "/tools/muhurta",
+      icon: Sparkles,
       color: "text-emerald-600 border-emerald-300 bg-emerald-50",
     },
     {

@@ -92,6 +92,33 @@ def test_find_muhurtas_endpoint():
     assert "tithi" in candidate
     assert "ascendant" in candidate
     assert "explanation" in candidate
+    assert "hora" in candidate
+
+
+def test_find_muhurtas_four_premier_occasions():
+    """Verify candidate search across Griha Pravesham, Business Launch, and Vehicle Purchase."""
+    occasions = ["griha_pravesham", "business_launch", "vehicle_purchase"]
+    for occ in occasions:
+        payload = {
+            "occasion_code": occ,
+            "start_date": "2026-10-18",
+            "end_date": "2026-10-19",
+            "latitude": 13.0827,
+            "longitude": 80.2707,
+            "timezone": "Asia/Kolkata",
+            "preferred_time_range": "morning",
+            "ayanamsa_id": 0,
+            "limit": 10,
+        }
+        res = client.post("/api/v1/muhurta/find", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["occasion"]["code"] == occ
+        assert len(data["candidates"]) > 0
+        first_c = data["candidates"][0]
+        assert first_c["duration_minutes"] >= 30
+        assert "score" in first_c
+        assert "passed_rules" in first_c
 
 
 def test_find_muhurtas_invalid_date_range():

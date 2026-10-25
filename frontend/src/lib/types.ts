@@ -2254,6 +2254,15 @@ export interface CandidateSlot {
   failed_rules: Array<{ rule: string; severity?: string; message: string }>;
   advisories: Array<{ rule: string; message: string }>;
   incomplete_checks: Array<{ check: string; message: string }>;
+  hora?: {
+    lord: string;
+    lord_ta: string;
+    symbol: string;
+    nature: string;
+    color?: string;
+    start_time_local: string;
+    end_time_local: string;
+  };
   tithi: {
     number: number;
     name: string;

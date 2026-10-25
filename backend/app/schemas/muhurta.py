@@ -49,6 +49,7 @@ class CandidateSlot(BaseModel):
     failed_rules: List[Dict[str, Any]]
     advisories: List[Dict[str, Any]]
     incomplete_checks: List[Dict[str, Any]]
+    hora: Optional[Dict[str, Any]] = None
     tithi: Dict[str, Any]
     nakshatra: Dict[str, Any]
     yoga: Dict[str, Any]

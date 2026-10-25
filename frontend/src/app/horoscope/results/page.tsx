@@ -30,12 +30,14 @@ import { DoshaSection } from "@/components/results/DoshaSection";
 import { NabhashaSection } from "@/components/results/NabhashaSection";
 import { AshtakavargaSection } from "@/components/results/AshtakavargaSection";
 import { DestinyCard } from "@/components/results/DestinyCard";
+import { DivisionalChartsSection } from "@/components/results/DivisionalChartsSection";
 import { AstrologicalPredictionsSection } from "@/components/results/AstrologicalPredictionsSection";
 import {
   calculateNabhasha,
   calculateAshtakavarga,
   calculateVedicYogas,
   calculateVargaD1D9,
+  calculateShodashvarga,
   calculateDoshas,
   calculateShadbala,
   calculateMedicalAstrology,
@@ -99,13 +101,16 @@ function HoroscopeResultsContent() {
   // Main Tabs: "horoscope" (ஜாதகம்) | "consultation" (ஆலோசனை) | "reports" (அறிக்கைகள் மற்றும் பதிவிறக்கங்கள்)
   const [mainTab, setMainTab] = useState<"horoscope" | "consultation" | "reports">("horoscope");
 
-  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "destiny-card"
+  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "divisional" | "destiny-card"
   const [secondaryTab, setSecondaryTab] = useState<
-    "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "destiny-card"
+    "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "divisional" | "destiny-card"
   >(() => {
-    const validSecondary = ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "medical", "doshas", "destiny-card"];
+    const validSecondary = ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "medical", "doshas", "divisional", "destiny-card"];
     if (tabParam && validSecondary.includes(tabParam)) {
       return tabParam as any;
+    }
+    if (tabParam && ["d1-d9", "varga", "vargas", "shodashvarga"].includes(tabParam)) {
+      return "divisional";
     }
     if (searchParams.get("category")) {
       return "facts";
@@ -193,9 +198,12 @@ function HoroscopeResultsContent() {
       setMainTab("consultation");
     } else if (tabParam === "reports") {
       setMainTab("reports");
-    } else if (tabParam && ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "doshas", "destiny-card"].includes(tabParam)) {
+    } else if (tabParam && ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "doshas", "divisional", "destiny-card"].includes(tabParam)) {
       setMainTab("horoscope");
       setSecondaryTab(tabParam as any);
+    } else if (tabParam && ["d1-d9", "varga", "vargas", "shodashvarga"].includes(tabParam)) {
+      setMainTab("horoscope");
+      setSecondaryTab("divisional");
     }
   }, [tabParam]);
 
@@ -216,7 +224,7 @@ function HoroscopeResultsContent() {
         ayanamsa: result.clientInputs.ayanamsaId,
       };
 
-      const [nabhashaRes, ashtakavargaRes, vedicYogaRes, vargaRes, doshasRes, shadbalaRes, medicalRes] = await Promise.all([
+      const [nabhashaRes, ashtakavargaRes, vedicYogaRes, vargaRes, shodashvargaRes, doshasRes, shadbalaRes, medicalRes] = await Promise.all([
         calculateNabhasha(birthInput).catch((e) => {
           console.warn("Nabhasha calculation failed:", e);
           return null;
@@ -231,6 +239,10 @@ function HoroscopeResultsContent() {
         }),
         calculateVargaD1D9(birthInput).catch((e) => {
           console.warn("Varga D1/D9 calculation failed:", e);
+          return null;
+        }),
+        calculateShodashvarga(birthInput).catch((e) => {
+          console.warn("Shodashvarga calculation failed:", e);
           return null;
         }),
         calculateDoshas(birthInput).catch((e) => {
@@ -253,6 +265,7 @@ function HoroscopeResultsContent() {
         ashtakavarga: ashtakavargaRes || result.horoscope.ashtakavarga,
         vedic_yogas: vedicYogaRes || result.horoscope.vedic_yogas,
         varga_d1_d9: vargaRes || result.horoscope.varga_d1_d9,
+        shodashvarga: shodashvargaRes || (result.horoscope as any).shodashvarga,
         doshas: doshasRes || result.horoscope.doshas,
         shadbala: shadbalaRes || (result.horoscope as any).shadbala,
         medical_astrology: medicalRes || result.horoscope.medical_astrology,
@@ -267,6 +280,7 @@ function HoroscopeResultsContent() {
         doshas: doshasRes || (result as any).doshas,
         shadbala: shadbalaRes || result.shadbala,
         medical_astrology: medicalRes || result.medical_astrology,
+        ...(shodashvargaRes ? { shodashvarga: shodashvargaRes } : {}),
       };
 
       setResult(updatedResult);
@@ -1020,6 +1034,18 @@ function HoroscopeResultsContent() {
 
                 <button
                   type="button"
+                  onClick={() => setSecondaryTab("divisional")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap ${
+                    secondaryTab === "divisional"
+                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold"
+                      : "text-[#52667E] hover:text-[#183047]"
+                  }`}
+                >
+                  {language === "ta" ? "வர்க்க சக்கரங்கள் (D1 - D60)" : "Divisional Charts (D1 - D60)"}
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSecondaryTab("destiny-card")}
                   className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                     secondaryTab === "destiny-card"
@@ -1424,7 +1450,36 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 8: DESTINY CARD */}
+              {/* Sub-Tab 8: DIVISIONAL CHARTS (D1 - D60) */}
+              {secondaryTab === "divisional" && (
+                <div className="space-y-5">
+                  <DivisionalChartsSection
+                    horoscope={horoscope}
+                    vargaD1D9={horoscope.varga_d1_d9 || (result as any).varga_d1_d9}
+                    shodashvarga={(horoscope as any).shodashvarga || (result as any).shodashvarga}
+                    clientInputs={clientInputs}
+                    savedHoroscopeId={result.savedId || idParam || undefined}
+                    onUpdateVargaData={(varga, shodash) => {
+                      setResult((prev) => {
+                        if (!prev) return null;
+                        const updated: FullHoroscopeResult = {
+                          ...prev,
+                          horoscope: {
+                            ...prev.horoscope,
+                            varga_d1_d9: varga,
+                            ...(shodash ? { shodashvarga: shodash } : {}),
+                          },
+                          ...(shodash ? { shodashvarga: shodash } : {}),
+                        };
+                        saveActiveCalculation(updated);
+                        return updated;
+                      });
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 9: DESTINY CARD */}
               {secondaryTab === "destiny-card" && (
                 <div className="space-y-4">
                   <DestinyCard result={result} />
@@ -1524,12 +1579,16 @@ function HoroscopeResultsContent() {
                       ? "வர்கோத்தம கிரகங்கள் மற்றும் புஷ்கர நவாம்ச நிலைகளை விரிவாகக் காண்க."
                       : "Detailed comparative dignity analysis between Rasi and Navamsa charts."}
                   </p>
-                  <Link
-                    href={idParam ? `/tools/d1-d9?saved_id=${idParam}` : "/tools/d1-d9"}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4872B] hover:underline pt-1"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMainTab("horoscope");
+                      setSecondaryTab("divisional");
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4872B] hover:underline pt-1 cursor-pointer"
                   >
                     <span>{language === "ta" ? "வர்க்க ஆய்வுக்குச் செல்க →" : "Open Varga Analysis →"}</span>
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>

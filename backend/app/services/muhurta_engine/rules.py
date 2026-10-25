@@ -114,6 +114,7 @@ def evaluate_muhurta_slot(
     lagna_planets: Dict[str, Any],
     rules: Dict[str, Any],
     birth_details: Optional[Dict[str, Any]] = None,
+    occasion_code: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Evaluates a candidate time window [slot_start_utc, slot_end_utc] against occasion rules.
 
@@ -315,7 +316,125 @@ def evaluate_muhurta_slot(
                 "message": "7th house is clear of malefic afflictions.",
             })
 
-    # 6. Bonus Auspicious Periods (Abhijit, Amrita Kalam)
+    # 6. Occasion-specific Bhava & Hora Rules
+    # A. 4th House (Sukhasthana / Vahana Bhava) for Griha Pravesha and Vehicle Purchase
+    if occasion_code in {"griha_pravesham", "vehicle_purchase"} or rules.get("require_chaturtha_shuddhi", False):
+        occupants_4th = occupants.get(4, [])
+        malefics_4th = [p for p in occupants_4th if p in MALEFIC_PLANETS]
+        benefics_4th = [p for p in occupants_4th if p in BENEFIC_PLANETS]
+
+        if malefics_4th:
+            advisories.append({
+                "rule": "Chaturtha (4th House) Caution",
+                "message": f"4th house of property/vehicle is afflicted by malefic(s): {', '.join(malefics_4th)}.",
+            })
+            score -= 10
+        elif benefics_4th:
+            passed_rules.append({
+                "rule": "Chaturtha Shuddhi & Dignity",
+                "message": f"4th house blessed by benefic {', '.join(benefics_4th)}, ensuring domestic happiness and vehicular safety.",
+            })
+            score = min(100, score + 5)
+        else:
+            passed_rules.append({
+                "rule": "Chaturtha Shuddhi",
+                "message": "4th house is clean and vacant, free of malefic afflictions.",
+            })
+
+    # B. 10th/11th House (Karma & Labhasthana) for Business / Shop Launch
+    if occasion_code in {"shop_opening", "business_launch", "office_inauguration"}:
+        occupants_11th = occupants.get(11, [])
+        if occupants_11th:
+            passed_rules.append({
+                "rule": "11th House Labhasthana Gains",
+                "message": f"11th house of business profits is energized by {', '.join(occupants_11th)}, supporting steady revenue.",
+            })
+            score = min(100, score + 10)
+
+        occupants_10th = occupants.get(10, [])
+        benefics_10th = [p for p in occupants_10th if p in BENEFIC_PLANETS]
+        if benefics_10th:
+            passed_rules.append({
+                "rule": "10th House Karmasthana Dignity",
+                "message": f"10th house of business enterprise is graced by {', '.join(benefics_10th)}.",
+            })
+            score = min(100, score + 5)
+
+    # C. Planetary Hora Suitability & Alignment
+    slot_hora: Optional[Dict[str, Any]] = None
+    all_horas = daily_panchang.get("horas", {}).get("all_horas", [])
+    if all_horas:
+        for h in all_horas:
+            if check_interval_overlap(slot_start_utc, slot_end_utc, h["start_time_utc"], h["end_time_utc"]):
+                slot_hora = h
+                break
+
+    if slot_hora:
+        hora_lord = slot_hora["lord"]
+        # Marriage: Venus, Jupiter, Moon are premier
+        if occasion_code == "marriage":
+            if hora_lord in {"Venus", "Jupiter", "Moon"}:
+                passed_rules.append({
+                    "rule": "Auspicious Planetary Hora",
+                    "message": f"{hora_lord} Hora ({slot_hora['lord_ta']}) is highly auspicious for Vivaha vows and marital bliss.",
+                })
+                score = min(100, score + 10)
+            elif hora_lord in {"Mars", "Saturn"}:
+                advisories.append({
+                    "rule": "Planetary Hora Advisory",
+                    "message": f"{hora_lord} Hora is severe and traditionally avoided for gentle marriage ceremonies.",
+                })
+                score -= 5
+        # Housewarming (Griha Pravesham): Jupiter, Venus, Mercury, Moon
+        elif occasion_code == "griha_pravesham":
+            if hora_lord in {"Jupiter", "Venus", "Mercury", "Moon"}:
+                passed_rules.append({
+                    "rule": "Auspicious Planetary Hora",
+                    "message": f"{hora_lord} Hora ({slot_hora['lord_ta']}) brings divine grace and peace into the new home.",
+                })
+                score = min(100, score + 10)
+            elif hora_lord in {"Mars", "Saturn"}:
+                advisories.append({
+                    "rule": "Planetary Hora Advisory",
+                    "message": f"{hora_lord} Hora is harsh for celebratory housewarming events.",
+                })
+                score -= 5
+        # Shop / Business Launch: Mercury, Jupiter, Sun
+        elif occasion_code in {"shop_opening", "business_launch", "office_inauguration"}:
+            if hora_lord == "Mercury":
+                passed_rules.append({
+                    "rule": "Prime Commercial Hora (Budha)",
+                    "message": "Budha (Mercury) Hora is the premier planetary hour for trade, retail opening, and client contracts.",
+                })
+                score = min(100, score + 15)
+            elif hora_lord in {"Jupiter", "Sun", "Venus"}:
+                passed_rules.append({
+                    "rule": "Auspicious Planetary Hora",
+                    "message": f"{hora_lord} Hora ({slot_hora['lord_ta']}) fosters financial expansion and executive authority.",
+                })
+                score = min(100, score + 10)
+        # Vehicle Purchase: Venus, Jupiter, Moon
+        elif occasion_code == "vehicle_purchase":
+            if hora_lord == "Venus":
+                passed_rules.append({
+                    "rule": "Prime Vahana Karaka Hora (Shukra)",
+                    "message": "Shukra (Venus) Hora is ruled by the celestial Karaka for conveyances and vehicles, blessing the purchase.",
+                })
+                score = min(100, score + 15)
+            elif hora_lord in {"Jupiter", "Moon", "Mercury"}:
+                passed_rules.append({
+                    "rule": "Auspicious Planetary Hora",
+                    "message": f"{hora_lord} Hora ({slot_hora['lord_ta']}) promotes smooth rides and travel safety.",
+                })
+                score = min(100, score + 10)
+            elif hora_lord in {"Mars", "Saturn"}:
+                advisories.append({
+                    "rule": "Planetary Hora Advisory",
+                    "message": f"{hora_lord} Hora is aggressive/slow and carries accident/maintenance risks for vehicle delivery.",
+                })
+                score -= 10
+
+    # 7. Bonus Auspicious Periods (Abhijit, Amrita Kalam)
     # Check if slot overlaps with Abhijit
     abhijit = auspicious.get("abhijit", {})
     if abhijit and check_interval_overlap(slot_start_utc, slot_end_utc, abhijit["start_utc"], abhijit["end_utc"]):
@@ -413,4 +532,13 @@ def evaluate_muhurta_slot(
         "advisories": advisories,
         "incomplete_checks": incomplete_checks,
         "explanation": explanation,
+        "hora": {
+            "lord": slot_hora["lord"],
+            "lord_ta": slot_hora["lord_ta"],
+            "symbol": slot_hora["symbol"],
+            "nature": slot_hora["nature"],
+            "color": slot_hora.get("color", "#F59E0B"),
+            "start_time_local": slot_hora["start_time_local"],
+            "end_time_local": slot_hora["end_time_local"],
+        } if slot_hora else None,
     }

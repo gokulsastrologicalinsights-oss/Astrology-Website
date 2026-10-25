@@ -112,6 +112,7 @@ def find_candidate_muhurtas(
                 lagna_planets=lagna_planets,
                 rules=rules,
                 birth_details=birth_details,
+                occasion_code=occasion["code"],
             )
 
             candidate_obj = {
@@ -131,6 +132,7 @@ def find_candidate_muhurtas(
                 "failed_rules": eval_res["failed_rules"],
                 "advisories": eval_res["advisories"],
                 "incomplete_checks": eval_res["incomplete_checks"],
+                "hora": eval_res.get("hora"),
                 "tithi": daily_panchang["tithi"],
                 "nakshatra": daily_panchang["nakshatra"],
                 "yoga": daily_panchang["yoga"],
