@@ -29,6 +29,7 @@ import {
   Hash,
   Briefcase,
   Grid,
+  Zap,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 import { HelpModal } from "@/components/layout/HelpModal";
@@ -174,6 +175,16 @@ interface AstrologyToolCard {
       href: "/tools/muhurta",
       icon: Sparkles,
       color: "text-emerald-600 border-emerald-300 bg-emerald-50",
+    },
+    {
+      id: "pancha-pakshi",
+      titleTa: "பஞ்ச பட்சி சாஸ்திரம்",
+      titleEn: "Pancha Pakshi Shastra",
+      descriptionTa: "அகத்தியர் சித்த முறைப்படி வல்லூறு, ஆந்தை, காகம், கோழி, மயில் ஐந்து பட்சிகளின் அரசு, ஊண், நடை, துயில், சாவு அந்தர கால வழிகாட்டி.",
+      descriptionEn: "Sage Agastya's five-bird bio-rhythm predictive system across Ruling, Eating, Walking, Sleeping, and Dying phases.",
+      href: "/tools/pancha-pakshi",
+      icon: Zap,
+      color: "text-teal-600 border-teal-300 bg-teal-50",
     },
     {
       id: "vastu",

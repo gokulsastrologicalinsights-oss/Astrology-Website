@@ -714,9 +714,15 @@ function D1D9Content() {
                       </div>
                       <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                         {chartStyle === "south" ? (
-                          <SouthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                          <SouthIndianChart
+                            horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                          />
                         ) : (
-                          <NorthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                          <NorthIndianChart
+                            horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                          />
                         )}
                       </div>
                     </div>
@@ -732,9 +738,15 @@ function D1D9Content() {
                       </div>
                       <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                         {chartStyle === "south" ? (
-                          <SouthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                          <SouthIndianChart
+                            horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                          />
                         ) : (
-                          <NorthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                          <NorthIndianChart
+                            horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                          />
                         )}
                       </div>
                     </div>
@@ -751,9 +763,15 @@ function D1D9Content() {
                     </div>
                     <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                       {chartStyle === "south" ? (
-                        <SouthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                        <SouthIndianChart
+                          horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                        />
                       ) : (
-                        <NorthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                        <NorthIndianChart
+                          horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                        />
                       )}
                     </div>
                   </div>
@@ -769,9 +787,15 @@ function D1D9Content() {
                     </div>
                     <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                       {chartStyle === "south" ? (
-                        <SouthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                        <SouthIndianChart
+                          horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                        />
                       ) : (
-                        <NorthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                        <NorthIndianChart
+                          horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                        />
                       )}
                     </div>
                   </div>
@@ -1064,9 +1088,15 @@ function D1D9Content() {
                       {/* Chart Render Canvas */}
                       <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                         {chartStyle === "south" ? (
-                          <SouthIndianChart horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse} />
+                          <SouthIndianChart
+                            horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                          />
                         ) : (
-                          <NorthIndianChart horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse} />
+                          <NorthIndianChart
+                            horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                          />
                         )}
                       </div>
                     </div>

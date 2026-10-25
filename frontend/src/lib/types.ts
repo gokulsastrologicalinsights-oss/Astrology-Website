@@ -2052,6 +2052,145 @@ export interface FamilyNumerologyResponse {
 }
 
 // ============================================================================
+// Pancha Pakshi Shastra (Five Birds Bio-Rhythms) Module Data Models
+// ============================================================================
+
+export interface BirdItem {
+  id: string;
+  index: number;
+  name_en: string;
+  name_ta: string;
+  element_en: string;
+  element_ta: string;
+  ruling_planet: string;
+  ruling_planet_ta: string;
+  lucky_direction: string;
+  lucky_direction_ta: string;
+  lucky_color: string;
+  lucky_color_ta: string;
+  symbol: string;
+  friendly_birds: string[];
+  friendly_birds_ta: string[];
+  inimical_birds: string[];
+  inimical_birds_ta: string[];
+  description_en: string;
+  description_ta: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  name_en: string;
+  name_ta: string;
+  power_score: number;
+  nature: string;
+  color: string;
+  badge: string;
+  description_en: string;
+  description_ta: string;
+  recommended_en: string[];
+  recommended_ta: string[];
+  avoid_en: string[];
+  avoid_ta: string[];
+}
+
+export interface AntaraSlot {
+  sub_index: number;
+  global_sub_index: number;
+  period_type: "day" | "night";
+  major_activity: string;
+  major_activity_en: string;
+  major_activity_ta: string;
+  sub_activity: string;
+  sub_activity_en: string;
+  sub_activity_ta: string;
+  power_score: number;
+  rating: "golden" | "favorable" | "neutral" | "danger";
+  rating_label_en: string;
+  rating_label_ta: string;
+  color: string;
+  start_time_utc: string;
+  end_time_utc: string;
+  start_time_local: string;
+  end_time_local: string;
+  duration_minutes: number;
+  recommended_en: string[];
+  recommended_ta: string[];
+  avoid_en: string[];
+  avoid_ta: string[];
+}
+
+export interface YamamSlot {
+  yamam_index: number;
+  period_type: "day" | "night";
+  name_en: string;
+  name_ta: string;
+  native_activity: string;
+  native_activity_en: string;
+  native_activity_ta: string;
+  power_score: number;
+  nature: string;
+  color: string;
+  ruling_bird: string;
+  ruling_bird_ta: string;
+  start_time_utc: string;
+  end_time_utc: string;
+  start_time_local: string;
+  end_time_local: string;
+  duration_minutes: number;
+  sub_periods: AntaraSlot[];
+  all_birds_state: Record<string, string>;
+}
+
+export interface PanchaPakshiResponse {
+  target_date: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    timezone: string;
+  };
+  astronomical: {
+    sunrise_utc: string;
+    sunrise_local: string;
+    sunset_utc: string;
+    sunset_local: string;
+    next_sunrise_local: string;
+    day_length_hours: number;
+    night_length_hours: number;
+    tithi: {
+      number: number;
+      name: string;
+      paksha: string;
+    };
+    target_paksha: string;
+    target_paksha_ta: string;
+  };
+  birth_details: {
+    nakshatra_number: number;
+    birth_paksha: string;
+  };
+  birth_bird: BirdItem;
+  day_yamam_duration_minutes: number;
+  night_yamam_duration_minutes: number;
+  sub_period_duration_minutes: number;
+  day_yamams: YamamSlot[];
+  night_yamams: YamamSlot[];
+  all_antaras: AntaraSlot[];
+  golden_windows: AntaraSlot[];
+  padupakshi_windows: AntaraSlot[];
+  total_golden_windows: number;
+  total_padupakshi_windows: number;
+}
+
+export interface PanchaPakshiRequest {
+  target_date: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  birth_nakshatra: number;
+  birth_paksha: string;
+}
+
+// ============================================================================
 // Muhurta & Panchang Module Data Models
 // ============================================================================
 

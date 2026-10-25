@@ -34,6 +34,7 @@ from app.routers import (
     unified_prediction,
     marriage_compatibility,
     horoscope_writing,
+    pancha_pakshi,
 )
 
 
@@ -163,5 +164,6 @@ app.include_router(unified_prediction.router)
 app.include_router(marriage_compatibility.router, prefix="/api/v1/marriage-compatibility")
 app.include_router(marriage_compatibility.router, prefix="/api/marriage-compatibility")
 app.include_router(horoscope_writing.router)
+app.include_router(pancha_pakshi.router)
 
 

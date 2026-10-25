@@ -15,6 +15,8 @@ interface SouthIndianChartProps {
   ascendantOverride?: { sign_index: number; degree_in_sign: number };
   transitPlanets?: PlanetInfo[];
   showTransits?: boolean;
+  isSaved?: boolean;
+  highlightLagnaBlue?: boolean;
 }
 
 // Fixed mapping of 4x4 grid cells to Zodiac Sign indices (1-12)
@@ -57,11 +59,31 @@ export function SouthIndianChart({
   ascendantOverride,
   transitPlanets,
   showTransits = false,
+  isSaved,
+  highlightLagnaBlue,
 }: SouthIndianChartProps) {
   const { language } = useLanguage();
   const ascendant = ascendantOverride || horoscope.ascendant;
   const planets = planetsOverride || horoscope.planets;
   const { metadata } = horoscope;
+
+  // Detect whether this chart belongs to a saved horoscope
+  const isSavedChart = React.useMemo(() => {
+    if (typeof highlightLagnaBlue === "boolean") return highlightLagnaBlue;
+    if (typeof isSaved === "boolean") return isSaved;
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has("id") || sp.has("saved_id") || sp.has("horoscope_id")) {
+        return true;
+      }
+    }
+    return Boolean(
+      (horoscope as any)?.id ||
+      (horoscope as any)?.is_saved ||
+      (horoscope as any)?.savedId ||
+      (horoscope.metadata as any)?.is_saved
+    );
+  }, [isSaved, highlightLagnaBlue, horoscope]);
 
   // Group natal planets by sign_index (1 to 12)
   const planetsBySign: Record<number, PlanetInfo[]> = {};
@@ -97,6 +119,44 @@ export function SouthIndianChart({
       {SOUTH_GRID.map((cell) => {
         const isAscendant = ascendant.sign_index === cell.signIndex;
         const cellPlanets = planetsBySign[cell.signIndex] || [];
+        const totalItems = (isAscendant ? 1 : 0) + cellPlanets.length;
+
+        // Determine highlighting:
+        // When opening a saved horoscope chart, highlight ONLY the Lagna box in blue.
+        // Keep all other boxes in their existing colors (white) and styles.
+        // For non-saved charts, Lagna uses the existing subtle cream highlight.
+        const isLagnaHighlightedBlue = isSavedChart && isAscendant;
+
+        let cellBgClass = "bg-white border-[#183047]";
+        if (isLagnaHighlightedBlue) {
+          cellBgClass = "bg-[#D8E8FD] ring-1 ring-inset ring-[#2563EB]/40 border-[#153F6B]";
+        } else if (isAscendant) {
+          cellBgClass = "bg-[#FAF2DE]/45 border-[#183047]";
+        }
+
+        // Scaled typography & layout classes based on item count for optimal readability & zero clipping
+        let textClass = "text-sm sm:text-base md:text-[17px]";
+        let gapClass = "gap-1";
+        const isMultiColumn = totalItems >= 5;
+
+        if (totalItems >= 5) {
+          textClass = "text-[9.5px] sm:text-[10.5px] md:text-[11px]";
+          gapClass = "gap-x-1 gap-y-0.5";
+        } else if (totalItems === 4) {
+          textClass = "text-[10.5px] sm:text-[11.5px] md:text-[12.5px]";
+          gapClass = "gap-0.5";
+        } else if (totalItems === 3) {
+          textClass = "text-[11.5px] sm:text-[12.5px] md:text-[13.5px]";
+          gapClass = "gap-0.5 sm:gap-1";
+        } else if (totalItems === 2) {
+          textClass = "text-[12.5px] sm:text-[14px] md:text-[15px]";
+          gapClass = "gap-1 sm:gap-1.5";
+        } else {
+          textClass = "text-sm sm:text-base md:text-[17px]";
+          gapClass = "gap-1";
+        }
+
+        const ascDeg = Math.floor(ascendant.degree_in_sign || 0);
 
         return (
           <div
@@ -105,16 +165,27 @@ export function SouthIndianChart({
               gridRowStart: cell.row + 1,
               gridColumnStart: cell.col + 1,
             }}
-            className={`border border-[#183047] p-1 sm:p-1.5 flex flex-col justify-center items-center overflow-hidden relative transition-colors ${
-              isAscendant ? "bg-[#FAF2DE]/45" : "bg-white"
-            }`}
+            className={`border p-1 sm:p-1.5 flex flex-col justify-center items-center overflow-hidden relative transition-colors ${cellBgClass}`}
           >
-            {/* Body: Grahas and Ascendant (Zodiac sign icons removed per requirement 1) */}
-            <div className="w-full flex-1 flex flex-col justify-center items-center gap-0.5 py-0.5 overflow-hidden text-center">
+            {/* Body: Grahas and Ascendant */}
+            <div
+              className={`w-full flex-1 ${
+                isMultiColumn
+                  ? "grid grid-cols-2 gap-x-1 gap-y-0.5 justify-items-center items-center"
+                  : `flex flex-col justify-center items-center ${gapClass}`
+              } py-0.5 overflow-hidden text-center`}
+            >
               {isAscendant && (
-                <div className="text-[10px] sm:text-[11px] font-bold text-[#153F6B] leading-tight">
-                  <span>{Math.floor(ascendant.degree_in_sign)}</span>
-                  <span>-{language === "ta" ? "ல" : "Asc"}</span>
+                <div
+                  className={`${textClass} font-bold leading-tight tracking-tight flex items-center justify-center gap-0.5 whitespace-nowrap select-none ${
+                    isLagnaHighlightedBlue ? "text-[#0C356A]" : "text-[#153F6B]"
+                  }`}
+                  title={`Lagna / Ascendant (${ascendant.degree_in_sign?.toFixed(2) ?? 0}°) in sign ${cell.signIndex}`}
+                >
+                  {ascDeg > 0 && <span className="font-mono">{ascDeg}-</span>}
+                  <span className={language === "ta" ? "font-tamil" : ""}>
+                    {language === "ta" ? "ல" : "Asc"}
+                  </span>
                 </div>
               )}
 
@@ -124,13 +195,16 @@ export function SouthIndianChart({
                 return (
                   <div
                     key={p.name}
-                    className="text-[10px] sm:text-[11px] font-semibold text-[#183047] leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                    className={`${textClass} font-semibold text-[#183047] leading-tight tracking-tight flex items-center justify-center gap-0.5 whitespace-nowrap`}
                     title={`${p.name} (${p.degree_in_sign.toFixed(2)}°) in ${p.sign_name}`}
                   >
                     {degInt > 0 && <span className="font-mono">{degInt}-</span>}
-                    <span>{shortName}</span>
+                    <span className={language === "ta" ? "font-tamil" : ""}>{shortName}</span>
                     {p.is_retrograde && (
-                      <span className="text-red-600 font-bold text-[9px]">
+                      <span
+                        className="text-red-600 font-bold ml-0.5 text-[0.85em] leading-none"
+                        title={language === "ta" ? "வக்ரம் (Retrograde)" : "Retrograde"}
+                      >
                         {language === "ta" ? "(வ)" : "(R)"}
                       </span>
                     )}

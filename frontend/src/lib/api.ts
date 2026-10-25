@@ -865,6 +865,10 @@ import type {
   DailyHoraResponse,
   SavedMuhurtaItem,
   SaveMuhurtaRequest,
+  PanchaPakshiRequest,
+  PanchaPakshiResponse,
+  BirdItem,
+  ActivityItem,
 } from "./types";
 
 export async function getOccasions(includeDisabled: boolean = false): Promise<{ occasions: OccasionItem[] }> {
@@ -931,6 +935,25 @@ export async function getDailyHoras(params: {
     method: "POST",
     body: JSON.stringify(params),
   });
+}
+
+export async function calculatePanchaPakshi(
+  payload: PanchaPakshiRequest
+): Promise<PanchaPakshiResponse> {
+  return request<PanchaPakshiResponse>("/api/v1/pancha-pakshi/calculate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getPanchaPakshiBirds(): Promise<{
+  birds: BirdItem[];
+  activities: Record<string, ActivityItem>;
+}> {
+  return request<{
+    birds: BirdItem[];
+    activities: Record<string, ActivityItem>;
+  }>("/api/v1/pancha-pakshi/birds");
 }
 
 export async function findMuhurtas(params: {

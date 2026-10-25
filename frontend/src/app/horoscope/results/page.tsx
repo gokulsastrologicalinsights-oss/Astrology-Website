@@ -174,6 +174,13 @@ function HoroscopeResultsContent() {
     }
   };
 
+  // Auto-fetch live ephemeris transits when navigating to Ashtakavarga tab
+  useEffect(() => {
+    if (secondaryTab === "ashtakavarga" && !liveTransitsData && !isLoadingTransits) {
+      fetchLiveTransits();
+    }
+  }, [secondaryTab, liveTransitsData, isLoadingTransits, fetchLiveTransits]);
+
 
   // Notes Modal state
   const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
@@ -1001,7 +1008,7 @@ function HoroscopeResultsContent() {
                       : "text-[#52667E] hover:text-[#183047]"
                   }`}
                 >
-                  {language === "ta" ? "அஷ்டகவர்க பலன்கள்" : "Ashtakavarga"}
+                  {language === "ta" ? "அஷ்டகவர்க பரல்கள்" : "Ashtakavarga"}
                 </button>
 
                 <button
@@ -1222,12 +1229,14 @@ function HoroscopeResultsContent() {
                           centerNumber="(1)"
                           transitPlanets={liveTransitsData?.planets}
                           showTransits={showTransits}
+                          isSaved={Boolean(idParam || result?.savedId || result?.isSaved)}
                         />
                       ) : (
                         <NorthIndianChart
                           horoscope={horoscope}
                           transitPlanets={liveTransitsData?.planets}
                           showTransits={showTransits}
+                          isSaved={Boolean(idParam || result?.savedId || result?.isSaved)}
                         />
                       )}
 
@@ -1299,9 +1308,13 @@ function HoroscopeResultsContent() {
                             horoscope={d9Horoscope}
                             centerLabel={language === "ta" ? "நவாம்சம்" : "Navamsa"}
                             centerNumber="(9)"
+                            isSaved={Boolean(idParam || result?.savedId || result?.isSaved)}
                           />
                         ) : (
-                          <NorthIndianChart horoscope={d9Horoscope} />
+                          <NorthIndianChart
+                            horoscope={d9Horoscope}
+                            isSaved={Boolean(idParam || result?.savedId || result?.isSaved)}
+                          />
                         )
                       )}
                     </div>
@@ -1405,6 +1418,9 @@ function HoroscopeResultsContent() {
                     ashtakavarga={horoscope.ashtakavarga || result.ashtakavarga}
                     onCalculate={handleCalculateVedicExtensions}
                     isCalculating={isCalculatingExtensions}
+                    transitPlanets={liveTransitsData?.planets}
+                    natalPlanets={horoscope.planets || result.horoscope?.planets}
+                    ascendantSign={horoscope.ascendant?.sign_index || result.horoscope?.ascendant?.sign_index}
                   />
                 </div>
               )}

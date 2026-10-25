@@ -10,6 +10,8 @@ interface NorthIndianChartProps {
   horoscope: HoroscopeResponse;
   transitPlanets?: PlanetInfo[];
   showTransits?: boolean;
+  isSaved?: boolean;
+  highlightLagnaBlue?: boolean;
 }
 
 interface HouseLayout {
@@ -41,9 +43,29 @@ export function NorthIndianChart({
   horoscope,
   transitPlanets,
   showTransits = false,
+  isSaved,
+  highlightLagnaBlue,
 }: NorthIndianChartProps) {
   const { language } = useLanguage();
   const { ascendant, planets, metadata } = horoscope;
+
+  // Detect whether this chart belongs to a saved horoscope
+  const isSavedChart = React.useMemo(() => {
+    if (typeof highlightLagnaBlue === "boolean") return highlightLagnaBlue;
+    if (typeof isSaved === "boolean") return isSaved;
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has("id") || sp.has("saved_id") || sp.has("horoscope_id")) {
+        return true;
+      }
+    }
+    return Boolean(
+      (horoscope as any)?.id ||
+      (horoscope as any)?.is_saved ||
+      (horoscope as any)?.savedId ||
+      (horoscope.metadata as any)?.is_saved
+    );
+  }, [isSaved, highlightLagnaBlue, horoscope]);
 
   const ascSign = ascendant.sign_index;
 
@@ -134,6 +156,15 @@ export function NorthIndianChart({
             {/* Natal Chart Background */}
             <rect x="0" y="0" width="400" height="400" fill="#FFFDF9" />
 
+            {/* When saved chart is opened, highlight only Lagna (House 1 top diamond) in blue */}
+            {isSavedChart && (
+              <polygon
+                points="200,0 300,100 200,200 100,100"
+                fill="#D8E8FD"
+                opacity="0.85"
+              />
+            )}
+
             {/* Geometric Lines */}
             {/* Outer Box */}
             <rect
@@ -211,12 +242,12 @@ export function NorthIndianChart({
                         textAnchor="middle"
                         dominantBaseline="central"
                         fill="#0F172A"
-                        fontSize={occupants.length > 3 ? "8.5" : "9.5"}
-                        fontWeight="500"
+                        fontSize={occupants.length > 3 ? "9.5" : occupants.length > 1 ? "11" : "12.5"}
+                        fontWeight={occupants.length <= 2 ? "600" : "500"}
                         className="select-none"
                       >
                         {shortName} {retro}{" "}
-                        <tspan fill="#64748B" fontSize={occupants.length > 3 ? "7.5" : "8"} className="font-mono">
+                        <tspan fill="#64748B" fontSize={occupants.length > 3 ? "8" : "9"} className="font-mono">
                           {formatDm(p.degree_in_sign)}
                         </tspan>
                       </text>

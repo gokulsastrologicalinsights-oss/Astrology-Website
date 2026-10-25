@@ -710,9 +710,15 @@ function AshtakavargaContent() {
 
                     <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                       {chartStyle === "south" ? (
-                        <SouthIndianChart horoscope={savChartObject as unknown as HoroscopeResponse} />
+                        <SouthIndianChart
+                          horoscope={savChartObject as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                        />
                       ) : (
-                        <NorthIndianChart horoscope={savChartObject as unknown as HoroscopeResponse} />
+                        <NorthIndianChart
+                          horoscope={savChartObject as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedIdParam || (inputMode === "saved" && selectedHoroscopeId))}
+                        />
                       )}
                     </div>
                   </div>

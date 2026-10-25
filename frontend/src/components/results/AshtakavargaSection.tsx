@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { AshtakavargaResponse, PlanetBavDetail } from "@/lib/types";
+import React, { useState, useMemo } from "react";
+import { AshtakavargaResponse, PlanetBavDetail, PlanetInfo } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaName, getRasiName, RASIS, GRAHAS } from "@/lib/translations";
 import {
@@ -16,12 +16,16 @@ import {
   Sparkles,
   Layers,
   Orbit,
+  Info,
 } from "lucide-react";
 
 interface AshtakavargaSectionProps {
   ashtakavarga?: AshtakavargaResponse | null;
   onCalculate?: () => void;
   isCalculating?: boolean;
+  transitPlanets?: PlanetInfo[];
+  natalPlanets?: PlanetInfo[];
+  ascendantSign?: number;
 }
 
 const CLASSICAL_PLANETS = [
@@ -34,14 +38,130 @@ const CLASSICAL_PLANETS = [
   "Saturn",
 ];
 
+interface SouthCell {
+  sign: number;
+  row: number;
+  col: number;
+}
+
+const SOUTH_GRID_CELLS: SouthCell[] = [
+  // Row 1 (top): Pisces(12), Aries(1), Taurus(2), Gemini(3)
+  { sign: 12, row: 1, col: 1 },
+  { sign: 1, row: 1, col: 2 },
+  { sign: 2, row: 1, col: 3 },
+  { sign: 3, row: 1, col: 4 },
+
+  // Row 2: Aquarius(11), [CENTER 2x2], Cancer(4)
+  { sign: 11, row: 2, col: 1 },
+  { sign: 4, row: 2, col: 4 },
+
+  // Row 3: Capricorn(10), [CENTER 2x2], Leo(5)
+  { sign: 10, row: 3, col: 1 },
+  { sign: 5, row: 3, col: 4 },
+
+  // Row 4 (bottom): Sagittarius(9), Scorpio(8), Libra(7), Virgo(6)
+  { sign: 9, row: 4, col: 1 },
+  { sign: 8, row: 4, col: 2 },
+  { sign: 7, row: 4, col: 3 },
+  { sign: 6, row: 4, col: 4 },
+];
+
+const LAGNA_ASHTAKAVARGA_RULES: Record<string, number[]> = {
+  Sun: [3, 4, 6, 10, 11, 12],
+  Moon: [3, 6, 10, 11],
+  Mars: [1, 3, 6, 10, 11],
+  Mercury: [1, 2, 4, 6, 8, 10, 11],
+  Jupiter: [1, 2, 4, 5, 6, 7, 9, 10, 11],
+  Venus: [1, 2, 3, 4, 5, 8, 9, 11],
+  Saturn: [1, 3, 4, 6, 10, 11],
+  Lagna: [3, 6, 10, 11],
+};
+
+interface SingleAshtakavargaChartProps {
+  label: string;
+  bindus: Record<number, number>;
+  lagnaSign: number;
+  transitSign?: number | null;
+}
+
+function SingleAshtakavargaChart({
+  label,
+  bindus,
+  lagnaSign,
+  transitSign,
+}: SingleAshtakavargaChartProps) {
+  return (
+    <div className="w-full max-w-[260px] aspect-square mx-auto bg-white border border-slate-700 grid grid-cols-4 grid-rows-4 select-none shadow-2xs">
+      {SOUTH_GRID_CELLS.map((cell) => {
+        const isLagna = cell.sign === lagnaSign;
+        const isTransit =
+          transitSign !== undefined &&
+          transitSign !== null &&
+          cell.sign === transitSign;
+        const val = bindus[cell.sign] ?? 0;
+
+        return (
+          <div
+            key={cell.sign}
+            style={{
+              gridRowStart: cell.row,
+              gridColumnStart: cell.col,
+            }}
+            className={`border border-slate-700 flex items-center justify-center relative font-mono text-xs sm:text-sm transition-colors ${
+              isTransit
+                ? "bg-[#FFFF00] text-black font-bold"
+                : "bg-white text-slate-800 font-semibold"
+            }`}
+          >
+            {/* Lagna indicator diagonal mark in top-left corner */}
+            {isLagna && (
+              <svg
+                className="absolute top-0 left-0 w-3 h-3 text-slate-400 pointer-events-none"
+                viewBox="0 0 10 10"
+              >
+                <line
+                  x1="0"
+                  y1="9"
+                  x2="9"
+                  y2="0"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+              </svg>
+            )}
+
+            <span>{val}</span>
+          </div>
+        );
+      })}
+
+      {/* Merged 2x2 Center Box */}
+      <div
+        style={{
+          gridRow: "2 / span 2",
+          gridColumn: "2 / span 2",
+        }}
+        className="border border-slate-700 bg-white flex items-center justify-center p-1 text-center"
+      >
+        <span className="font-tamil text-sm sm:text-base font-bold text-slate-900 leading-tight">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function AshtakavargaSection({
   ashtakavarga,
   onCalculate,
   isCalculating,
+  transitPlanets,
+  natalPlanets,
+  ascendantSign,
 }: AshtakavargaSectionProps) {
   const { language, t } = useLanguage();
 
-  const [activeSubTab, setActiveSubTab] = useState<"sav" | "bav" | "matrix">("sav");
+  const [activeSubTab, setActiveSubTab] = useState<"charts" | "sav" | "bav" | "matrix">("charts");
   const [selectedPlanet, setSelectedPlanet] = useState<string>("Sun");
   const [shodhanaStage, setShodhanaStage] = useState<"raw" | "trikona" | "ekadhipatya" | "pinda">("raw");
 
@@ -93,6 +213,121 @@ export function AshtakavargaSection({
     classical_reference,
   } = ashtakavarga;
 
+  const effectiveLagna = ascendantSign || lagna_sign_index || 1;
+
+  // Transit position per planet
+  const transitSignsMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (!transitPlanets) return map;
+    for (const p of transitPlanets) {
+      if (p.name && p.sign_index) {
+        map[p.name] = p.sign_index;
+      }
+    }
+    return map;
+  }, [transitPlanets]);
+
+  // Compute Lagna Ashtakavarga Bindus (Standard BPHS 49 points)
+  const lagnaBindus = useMemo(() => {
+    const donorSigns: Record<string, number> = { Lagna: effectiveLagna };
+    if (natalPlanets) {
+      for (const p of natalPlanets) {
+        if (p.name && p.sign_index) {
+          donorSigns[p.name] = p.sign_index;
+        }
+      }
+    }
+
+    const result: Record<number, number> = {};
+    for (let s = 1; s <= 12; s++) result[s] = 0;
+
+    for (const [donor, houses] of Object.entries(LAGNA_ASHTAKAVARGA_RULES)) {
+      const sign = donorSigns[donor];
+      if (sign) {
+        for (const h of houses) {
+          const targetSign = ((sign - 1 + (h - 1)) % 12) + 1;
+          result[targetSign] = (result[targetSign] || 0) + 1;
+        }
+      }
+    }
+    return result;
+  }, [effectiveLagna, natalPlanets]);
+
+  // 9 Ashtakavarga Charts List in classical order
+  const chartsList = useMemo(() => {
+    const getSignMap = (rawMap?: Record<string | number, number>) => {
+      const res: Record<number, number> = {};
+      if (!rawMap) return res;
+      for (let s = 1; s <= 12; s++) {
+        res[s] = rawMap[String(s)] ?? rawMap[s] ?? 0;
+      }
+      return res;
+    };
+
+    return [
+      {
+        key: "sav",
+        label: language === "ta" ? "சர்வ" : "SAV",
+        bindus: getSignMap(sarvashtakavarga?.sign_bindus),
+        transitSign: null,
+      },
+      {
+        key: "Sun",
+        label: language === "ta" ? "சூரியன்" : "Sun",
+        bindus: getSignMap(bhinnashtakavarga["Sun"]?.sign_bindus),
+        transitSign: transitSignsMap["Sun"] ?? null,
+      },
+      {
+        key: "Moon",
+        label: language === "ta" ? "சந்திரன்" : "Moon",
+        bindus: getSignMap(bhinnashtakavarga["Moon"]?.sign_bindus),
+        transitSign: transitSignsMap["Moon"] ?? null,
+      },
+      {
+        key: "Mars",
+        label: language === "ta" ? "செவ்வாய்" : "Mars",
+        bindus: getSignMap(bhinnashtakavarga["Mars"]?.sign_bindus),
+        transitSign: transitSignsMap["Mars"] ?? null,
+      },
+      {
+        key: "Mercury",
+        label: language === "ta" ? "புதன்" : "Mercury",
+        bindus: getSignMap(bhinnashtakavarga["Mercury"]?.sign_bindus),
+        transitSign: transitSignsMap["Mercury"] ?? null,
+      },
+      {
+        key: "Jupiter",
+        label: language === "ta" ? "குரு" : "Jupiter",
+        bindus: getSignMap(bhinnashtakavarga["Jupiter"]?.sign_bindus),
+        transitSign: transitSignsMap["Jupiter"] ?? null,
+      },
+      {
+        key: "Venus",
+        label: language === "ta" ? "சுக்கிரன்" : "Venus",
+        bindus: getSignMap(bhinnashtakavarga["Venus"]?.sign_bindus),
+        transitSign: transitSignsMap["Venus"] ?? null,
+      },
+      {
+        key: "Saturn",
+        label: language === "ta" ? "சனி" : "Saturn",
+        bindus: getSignMap(bhinnashtakavarga["Saturn"]?.sign_bindus),
+        transitSign: transitSignsMap["Saturn"] ?? null,
+      },
+      {
+        key: "Lagna",
+        label: language === "ta" ? "ல" : "Lagna",
+        bindus: lagnaBindus,
+        transitSign: null,
+      },
+    ];
+  }, [
+    bhinnashtakavarga,
+    sarvashtakavarga,
+    lagnaBindus,
+    transitSignsMap,
+    language,
+  ]);
+
   const currentBav: PlanetBavDetail | undefined = bhinnashtakavarga[selectedPlanet];
 
   // Helper to extract bindus based on stage
@@ -133,17 +368,34 @@ export function AshtakavargaSection({
             <span>{classical_reference}</span>
           </span>
           <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-[#E2DCD5] text-[#475569]">
-            Lagna: {getRasiName(lagna_sign_index, language)} (Sign {lagna_sign_index})
+            Lagna: {getRasiName(effectiveLagna, language)} (Sign {effectiveLagna})
           </span>
         </div>
       </div>
 
       {/* 2. Sub-tab Navigation */}
-      <div className="border-b border-[#E2DCD5] flex items-center gap-2">
+      <div className="border-b border-[#E2DCD5] flex items-center gap-2 overflow-x-auto pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("charts")}
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+            activeSubTab === "charts"
+              ? "border-[#B8860B] text-[#784E0E] bg-[#FAF8F5]"
+              : "border-transparent text-[#475569] hover:text-[#0F172A]"
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <Grid className="w-3.5 h-3.5" />
+            <span>
+              {language === "ta" ? "அஷ்டகவர்க பரல்கள் (சக்கரங்கள்)" : "9 Ashtakavarga Charts"}
+            </span>
+          </div>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveSubTab("sav")}
-          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer ${
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer whitespace-nowrap ${
             activeSubTab === "sav"
               ? "border-[#B8860B] text-[#784E0E] bg-[#FAF8F5]"
               : "border-transparent text-[#475569] hover:text-[#0F172A]"
@@ -158,7 +410,7 @@ export function AshtakavargaSection({
         <button
           type="button"
           onClick={() => setActiveSubTab("bav")}
-          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer ${
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer whitespace-nowrap ${
             activeSubTab === "bav"
               ? "border-[#B8860B] text-[#784E0E] bg-[#FAF8F5]"
               : "border-transparent text-[#475569] hover:text-[#0F172A]"
@@ -173,7 +425,7 @@ export function AshtakavargaSection({
         <button
           type="button"
           onClick={() => setActiveSubTab("matrix")}
-          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer ${
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-t-lg transition-all border-b-2 cursor-pointer whitespace-nowrap ${
             activeSubTab === "matrix"
               ? "border-[#B8860B] text-[#784E0E] bg-[#FAF8F5]"
               : "border-transparent text-[#475569] hover:text-[#0F172A]"
@@ -185,6 +437,38 @@ export function AshtakavargaSection({
           </div>
         </button>
       </div>
+
+      {/* ========================================================= */}
+      {/* TAB 0: 9 ASHTAKAVARGA CHARTS (SOUTH INDIAN WITH TRANSITS) */}
+      {/* ========================================================= */}
+      {activeSubTab === "charts" && (
+        <div className="space-y-6 pt-1">
+          {/* Info note exactly matching reference */}
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-[#334155] font-medium py-1">
+            <div className="w-4 h-4 rounded-full bg-[#153F6B] text-white flex items-center justify-center shrink-0 text-[10px] font-serif font-bold">
+              i
+            </div>
+            <span>
+              {language === "ta"
+                ? "தற்போதைய கிரக நிலைகள் (கோச்சாரம்) சிறப்பித்துக் காட்டப்பட்டுள்ளன."
+                : "Current planetary positions (Transit) are highlighted."}
+            </span>
+          </div>
+
+          {/* 3x3 Grid of 9 South Indian Ashtakavarga Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 pt-2">
+            {chartsList.map((item) => (
+              <SingleAshtakavargaChart
+                key={item.key}
+                label={item.label}
+                bindus={item.bindus}
+                lagnaSign={effectiveLagna}
+                transitSign={item.transitSign}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* TAB 1: SARVASHTAKAVARGA (SAV)                             */}

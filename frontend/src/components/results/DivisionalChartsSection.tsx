@@ -475,9 +475,15 @@ export function DivisionalChartsSection({
                       </div>
                       <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                         {chartStyle === "south" ? (
-                          <SouthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                          <SouthIndianChart
+                            horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedHoroscopeId)}
+                          />
                         ) : (
-                          <NorthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                          <NorthIndianChart
+                            horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedHoroscopeId)}
+                          />
                         )}
                       </div>
                     </div>
@@ -493,9 +499,15 @@ export function DivisionalChartsSection({
                       </div>
                       <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                         {chartStyle === "south" ? (
-                          <SouthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                          <SouthIndianChart
+                            horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedHoroscopeId)}
+                          />
                         ) : (
-                          <NorthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                          <NorthIndianChart
+                            horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedHoroscopeId)}
+                          />
                         )}
                       </div>
                     </div>
@@ -512,9 +524,15 @@ export function DivisionalChartsSection({
                     </div>
                     <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                       {chartStyle === "south" ? (
-                        <SouthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                        <SouthIndianChart
+                          horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedHoroscopeId)}
+                        />
                       ) : (
-                        <NorthIndianChart horoscope={vargaData.d1_chart as unknown as HoroscopeResponse} />
+                        <NorthIndianChart
+                          horoscope={vargaData.d1_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedHoroscopeId)}
+                        />
                       )}
                     </div>
                   </div>
@@ -530,9 +548,15 @@ export function DivisionalChartsSection({
                     </div>
                     <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                       {chartStyle === "south" ? (
-                        <SouthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                        <SouthIndianChart
+                          horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedHoroscopeId)}
+                        />
                       ) : (
-                        <NorthIndianChart horoscope={vargaData.d9_chart as unknown as HoroscopeResponse} />
+                        <NorthIndianChart
+                          horoscope={vargaData.d9_chart as unknown as HoroscopeResponse}
+                          isSaved={Boolean(savedHoroscopeId)}
+                        />
                       )}
                     </div>
                   </div>
@@ -825,9 +849,15 @@ export function DivisionalChartsSection({
                       {/* Chart Render Canvas */}
                       <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8]">
                         {chartStyle === "south" ? (
-                          <SouthIndianChart horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse} />
+                          <SouthIndianChart
+                            horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedHoroscopeId)}
+                          />
                         ) : (
-                          <NorthIndianChart horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse} />
+                          <NorthIndianChart
+                            horoscope={selectedVargaItem.chart as unknown as HoroscopeResponse}
+                            isSaved={Boolean(savedHoroscopeId)}
+                          />
                         )}
                       </div>
                     </div>
