@@ -298,3 +298,173 @@ class SavedRemedyReportsListResponse(BaseModel):
     total_count: int
     reports: List[SavedRemedyReportResponse]
 
+
+# ==============================================================================
+# Kaveri Delta Navagraha Pilgrimage Circuit Schemas
+# ==============================================================================
+
+class PilgrimageTempleStop(BaseModel):
+    """An individual temple stop along a Navagraha pilgrimage circuit."""
+    order_in_day: int
+    code: str
+    graha: str
+    graha_name_en: str
+    graha_name_ta: str
+    name_en: str
+    name_ta: str
+    presiding_deity_en: str
+    presiding_deity_ta: str
+    place_name_en: str
+    place_name_ta: str
+    district_en: str
+    district_ta: str
+    latitude: float
+    longitude: float
+    visiting_time_window_en: str
+    visiting_time_window_ta: str
+    darshan_timings_en: str
+    darshan_timings_ta: str
+    special_ritual_en: str
+    special_ritual_ta: str
+    remedy_offerings_en: str
+    remedy_offerings_ta: str
+    distance_from_previous_km: float = 0.0
+    driving_minutes_from_previous: int = 0
+    is_chart_priority: bool = False
+    priority_level: Optional[str] = None  # "high", "essential", "moderate"
+    chart_priority_reason_en: Optional[str] = None
+    chart_priority_reason_ta: Optional[str] = None
+
+
+class PilgrimageDayPlan(BaseModel):
+    """Day itinerary in a multi-day or single-day pilgrimage."""
+    day_number: int
+    title_en: str
+    title_ta: str
+    base_camp_en: str
+    base_camp_ta: str
+    recommended_start_time: str
+    total_distance_km: float
+    estimated_travel_time_hours: float
+    temple_stops: List[PilgrimageTempleStop]
+    practical_tips_en: List[str] = Field(default_factory=list)
+    practical_tips_ta: List[str] = Field(default_factory=list)
+
+
+class PilgrimageCircuitResponse(BaseModel):
+    """Complete Navagraha Pilgrimage Circuit Itinerary."""
+    circuit_id: str
+    title_en: str
+    title_ta: str
+    summary_en: str
+    summary_ta: str
+    base_hub_en: str = "Kumbakonam"
+    base_hub_ta: str = "கும்பகோணம்"
+    total_temples: int = 9
+    total_distance_km: float
+    day_plans: List[PilgrimageDayPlan]
+    chart_priorities_present: bool = False
+    rahu_kalam_guidelines_en: str
+    rahu_kalam_guidelines_ta: str
+    dress_code_and_customs_en: str
+    dress_code_and_customs_ta: str
+
+
+class PersonalizedPilgrimageRequest(BaseModel):
+    """Request for generating a chart-aware Navagraha pilgrimage circuit."""
+    horoscope_id: Optional[str] = None
+    birth_date: Optional[str] = None
+    birth_time: Optional[str] = None
+    timezone: Optional[str] = "Asia/Kolkata"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    ayanamsa: Optional[int] = 0
+    chart_snapshot: Optional[Dict[str, Any]] = None
+    circuit_type: str = Field("2_day", description="'1_day_express', '2_day_comprehensive', 'chart_priority_only'")
+
+
+# ==============================================================================
+# Astrological Gemstone (Ratna) Advisory & Safety Schemas
+# ==============================================================================
+
+class GemstoneRecommendation(BaseModel):
+    """Classical gemstone prescription for a specific auspicious house ruler."""
+    category_code: str  # "life_stone", "lucky_stone", "fortune_stone"
+    category_name_en: str
+    category_name_ta: str
+    governing_purpose_en: str
+    governing_purpose_ta: str
+    graha: str
+    graha_name_en: str
+    graha_name_ta: str
+    house_lordships: List[int]
+    primary_gem_en: str
+    primary_gem_ta: str
+    primary_gem_sanskrit: str
+    upratna_substitutes_en: List[str]
+    upratna_substitutes_ta: List[str]
+    prescribed_metal_en: str
+    prescribed_metal_ta: str
+    ideal_finger_en: str
+    ideal_finger_ta: str
+    minimum_carats: float
+    energization_day_en: str
+    energization_day_ta: str
+    consecration_mantra_sanskrit: str
+    consecration_mantra_ta: str
+    cleansing_vidhi_en: str
+    cleansing_vidhi_ta: str
+    safety_status: str  # "auspicious", "caution_required", "prohibited"
+    is_eligible: bool
+    astrological_justification_en: str
+    astrological_justification_ta: str
+    incompatible_gems_warning_en: Optional[str] = None
+    incompatible_gems_warning_ta: Optional[str] = None
+
+
+class ProhibitedGemstoneItem(BaseModel):
+    """Gemstone strictly prohibited due to Dusthana, Maraka, or functional malefic status."""
+    graha: str
+    graha_name_en: str
+    graha_name_ta: str
+    primary_gem_en: str
+    primary_gem_ta: str
+    reason_en: str
+    reason_ta: str
+    dusthana_houses_ruled: List[int] = Field(default_factory=list)
+    is_functional_malefic: bool = True
+    safe_alternative_en: str
+    safe_alternative_ta: str
+
+
+class GemstoneAdvisoryResponse(BaseModel):
+    """Complete 3-pillar gemstone prescription and safety audit for a native."""
+    lagna_sign: str
+    moon_sign: Optional[str] = None
+    running_mahadasha: Optional[str] = None
+    running_bhukti: Optional[str] = None
+    life_stone: GemstoneRecommendation
+    lucky_stone: GemstoneRecommendation
+    fortune_stone: GemstoneRecommendation
+    prohibited_gemstones: List[ProhibitedGemstoneItem] = Field(default_factory=list)
+    conflicting_combinations_warning_en: List[str] = Field(default_factory=list)
+    conflicting_combinations_warning_ta: List[str] = Field(default_factory=list)
+    general_wearing_rules_en: List[str] = Field(default_factory=list)
+    general_wearing_rules_ta: List[str] = Field(default_factory=list)
+    mandatory_review_notice_en: str
+    mandatory_review_notice_ta: str
+
+
+class GemstoneAdvisoryRequest(BaseModel):
+    """Payload to request gemstone prescription and safety audit."""
+    ascendant_sign: Optional[str] = None
+    horoscope_id: Optional[str] = None
+    birth_date: Optional[str] = None
+    birth_time: Optional[str] = None
+    timezone: Optional[str] = "Asia/Kolkata"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    ayanamsa: Optional[int] = 0
+    chart_snapshot: Optional[Dict[str, Any]] = None
+
+

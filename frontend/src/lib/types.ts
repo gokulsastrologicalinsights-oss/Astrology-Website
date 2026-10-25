@@ -3065,6 +3065,165 @@ export interface SavedRemedyReportsListResponse {
   reports: SavedRemedyReportResponse[];
 }
 
+
+// ─── Kaveri Delta Navagraha Pilgrimage Circuit Types ──────────────────────────
+
+export interface PilgrimageTempleStop {
+  order_in_day: number;
+  code: string;
+  graha: string;
+  graha_name_en: string;
+  graha_name_ta: string;
+  name_en: string;
+  name_ta: string;
+  presiding_deity_en: string;
+  presiding_deity_ta: string;
+  place_name_en: string;
+  place_name_ta: string;
+  district_en: string;
+  district_ta: string;
+  latitude: number;
+  longitude: number;
+  visiting_time_window_en: string;
+  visiting_time_window_ta: string;
+  darshan_timings_en: string;
+  darshan_timings_ta: string;
+  special_ritual_en: string;
+  special_ritual_ta: string;
+  remedy_offerings_en: string;
+  remedy_offerings_ta: string;
+  distance_from_previous_km: number;
+  driving_minutes_from_previous: number;
+  is_chart_priority: boolean;
+  priority_level?: "high" | "essential" | "moderate" | null;
+  chart_priority_reason_en?: string | null;
+  chart_priority_reason_ta?: string | null;
+}
+
+export interface PilgrimageDayPlan {
+  day_number: number;
+  title_en: string;
+  title_ta: string;
+  base_camp_en: string;
+  base_camp_ta: string;
+  recommended_start_time: string;
+  total_distance_km: number;
+  estimated_travel_time_hours: number;
+  temple_stops: PilgrimageTempleStop[];
+  practical_tips_en: string[];
+  practical_tips_ta: string[];
+}
+
+export interface PilgrimageCircuitResponse {
+  circuit_id: string;
+  title_en: string;
+  title_ta: string;
+  summary_en: string;
+  summary_ta: string;
+  base_hub_en: string;
+  base_hub_ta: string;
+  total_temples: number;
+  total_distance_km: number;
+  day_plans: PilgrimageDayPlan[];
+  chart_priorities_present: boolean;
+  rahu_kalam_guidelines_en: string;
+  rahu_kalam_guidelines_ta: string;
+  dress_code_and_customs_en: string;
+  dress_code_and_customs_ta: string;
+}
+
+export interface PersonalizedPilgrimageRequest {
+  horoscope_id?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  ayanamsa?: number;
+  chart_snapshot?: Record<string, any>;
+  circuit_type?: "1_day_express" | "2_day" | string;
+}
+
+
+// ─── Astrological Gemstone (Ratna) Advisory Types ────────────────────────────
+
+export interface GemstoneRecommendation {
+  category_code: "life_stone" | "lucky_stone" | "fortune_stone" | string;
+  category_name_en: string;
+  category_name_ta: string;
+  governing_purpose_en: string;
+  governing_purpose_ta: string;
+  graha: string;
+  graha_name_en: string;
+  graha_name_ta: string;
+  house_lordships: number[];
+  primary_gem_en: string;
+  primary_gem_ta: string;
+  primary_gem_sanskrit: string;
+  upratna_substitutes_en: string[];
+  upratna_substitutes_ta: string[];
+  prescribed_metal_en: string;
+  prescribed_metal_ta: string;
+  ideal_finger_en: string;
+  ideal_finger_ta: string;
+  minimum_carats: number;
+  energization_day_en: string;
+  energization_day_ta: string;
+  consecration_mantra_sanskrit: string;
+  consecration_mantra_ta: string;
+  cleansing_vidhi_en: string;
+  cleansing_vidhi_ta: string;
+  safety_status: "auspicious" | "caution_required" | "prohibited" | string;
+  is_eligible: boolean;
+  astrological_justification_en: string;
+  astrological_justification_ta: string;
+  incompatible_gems_warning_en?: string | null;
+  incompatible_gems_warning_ta?: string | null;
+}
+
+export interface ProhibitedGemstoneItem {
+  graha: string;
+  graha_name_en: string;
+  graha_name_ta: string;
+  primary_gem_en: string;
+  primary_gem_ta: string;
+  reason_en: string;
+  reason_ta: string;
+  dusthana_houses_ruled: number[];
+  is_functional_malefic: boolean;
+  safe_alternative_en: string;
+  safe_alternative_ta: string;
+}
+
+export interface GemstoneAdvisoryResponse {
+  lagna_sign: string;
+  moon_sign?: string | null;
+  running_mahadasha?: string | null;
+  running_bhukti?: string | null;
+  life_stone: GemstoneRecommendation;
+  lucky_stone: GemstoneRecommendation;
+  fortune_stone: GemstoneRecommendation;
+  prohibited_gemstones: ProhibitedGemstoneItem[];
+  conflicting_combinations_warning_en: string[];
+  conflicting_combinations_warning_ta: string[];
+  general_wearing_rules_en: string[];
+  general_wearing_rules_ta: string[];
+  mandatory_review_notice_en: string;
+  mandatory_review_notice_ta: string;
+}
+
+export interface GemstoneAdvisoryRequest {
+  ascendant_sign?: string;
+  horoscope_id?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  ayanamsa?: number;
+  chart_snapshot?: Record<string, any>;
+}
+
 export interface SthanaBalaSub {
   uchcha_bala: number;
   saptavargaja_bala: number;

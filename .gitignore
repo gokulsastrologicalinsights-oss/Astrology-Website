@@ -42,6 +42,7 @@ target/
 
 # PDF sample artifacts
 sample_kp_*.pdf
+docs/*.pdf
 
 # System & IDE
 .DS_Store

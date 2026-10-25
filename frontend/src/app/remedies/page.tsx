@@ -27,6 +27,8 @@ import {
   RemedyAnalysisResponse,
 } from "@/lib/types";
 import { PersonalizedRemedySection } from "@/components/remedies/PersonalizedRemedySection";
+import { PilgrimageCircuitView } from "@/components/remedies/PilgrimageCircuitView";
+import { GemstoneAdvisoryView } from "@/components/remedies/GemstoneAdvisoryView";
 import {
   Flame,
   Compass,
@@ -84,7 +86,7 @@ function RemediesHubContent() {
 
   // Active tab state
   const [activeTab, setActiveTab] = useState<
-    "analysis" | "taxonomy" | "catalog" | "temples" | "eligibility" | "sources"
+    "analysis" | "taxonomy" | "catalog" | "temples" | "pilgrimage" | "gemstones" | "eligibility" | "sources"
   >(() => {
     return horoscopeId ? "analysis" : "taxonomy";
   });
@@ -500,6 +502,46 @@ function RemediesHubContent() {
           </span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-100 text-rose-900">
             {temples.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("pilgrimage")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === "pilgrimage"
+              ? "bg-white text-[#102A4C] shadow-2xs border border-[#DDE5F0]"
+              : "text-[#52667E] hover:text-[#102A4C]"
+          }`}
+        >
+          <Compass className="w-4 h-4 text-[#8B6914]" />
+          <span>
+            {language === "ta"
+              ? "நவக்கிரக யாத்திரை (சுற்றுலா)"
+              : "Navagraha Pilgrimage Circuit"}
+          </span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-900 font-bold">
+            New
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("gemstones")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === "gemstones"
+              ? "bg-white text-[#102A4C] shadow-2xs border border-[#DDE5F0]"
+              : "text-[#52667E] hover:text-[#102A4C]"
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-emerald-600" />
+          <span>
+            {language === "ta"
+              ? "ரத்தின ஆலோசனை & பாதுகாப்பு"
+              : "Gemstone Prescription & Safety"}
+          </span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-900 font-bold">
+            New
           </span>
         </button>
 
@@ -1143,6 +1185,26 @@ function RemediesHubContent() {
             })}
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: Kaveri Delta Navagraha Pilgrimage Circuit Planner */}
+      {/* ========================================================================= */}
+      {!loading && activeTab === "pilgrimage" && (
+        <PilgrimageCircuitView
+          analysisResult={analysisResult}
+          horoscopeId={horoscopeId}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: Astrological Gemstone (Ratna) Advisory & Safety Audit */}
+      {/* ========================================================================= */}
+      {!loading && activeTab === "gemstones" && (
+        <GemstoneAdvisoryView
+          analysisResult={analysisResult}
+          horoscopeId={horoscopeId}
+        />
       )}
 
       {/* ========================================================================= */}

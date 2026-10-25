@@ -85,6 +85,10 @@ import {
   SaveRemedyReportRequest,
   SavedRemedyReportResponse,
   SavedRemedyReportsListResponse,
+  PilgrimageCircuitResponse,
+  PersonalizedPilgrimageRequest,
+  GemstoneAdvisoryResponse,
+  GemstoneAdvisoryRequest,
   UnifiedMarriageRequest,
   UnifiedMarriageResponse,
   MarriageCompatibilityRequest,
@@ -1406,6 +1410,38 @@ export async function listRemedyReportsForHoroscope(
       },
     }
   );
+}
+
+export async function getPilgrimageCircuits(): Promise<PilgrimageCircuitResponse[]> {
+  return request<PilgrimageCircuitResponse[]>("/api/v1/remedies/pilgrimage/circuits");
+}
+
+export async function getPersonalizedPilgrimageCircuit(
+  req: PersonalizedPilgrimageRequest,
+  token?: string
+): Promise<PilgrimageCircuitResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<PilgrimageCircuitResponse>("/api/v1/remedies/pilgrimage/personalized", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getGemstoneAdvisory(
+  req: GemstoneAdvisoryRequest,
+  token?: string
+): Promise<GemstoneAdvisoryResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<GemstoneAdvisoryResponse>("/api/v1/remedies/gemstones/advisory", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
 }
 
 

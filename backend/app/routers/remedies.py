@@ -31,11 +31,17 @@ from app.schemas.remedies import (
     SaveRemedyReportRequest,
     SavedRemedyReportResponse,
     SavedRemedyReportsListResponse,
+    PilgrimageCircuitResponse,
+    PersonalizedPilgrimageRequest,
+    GemstoneAdvisoryResponse,
+    GemstoneAdvisoryRequest,
 )
 from app.services.remedy_engine.repository import remedy_repository
 from app.services.remedy_engine.validation import RemedyValidator
 from app.services.remedy_engine.eligibility import RemedyEligibilityEngine
 from app.services.remedy_engine.analysis import generate_remedy_analysis
+from app.services.remedy_engine.pilgrimage import PilgrimageCircuitEngine
+from app.services.remedy_engine.gemstone_advisory import GemstoneAdvisoryEngine
 from datetime import date
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.ephemeris import calculate_full_horoscope
@@ -448,4 +454,219 @@ async def list_reports_for_horoscope(
         total_count=len(reports),
         reports=[SavedRemedyReportResponse(**r) for r in reports],
     )
+
+
+# ------------------------------------------------------------------------------
+# 8. Kaveri Delta Navagraha Pilgrimage Circuit Endpoints
+# ------------------------------------------------------------------------------
+
+@router.get(
+    "/pilgrimage/circuits",
+    response_model=List[PilgrimageCircuitResponse],
+    summary="Get Standard Navagraha Pilgrimage Circuits",
+)
+async def get_pilgrimage_circuits() -> List[PilgrimageCircuitResponse]:
+    """Returns classical 1-Day Express and 2-Day Comprehensive Navagraha pilgrimage circuits."""
+    return PilgrimageCircuitEngine.get_standard_circuits()
+
+
+@router.post(
+    "/pilgrimage/personalized",
+    response_model=PilgrimageCircuitResponse,
+    summary="Get Chart-Aware Prioritized Pilgrimage Circuit",
+)
+async def get_personalized_pilgrimage_circuit(
+    request: PersonalizedPilgrimageRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> PilgrimageCircuitResponse:
+    """Evaluates native's chart afflictions, Dasha periods, and Doshas to prioritize specific sthalams."""
+    chart_context: Dict[str, Any] = {}
+
+    # Case 1: Provided snapshot
+    if request.chart_snapshot and isinstance(request.chart_snapshot, dict):
+        chart_data = request.chart_snapshot.get("horoscope") or request.chart_snapshot
+        chart_context["running_mahadasha"] = request.chart_snapshot.get("running_mahadasha")
+        chart_context["running_bhukti"] = request.chart_snapshot.get("running_bhukti")
+    # Case 2: Saved horoscope ID
+    elif request.horoscope_id:
+        clean_id = _validate_uuid(request.horoscope_id)
+        supabase = get_supabase_client()
+        row = None
+        if supabase:
+            try:
+                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+                if resp.data:
+                    row = resp.data[0]
+            except Exception as err:
+                logger.warning(f"Error fetching horoscope {clean_id}: {err}")
+        if row:
+            calc_res = row.get("calculation_result") or {}
+            chart_data = calc_res.get("horoscope")
+            dasa_res = calc_res.get("dasa") or {}
+            if dasa_res.get("current_dasa"):
+                chart_context["running_mahadasha"] = dasa_res["current_dasa"].get("lord")
+                chart_context["running_bhukti"] = dasa_res["current_dasa"].get("bhukti_lord")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Horoscope {clean_id} not found.",
+            )
+    # Case 3: Live birth inputs
+    elif request.birth_date and request.birth_time and request.latitude is not None and request.longitude is not None:
+        computed = calculate_full_horoscope(
+            birth_date=request.birth_date,
+            birth_time=request.birth_time,
+            timezone_str=request.timezone or "Asia/Kolkata",
+            latitude=request.latitude,
+            longitude=request.longitude,
+            ayanamsa_id=request.ayanamsa or 0,
+        )
+        chart_data = computed.model_dump()
+        try:
+            b_in = BirthInput(
+                birth_date=request.birth_date,
+                birth_time=request.birth_time,
+                timezone=request.timezone or "Asia/Kolkata",
+                latitude=request.latitude,
+                longitude=request.longitude,
+            )
+            d_res = calculate_dasa(b_in, target_date=date.today())
+            d_dict = d_res.model_dump()
+            if d_dict.get("current_dasa"):
+                chart_context["running_mahadasha"] = d_dict["current_dasa"].get("lord")
+                chart_context["running_bhukti"] = d_dict["current_dasa"].get("bhukti_lord")
+        except Exception:
+            pass
+    else:
+        # Fall back to standard circuit without chart priorities
+        return (
+            PilgrimageCircuitEngine.build_1_day_express_circuit()
+            if request.circuit_type == "1_day_express"
+            else PilgrimageCircuitEngine.build_2_day_comprehensive_circuit()
+        )
+
+    # Extract planets context for priority resolution
+    planets_list = chart_data.get("planets", [])
+    debilitated = []
+    combust = []
+    for p in planets_list:
+        p_name = (p.get("name") or "").lower()
+        if p.get("is_debilitated"):
+            debilitated.append(p_name)
+        if p.get("is_combust"):
+            combust.append(p_name)
+    chart_context["debilitated_planets"] = debilitated
+    chart_context["combust_planets"] = combust
+
+    # Kuja Dosha
+    doshas = chart_data.get("doshas") or {}
+    if doshas.get("manglik") or doshas.get("kuja_dosha"):
+        chart_context["kuja_dosha_status"] = "present"
+
+    return PilgrimageCircuitEngine.generate_personalized_circuit(
+        chart_context=chart_context,
+        circuit_type=request.circuit_type,
+    )
+
+
+# ------------------------------------------------------------------------------
+# 9. Astrological Gemstone (Ratna) Advisory & Safety Endpoints
+# ------------------------------------------------------------------------------
+
+@router.post(
+    "/gemstones/advisory",
+    response_model=GemstoneAdvisoryResponse,
+    summary="Get Astrological Gemstone Prescription & Safety Audit",
+)
+async def get_gemstone_advisory(
+    request: GemstoneAdvisoryRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> GemstoneAdvisoryResponse:
+    """Evaluates 3-pillar gemstone recommendations (Life, Lucky, Fortune) and classical Dusthana prohibitions."""
+    lagna_sign = request.ascendant_sign
+    moon_sign: Optional[str] = None
+    mahadasha: Optional[str] = None
+    bhukti: Optional[str] = None
+
+    if not lagna_sign and request.horoscope_id:
+        clean_id = _validate_uuid(request.horoscope_id)
+        supabase = get_supabase_client()
+        row = None
+        if supabase:
+            try:
+                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+                if resp.data:
+                    row = resp.data[0]
+            except Exception as err:
+                logger.warning(f"Error fetching horoscope {clean_id}: {err}")
+        if row:
+            calc_res = row.get("calculation_result") or {}
+            horo = calc_res.get("horoscope") or {}
+            asc_info = horo.get("ascendant", {})
+            lagna_sign = asc_info.get("sign") or row.get("ascendant_sign")
+            moon_info = next((p for p in horo.get("planets", []) if p.get("name") == "Moon"), {})
+            moon_sign = moon_info.get("sign")
+            dasa_res = calc_res.get("dasa") or {}
+            if dasa_res.get("current_dasa"):
+                mahadasha = dasa_res["current_dasa"].get("lord")
+                bhukti = dasa_res["current_dasa"].get("bhukti_lord")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Horoscope {clean_id} not found.",
+            )
+
+    if not lagna_sign and request.birth_date and request.birth_time and request.latitude is not None and request.longitude is not None:
+        computed = calculate_full_horoscope(
+            birth_date=request.birth_date,
+            birth_time=request.birth_time,
+            timezone_str=request.timezone or "Asia/Kolkata",
+            latitude=request.latitude,
+            longitude=request.longitude,
+            ayanamsa_id=request.ayanamsa or 0,
+        )
+        lagna_sign = computed.ascendant.sign_name
+        moon_obj = next((p for p in computed.planets if p.name == "Moon"), None)
+        moon_sign = moon_obj.sign_name if moon_obj else None
+        try:
+            b_in = BirthInput(
+                birth_date=request.birth_date,
+                birth_time=request.birth_time,
+                timezone=request.timezone or "Asia/Kolkata",
+                latitude=request.latitude,
+                longitude=request.longitude,
+            )
+            d_res = calculate_dasa(b_in, target_date=date.today())
+            d_dict = d_res.model_dump()
+            if d_dict.get("current_dasa"):
+                mahadasha = d_dict["current_dasa"].get("lord")
+                bhukti = d_dict["current_dasa"].get("bhukti_lord")
+        except Exception:
+            pass
+
+    if not lagna_sign:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Ascendant sign (Lagna) is required to calculate gemstone advisory.",
+        )
+
+    # Normalize lagna sign
+    lagna_clean = lagna_sign.strip().capitalize()
+    valid_lagnas = [
+        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    ]
+    if lagna_clean not in valid_lagnas:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid ascendant sign: '{lagna_sign}'. Must be one of Aries through Pisces.",
+        )
+
+    return GemstoneAdvisoryEngine.evaluate_advisory(
+        lagna_sign=lagna_clean,
+        moon_sign=moon_sign,
+        running_mahadasha=mahadasha,
+        running_bhukti=bhukti,
+    )
+
 
