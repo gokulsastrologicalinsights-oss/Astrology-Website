@@ -269,7 +269,7 @@ export default function HoroscopeFormPage() {
         includeOuterPlanets,
       });
 
-      // Automatic Saving Workflow
+      // Automatic Saving Workflow (Server authoritatively authenticates via session cookie)
       let savedId: string | undefined = undefined;
       let displayNumber: number | undefined = undefined;
       let isSaved = false;
@@ -277,46 +277,49 @@ export default function HoroscopeFormPage() {
 
       const idempotencyKey = `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      if (isAuthenticated) {
-        try {
-          const compactedSnapshot = prepareCalculationSnapshot(fullResult, idempotencyKey);
-          const saveRes = await fetch("/api/horoscopes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              idempotency_key: idempotencyKey,
-              person_name: fullName.trim(),
-              customer_full_name: fullName.trim(),
-              birth_date: birthDate,
-              customer_phone: customerPhone.trim(),
-              country_code: countryCode,
-              customer_id: customerId || undefined,
-              birth_time: formattedTime,
-              timezone: timezone.trim(),
-              birthplace: locationQuery.trim() || `Coordinates: ${latitude}, ${longitude}`,
-              latitude: Number(latitude),
-              longitude: Number(longitude),
-              ayanamsa_id: selectedAyanamsa,
-              house_system_id: selectedHouseSystem,
-              calculation_result: compactedSnapshot,
-            }),
-          });
+      try {
+        const compactedSnapshot = prepareCalculationSnapshot(fullResult, idempotencyKey);
+        const saveRes = await fetch("/api/horoscopes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idempotency_key: idempotencyKey,
+            person_name: fullName.trim(),
+            customer_full_name: fullName.trim(),
+            birth_date: birthDate,
+            customer_phone: customerPhone.trim(),
+            country_code: countryCode,
+            customer_id: customerId || undefined,
+            birth_time: formattedTime,
+            timezone: timezone.trim(),
+            birthplace: locationQuery.trim() || `Coordinates: ${latitude}, ${longitude}`,
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+            ayanamsa_id: selectedAyanamsa,
+            house_system_id: selectedHouseSystem,
+            calculation_result: compactedSnapshot,
+          }),
+        });
 
-          if (saveRes.ok) {
-            const saveData = await saveRes.json();
-            if (saveData.horoscope) {
-              savedId = saveData.horoscope.id;
-              displayNumber = saveData.horoscope.display_number;
-              isSaved = true;
-            }
+        if (saveRes.ok) {
+          const saveData = await saveRes.json();
+          if (saveData.horoscope) {
+            savedId = saveData.horoscope.id;
+            displayNumber = saveData.horoscope.display_number;
+            isSaved = true;
+          }
+        } else {
+          const errData = await saveRes.json().catch(() => ({}));
+          // If 401 unauthorized, user is simply an unauthenticated guest; don't report error
+          if (saveRes.status === 401) {
+            saveErrorMsg = undefined;
           } else {
-            const errData = await saveRes.json().catch(() => ({}));
             saveErrorMsg = errData.error || "Automatic save failed.";
           }
-        } catch (saveErr) {
-          console.warn("Auto-save attempt failed:", saveErr);
-          saveErrorMsg = "Network error during automatic save.";
         }
+      } catch (saveErr: any) {
+        console.warn("Auto-save attempt failed:", saveErr);
+        saveErrorMsg = saveErr?.message || "Network error during automatic save.";
       }
 
       const finalResult = {

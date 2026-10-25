@@ -26,7 +26,7 @@ A comprehensive, strictly read-only technical, astronomical, and licensing audit
 │ 3. UI Pages & Workspace Tabs │ ✅ READY               │ 0 TS Errors    │
 │ 4. Authentication & Security │ ✅ READY               │ RLS / Bearer   │
 │ 5. Supabase Persistence      │ ⚠️ PARTIALLY READY     │ Migration Gap  │
-│ 6. Reports & PDF Generation  │ ⚠️ PARTIALLY READY     │ Print-Only     │
+│ 6. Reports & PDF Generation  │ ✅ READY               │ 6-Page Bilingual PDF │
 │ 7. Ephemeris Licensing       │ ⚠️ PARTIALLY READY     │ AGPL Duality   │
 │ 8. Production Deployment     │ ❌ NOT READY           │ Not Deployed   │
 └──────────────────────────────┴────────────────────────┴────────────────┘
@@ -62,7 +62,7 @@ The following table distinguishes features that are **implemented in code**, **c
 | **12** | **KP Transit Timeline** | Yes | Yes | Yes | Yes | No | **Implemented & Validated.** Tracks exact boundary ingress/egress timestamps across Rashi, Nakshatra, and KP Sub-Lord divisions over 7–30 day forecasting windows. |
 | **13** | **KP Event Prediction Engine** | Yes | Yes | Yes | Yes | No | **Implemented & Validated.** Evaluates 110 life events in `EVENT_REGISTRY`. Evaluates promise, DBA filtering, Moon transit date scanning, and Ascendant time-window bisection ($\pm 0.5$s tolerance). |
 | **14** | **English & Tamil Web Reports** | Yes | Yes | Yes | Partial | No | **Partially Implemented.** Web UI renders bilingual tabs and tables. However, some Tamil translation keys in `translations.ts` have corrupted/placeholder strings. |
-| **15** | **Server-side PDF Generation** | No | No | No | No | No | **NOT IMPLEMENTED for KP.** Dedicated 9-page ReportLab PDF generation exists only for Vedic horoscopes (`/api/v1/reports/horoscope/pdf`). KP module relies on client-side `window.print()`, CSV, and JSON. |
+| **15** | **Server-side PDF Generation** | Yes | Yes | Yes | Yes | No | **Implemented & Validated.** Dedicated 6-page bilingual ReportLab PDF generator implemented for both Natal KP and Horary (1–249) charts (`/api/v1/reports/kp/pdf`), featuring dual vector charts (Nirayana Rasi & Placidus Bhava Chalit), CSL promise arbiter, 4-tier ABCD significators, Ruling Planets, 5-level Vimshottari dasa, KP event matrix, and certified SHA-256 seal. |
 | **16** | **Supabase DB Persistence** | Partial | Yes | Yes | Partial | No | **Partially Operational.** `kp_event_analyses` table is migrated and live on Supabase. `saved_kp_charts` migration exists locally but **has not been applied** to the remote Supabase database (uses in-memory fallback). |
 | **17** | **Authentication & Security** | Yes | Yes | Yes | Yes | No | **Implemented & Validated.** Endpoints enforce Supabase Auth Bearer tokens, user ID isolation, customer CRM deduplication, and administrative override roles. |
 | **18** | **Production Cloud Deployment** | No | No | No | No | No | **NOT DEPLOYED.** Local environment variables (`127.0.0.1:8000`), local CORS origins, no remote git origin, and no cloud deployment manifests present. |

@@ -13,9 +13,11 @@ from app.schemas.kp import (
     TransitTimelineRequest,
     TransitTimelineResponse,
 )
+from app.schemas.pdf_report import KpPdfReportRequest
 from app.services.kp_service import calculate_kp_chart, calculate_horary_chart
 from app.services.kp_transit_timeline import compute_transit_timeline
 from app.services.auth_service import get_current_user
+from app.routers.pdf_reports import get_optional_current_user
 from app.services.kp_engine.kp_chart_repository import (
     save_kp_chart,
     list_kp_charts,
@@ -171,4 +173,25 @@ def get_transit_timeline(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="KP Transit Timeline calculation failed.",
         )
+
+
+# 8. KP PDF Report Generation Endpoints
+@router.post("/kp/pdf", summary="Generate dedicated 6-page bilingual KP Astrology PDF report")
+async def generate_kp_pdf_direct(
+    request: KpPdfReportRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+):
+    from app.routers.pdf_reports import generate_kp_pdf_endpoint
+    return await generate_kp_pdf_endpoint(request, current_user=current_user)
+
+
+@router.get("/kp/charts/{chart_id}/pdf", summary="Download a 6-page KP PDF report by saved ID")
+async def download_kp_chart_pdf_direct(
+    chart_id: str,
+    language: str = "en",
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+):
+    from app.routers.pdf_reports import download_kp_pdf_by_id_endpoint
+    return await download_kp_pdf_by_id_endpoint(chart_id, language=language, current_user=current_user)
+
 

@@ -17,8 +17,9 @@
     "test:d1-d9": "node scripts/test-d1-d9.mjs",
     "test:dosha": "node scripts/test-dosha-ui-integration.mjs && node scripts/test-dosha-persistence-and-restoration.mjs",
     "test:marriage-prediction": "node scripts/test-marriage-prediction-frontend.mjs",
+    "test:predictions": "node scripts/test-predictions-engine-frontend.mjs",
     "test:medical-astrology": "node --experimental-strip-types scripts/test-medical-astrology-frontend.mjs",
-    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs && node scripts/test-transit-watch.mjs && node scripts/test-d1-d9.mjs && node scripts/test-dosha-ui-integration.mjs && node scripts/test-dosha-persistence-and-restoration.mjs && node --experimental-strip-types scripts/test-medical-astrology-frontend.mjs"
+    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs && node scripts/test-transit-watch.mjs && node scripts/test-d1-d9.mjs && node scripts/test-dosha-ui-integration.mjs && node scripts/test-dosha-persistence-and-restoration.mjs && node scripts/test-predictions-engine-frontend.mjs && node --experimental-strip-types scripts/test-medical-astrology-frontend.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

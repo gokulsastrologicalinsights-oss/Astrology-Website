@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { SavedKpChartRecord } from "@/lib/types";
-import { listSavedKpCharts, deleteSavedKpChart } from "@/lib/api";
+import { listSavedKpCharts, deleteSavedKpChart, downloadSavedKpPdf } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import {
   FolderOpen,
@@ -14,6 +14,8 @@ import {
   Compass,
   AlertCircle,
   RefreshCw,
+  FileDown,
+  Loader2,
 } from "lucide-react";
 
 interface SavedKpRecordsListProps {
@@ -33,6 +35,29 @@ export function SavedKpRecordsList({
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = async (record: SavedKpChartRecord, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!session?.access_token) return;
+    setDownloadingId(record.id);
+    try {
+      const blob = await downloadSavedKpPdf(record.id, language, session.access_token);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `KP_${record.chart_type === "horary" ? "Horary" : "Natal"}_${record.display_number}_Report.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Failed to download KP PDF:", err);
+      alert(err?.message || "Failed to download PDF report.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const fetchRecords = async () => {
     if (!session?.access_token) return;
@@ -215,6 +240,20 @@ export function SavedKpRecordsList({
                     </td>
                     <td className="px-3 py-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          disabled={downloadingId === r.id}
+                          onClick={(e) => handleDownloadPdf(r, e)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#FAF6EC] border border-[#D8BD80] text-[#8C6D23] hover:bg-[#F3E7C4] transition-colors disabled:opacity-50"
+                          title="Download 6-page KP PDF report"
+                        >
+                          {downloadingId === r.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <FileDown className="w-3.5 h-3.5" />
+                          )}
+                          <span>PDF</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => onOpenRecord(r)}

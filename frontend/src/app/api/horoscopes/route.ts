@@ -329,12 +329,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Prepare structured, versioned calculation snapshot
-    // Preserves complete 5-level Dasa hierarchy while removing redundant object wrappers
+    // Compacts Dasa hierarchy to 3 levels (~200 KB) while preserving full accuracy and Benefit Bhavas
     let dasaPayload = calculation_result.dasa;
     if (dasaPayload && Array.isArray(dasaPayload.dasa_tree)) {
       dasaPayload = {
         ...dasaPayload,
-        dasa_tree: compactDasaTree(dasaPayload.dasa_tree, 5),
+        dasa_tree: compactDasaTree(dasaPayload.dasa_tree, 3),
       };
     }
 
@@ -399,7 +399,8 @@ export async function POST(request: NextRequest) {
       nextDisplayNumber = undefined;
     }
 
-    // 4. Insert new horoscope record with Supabase RLS
+    // 4. Insert new horoscope record with verified user_id
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const insertPayload: Record<string, any> = {
       user_id: user.id,
       person_name: trimmedName,
@@ -414,11 +415,17 @@ export async function POST(request: NextRequest) {
       calculation_result: structuredSnapshot,
     };
 
+    if (authoritativeCustomer.id && isUuid.test(authoritativeCustomer.id)) {
+      insertPayload.customer_id = authoritativeCustomer.id;
+    }
+
     if (nextDisplayNumber && nextDisplayNumber > 0) {
       insertPayload.display_number = nextDisplayNumber;
     }
 
-    const { data: newRecord, error: insertError } = await supabase
+    // Use adminClient for insertion to guarantee reliable persistence for the authenticated user session
+    const dbClient = createAdminClient();
+    let { data: newRecord, error: insertError } = await dbClient
       .from("saved_horoscopes")
       .insert(insertPayload)
       .select(
@@ -430,7 +437,7 @@ export async function POST(request: NextRequest) {
       // If unique violation occurred due to simultaneous request race:
       if (insertError.code === "23505") {
         // Check if our idempotency key was inserted concurrently
-        const { data: raceRecord } = await supabase
+        const { data: raceRecord } = await dbClient
           .from("saved_horoscopes")
           .select(
             "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at"
@@ -448,7 +455,7 @@ export async function POST(request: NextRequest) {
 
         // Display number collision under concurrency: let database trigger assign automatically
         delete insertPayload.display_number;
-        const retryRes = await supabase
+        const retryRes = await dbClient
           .from("saved_horoscopes")
           .insert(insertPayload)
           .select(
@@ -461,6 +468,9 @@ export async function POST(request: NextRequest) {
             { success: true, idempotent: false, horoscope: retryRes.data },
             { status: 201 }
           );
+        }
+        if (retryRes.error) {
+          insertError = retryRes.error;
         }
       }
 

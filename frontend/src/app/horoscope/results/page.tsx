@@ -30,6 +30,7 @@ import { DoshaSection } from "@/components/results/DoshaSection";
 import { NabhashaSection } from "@/components/results/NabhashaSection";
 import { AshtakavargaSection } from "@/components/results/AshtakavargaSection";
 import { DestinyCard } from "@/components/results/DestinyCard";
+import { AstrologicalPredictionsSection } from "@/components/results/AstrologicalPredictionsSection";
 import {
   calculateNabhasha,
   calculateAshtakavarga,
@@ -477,6 +478,7 @@ function HoroscopeResultsContent() {
         body: JSON.stringify({
           idempotency_key: idempotencyKey,
           person_name: result.clientInputs.fullName?.trim() || "Unnamed Horoscope",
+          customer_full_name: result.clientInputs.fullName?.trim() || "Unnamed Horoscope",
           birth_date: result.clientInputs.birthDate,
           birth_time: result.clientInputs.birthTime,
           timezone: result.clientInputs.timezone,
@@ -504,6 +506,10 @@ function HoroscopeResultsContent() {
       };
       setResult(updated);
       saveActiveCalculation(updated);
+
+      if (typeof window !== "undefined" && data.horoscope?.id) {
+        window.history.replaceState(null, "", `/horoscope/results?id=${data.horoscope.id}`);
+      }
     } catch (err: any) {
       setResult((prev) =>
         prev
@@ -518,6 +524,15 @@ function HoroscopeResultsContent() {
       setIsRetryingSave(false);
     }
   };
+
+  // Auto-attempt background save if loaded active calculation is not yet saved to account
+  const autoSaveAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (!idParam && result && !result.isSaved && !result.savedId && !autoSaveAttemptedRef.current) {
+      autoSaveAttemptedRef.current = true;
+      handleRetrySave();
+    }
+  }, [idParam, result?.isSaved, result?.savedId]);
 
   // Save consultation notes handler
   const handleSaveNotes = () => {
@@ -814,6 +829,11 @@ function HoroscopeResultsContent() {
                   ? "கணக்கீடு முடிந்தது, ஆனால் முடிவுகள் உங்கள் கணக்கில் இன்னும் சேமிக்கப்படவில்லை."
                   : "Calculation completed, but the result has not yet been saved to your account."}
               </p>
+              {result.saveError && result.saveError !== "Failed to save horoscope." && (
+                <p className="text-[10px] text-amber-900/80 font-mono mt-1">
+                  {result.saveError}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -1260,6 +1280,12 @@ function HoroscopeResultsContent() {
                       )}
                     </div>
                   </div>
+
+                  {/* Astrological Conditions & Predictions Engine directly below D1 & D9 charts */}
+                  <AstrologicalPredictionsSection
+                    horoscopeResult={result}
+                    language={language}
+                  />
 
                   {/* Summary & Destiny Card Banner beneath Charts */}
                   <div className="p-4 rounded-xl bg-white border border-[#D9DEE7] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">

@@ -3896,3 +3896,76 @@ export interface HoroscopeWritingUpdateRequest {
   calculated_data?: HoroscopeWritingResponse;
   overrides?: Record<string, any>;
 }
+
+// ============================================================================
+// Prediction Rules Engine Types
+// ============================================================================
+
+export interface PredictionSubcategory {
+  slug: string;
+  name_en: string;
+  name_ta: string;
+  description_en: string;
+  description_ta: string;
+}
+
+export interface PredictionCategoryGroup {
+  group_code: string;
+  group_name_en: string;
+  group_name_ta: string;
+  display_order: number;
+  subcategories: PredictionSubcategory[];
+}
+
+export interface EvaluatedPredictionRule {
+  rule_id: string;
+  version: number;
+  name: string;
+  name_en: string;
+  name_ta?: string;
+  category_slug: string;
+  subcategory?: string;
+  astrology_system: string;
+  chart_scope: string;
+  calculation_mode: string;
+  severity: "info" | "favorable" | "unfavorable" | "neutral" | "mixed";
+  status: "matched" | "not_matched" | "unevaluable";
+  matched: boolean;
+  unevaluable?: boolean;
+  unevaluable_reason?: string;
+  interpretation: string;
+  interpretation_en: string;
+  interpretation_ta?: string;
+  astrological_principle: string;
+  astrological_principle_en: string;
+  astrological_principle_ta?: string;
+  chart_evidence: string[];
+  match_reasons: string[];
+  source_reference?: string;
+  limitations?: string;
+  limitations_en?: string;
+  limitations_ta?: string;
+}
+
+export interface EvaluatePredictionRulesRequest {
+  horoscope?: HoroscopeResponse;
+  saved_horoscope_id?: string;
+  category_slug?: string;
+  subcategory?: string;
+  chart_scope?: string;
+  astrology_system?: string;
+  language?: string;
+  dasa?: Record<string, any>;
+  kp?: Record<string, any>;
+}
+
+export interface EvaluatePredictionRulesResponse {
+  total_rules_evaluated: number;
+  total_matched: number;
+  total_unevaluable: number;
+  category_slug?: string;
+  subcategory?: string;
+  language: string;
+  results: EvaluatedPredictionRule[];
+}
+

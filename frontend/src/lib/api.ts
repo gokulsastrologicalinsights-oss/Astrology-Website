@@ -48,6 +48,10 @@ import {
   SavedKpChartRecord,
   VedicYogaResponse,
   UnifiedDoshaResponse,
+  PredictionCategoryGroup,
+  EvaluatePredictionRulesRequest,
+  EvaluatePredictionRulesResponse,
+  EvaluatedPredictionRule,
   MedicalAstrologyResponse,
   KpEventAnalysisRequest,
   KpEventAnalysisResponse,
@@ -290,6 +294,67 @@ export async function calculateHoraryKp(req: HoraryKpRequest): Promise<HoraryKpR
     method: "POST",
     body: JSON.stringify(req),
   });
+}
+
+/**
+ * 5c. Export Dedicated Server-Side KP Astrology PDF Report (POST /api/v1/reports/kp/pdf)
+ */
+export async function exportKpPdf(
+  payload: {
+    chart_type?: "natal" | "horary";
+    birth_input?: Record<string, any>;
+    horary_input?: Record<string, any>;
+    saved_chart_id?: string;
+    native_name?: string;
+    gender?: string;
+    language?: "en" | "ta";
+    ayanamsa?: number;
+    house_system?: number;
+  },
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/kp/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to export KP PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * 5d. Download Saved KP Chart PDF Report (GET /api/v1/reports/kp/pdf/{id})
+ */
+export async function downloadSavedKpPdf(
+  chartId: string,
+  language: string = "en",
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/kp/pdf/${encodeURIComponent(chartId)}?language=${encodeURIComponent(language)}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to download saved KP PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
 }
 
 /**
@@ -1663,4 +1728,134 @@ export async function updateSavedHoroscopeWriting(
     },
     body: JSON.stringify(payload),
   });
+}
+
+/**
+ * 38. Get Prediction Categories Registry (GET /api/v1/rules/categories)
+ */
+export async function getPredictionCategories(): Promise<PredictionCategoryGroup[]> {
+  return request<PredictionCategoryGroup[]>("/api/v1/rules/categories", {
+    method: "GET",
+  });
+}
+
+/**
+ * 39. Evaluate Astrological Rules (POST /api/v1/rules/evaluate)
+ */
+export async function evaluatePredictionRules(
+  req: EvaluatePredictionRulesRequest,
+  token?: string
+): Promise<EvaluatePredictionRulesResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<EvaluatePredictionRulesResponse>("/api/v1/rules/evaluate", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 40. Validate Rule AST Definition (POST /api/v1/rules/validate)
+ */
+export async function validateRuleDefinition(
+  rule: Record<string, any>
+): Promise<{ is_valid: boolean; errors: string[] }> {
+  return request<{ is_valid: boolean; errors: string[] }>("/api/v1/rules/validate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ rule }),
+  });
+}
+
+/**
+ * 41. Test Rule Definition against Horoscope (POST /api/v1/rules/test)
+ */
+export async function testRuleDefinition(
+  req: {
+    rule: Record<string, any>;
+    horoscope?: HoroscopeResponse;
+    saved_horoscope_id?: string;
+    dasa?: Record<string, any>;
+    kp?: Record<string, any>;
+    language?: string;
+  },
+  token?: string
+): Promise<EvaluatedPredictionRule> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<EvaluatedPredictionRule>("/api/v1/rules/test", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 42. List Admin Rule Definitions (GET /api/v1/rules/definitions)
+ */
+export async function listRuleDefinitions(
+  params?: {
+    category_slug?: string;
+    subcategory?: string;
+    enabled_only?: boolean;
+  },
+  token?: string
+): Promise<any[]> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const q = new URLSearchParams();
+  if (params?.category_slug) q.set("category_slug", params.category_slug);
+  if (params?.subcategory) q.set("subcategory", params.subcategory);
+  if (params?.enabled_only) q.set("enabled_only", "true");
+  const qs = q.toString() ? `?${q.toString()}` : "";
+  return request<any[]>(`/api/v1/rules/definitions${qs}`, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+}
+
+/**
+ * 43. Create or Update Rule Definition (POST /api/v1/rules/definitions)
+ */
+export async function saveRuleDefinition(
+  rule: Record<string, any>,
+  token?: string
+): Promise<{ status: string; action: string; rule: any }> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<{ status: string; action: string; rule: any }>("/api/v1/rules/definitions", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(rule),
+  });
+}
+
+/**
+ * 44. Toggle Rule Status (PATCH /api/v1/rules/definitions/{id}/status)
+ */
+export async function toggleRuleStatus(
+  ruleId: string,
+  enabled: boolean,
+  token?: string
+): Promise<{ status: string; rule_id: string; is_enabled: boolean }> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<{ status: string; rule_id: string; is_enabled: boolean }>(
+    `/api/v1/rules/definitions/${encodeURIComponent(ruleId)}/status?enabled=${enabled}`,
+    {
+      method: "PATCH",
+      headers: {
+        ...authHeaders,
+      },
+    }
+  );
 }

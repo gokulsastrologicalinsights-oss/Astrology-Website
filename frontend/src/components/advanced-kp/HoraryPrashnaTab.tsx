@@ -6,7 +6,7 @@ import {
   HoraryKpResponse,
   SavedKpChartRecord,
 } from "@/lib/types";
-import { calculateHoraryKp, saveKpChart } from "@/lib/api";
+import { calculateHoraryKp, saveKpChart, exportKpPdf } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { formatDms } from "@/lib/formatters";
 import { getGrahaName, getRasiName, getLordName } from "@/lib/translations";
@@ -22,6 +22,8 @@ import {
   CheckCircle2,
   AlertCircle,
   RotateCcw,
+  FileDown,
+  Loader2,
 } from "lucide-react";
 
 interface HoraryPrashnaTabProps {
@@ -51,6 +53,48 @@ export function HoraryPrashnaTab({ language, onSavedRecord }: HoraryPrashnaTabPr
   // Persistence State
   const [saving, setSaving] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+
+  const handleExportPdf = async () => {
+    if (!result) return;
+    setIsExportingPdf(true);
+    setError(null);
+    try {
+      const payload = {
+        chart_type: "horary" as const,
+        native_name: questionText.trim() || `Horary Query #${result.horary_number}`,
+        language,
+        ayanamsa,
+        house_system: 2,
+        horary_input: {
+          horary_number: result.horary_number,
+          question_text: questionText.trim() || undefined,
+          question_date: questionDate,
+          question_time: questionTime,
+          timezone,
+          latitude,
+          longitude,
+          location_name: locationName,
+          ayanamsa,
+          house_system: 2,
+        },
+      };
+      const blob = await exportKpPdf(payload);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `KP_Horary_${result.horary_number}_Report_${questionDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Failed to export Horary PDF:", err);
+      setError(err?.message || (language === "ta" ? "PDF பதிவிறக்கம் தோல்வியடைந்தது." : "Failed to download Horary PDF."));
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   // Set current date/time on mount
   useEffect(() => {
@@ -423,6 +467,29 @@ export function HoraryPrashnaTab({ language, onSavedRecord }: HoraryPrashnaTabPr
                       : language === "ta"
                       ? "ஜாதகத்தை சேமி"
                       : "Save Horary Chart"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  disabled={isExportingPdf}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#B8862B] hover:bg-[#996515] transition-colors shadow-xs disabled:opacity-50"
+                  title="Download 6-page KP Horary PDF Report"
+                >
+                  {isExportingPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <FileDown className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {isExportingPdf
+                      ? language === "ta"
+                        ? "PDF தயாராகிறது..."
+                        : "Generating..."
+                      : language === "ta"
+                      ? "PDF பதிவிறக்கம்"
+                      : "Download PDF"}
                   </span>
                 </button>
               </div>

@@ -45,6 +45,7 @@ class Settings(BaseModel):
         "http://localhost:3001",
         "http://127.0.0.1:3001",
     ]
+    allowed_origin_regex: str | None = r"^https://.*\.vercel\.app$"
 
     # Security & limits
     max_request_body_bytes: int = 1_048_576  # 1 MB max request body
@@ -59,6 +60,9 @@ class Settings(BaseModel):
         env_origins = os.getenv("ALLOWED_ORIGINS")
         if env_origins:
             self.allowed_origins = [o.strip() for o in env_origins.split(",") if o.strip()]
+        env_regex = os.getenv("ALLOWED_ORIGIN_REGEX")
+        if env_regex is not None:
+            self.allowed_origin_regex = env_regex if env_regex else None
         self.debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 
 

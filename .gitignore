@@ -40,6 +40,9 @@ target/
 *.so
 *.dylib
 
+# PDF sample artifacts
+sample_kp_*.pdf
+
 # System & IDE
 .DS_Store
 Thumbs.db

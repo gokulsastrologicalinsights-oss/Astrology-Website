@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { KpResponse, HoraryKpResponse } from "@/lib/types";
-import { Printer, Download, FileText, CheckCircle } from "lucide-react";
+import { Printer, Download, FileText, CheckCircle, FileDown, Loader2, AlertCircle } from "lucide-react";
 import { formatDms } from "@/lib/formatters";
+import { exportKpPdf } from "@/lib/api";
 
 interface KpReportsExportTabProps {
   data: KpResponse | HoraryKpResponse | null;
@@ -18,6 +19,9 @@ export function KpReportsExportTab({
   title,
   language,
 }: KpReportsExportTabProps) {
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
   if (!data) {
     return (
       <div className="p-8 text-center bg-white rounded-xl border border-[#E2DCD5] text-[#64748B]">
@@ -30,6 +34,68 @@ export function KpReportsExportTab({
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      setIsExportingPdf(true);
+      setPdfError(null);
+
+      const isHorary = chartType === "horary" && "horary_number" in data;
+      const payload: any = {
+        chart_type: chartType,
+        native_name: title || (isHorary ? "Querent" : "Native"),
+        language,
+        ayanamsa: 1,
+        house_system: 2,
+      };
+
+      if (isHorary) {
+        const horaryData = data as HoraryKpResponse;
+        const qDt = new Date(horaryData.question_datetime || Date.now());
+        const qDateStr = !isNaN(qDt.getTime()) ? qDt.toISOString().split("T")[0] : "2026-10-24";
+        const qTimeStr = !isNaN(qDt.getTime()) ? qDt.toTimeString().split(" ")[0].slice(0, 5) : "12:00";
+
+        payload.horary_input = {
+          horary_number: horaryData.horary_number,
+          question_text: horaryData.question_text || title || `Horary Query #${horaryData.horary_number}`,
+          question_date: qDateStr,
+          question_time: qTimeStr,
+          timezone: horaryData.metadata?.local_timezone || "Asia/Kolkata",
+          latitude: horaryData.metadata?.coordinates?.latitude ?? 13.0827,
+          longitude: horaryData.metadata?.coordinates?.longitude ?? 80.2707,
+          location_name: horaryData.location_name || "Query Location",
+          ayanamsa: 1,
+          house_system: 2,
+        };
+      } else {
+        const bDate = (data as any).birth_date || (data as any).birthDate || "1990-05-15";
+        const bTime = (data as any).birth_time || (data as any).birthTime || "14:30:00";
+        payload.birth_input = {
+          birth_date: bDate,
+          birth_time: bTime,
+          timezone: data.metadata?.local_timezone || "Asia/Kolkata",
+          latitude: data.metadata?.coordinates?.latitude ?? 13.0827,
+          longitude: data.metadata?.coordinates?.longitude ?? 80.2707,
+        };
+      }
+
+      const blob = await exportKpPdf(payload);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const dateStr = new Date().toISOString().split("T")[0];
+      link.download = `KP_${chartType === "horary" ? "Horary" : "Natal"}_Report_${dateStr}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Failed to generate KP PDF report:", err);
+      setPdfError(err?.message || (language === "ta" ? "PDF உருவாக்கத்தில் பிழை ஏற்பட்டது." : "Failed to compile KP PDF report."));
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const handleExportJson = () => {
@@ -102,11 +168,37 @@ export function KpReportsExportTab({
             {language === "ta" ? "அறிக்கை & ஏற்றுமதி கருவிகள்" : "Detailed Report & Export Tools"}
           </h3>
           <p className="text-xs text-[#52667E]">
-            Print-friendly verification report with certified ephemeris metadata and settings.
+            {language === "ta"
+              ? "சுவிஸ் எபிமெரிஸ் மற்றும் சேலன் வானியல் எஞ்சின் மூலம் சான்றளிக்கப்பட்ட 6-பக்க அதிகாரப்பூர்வ கே.பி. அறிக்கை."
+              : "Official 6-page bilingual ReportLab PDF calibrated with Swiss Ephemeris & XALEN engine."}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Dedicated Server-Side ReportLab PDF Generator Button */}
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#102A4C] hover:bg-[#1E3A61] disabled:opacity-50 transition-colors shadow-2xs"
+            title="Download certified 6-page bilingual ReportLab PDF"
+          >
+            {isExportingPdf ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <FileDown className="w-3.5 h-3.5 text-[#EAB308]" />
+            )}
+            <span>
+              {isExportingPdf
+                ? language === "ta"
+                  ? "PDF தயாராகிறது..."
+                  : "Generating PDF..."
+                : language === "ta"
+                ? "அதிகாரப்பூர்வ PDF பதிவிறக்கம் (6 பக்கங்கள்)"
+                : "Download Official PDF (6 Pages)"}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={handleExportCsv}
@@ -128,13 +220,20 @@ export function KpReportsExportTab({
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#B8862B] hover:bg-[#996515] transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-[#64748B] bg-white border border-[#DDE5F0] hover:bg-[#FAF6EC] transition-colors"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print Report / PDF</span>
+            <span>Browser Print</span>
           </button>
         </div>
       </div>
+
+      {pdfError && (
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{pdfError}</span>
+        </div>
+      )}
 
       {/* Printable Report Preview */}
       <div className="p-8 rounded-2xl border border-[#DDE5F0] bg-white shadow-sm space-y-6 print:border-none print:shadow-none print:p-0">
@@ -153,9 +252,9 @@ export function KpReportsExportTab({
           </div>
           <div className="text-right text-xs text-[#52667E] space-y-0.5">
             <div>Generated: {new Date().toLocaleDateString()}</div>
-            <div>Engine: <strong>{data.metadata.engine}</strong></div>
-            <div>Ayanamsa: <strong>{data.metadata.ayanamsa_name} ({data.metadata.ayanamsa_deg.toFixed(4)}°)</strong></div>
-            <div>House System: <strong>{data.metadata.house_system_name}</strong></div>
+            <div>Engine: <strong>{data.metadata?.engine || "Swiss Ephemeris & XALEN"}</strong></div>
+            <div>Ayanamsa: <strong>{data.metadata?.ayanamsa_name} ({data.metadata?.ayanamsa_deg?.toFixed(4)}°)</strong></div>
+            <div>House System: <strong>{data.metadata?.house_system_name}</strong></div>
           </div>
         </div>
 
@@ -163,19 +262,19 @@ export function KpReportsExportTab({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs">
           <div>
             <span className="text-[#64748B] block">Latitude:</span>
-            <strong className="text-[#102A4C]">{data.metadata.coordinates?.latitude ?? "—"}°</strong>
+            <strong className="text-[#102A4C]">{data.metadata?.coordinates?.latitude ?? "—"}°</strong>
           </div>
           <div>
             <span className="text-[#64748B] block">Longitude:</span>
-            <strong className="text-[#102A4C]">{data.metadata.coordinates?.longitude ?? "—"}°</strong>
+            <strong className="text-[#102A4C]">{data.metadata?.coordinates?.longitude ?? "—"}°</strong>
           </div>
           <div>
             <span className="text-[#64748B] block">Timezone:</span>
-            <strong className="text-[#102A4C]">{data.metadata.local_timezone}</strong>
+            <strong className="text-[#102A4C]">{data.metadata?.local_timezone || "Asia/Kolkata"}</strong>
           </div>
           <div>
             <span className="text-[#64748B] block">Julian Day (UT1):</span>
-            <strong className="text-[#102A4C] font-mono">{data.metadata.julian_day_ut1.toFixed(4)}</strong>
+            <strong className="text-[#102A4C] font-mono">{data.metadata?.julian_day_ut1?.toFixed(4) || "—"}</strong>
           </div>
         </div>
 
@@ -253,7 +352,7 @@ export function KpReportsExportTab({
 
         {/* Engine Footnotes */}
         <div className="pt-4 border-t border-[#F1F5F9] text-[11px] text-[#64748B] space-y-1">
-          {data.metadata.notes?.map((n, i) => (
+          {data.metadata?.notes?.map((n, i) => (
             <div key={i} className="flex items-start gap-1.5">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
               <span>{n}</span>

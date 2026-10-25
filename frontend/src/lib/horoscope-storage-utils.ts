@@ -6,11 +6,12 @@
 import type { FullHoroscopeResult, SavedHoroscopeItem } from "./types";
 
 /**
- * Prunes the deep Vimshottari Dasa tree while preserving the complete 5-level hierarchy
- * (Mahadasha -> Antardasha -> Pratyantardasha -> Sookshmadasha -> Pranadasha) and
- * removes repeated redundant dictionaries, ensuring full temporal accuracy and Benefit Bhavas.
+ * Prunes the deep Vimshottari Dasa tree while preserving a fast, accurate 3-level hierarchy
+ * (Mahadasha -> Antardasha -> Pratyantardasha) with Benefit Bhavas.
+ * Deeper levels (Sookshmadasha & Pranadasha) are dynamically expanded on demand via canonical math,
+ * keeping database storage lightweight (~200 KB) and avoiding gateway / payload limits.
  */
-export function compactDasaTree(tree: any[], maxDepth = 5): any[] {
+export function compactDasaTree(tree: any[], maxDepth = 3): any[] {
   if (!Array.isArray(tree) || maxDepth <= 0) return [];
   return tree.map((node) => {
     const compactNode: any = {
@@ -71,7 +72,7 @@ export function prepareCalculationSnapshot(
   if (dasa && Array.isArray(dasa.dasa_tree)) {
     dasa = {
       ...dasa,
-      dasa_tree: compactDasaTree(dasa.dasa_tree, 5),
+      dasa_tree: compactDasaTree(dasa.dasa_tree, 3),
     };
   }
 

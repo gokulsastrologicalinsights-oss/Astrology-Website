@@ -62,10 +62,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 1. CORS Middleware - strictly restricted to configured origins
+# 1. CORS Middleware - restricted to configured origins + Vercel preview/production domains
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
+    allow_origin_regex=settings.allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
@@ -157,6 +158,7 @@ app.include_router(kp_prediction.router)
 app.include_router(vastu.router)
 app.include_router(remedies.router)
 app.include_router(pdf_reports.router)
+app.include_router(pdf_reports.kp_router)
 app.include_router(unified_prediction.router)
 app.include_router(marriage_compatibility.router, prefix="/api/v1/marriage-compatibility")
 app.include_router(marriage_compatibility.router, prefix="/api/marriage-compatibility")

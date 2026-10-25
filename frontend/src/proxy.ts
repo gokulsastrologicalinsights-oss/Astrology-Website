@@ -14,7 +14,7 @@ const PUBLIC_API_PREFIXES = [
   "/api/auth/me",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -168,6 +168,9 @@ export async function middleware(request: NextRequest) {
 
   return response;
 }
+
+export const middleware = proxy;
+export default proxy;
 
 export const config = {
   matcher: [

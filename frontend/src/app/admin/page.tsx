@@ -322,6 +322,32 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* Astrological Rules Engine Administration Banner */}
+      <div className="rounded-2xl border border-[#D8BD80] bg-[#FAF8F2] p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white border border-[#D8BD80] flex items-center justify-center text-[#B4872B] shrink-0">
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#183047]">
+              {language === "ta" ? "ஜோதிட விதிகள் மற்றும் கணிப்புகள் மேலாண்மை" : "Astrological Rules & Predictions Engine"}
+            </h3>
+            <p className="text-xs text-[#52667E]">
+              {language === "ta"
+                ? "8 பிரிவுகளில் உள்ள பராசர மற்றும் கே.பி விதிமுறைகளை உருவாக்குதல், திருத்துதல் மற்றும் சோதித்தல்."
+                : "Manage, validate, test against saved horoscopes, and version control the shared library of rules."}
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/admin/rules"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#B4872B] hover:bg-[#8C6D23] text-white text-xs font-bold transition-colors shadow-2xs shrink-0 self-start sm:self-auto"
+        >
+          <span>{language === "ta" ? "விதிகள் மையம்" : "Manage Rules Library"}</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
       {/* User Records Table */}
       <div className="mt-8 rounded-2xl border border-[#E2DCD5] bg-white overflow-hidden shadow-xs">
         <div className="p-5 border-b border-[#E2DCD5] flex items-center justify-between bg-[#FAF8F5]">

@@ -856,7 +856,7 @@ def scan_candidate_event_windows(
             refined_list.extend(candidate_windows[num_to_refine:])
 
         candidate_windows = refined_list
-        candidate_windows.sort(key=lambda w: (-w.composite_score, w.date, w.start_time))
+        candidate_windows.sort(key=lambda w: (0 if w.scan_mode == "deep" else 1, -w.composite_score, w.date, w.start_time))
 
     elapsed_ms = round((pytime.perf_counter() - t_start_perf) * 1000.0, 2)
     benchmark_metrics = {
