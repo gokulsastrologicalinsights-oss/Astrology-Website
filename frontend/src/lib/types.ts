@@ -146,6 +146,68 @@ export interface SavDetail {
   inauspicious_signs: number[];
 }
 
+export interface PrastaraRow {
+  contributor: string;
+  sign_bindus: Record<string | number, number>;
+  total_contributions: number;
+}
+
+export interface PrastaraDetail {
+  planet: string;
+  rows: PrastaraRow[];
+  sign_totals: Record<string | number, number>;
+  total_bindus: number;
+}
+
+export interface PrastaraResponse {
+  metadata?: CalculationMetadata;
+  prastara: Record<string, PrastaraDetail>;
+  grand_total_bindus: number;
+  validation_status: string;
+}
+
+export interface KakshaDivisionInfo {
+  kaksha_number: number;
+  lord: string;
+  start_degree: number;
+  end_degree: number;
+  range_display: string;
+  has_bindu: boolean;
+  auspicious: boolean;
+}
+
+export interface PlanetKakshaSignDetail {
+  sign_index: number;
+  sign_name: string;
+  divisions: KakshaDivisionInfo[];
+  total_bindus: number;
+}
+
+export interface KakshaTransitQuery {
+  transiting_planet: string;
+  transit_longitude?: number;
+  transit_sign_index?: number;
+  transit_degree_in_sign?: number;
+}
+
+export interface KakshaTransitResult {
+  transiting_planet: string;
+  sign_index: number;
+  sign_name: string;
+  degree_in_sign: number;
+  kaksha_number: number;
+  kaksha_lord: string;
+  kaksha_range: string;
+  has_bindu: boolean;
+  effect: "Auspicious" | "Inauspicious" | string;
+  interpretation: string;
+}
+
+export interface KakshaResponse {
+  metadata?: CalculationMetadata;
+  kaksha_grids: Record<string, PlanetKakshaSignDetail[]>;
+}
+
 export interface AshtakavargaResponse {
   metadata?: CalculationMetadata;
   bhinnashtakavarga: Record<string, PlanetBavDetail>;
@@ -153,6 +215,8 @@ export interface AshtakavargaResponse {
   lagna_sign_index: number;
   validation_status: string;
   classical_reference: string;
+  prastara?: Record<string, PrastaraDetail>;
+  kaksha_grids?: Record<string, PlanetKakshaSignDetail[]>;
 }
 
 export interface YogaConditionItem {

@@ -28,6 +28,7 @@ import {
   Search,
   Hash,
   Briefcase,
+  Grid,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 import { HelpModal } from "@/components/layout/HelpModal";
@@ -145,6 +146,14 @@ interface AstrologyToolCard {
       href: "/tools/d1-d9",
       icon: Compass,
       color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
+    },
+    {
+      id: "ashtakavarga",
+      titleTa: "அஷ்டகவர்க்கம் & கக்ஷா கோச்சாரம்",
+      titleEn: "Ashtakavarga & Kakshya Studio",
+      href: "/tools/ashtakavarga",
+      icon: Grid,
+      color: "text-indigo-600 border-indigo-300 bg-indigo-50",
     },
     {
       id: "numerology",

@@ -15,6 +15,10 @@ import {
   FullHoroscopeResult,
   NabhashaResponse,
   AshtakavargaResponse,
+  PrastaraResponse,
+  KakshaResponse,
+  KakshaTransitQuery,
+  KakshaTransitResult,
   BirthInput,
   ApiErrorResponse,
   TraditionalNumerologyRequest,
@@ -382,6 +386,42 @@ export async function calculateAshtakavarga(
   req: BirthInput & { ayanamsa?: number }
 ): Promise<AshtakavargaResponse> {
   return request<AshtakavargaResponse>("/api/v1/vedic/ashtakavarga", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 7b. Complete Prastarashtakavarga for all 7 planets (POST /api/v1/vedic/ashtakavarga/prastara)
+ */
+export async function calculatePrastara(
+  req: BirthInput & { ayanamsa?: number }
+): Promise<PrastaraResponse> {
+  return request<PrastaraResponse>("/api/v1/vedic/ashtakavarga/prastara", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 7c. Full 96-Kaksha grids for all 7 planets (POST /api/v1/vedic/ashtakavarga/kaksha)
+ */
+export async function calculateKakshaGrids(
+  req: BirthInput & { ayanamsa?: number }
+): Promise<KakshaResponse> {
+  return request<KakshaResponse>("/api/v1/vedic/ashtakavarga/kaksha", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 7d. Real-time Kaksha transit evaluator (POST /api/v1/vedic/ashtakavarga/kaksha/transit)
+ */
+export async function calculateKakshaTransit(
+  req: BirthInput & { ayanamsa?: number; transit: KakshaTransitQuery }
+): Promise<KakshaTransitResult> {
+  return request<KakshaTransitResult>("/api/v1/vedic/ashtakavarga/kaksha/transit", {
     method: "POST",
     body: JSON.stringify(req),
   });
