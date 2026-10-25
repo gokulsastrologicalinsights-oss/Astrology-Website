@@ -390,6 +390,52 @@ export function DailyPanchangamView() {
               </div>
             </div>
           </div>
+
+          {/* 4. Planetary Horas Section */}
+          {panchangData.horas?.all_horas && (
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#DDE5F0] shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F1F5F9]">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-[#102A4C]">
+                    {language === "ta" ? "24 மணி நேர கிரக ஹோரைகள்" : "24-Planetary Horas Schedule"}
+                  </h3>
+                  <p className="text-xs text-[#52667E]">
+                    {language === "ta"
+                      ? "சூரிய உதய முதல் அடுத்த சூரிய உதயம் வரையிலான கிரக ஆதிக்க நேரங்கள்."
+                      : "Planetary hour rulership from sunrise to next day sunrise."}
+                  </p>
+                </div>
+
+                <a
+                  href="/tools/panchang"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#102A4C] hover:bg-[#16365C] text-white text-xs font-semibold shadow-2xs transition-all"
+                >
+                  <span>{language === "ta" ? "முழுமையான ஹோரை அரங்கம்" : "Open Full 24-Hora Studio"}</span>
+                  <span>→</span>
+                </a>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {panchangData.horas.all_horas.map((h: any) => (
+                  <div
+                    key={h.index}
+                    className="p-3 rounded-xl border border-[#E2E8F0] bg-[#FAF8F5]/60 hover:bg-white hover:border-[#3478F6] transition-all text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between text-[10px] text-[#52667E]">
+                      <span>#{h.index} {h.period === "day" ? "Day" : "Night"}</span>
+                      <span className="font-bold">{h.symbol}</span>
+                    </div>
+                    <div className="font-bold text-[#102A4C] truncate">
+                      {h.lord} <span className="text-[10px] text-[#52667E]">({h.lord_ta})</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-[#52667E]">
+                      {h.start_time_local.slice(0, 5)} - {h.end_time_local.slice(0, 5)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

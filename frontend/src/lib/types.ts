@@ -2055,6 +2055,163 @@ export interface FamilyNumerologyResponse {
 // Muhurta & Panchang Module Data Models
 // ============================================================================
 
+export interface HoraSlotItem {
+  index: number;
+  period: "day" | "night";
+  period_index: number;
+  lord: string;
+  lord_ta: string;
+  lord_sanskrit: string;
+  nature: "benefic" | "malefic" | "mixed";
+  benefic_type: string;
+  symbol: string;
+  color: string;
+  start_time_utc: string;
+  end_time_utc: string;
+  start_time_local: string;
+  end_time_local: string;
+  start_time_full_local: string;
+  end_time_full_local: string;
+  duration_minutes: number;
+  good_for_en: string[];
+  good_for_ta: string[];
+  avoid_en: string[];
+  avoid_ta: string[];
+}
+
+export interface DailyHoraResponse {
+  date: string;
+  day_lord: {
+    name_en: string;
+    name_ta: string;
+    sanskrit_name: string;
+  };
+  next_day_lord: {
+    name_en: string;
+    name_ta: string;
+    sanskrit_name: string;
+  };
+  daytime_hora_duration_minutes: number;
+  nighttime_hora_duration_minutes: number;
+  day_horas: HoraSlotItem[];
+  night_horas: HoraSlotItem[];
+  all_horas: HoraSlotItem[];
+}
+
+export interface PanchangResponse {
+  date: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    timezone: string;
+  };
+  astronomical: {
+    sunrise_utc: string;
+    sunrise_local: string;
+    sunset_utc: string;
+    sunset_local: string;
+    solar_noon_utc: string;
+    solar_noon_local: string;
+    day_length_hours: number;
+  };
+  vara: {
+    weekday_number: number;
+    name_en: string;
+    name_ta: string;
+    sanskrit_name: string;
+  };
+  tithi: {
+    number: number;
+    name: string;
+    name_ta?: string;
+    paksha: string;
+    start_time_utc: string;
+    start_time_local: string;
+    end_time_utc: string;
+    end_time_local: string;
+  };
+  nakshatra: {
+    number: number;
+    name: string;
+    name_ta?: string;
+    lord: string;
+    pada: number;
+    start_time_utc: string;
+    start_time_local: string;
+    end_time_utc: string;
+    end_time_local: string;
+  };
+  yoga: {
+    number: number;
+    name: string;
+    name_ta?: string;
+  };
+  karana: {
+    number: number;
+    name: string;
+    name_ta?: string;
+  };
+  sun_sign: {
+    index: number;
+    name_en: string;
+    name_ta: string;
+    degree_in_sign: number;
+  };
+  moon_sign: {
+    index: number;
+    name_en: string;
+    name_ta: string;
+    degree_in_sign: number;
+  };
+  inauspicious_periods: {
+    rahu_kalam: {
+      part: number;
+      start_utc: string;
+      end_utc: string;
+      duration_minutes: number;
+    };
+    yamagandam: {
+      part: number;
+      start_utc: string;
+      end_utc: string;
+      duration_minutes: number;
+    };
+    gulikai: {
+      part: number;
+      start_utc: string;
+      end_utc: string;
+      duration_minutes: number;
+    };
+  };
+  auspicious_periods: {
+    abhijit: {
+      start_utc: string;
+      end_utc: string;
+      duration_minutes: number;
+      is_dur_muhurta_clash: boolean;
+    };
+    amrita_kalam: {
+      start_utc: string;
+      end_utc: string;
+      start_ghatika: number;
+      duration_minutes: number;
+    };
+  };
+  varjyam: {
+    start_utc: string;
+    end_utc: string;
+    start_ghatika: number;
+    duration_minutes: number;
+  };
+  dur_muhurtas: Array<{
+    part: number;
+    start_utc: string;
+    end_utc: string;
+    duration_minutes: number;
+  }>;
+  horas: DailyHoraResponse;
+}
+
 export interface OccasionItem {
   id?: string;
   code: string;

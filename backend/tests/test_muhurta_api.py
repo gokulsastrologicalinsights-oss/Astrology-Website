@@ -39,6 +39,31 @@ def test_panchang_endpoint():
     assert "nakshatra" in data
     assert "inauspicious_periods" in data
     assert "rahu_kalam" in data["inauspicious_periods"]
+    assert "horas" in data
+    assert len(data["horas"]["all_horas"]) == 24
+    assert "sun_sign" in data
+    assert "moon_sign" in data
+
+
+def test_hora_endpoint():
+    """Verify dedicated 24-Hora calculation endpoint."""
+    payload = {
+        "date": "2026-10-18",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "timezone": "Asia/Kolkata",
+        "ayanamsa_id": 0,
+    }
+    response = client.post("/api/v1/muhurta/hora", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "day_horas" in data
+    assert len(data["day_horas"]) == 12
+    assert "night_horas" in data
+    assert len(data["night_horas"]) == 12
+    assert "all_horas" in data
+    assert len(data["all_horas"]) == 24
+    assert data["day_lord"]["name_en"] == "Sun"
 
 
 def test_find_muhurtas_endpoint():

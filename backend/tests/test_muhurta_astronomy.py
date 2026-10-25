@@ -18,6 +18,7 @@ from app.services.muhurta_engine.astronomy import (
     get_tithi_at_jd,
     get_nakshatra_at_jd,
     calculate_daily_panchangam,
+    calculate_daily_horas,
     calculate_varjyam_and_amrita,
     get_slot_lagna_and_planets,
     datetime_to_jd,
@@ -140,3 +141,62 @@ def test_slot_lagna_and_bhava_occupants():
     for p_name in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]:
         assert p_name in planets
         assert 1 <= planets[p_name]["bhava"] <= 12
+
+
+def test_24_horas_calculation():
+    """Verify 24 Vedic Planetary Horas (12 day + 12 night), Chaldean sequence, and continuous transitions."""
+    test_date = date(2026, 10, 18)  # Sunday
+    horas_data = calculate_daily_horas(test_date, 13.0827, 80.2707, "Asia/Kolkata")
+
+    assert len(horas_data["day_horas"]) == 12
+    assert len(horas_data["night_horas"]) == 12
+    assert len(horas_data["all_horas"]) == 24
+
+    # Day lord for Sunday is Sun
+    assert horas_data["day_lord"]["name_en"] == "Sun"
+    assert horas_data["next_day_lord"]["name_en"] == "Moon"
+
+    # 1st hora is Sun, 2nd is Venus, 3rd is Mercury, 4th is Moon (Chaldean order)
+    all_horas = horas_data["all_horas"]
+    assert all_horas[0]["lord"] == "Sun"
+    assert all_horas[1]["lord"] == "Venus"
+    assert all_horas[2]["lord"] == "Mercury"
+    assert all_horas[3]["lord"] == "Moon"
+    assert all_horas[4]["lord"] == "Saturn"
+    assert all_horas[5]["lord"] == "Jupiter"
+    assert all_horas[6]["lord"] == "Mars"
+    assert all_horas[7]["lord"] == "Sun"
+
+    # Day hora 1 start equals day hora 1 start_time_utc
+    # Day hora 12 end equals night hora 1 start
+    day_12 = horas_data["day_horas"][11]
+    night_1 = horas_data["night_horas"][0]
+    assert day_12["end_time_utc"] == night_1["start_time_utc"]
+
+    # Last night hora (hora 24) lord is Mercury for Sunday (so 25th hora starts Monday with Moon)
+    assert all_horas[23]["lord"] == "Mercury"
+
+    # Verify activities and Tamil fields exist
+    for h in all_horas:
+        assert len(h["good_for_en"]) > 0
+        assert len(h["good_for_ta"]) > 0
+        assert len(h["avoid_en"]) > 0
+        assert len(h["avoid_ta"]) > 0
+        assert h["lord_ta"] != ""
+        assert h["symbol"] != ""
+
+
+def test_panchang_includes_horas_and_signs():
+    """Verify daily Panchang response embeds 24-horas, Sun Rashi, and Moon Rashi."""
+    test_date = date(2026, 10, 18)
+    res = calculate_daily_panchangam(test_date, 13.0827, 80.2707, "Asia/Kolkata")
+
+    assert "horas" in res
+    assert len(res["horas"]["all_horas"]) == 24
+    assert "sun_sign" in res
+    assert 1 <= res["sun_sign"]["index"] <= 12
+    assert "moon_sign" in res
+    assert 1 <= res["moon_sign"]["index"] <= 12
+    assert res["yoga"]["name_ta"] != ""
+    assert res["karana"]["name_ta"] != ""
+

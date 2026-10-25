@@ -88,10 +88,305 @@ YOGA_NAMES = [
     "Brahma", "Indra", "Vaidhriti"
 ]
 
+YOGA_NAMES_TA = [
+    "விஷ்கம்பம்", "ப்ரீதி", "ஆயுஷ்மான்", "சௌபாக்யம்", "சோபனம்", "அதிகண்டம்", "சுகர்மம்", "த்ருதி",
+    "சூலம்", "கண்டம்", "விருத்தி", "துருவம்", "வியாகாதம்", "ஹர்ஷணம்", "வஜ்ரம்", "சித்தி",
+    "வியதிபாதம்", "வரியான்", "பரிகம்", "சிவம்", "சித்தம்", "சாத்தியம்", "சுபம்", "சுப்ரம்",
+    "பிரம்மம்", "ஐந்திரம்", "வைத்ருதி"
+]
+
 KARANA_NAMES = [
     "Bava", "Balava", "Kaulava", "Taitila", "Garija", "Vanija", "Vishti",
     "Shakuni", "Chatushpada", "Naga", "Kimstughna"
 ]
+
+KARANA_NAMES_TA: Dict[str, str] = {
+    "Bava": "பவம்",
+    "Balava": "பாலவம்",
+    "Kaulava": "கௌலவம்",
+    "Taitila": "சைதுளை",
+    "Garija": "கரசை",
+    "Vanija": "வணிஜை",
+    "Vishti": "பத்திரை (விஷ்டி)",
+    "Shakuni": "சகுனி",
+    "Chatushpada": "சதுஷ்பாதம்",
+    "Naga": "நாகவம்",
+    "Kimstughna": "கிம்ஸ்துக்னம்",
+}
+
+# Chaldean planetary speed order (descending): Sun -> Venus -> Mercury -> Moon -> Saturn -> Jupiter -> Mars
+CHALDEAN_HORA_ORDER = ["Sun", "Venus", "Mercury", "Moon", "Saturn", "Jupiter", "Mars"]
+
+# Weekday lord (Python weekday: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun)
+WEEKDAY_DAY_LORDS = {
+    0: "Moon",
+    1: "Mars",
+    2: "Mercury",
+    3: "Jupiter",
+    4: "Venus",
+    5: "Saturn",
+    6: "Sun",
+}
+
+WEEKDAY_DAY_LORDS_META = {
+    "Sun": {"name_en": "Sun", "name_ta": "சூரியன்", "sanskrit_name": "Surya"},
+    "Moon": {"name_en": "Moon", "name_ta": "சந்திரன்", "sanskrit_name": "Chandra"},
+    "Mars": {"name_en": "Mars", "name_ta": "செவ்வாய்", "sanskrit_name": "Mangala"},
+    "Mercury": {"name_en": "Mercury", "name_ta": "புதன்", "sanskrit_name": "Budha"},
+    "Jupiter": {"name_en": "Jupiter", "name_ta": "குரு", "sanskrit_name": "Guru"},
+    "Venus": {"name_en": "Venus", "name_ta": "சுக்கிரன்", "sanskrit_name": "Shukra"},
+    "Saturn": {"name_en": "Saturn", "name_ta": "சனி", "sanskrit_name": "Shani"},
+}
+
+HORA_METADATA: Dict[str, Dict[str, Any]] = {
+    "Sun": {
+        "lord_en": "Sun",
+        "lord_ta": "சூரியன்",
+        "lord_sanskrit": "Surya",
+        "nature": "mixed",
+        "benefic_type": "Krura (Fiery / Authority)",
+        "symbol": "☉",
+        "color": "#F59E0B",
+        "good_for_en": [
+            "Government dealings, official applications, and administrative work",
+            "Applying for jobs, promotions, and meeting senior superiors",
+            "Executive leadership decisions and public service",
+            "Purchasing gold, copper, ruby, or solar assets",
+            "Starting medical treatments, eye and heart care",
+            "Spiritual initiation, temple visits, and Gayatri Mantra japa",
+        ],
+        "good_for_ta": [
+            "அரசு காரியங்கள், உயர் அதிகாரிகள் சந்திப்பு மற்றும் விண்ணப்பங்கள்",
+            "வேலை வாய்ப்பு விண்ணப்பம், பதவி உயர்வு, புதிய பொறுப்பேற்பு",
+            "நிர்வாக முக்கிய முடிவுகள் மற்றும் பொதுச் சேவை",
+            "தங்கம், தாமிரம், மாணிக்கம் போன்ற சூரிய உலோகங்கள் வாங்குதல்",
+            "மருத்துவ சிகிச்சை தொடங்குதல், கண் மற்றும் இதய நலம்",
+            "ஆன்மீக வழிபாடு, சூரிய நமஸ்காரம் மற்றும் காயத்ரி ஜபம்",
+        ],
+        "avoid_en": [
+            "Signing peace treaties or delicate diplomatic compromises",
+            "Beginning long journeys or leisure tourism",
+            "Secretive deals or deceitful actions",
+            "Marriage ceremonies (Vivaha Muhurta)",
+        ],
+        "avoid_ta": [
+            "சமாதானப் பேச்சுவார்த்தைகள் மற்றும் விட்டுக்கொடுத்தல்",
+            "சுற்றுலா மற்றும் நீண்ட தூர பிரயாணம் தொடங்குதல்",
+            "ரகசிய அல்லது மறைமுக ஒப்பந்தங்கள்",
+            "திருமண முகூர்த்தம் நடத்துதல்",
+        ],
+    },
+    "Venus": {
+        "lord_en": "Venus",
+        "lord_ta": "சுக்கிரன்",
+        "lord_sanskrit": "Shukra",
+        "nature": "benefic",
+        "benefic_type": "Subha (Supremely Auspicious / Joy)",
+        "symbol": "♀",
+        "color": "#EC4899",
+        "good_for_en": [
+            "Marriage proposals, wedding shopping, engagement rituals, and romance",
+            "Purchasing new vehicles, diamond jewelry, silks, and luxury items",
+            "Inauguration of art, music, dance, film, or photography studios",
+            "Interior decorating, renovations, and wearing new clothes",
+            "Beauty care, salon visits, and wellness treatments",
+            "Retail trade, luxury commerce, and financial investments",
+        ],
+        "good_for_ta": [
+            "திருமணம், நிச்சயதார்த்தம், காதல் மற்றும் வரன் பார்த்தல்",
+            "வாகனம், வைரம், வெள்ளி, பட்டு ஆடைகள், அலங்காரப் பொருட்கள் வாங்குதல்",
+            "கலை, இசை, சினிமா, புகைப்படம் மற்றும் நாட்டியப் பயிற்சிகள் தொடங்குதல்",
+            "வீடு அலங்காரம் செய்தல், புது ஆடைகள் அணிதல்",
+            "அழகு சாதன சிகிச்சைகள் மற்றும் புத்துணர்வு சிகிச்சை",
+            "சில்லறை வணிகம் மற்றும் ஆடம்பரப் பொருட்கள் விற்பனை தொடங்குதல்",
+        ],
+        "avoid_en": [
+            "Hostile arguments, aggressive litigation, and warfare",
+            "Borrowing or lending tough financial loans",
+            "Aggressive medical surgeries or conflict actions",
+        ],
+        "avoid_ta": [
+            "கடுமையான வாக்குவாதங்கள் மற்றும் நீதிமன்ற வழக்குகள்",
+            "கடன் வாங்குதல் அல்லது கடன் கொடுத்தல்",
+            "ஆக்ரோஷமான அறுவை சிகிச்சைகள் மற்றும் சண்டைகள்",
+        ],
+    },
+    "Mercury": {
+        "lord_en": "Mercury",
+        "lord_ta": "புதன்",
+        "lord_sanskrit": "Budha",
+        "nature": "benefic",
+        "benefic_type": "Subha (Intellect / Commerce)",
+        "symbol": "☿",
+        "color": "#10B981",
+        "good_for_en": [
+            "Business meetings, partnerships, signing agreements and trade deals",
+            "Educational admissions, starting new courses, competitive exams",
+            "Accounting, auditing, stock market investments, and banking",
+            "Writing, journalism, publishing, software development, and coding",
+            "Marketing campaigns, advertising, telecommunications, PR",
+            "Consultancy, legal advice, and counseling sessions",
+        ],
+        "good_for_ta": [
+            "வியாபாரப் பேச்சுவார்த்தைகள், புதிய ஒப்பந்தங்கள் கையெழுத்திடுதல்",
+            "கல்வி ஆரம்பம், வித்யாரம்பம், புதிய பாடநெறி, தேர்வு எழுதுதல்",
+            "கணக்கு பார்த்தல், தணிக்கை, பங்குச்சந்தை பரிவர்த்தனை, வங்கி வேலைகள்",
+            "புத்தகம் எழுதுதல், பத்திரிகை, மென்பொருள் தயாரிப்பு, கணிப்பொறி பணி",
+            "விளம்பரம், தகவல் தொடர்பு, சந்தைப்படுத்துதல் திட்டங்கள்",
+            "ஜோதிட ஆலோசனை மற்றும் சட்ட வல்லுநர் ஆலோசனைகள் பெறுதல்",
+        ],
+        "avoid_en": [
+            "Physical combat, violent confrontations, or street brawls",
+            "Purchasing vast barren land or agricultural estates",
+        ],
+        "avoid_ta": [
+            "உடலளவிலான மோதல்கள் மற்றும் ஆக்ரோஷமான சண்டைகள்",
+            "பாழ் நிலங்கள் அல்லது தரிசு நிலங்கள் வாங்குதல்",
+        ],
+    },
+    "Moon": {
+        "lord_en": "Moon",
+        "lord_ta": "சந்திரன்",
+        "lord_sanskrit": "Chandra",
+        "nature": "benefic",
+        "benefic_type": "Subha (Gentle / Fluid / Mind)",
+        "symbol": "☽",
+        "color": "#38BDF8",
+        "good_for_en": [
+            "Commencing travels, pleasant journeys, sea voyages, and pilgrimage",
+            "Meeting close friends, family reunions, and emotional bonding",
+            "Food and beverage businesses, restaurants, milk and dairy trade",
+            "Purchasing pearls, silver vessels, and home kitchen utensils",
+            "Agricultural sowing, water irrigation, well digging, borewells",
+            "House entry, shifting residence, and maternal care",
+        ],
+        "good_for_ta": [
+            "பயணங்கள் தொடங்குதல், சுற்றுலா, கடல் வழிப் பயணம், தீர்த்த யாத்திரை",
+            "உறவினர்கள் மற்றும் நண்பர்கள் சந்திப்பு, குடும்ப சமாதானம்",
+            "உணவகம், பால் பண்ணை, திரவ உணவுப் பொருட்கள் வியாபாரம் தொடங்குதல்",
+            "முத்து, வெள்ளிப் பாத்திரங்கள் மற்றும் வீட்டு உபயோகப் பொருட்கள் வாங்குதல்",
+            "விவசாய விதைப்பு, நீர்ப்பாசனம், கிணறு மற்றும் போர்வெல் அமைத்தல்",
+            "புது வீட்டிற்கு குடிபெயர்தல் மற்றும் தாயார் ஆசி பெறுதல்",
+        ],
+        "avoid_en": [
+            "Major invasive surgical operations",
+            "Initiating hostile court lawsuits against rivals",
+            "Heavy stone drilling or earth-shattering excavations",
+        ],
+        "avoid_ta": [
+            "முக்கியமான அறுவை சிகிச்சைகள் மேற்கொள்ளுதல்",
+            "எதிரிகள் மீது கடுமையான வழக்கு தொடங்குதல்",
+            "கடினமான பாறை உடைப்பு மற்றும் கனரக பூமி தோண்டுதல்",
+        ],
+    },
+    "Saturn": {
+        "lord_en": "Saturn",
+        "lord_ta": "சனி",
+        "lord_sanskrit": "Shani",
+        "nature": "malefic",
+        "benefic_type": "Krura (Discipline / Grounding / Endurance)",
+        "symbol": "♄",
+        "color": "#6366F1",
+        "good_for_en": [
+            "Laying foundation stones, underground construction, boreholes",
+            "Purchasing agricultural land, iron, steel, coal, oil, and heavy machinery",
+            "Starting factories, logistics, warehousing, and hiring manual workforce",
+            "Repaying old debts, opening long-term fixed deposits, legal defence",
+            "Spiritual austerity, fasting, meditation, and feeding the underprivileged",
+            "Remedial pujas for Shani (Sesame oil lamp offering to Lord Shaneeshwara)",
+        ],
+        "good_for_ta": [
+            "அஸ்திவாரம் போடுதல், பூமி பூஜை, கனரக கட்டுமானப் பணிகள்",
+            "விவசாய நிலம், இரும்பு, நிலக்கரி, எண்ணெய் மற்றும் இயந்திரங்கள் வாங்குதல்",
+            "தொழிற்சாலை துவக்கம், கிடங்கு அமைத்தல், தொழிலாளர்கள் நியமனம்",
+            "பழைய கடன்களை அடைத்தல், நீண்ட கால நிலையான வைப்பு நிதி",
+            "ஆன்மீக தவம், விரதம், யோகாசனம், ஏழைகளுக்கு அன்னதானம் செய்தல்",
+            "சனீஸ்வர பகவானுக்கு நல்லெண்ணெய் தீபம் ஏற்றி வழிபடுதல்",
+        ],
+        "avoid_en": [
+            "All auspicious celebrations: Marriage, Seemantham, Baby shower",
+            "Buying and wearing new clothes or precious fine jewelry",
+            "Giving financial loans to others (high chance of delay/loss)",
+            "Pleasure vacations or joyful parties",
+        ],
+        "avoid_ta": [
+            "திருமணம், சீமந்தம், சுப காரியங்கள் செய்தல்",
+            "புதிய ஆடைகள், தங்க நகைகள் முதல் முறை அணிதல்",
+            "பிறருக்கு கடன் கொடுப்பது (திரும்பி வருவது கடினம்)",
+            "இன்பச் சுற்றுலா மற்றும் கொண்டாட்டங்கள் தொடங்குதல்",
+        ],
+    },
+    "Jupiter": {
+        "lord_en": "Jupiter",
+        "lord_ta": "குரு",
+        "lord_sanskrit": "Guru",
+        "nature": "benefic",
+        "benefic_type": "Parama Subha (Supreme Benefic / Sarva Siddhi)",
+        "symbol": "♃",
+        "color": "#EAB308",
+        "good_for_en": [
+            "All highly auspicious beginnings (Sarva Karya Siddhi window)",
+            "Weddings, engagements, Upanayana, spiritual initiation, and mantra upadesha",
+            "Higher education, university admission, philosophical studies",
+            "Large financial investments, fixed assets, gold and yellow sapphire purchases",
+            "Housewarming (Griha Pravesha), temple consecrations, Vedic rituals",
+            "Meeting elders, saints, preceptors, and achieving legal amicable settlements",
+        ],
+        "good_for_ta": [
+            "அனைத்து சுப காரியங்கள் தொடங்குதல் (சர்வ காரிய சித்தி)",
+            "திருமணம், நிச்சயதார்த்தம், பூணூல் அணிவித்தல், குரு உபதேசம் பெறுதல்",
+            "உயர் கல்வி ஆரம்பம், ஆராய்ச்சிப் படிப்பு, ஆன்மீக நூல்கள் வாசித்தல்",
+            "பெரிய நிதி முதலீடுகள், சொத்து வாங்குதல், தங்கம் மற்றும் புஷ்பராகம் வாங்குதல்",
+            "புதுமனை புகுவிழா (கிரகப்பிரவேசம்), கோவில் கும்பாபிஷேகம், ஹோமங்கள்",
+            "பெரியோர்கள் மற்றும் மகான்களின் ஆசி பெறுதல், சமரச தீர்வுகள்",
+        ],
+        "avoid_en": [
+            "Deceitful or unethical practices",
+            "Cruel or destructive activities",
+        ],
+        "avoid_ta": [
+            "நேர்மையற்ற அல்லது சட்டவிரோதமான செயல்கள்",
+            "கொடுமையான, பிறருக்கு தீங்கு விளைவிக்கும் செயல்கள்",
+        ],
+    },
+    "Mars": {
+        "lord_en": "Mars",
+        "lord_ta": "செவ்வாய்",
+        "lord_sanskrit": "Mangala",
+        "nature": "mixed",
+        "benefic_type": "Krura (Dynamic / Courage / Energy)",
+        "symbol": "♂",
+        "color": "#EF4444",
+        "good_for_en": [
+            "Real estate deals, land registrations, property site visits, and layout plotting",
+            "Undergoing surgical operations, dental procedures, and donating blood",
+            "Sports competitions, martial arts, fitness gym workouts, and athletic drills",
+            "Engineering projects, electrical installations, metal furnaces, weapons handling",
+            "Police, defense, litigation offensive actions, asserting lawful rights",
+            "Automobile mechanical servicing and vehicle overhaul",
+        ],
+        "good_for_ta": [
+            "ரியல் எஸ்டேட், பூமி கிரயம், நிலம் பதிவு செய்தல், வீட்டு மனை பார்த்தல்",
+            "அறுவை சிகிச்சை செய்து கொள்ளுதல், பல் மருத்துவம், ரத்த தானம் செய்தல்",
+            "விளையாட்டுப் போட்டிகள், தற்காப்புக் கலை, ஜிம் உடற்பயிற்சி தொடங்குதல்",
+            "பொறியியல் பணிகள், மின்சார சாதனங்கள் பொருத்துதல், உலை வேலைகள்",
+            "காவல்துறை, ராணுவம், வழக்குகளில் தைரியமான ஆக்ரோஷ நடவடிக்கைகள்",
+            "வாகனம் பழுதுபார்த்தல், பட்டறை வேலைகள் மற்றும் இயந்திர பராமரிப்பு",
+        ],
+        "avoid_en": [
+            "Marriage ceremonies and romantic proposals",
+            "Delicate diplomatic peace accords and sweet talks",
+            "Commencing travels towards the North direction",
+            "Taking on new personal debts",
+        ],
+        "avoid_ta": [
+            "திருமண பேச்சுவார்த்தை, நிச்சயதார்த்தம், காதல் வெளிப்பாடு",
+            "மென்மையான சமாதானப் பேச்சுவார்த்தைகள்",
+            "வடக்கு திசை நோக்கிய பயணங்கள் தொடங்குதல்",
+            "புதிய கடன் வாங்குதல்",
+        ],
+    },
+}
 
 WEEKDAY_NAMES_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 WEEKDAY_NAMES_TA = ["திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி", "ஞாயிறு"]
@@ -397,6 +692,109 @@ def calculate_varjyam_and_amrita(nak_idx: int, nak_start_utc: datetime, nak_end_
     return varjyam_info, amrita_info
 
 
+def calculate_daily_horas(
+    event_date: date,
+    latitude: float,
+    longitude: float,
+    timezone_str: str,
+) -> Dict[str, Any]:
+    """Calculate the 24 Vedic Planetary Horas (12 Daytime + 12 Nighttime) based on local solar times.
+
+    Daytime horas: from local sunrise to local sunset divided into 12 proportional intervals.
+    Nighttime horas: from local sunset to next day's sunrise divided into 12 proportional intervals.
+    Ruler order: Chaldean descending speed order (Sun -> Venus -> Mercury -> Moon -> Saturn -> Jupiter -> Mars).
+    1st Hora of daytime begins with the lord of the solar weekday.
+    """
+    tz = ZoneInfo(timezone_str)
+    sunrise_utc, sunset_utc, _ = calculate_solar_sunrise_sunset(event_date, latitude, longitude)
+    next_sunrise_utc, _, _ = calculate_solar_sunrise_sunset(event_date + timedelta(days=1), latitude, longitude)
+
+    local_sunrise_dt = sunrise_utc.astimezone(tz)
+    weekday_py = local_sunrise_dt.weekday()  # 0=Mon..6=Sun
+    day_lord_key = WEEKDAY_DAY_LORDS[weekday_py]
+
+    next_day_py = (weekday_py + 1) % 7
+    next_day_lord_key = WEEKDAY_DAY_LORDS[next_day_py]
+
+    daytime_duration_secs = (sunset_utc - sunrise_utc).total_seconds()
+    if daytime_duration_secs <= 0:
+        daytime_duration_secs = 12 * 3600.0
+    day_hora_duration_secs = daytime_duration_secs / 12.0
+
+    nighttime_duration_secs = (next_sunrise_utc - sunset_utc).total_seconds()
+    if nighttime_duration_secs <= 0:
+        nighttime_duration_secs = 12 * 3600.0
+    night_hora_duration_secs = nighttime_duration_secs / 12.0
+
+    start_idx = CHALDEAN_HORA_ORDER.index(day_lord_key)
+
+    day_horas: List[Dict[str, Any]] = []
+    night_horas: List[Dict[str, Any]] = []
+    all_horas: List[Dict[str, Any]] = []
+
+    for i in range(24):
+        lord_name = CHALDEAN_HORA_ORDER[(start_idx + i) % 7]
+        meta = HORA_METADATA[lord_name]
+
+        if i < 12:
+            period = "day"
+            period_index = i + 1
+            slot_start_utc = sunrise_utc + timedelta(seconds=i * day_hora_duration_secs)
+            slot_end_utc = sunrise_utc + timedelta(seconds=(i + 1) * day_hora_duration_secs)
+            dur_mins = round(day_hora_duration_secs / 60.0, 1)
+        else:
+            period = "night"
+            night_slot = i - 12
+            period_index = night_slot + 1
+            slot_start_utc = sunset_utc + timedelta(seconds=night_slot * night_hora_duration_secs)
+            slot_end_utc = sunset_utc + timedelta(seconds=(night_slot + 1) * night_hora_duration_secs)
+            dur_mins = round(night_hora_duration_secs / 60.0, 1)
+
+        slot_start_local = slot_start_utc.astimezone(tz)
+        slot_end_local = slot_end_utc.astimezone(tz)
+
+        hora_slot = {
+            "index": i + 1,
+            "period": period,
+            "period_index": period_index,
+            "lord": lord_name,
+            "lord_ta": meta["lord_ta"],
+            "lord_sanskrit": meta["lord_sanskrit"],
+            "nature": meta["nature"],
+            "benefic_type": meta["benefic_type"],
+            "symbol": meta["symbol"],
+            "color": meta["color"],
+            "start_time_utc": slot_start_utc.isoformat(),
+            "end_time_utc": slot_end_utc.isoformat(),
+            "start_time_local": slot_start_local.strftime("%H:%M:%S"),
+            "end_time_local": slot_end_local.strftime("%H:%M:%S"),
+            "start_time_full_local": slot_start_local.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time_full_local": slot_end_local.strftime("%Y-%m-%d %H:%M:%S"),
+            "duration_minutes": dur_mins,
+            "good_for_en": meta["good_for_en"],
+            "good_for_ta": meta["good_for_ta"],
+            "avoid_en": meta["avoid_en"],
+            "avoid_ta": meta["avoid_ta"],
+        }
+
+        all_horas.append(hora_slot)
+        if period == "day":
+            day_horas.append(hora_slot)
+        else:
+            night_horas.append(hora_slot)
+
+    return {
+        "date": event_date.isoformat(),
+        "day_lord": WEEKDAY_DAY_LORDS_META[day_lord_key],
+        "next_day_lord": WEEKDAY_DAY_LORDS_META[next_day_lord_key],
+        "daytime_hora_duration_minutes": round(day_hora_duration_secs / 60.0, 1),
+        "nighttime_hora_duration_minutes": round(night_hora_duration_secs / 60.0, 1),
+        "day_horas": day_horas,
+        "night_horas": night_horas,
+        "all_horas": all_horas,
+    }
+
+
 def calculate_daily_panchangam(
     event_date: date,
     latitude: float,
@@ -447,6 +845,7 @@ def calculate_daily_panchangam(
     yoga_idx = int(yoga_sum // (360.0 / 27.0)) + 1
     yoga_idx = max(1, min(27, yoga_idx))
     yoga_name = YOGA_NAMES[yoga_idx - 1]
+    yoga_name_ta = YOGA_NAMES_TA[yoga_idx - 1]
 
     # Karana (each tithi has 2 karanas = 6 deg each)
     moon_trop, sun_trop, _, _ = get_moon_and_sun_longitudes(sunrise_jd)
@@ -464,6 +863,38 @@ def calculate_daily_panchangam(
     else:
         repeating = ["Bava", "Balava", "Kaulava", "Taitila", "Garija", "Vanija", "Vishti"]
         karana_name = repeating[(karana_num - 2) % 7]
+    karana_name_ta = KARANA_NAMES_TA.get(karana_name, karana_name)
+
+    # Solar Sign (Surya Rashi) and Lunar Sign (Chandra Rashi) at sunrise
+    sun_sign_idx = int(sun_sid // 30.0) + 1
+    sun_sign_idx = max(1, min(12, sun_sign_idx))
+    sun_deg = sun_sid % 30.0
+
+    moon_sign_idx = int(moon_sid // 30.0) + 1
+    moon_sign_idx = max(1, min(12, moon_sign_idx))
+    moon_deg = moon_sid % 30.0
+
+    sun_sign = {
+        "index": sun_sign_idx,
+        "name_en": ZODIAC_NAMES_EN[sun_sign_idx - 1],
+        "name_ta": ZODIAC_NAMES_TA[sun_sign_idx - 1],
+        "degree_in_sign": round(sun_deg, 2),
+    }
+
+    moon_sign = {
+        "index": moon_sign_idx,
+        "name_en": ZODIAC_NAMES_EN[moon_sign_idx - 1],
+        "name_ta": ZODIAC_NAMES_TA[moon_sign_idx - 1],
+        "degree_in_sign": round(moon_deg, 2),
+    }
+
+    # 24 Planetary Horas (12 Day + 12 Night)
+    horas = calculate_daily_horas(
+        event_date=event_date,
+        latitude=latitude,
+        longitude=longitude,
+        timezone_str=timezone_str,
+    )
 
     return {
         "date": event_date.isoformat(),
@@ -511,11 +942,15 @@ def calculate_daily_panchangam(
         "yoga": {
             "number": yoga_idx,
             "name": yoga_name,
+            "name_ta": yoga_name_ta,
         },
         "karana": {
             "number": karana_num,
             "name": karana_name,
+            "name_ta": karana_name_ta,
         },
+        "sun_sign": sun_sign,
+        "moon_sign": moon_sign,
         "inauspicious_periods": octants,
         "auspicious_periods": {
             "abhijit": muhurtas["abhijit"],
@@ -523,6 +958,7 @@ def calculate_daily_panchangam(
         },
         "varjyam": varjyam_info,
         "dur_muhurtas": muhurtas["dur_muhurtas"],
+        "horas": horas,
     }
 
 

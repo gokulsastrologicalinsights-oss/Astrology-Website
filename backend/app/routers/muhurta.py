@@ -21,7 +21,7 @@ from app.schemas.muhurta import (
     CustomOccasionRequest,
 )
 from app.services.auth_service import get_current_user
-from app.services.muhurta_engine.astronomy import calculate_daily_panchangam
+from app.services.muhurta_engine.astronomy import calculate_daily_panchangam, calculate_daily_horas
 from app.services.muhurta_engine.finder import find_candidate_muhurtas
 from app.services.muhurta_repository import (
     list_occasions,
@@ -90,6 +90,23 @@ def compute_daily_panchang(request: PanchangRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to calculate Panchangam: {str(e)}",
+        )
+
+
+@router.post("/hora", summary="Calculate 24 Vedic Planetary Horas (Day & Night)")
+def compute_daily_horas(request: PanchangRequest):
+    try:
+        res = calculate_daily_horas(
+            event_date=request.date,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            timezone_str=request.timezone,
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to calculate Horas: {str(e)}",
         )
 
 

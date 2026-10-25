@@ -861,6 +861,8 @@ export async function exportNumerologyPdf(
 import type {
   OccasionItem,
   FindMuhurtaResponse,
+  PanchangResponse,
+  DailyHoraResponse,
   SavedMuhurtaItem,
   SaveMuhurtaRequest,
 } from "./types";
@@ -911,8 +913,21 @@ export async function getDailyPanchang(params: {
   longitude: number;
   timezone?: string;
   ayanamsa_id?: number;
-}): Promise<Record<string, any>> {
-  return request<Record<string, any>>("/api/v1/muhurta/panchang", {
+}): Promise<PanchangResponse> {
+  return request<PanchangResponse>("/api/v1/muhurta/panchang", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function getDailyHoras(params: {
+  date: string;
+  latitude: number;
+  longitude: number;
+  timezone?: string;
+  ayanamsa_id?: number;
+}): Promise<DailyHoraResponse> {
+  return request<DailyHoraResponse>("/api/v1/muhurta/hora", {
     method: "POST",
     body: JSON.stringify(params),
   });
