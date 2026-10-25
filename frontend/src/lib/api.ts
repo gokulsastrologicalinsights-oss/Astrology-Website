@@ -67,6 +67,8 @@ import {
   ShadbalaResponse,
   VargaD1D9Request,
   VargaD1D9Response,
+  ShodashvargaRequest,
+  ShodashvargaResponse,
   SourceReferenceResponse,
   ProblemTaxonomyItem,
   ProblemTaxonomyListResponse,
@@ -1252,6 +1254,41 @@ export async function getSavedHoroscopeVargaD1D9(
   token: string
 ): Promise<VargaD1D9Response> {
   return request<VargaD1D9Response>(`/api/v1/horoscope/varga/d1-d9/${horoscopeId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * 22b. Calculate Complete 16 Shodashvarga Charts (POST /api/v1/horoscope/varga/shodashvarga)
+ */
+export async function calculateShodashvarga(
+  req: ShodashvargaRequest,
+  token?: string
+): Promise<ShodashvargaResponse> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return request<ShodashvargaResponse>("/api/v1/horoscope/varga/shodashvarga", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 22c. Get Saved Horoscope 16 Shodashvarga Charts (GET /api/v1/horoscope/varga/shodashvarga/{id})
+ */
+export async function getSavedHoroscopeShodashvarga(
+  horoscopeId: string,
+  token: string
+): Promise<ShodashvargaResponse> {
+  return request<ShodashvargaResponse>(`/api/v1/horoscope/varga/shodashvarga/${horoscopeId}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

@@ -140,8 +140,8 @@ interface AstrologyToolCard {
     },
     {
       id: "d1-d9",
-      titleTa: "D1/D9 சக்கரங்கள்",
-      titleEn: "D1 Rasi & D9 Navamsa",
+      titleTa: "வர்க்க சக்கரங்கள் (D1 - D60)",
+      titleEn: "Divisional Charts (D1 - D60)",
       href: "/tools/d1-d9",
       icon: Compass,
       color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",

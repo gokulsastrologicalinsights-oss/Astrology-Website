@@ -2780,9 +2780,77 @@ export interface VargaD1D9Response {
   summary: VargaChartSummary;
   d1_chart: any;
   d9_chart: any;
+  shodashvarga?: ShodashvargaResponse;
 }
 
 export interface VargaD1D9Request {
+  saved_horoscope_id?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  ayanamsa?: number;
+  house_system?: number;
+}
+
+// ==========================================
+// Complete Shodashvarga (D1 to D60) Types
+// ==========================================
+
+export interface ShodashvargaPlanetEntry {
+  name: string;
+  body_id: number;
+  sign_index: number;
+  sign_name: string;
+  sign_name_tamil: string;
+  degree_in_sign: number;
+  house: number;
+  sign_lord: string;
+  is_retrograde: boolean;
+  is_vargottama: boolean;
+  shashtyamsa_deity?: string | null;
+  shashtyamsa_deity_tamil?: string | null;
+  shashtyamsa_nature?: "Benefic" | "Malefic" | "Neutral" | string | null;
+}
+
+export interface ShodashvargaAscendantEntry {
+  sign_index: number;
+  sign_name: string;
+  sign_name_tamil: string;
+  degree_in_sign: number;
+  sign_lord: string;
+  is_vargottama: boolean;
+  shashtyamsa_deity?: string | null;
+  shashtyamsa_deity_tamil?: string | null;
+  shashtyamsa_nature?: "Benefic" | "Malefic" | "Neutral" | string | null;
+}
+
+export interface ShodashvargaChartItem {
+  division_id: string; // e.g. "D1", "D2", ..., "D60"
+  division_number: number;
+  name: string;
+  name_tamil: string;
+  significance: string;
+  significance_tamil: string;
+  span_degrees: number;
+  ascendant: ShodashvargaAscendantEntry;
+  planets: ShodashvargaPlanetEntry[];
+  chart: any;
+}
+
+export interface ShodashvargaResponse {
+  metadata?: CalculationMetadata;
+  charts: Record<string, ShodashvargaChartItem>;
+  planet_vargas: Record<string, Record<string, number>>;
+  vargottama_planets: string[];
+  d1_chart: any;
+  d9_chart: any;
+  d10_chart: any;
+  d60_chart: any;
+}
+
+export interface ShodashvargaRequest {
   saved_horoscope_id?: string;
   birth_date?: string;
   birth_time?: string;
