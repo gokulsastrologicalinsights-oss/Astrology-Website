@@ -1,8 +1,8 @@
 """Pydantic schemas for Pancha Pakshi Shastra endpoints."""
 
 from typing import List, Dict, Any, Optional
-from datetime import date as dt_date
-from pydantic import BaseModel, Field
+from datetime import date as dt_date, datetime
+from pydantic import BaseModel, Field, field_validator
 
 
 class PanchaPakshiRequest(BaseModel):
@@ -12,6 +12,39 @@ class PanchaPakshiRequest(BaseModel):
     timezone: str = Field(default="Asia/Kolkata")
     birth_nakshatra: int = Field(..., ge=1, le=27, description="Birth star index 1..27 (Ashwini=1, Revati=27)")
     birth_paksha: str = Field(default="shukla", description="'shukla' (waxing) or 'krishna' (waning)")
+
+    @field_validator("target_date", mode="before")
+    @classmethod
+    def parse_target_date(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean_str = v.strip().split("T")[0].split(" ")[0]
+            try:
+                return dt_date.fromisoformat(clean_str)
+            except Exception:
+                pass
+        elif isinstance(v, datetime):
+            return v.date()
+        return v
+
+    @field_validator("birth_nakshatra", mode="before")
+    @classmethod
+    def parse_birth_nakshatra(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return int(v.strip())
+            except Exception:
+                pass
+        return v
+
+    @field_validator("birth_paksha", mode="before")
+    @classmethod
+    def parse_birth_paksha(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            if "krishna" in clean or "தேய்" in clean or "thei" in clean or "waning" in clean:
+                return "krishna"
+            return "shukla"
+        return v
 
 
 class AntaraSlot(BaseModel):

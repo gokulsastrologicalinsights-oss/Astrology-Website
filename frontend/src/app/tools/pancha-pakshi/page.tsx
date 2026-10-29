@@ -93,17 +93,55 @@ function PanchaPakshiStudioInner() {
   const { language } = useLanguage();
   const searchParams = useSearchParams();
 
-  // Inputs state
+  // Inputs state - safely initialize with fallback from searchParams or defaults
   const [dateStr, setDateStr] = useState<string>(() => {
+    const pDate = searchParams?.get("date") || searchParams?.get("target_date");
+    if (pDate && !isNaN(Date.parse(pDate))) return pDate.split("T")[0];
     return new Date().toISOString().split("T")[0];
   });
-  const [selectedCity, setSelectedCity] = useState<CityPreset>(CITY_PRESETS[0]);
-  const [latitude, setLatitude] = useState<number>(CITY_PRESETS[0].lat);
-  const [longitude, setLongitude] = useState<number>(CITY_PRESETS[0].lon);
-  const [timezoneStr, setTimezoneStr] = useState<string>(CITY_PRESETS[0].tz);
+  const [selectedCity, setSelectedCity] = useState<CityPreset>(() => {
+    const cityName = searchParams?.get("city") || searchParams?.get("location");
+    if (cityName) {
+      const found = CITY_PRESETS.find(
+        (c) => c.name_en.toLowerCase() === cityName.toLowerCase() || c.name_ta === cityName
+      );
+      if (found) return found;
+    }
+    return CITY_PRESETS[0];
+  });
+  const [latitude, setLatitude] = useState<number>(() => {
+    const pLat = searchParams?.get("lat") || searchParams?.get("latitude");
+    if (pLat && !isNaN(parseFloat(pLat))) return parseFloat(pLat);
+    return CITY_PRESETS[0].lat;
+  });
+  const [longitude, setLongitude] = useState<number>(() => {
+    const pLon = searchParams?.get("lon") || searchParams?.get("longitude");
+    if (pLon && !isNaN(parseFloat(pLon))) return parseFloat(pLon);
+    return CITY_PRESETS[0].lon;
+  });
+  const [timezoneStr, setTimezoneStr] = useState<string>(() => {
+    return searchParams?.get("tz") || searchParams?.get("timezone") || CITY_PRESETS[0].tz;
+  });
 
-  const [birthNakshatra, setBirthNakshatra] = useState<number>(4); // Rohini default
-  const [birthPaksha, setBirthPaksha] = useState<"shukla" | "krishna">("shukla");
+  const [birthNakshatra, setBirthNakshatra] = useState<number>(() => {
+    const pNak = searchParams?.get("nakshatra") || searchParams?.get("star") || searchParams?.get("birth_nakshatra");
+    if (pNak) {
+      const parsed = parseInt(pNak, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 27) return parsed;
+      const found = NAKSHATRAS.find(
+        (n) => n.name_en.toLowerCase() === pNak.toLowerCase() || n.name_ta === pNak
+      );
+      if (found) return found.index;
+    }
+    return 4; // Rohini default
+  });
+  const [birthPaksha, setBirthPaksha] = useState<"shukla" | "krishna">(() => {
+    const pPak = searchParams?.get("paksha") || searchParams?.get("birth_paksha");
+    if (pPak && (pPak.toLowerCase().includes("krishna") || pPak.includes("தேய்") || pPak.toLowerCase().includes("waning"))) {
+      return "krishna";
+    }
+    return "shukla";
+  });
 
   // View state
   const [activeTab, setActiveTab] = useState<"timeline" | "golden" | "padupakshi" | "lore">("timeline");
@@ -166,20 +204,51 @@ function PanchaPakshiStudioInner() {
   };
 
   const fetchBioRhythms = async () => {
+    // Defensive parameter sanitization to prevent 422 or empty payload errors
+    const validNakshatra = Math.max(1, Math.min(27, parseInt(String(birthNakshatra), 10) || 4));
+    const validPaksha: "shukla" | "krishna" = birthPaksha === "krishna" ? "krishna" : "shukla";
+    const validDate = dateStr && !isNaN(Date.parse(dateStr))
+      ? dateStr.split("T")[0]
+      : new Date().toISOString().split("T")[0];
+    const validLat = typeof latitude === "number" && !isNaN(latitude) ? latitude : selectedCity.lat;
+    const validLon = typeof longitude === "number" && !isNaN(longitude) ? longitude : selectedCity.lon;
+    const validTz = timezoneStr || selectedCity.tz || "Asia/Kolkata";
+
     setLoading(true);
     setError(null);
     try {
       const res = await calculatePanchaPakshi({
-        target_date: dateStr,
-        latitude,
-        longitude,
-        timezone: timezoneStr,
-        birth_nakshatra: birthNakshatra,
-        birth_paksha: birthPaksha,
+        target_date: validDate,
+        latitude: validLat,
+        longitude: validLon,
+        timezone: validTz,
+        birth_nakshatra: validNakshatra,
+        birth_paksha: validPaksha,
       });
       setData(res);
     } catch (err: any) {
-      setError(err?.message || "Failed to calculate Pancha Pakshi bio-rhythms.");
+      console.error("Pancha Pakshi calculation error:", err);
+      let msg = "";
+      if (typeof err?.message === "string" && err.message.trim() && err.message !== "[object Object]") {
+        msg = err.message.trim();
+      } else if (typeof err?.data?.detail === "string" && err.data.detail.trim() && err.data.detail !== "[object Object]") {
+        msg = err.data.detail.trim();
+      } else if (Array.isArray(err?.data?.validation_errors) && err.data.validation_errors.length > 0) {
+        msg = err.data.validation_errors
+          .map((v: any) => `${v.field || ""}: ${v.message || v.type || "Invalid"}`)
+          .join("; ");
+      } else if (Array.isArray(err?.data?.detail) && err.data.detail.length > 0) {
+        msg = err.data.detail
+          .map((d: any) => (typeof d === "string" ? d : d.msg || d.message || JSON.stringify(d)))
+          .join("; ");
+      } else if (typeof err?.data?.error === "string" && err.data.error.trim()) {
+        msg = err.data.error.trim();
+      } else {
+        msg = language === "ta"
+          ? "பஞ்ச பட்சி சாஸ்திர கணிப்பில் பிழை ஏற்பட்டது. தயவுசெய்து அளவுருக்களை சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
+          : "Failed to calculate Pancha Pakshi bio-rhythms. Please check parameters and try again.";
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -409,12 +478,25 @@ function PanchaPakshiStudioInner() {
 
         {/* Error Notification */}
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
-            <div>
-              <strong className="font-bold">Error: </strong>
-              <span>{error}</span>
+          <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start sm:items-center gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5 sm:mt-0" />
+              <div>
+                <strong className="font-bold">
+                  {language === "ta" ? "கணிப்புப் பிழை: " : "Calculation Error: "}
+                </strong>
+                <span className="text-rose-700 font-medium">{error}</span>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={fetchBioRhythms}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>{language === "ta" ? "மீண்டும் முயற்சி செய்" : "Retry Calculation"}</span>
+            </button>
           </div>
         )}
 

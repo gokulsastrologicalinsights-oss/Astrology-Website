@@ -151,12 +151,102 @@ function getApiBaseUrl(): string {
 
 const API_BASE_URL = getApiBaseUrl();
 
+/**
+ * Robustly formats any error payload from FastAPI, Next.js proxy, or network
+ * into a clean, human-readable string without ever leaking "[object Object]".
+ */
+export function formatApiErrorMessage(
+  errorData: any,
+  status?: number,
+  statusText?: string
+): string {
+  if (!errorData) {
+    return status
+      ? `Backend request failed with HTTP ${status}${statusText ? ` (${statusText})` : ""}`
+      : "An unexpected error occurred during request.";
+  }
+
+  // 1. If errorData is already a non-empty string
+  if (typeof errorData === "string" && errorData.trim() && errorData !== "[object Object]") {
+    return errorData.trim();
+  }
+
+  // 2. If validation_errors is an array of structured field errors
+  if (Array.isArray(errorData.validation_errors) && errorData.validation_errors.length > 0) {
+    const formatted = errorData.validation_errors
+      .map((v: any) => {
+        if (!v) return "";
+        const field = v.field ? `${v.field}: ` : "";
+        return `${field}${v.message || v.type || "Invalid value"}`;
+      })
+      .filter(Boolean)
+      .join("; ");
+    if (formatted) return formatted;
+  }
+
+  // 3. If detail is an array (standard FastAPI 422 format: [{loc: [...], msg: "..."}])
+  if (Array.isArray(errorData.detail) && errorData.detail.length > 0) {
+    const formatted = errorData.detail
+      .map((d: any) => {
+        if (!d) return "";
+        if (typeof d === "string") return d;
+        const loc = Array.isArray(d.loc)
+          ? d.loc.filter((l: any) => l !== "body").join(".")
+          : "";
+        const prefix = loc ? `${loc}: ` : "";
+        return `${prefix}${d.msg || d.message || d.type || JSON.stringify(d)}`;
+      })
+      .filter(Boolean)
+      .join("; ");
+    if (formatted) return formatted;
+  }
+
+  // 4. If detail is a non-empty string
+  if (typeof errorData.detail === "string" && errorData.detail.trim() && errorData.detail !== "[object Object]") {
+    return errorData.detail.trim();
+  }
+
+  // 5. If detail is an object with message/error/detail property
+  if (typeof errorData.detail === "object" && errorData.detail !== null) {
+    const msg = errorData.detail.message || errorData.detail.error || errorData.detail.detail || errorData.detail.msg;
+    if (typeof msg === "string" && msg.trim() && msg !== "[object Object]") {
+      return msg.trim();
+    }
+  }
+
+  // 6. If error is a string
+  if (typeof errorData.error === "string" && errorData.error.trim() && errorData.error !== "[object Object]") {
+    return errorData.error.trim();
+  }
+
+  // 7. If error is an object with message/description property
+  if (typeof errorData.error === "object" && errorData.error !== null) {
+    const msg = errorData.error.message || errorData.error.description || errorData.error.error || errorData.error.msg;
+    if (typeof msg === "string" && msg.trim() && msg !== "[object Object]") {
+      return msg.trim();
+    }
+  }
+
+  // 8. If message is a string on root object
+  if (typeof errorData.message === "string" && errorData.message.trim() && errorData.message !== "[object Object]") {
+    return errorData.message.trim();
+  }
+
+  return status
+    ? `Backend request failed with HTTP ${status}${statusText ? ` (${statusText})` : ""}`
+    : "An unexpected error occurred during request.";
+}
+
 export class ApiError extends Error {
   statusCode: number;
   data?: ApiErrorResponse;
 
-  constructor(message: string, statusCode: number, data?: ApiErrorResponse) {
-    super(message);
+  constructor(message: string | unknown, statusCode: number, data?: ApiErrorResponse) {
+    const safeMessage =
+      typeof message === "string" && message.trim() && message !== "[object Object]"
+        ? message.trim()
+        : formatApiErrorMessage(data, statusCode, "");
+    super(safeMessage);
     this.name = "ApiError";
     this.statusCode = statusCode;
     this.data = data;
@@ -206,11 +296,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         // Response was not JSON
       }
 
-      const message =
-        errorData?.detail ||
-        errorData?.error ||
-        `Backend request failed with HTTP ${response.status} (${response.statusText})`;
-
+      const message = formatApiErrorMessage(errorData, response.status, response.statusText);
       throw new ApiError(message, response.status, errorData);
     }
 

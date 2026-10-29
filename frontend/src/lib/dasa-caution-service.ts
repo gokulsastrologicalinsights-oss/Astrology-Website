@@ -17,6 +17,8 @@ import {
   DasaResponse,
   DasaPeriodNode,
   FullHoroscopeResult,
+  ShadbalaResponse,
+  AshtakavargaResponse,
 } from "./types";
 import {
   analyzeDasaBukthiPalangal,
@@ -289,14 +291,17 @@ export async function getTodayDasaCautionAlerts(
   // Upcoming horizon: 60 days into future
   const upcomingHorizonJd = nowJd + 60.0;
 
-  // 1. Fetch saved horoscopes
+  // 1. Fetch saved horoscopes with selective JSON arrows for maximum speed & lightweight bandwidth
   const adminClient = createAdminClient();
   let savedList: any[] = [];
 
   try {
     let query = adminClient
       .from("saved_horoscopes")
-      .select("id, user_id, person_name, birth_date, calculation_result, created_at, updated_at");
+      .select(
+        "id, user_id, person_name, birth_date, horoscope:calculation_result->horoscope, dasa:calculation_result->dasa, customer:calculation_result->customer, created_at, updated_at"
+      )
+      .order("created_at", { ascending: false });
     if (!isAdmin) {
       query = query.eq("user_id", userId);
     }
@@ -333,18 +338,17 @@ export async function getTodayDasaCautionAlerts(
   const alerts: DasaCautionItem[] = [];
 
   for (const record of savedList) {
-    const calc = record.calculation_result;
-    if (!calc || !calc.horoscope || !calc.dasa || !calc.dasa.dasa_tree) {
+    const horoscope: HoroscopeResponse = record.horoscope || record.calculation_result?.horoscope;
+    const dasa: DasaResponse = record.dasa || record.calculation_result?.dasa;
+    const customerMeta = record.customer || record.calculation_result?.customer || {};
+    const shadbala: ShadbalaResponse | undefined = record.shadbala || record.calculation_result?.shadbala;
+    const ashtakavarga: AshtakavargaResponse | undefined = record.ashtakavarga || record.calculation_result?.ashtakavarga;
+
+    if (!horoscope || !dasa || !dasa.dasa_tree) {
       continue;
     }
 
-    const horoscope: HoroscopeResponse = calc.horoscope;
-    const dasa: DasaResponse = calc.dasa;
-    const shadbala = calc.shadbala;
-    const ashtakavarga = calc.ashtakavarga;
-    const birthDate: string = record.birth_date || calc.clientInputs?.birth_date || "";
-
-    const customerMeta = calc.customer || {};
+    const birthDate: string = record.birth_date || "";
     const fullName = customerMeta.full_name || record.person_name || "Client";
     const phoneVal = validateAndNormalizePhone(
       customerMeta.phone_number || "",
@@ -384,8 +388,8 @@ export async function getTodayDasaCautionAlerts(
           mahaNode.lord,
           antarNode.lord,
           undefined,
-          shadbala,
-          ashtakavarga,
+          undefined,
+          undefined,
           birthDate
         );
 
@@ -395,6 +399,7 @@ export async function getTodayDasaCautionAlerts(
         const isShadashtaka = !!analysis.relationship?.isShadashtakaWarning; // 6/8 axis
         const isDvidvadasa = !!analysis.relationship?.isDvidvadasaWarning; // 2/12 axis
         const isMaraka = !!analysis.relationship?.isMarakaInfluence;
+        const isNaturalEnemies = analysis.relationship?.relationshipNature === "mutual_enemies";
         const isCombustOrDebil =
           analysis.antarStrength?.isCombust ||
           analysis.antarStrength?.dignity === "debilitated";
@@ -406,15 +411,20 @@ export async function getTodayDasaCautionAlerts(
 
         // Qualify as caution alert if:
         // - 6/8 Shadashtaka Axis (classic adverse condition)
-        // - Maraka or 2/12 Dvidvadasa with low score
-        // - Verdict is Challenging or Precautions Required
-        // - Adverse score >= 52
+        // - 2/12 Dvidvadasa Axis (unplanned expenses & separation)
+        // - Maraka (2nd/7th house) activation
+        // - Inimical natural relationship (mutual enemies like Sun-Saturn, Mars-Mercury)
+        // - Combust / Debilitated period lords
+        // - Challenging / Sensitive verdict
+        // - Adverse score >= 45
         const isCautionPeriod =
           isShadashtaka ||
+          isDvidvadasa ||
+          isMaraka ||
+          isNaturalEnemies ||
+          isCombustOrDebil ||
           isChallengingVerdict ||
-          (isMaraka && adverseScore >= 45) ||
-          (isDvidvadasa && adverseScore >= 50) ||
-          adverseScore >= 55;
+          adverseScore >= 45;
 
         if (!isCautionPeriod) {
           continue;
@@ -423,7 +433,8 @@ export async function getTodayDasaCautionAlerts(
         // Determine severity
         const severity: CautionSeverity =
           isShadashtaka ||
-          adverseScore >= 68 ||
+          isMaraka ||
+          adverseScore >= 60 ||
           analysis.verdictLabelEn === "Sensitive / Precautions Required"
             ? "critical"
             : "moderate";
