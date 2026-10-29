@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getTodayDasaCautionAlerts,
   markDasaCautionAlertSent,
@@ -27,8 +28,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const lang = (searchParams.get("lang") === "ta" ? "ta" : "en") as "en" | "ta";
+    const forceFresh = searchParams.get("fresh") === "true";
 
-    const { data: profile } = await supabase
+    // Use admin client to reliably check role without anon client RLS restrictions
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
       .from("profiles")
       .select("role")
       .eq("id", user.id)
@@ -36,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = profile?.role === "admin";
 
-    const data = await getTodayDasaCautionAlerts(user.id, isAdmin, lang);
+    const data = await getTodayDasaCautionAlerts(user.id, isAdmin, lang, forceFresh);
 
     return NextResponse.json({
       success: true,

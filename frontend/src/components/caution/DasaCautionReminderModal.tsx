@@ -25,6 +25,7 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  RefreshCw,
 } from "lucide-react";
 import { DasaCautionItem, CautionSeverity } from "@/lib/dasa-caution-service";
 import { SUPPORTED_COUNTRY_CODES } from "@/lib/phone-utils";
@@ -48,6 +49,7 @@ export function DasaCautionReminderModal({
 
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<DasaCautionItem[]>([]);
   const [todayKolkata, setTodayKolkata] = useState<string>("");
   const [markingId, setMarkingId] = useState<string | null>(null);
@@ -68,33 +70,39 @@ export function DasaCautionReminderModal({
   const [isSavingContact, setIsSavingContact] = useState<boolean>(false);
   const [contactSaveError, setContactSaveError] = useState<string | null>(null);
 
-  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  // Modal open is true if explicitly controlled open OR internally auto-opened on login
+  const isOpen = controlledIsOpen !== undefined ? (controlledIsOpen || internalIsOpen) : internalIsOpen;
 
   const handleClose = () => {
     if (todayKolkata) {
       sessionStorage.setItem(`dasa_caution_dismissed_${todayKolkata}`, "true");
     }
+    setInternalIsOpen(false);
     if (controlledOnClose) {
       controlledOnClose();
-    } else {
-      setInternalIsOpen(false);
     }
   };
 
   const fetchAlerts = useCallback(
-    async (isAuto = false) => {
+    async (isAuto = false, forceFresh = false) => {
       if (!isAuthenticated) return;
       setLoading(true);
+      setFetchError(null);
       try {
-        const res = await fetch(`/api/customers/dasa-cautions?lang=${messageLang}`);
+        const url = `/api/customers/dasa-cautions?lang=${messageLang}${forceFresh ? "&fresh=true" : ""}`;
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           const items: DasaCautionItem[] = data.alerts || [];
           setAlerts(items);
           setTodayKolkata(data.todayKolkata || "");
 
+          if (data.queryError) {
+            console.warn("Dasa caution query notice:", data.queryError);
+          }
+
           if (onAlertsCountChange) {
-            onAlertsCountChange(data.activeCount || items.length);
+            onAlertsCountChange(data.activeCount !== undefined ? data.activeCount : items.length);
           }
 
           if (isAuto && items.length > 0) {
@@ -105,14 +113,19 @@ export function DasaCautionReminderModal({
               setInternalIsOpen(true);
             }
           }
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error || (isTa ? "எச்சரிக்கை பட்டியலை ஏற்றுவதில் பிழை ஏற்பட்டது." : "Failed to load caution alerts.");
+          setFetchError(errMsg);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn("Could not load Dasa caution reminders:", err);
+        setFetchError(err?.message || (isTa ? "இணைப்பு பிழை ஏற்பட்டது." : "Network connection error."));
       } finally {
         setLoading(false);
       }
     },
-    [isAuthenticated, messageLang, onAlertsCountChange]
+    [isAuthenticated, messageLang, onAlertsCountChange, isTa]
   );
 
   // Initial check on login
@@ -292,6 +305,15 @@ export function DasaCautionReminderModal({
 
             <button
               type="button"
+              onClick={() => fetchAlerts(false, true)}
+              title={isTa ? "மீண்டும் கணிக்க (Refresh)" : "Refresh & Re-scan"}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-rose-100 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            </button>
+
+            <button
+              type="button"
               onClick={handleClose}
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-rose-100 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close"
@@ -378,19 +400,93 @@ export function DasaCautionReminderModal({
                   : "Analyzing saved charts for adverse Dasa-Bhuktis..."}
               </p>
             </div>
-          ) : filteredAlerts.length === 0 ? (
-            <div className="py-16 text-center space-y-3 bg-white rounded-2xl border border-dashed border-slate-200 p-8">
-              <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6" />
+          ) : fetchError ? (
+            <div className="py-16 text-center space-y-3 bg-white rounded-2xl border border-rose-200 p-8">
+              <div className="w-12 h-12 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-slate-800 text-sm sm:text-base">
-                {isTa ? "கண்ட கால எச்சரிக்கைகள் ஏதுமில்லை!" : "No Critical Caution Periods Found!"}
+                {isTa ? "தகவல் பெறுவதில் தாமதம் / பிழை" : "Unable to Load Caution Alerts"}
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                {isTa
-                  ? "தற்போது உங்களுடைய சேமிக்கப்பட்ட ஜாதகங்களில் தீவிர மாரக/சடாஷ்டக தோஷங்கள் உள்ள நபர்கள் எவருமில்லை. அனைவரும் சீரான காலத்தில் உள்ளனர்."
-                  : "None of your saved clients are currently traversing severe Maraka or Shadashtaka periods. All charts are operating in balanced or favorable windows."}
+                {fetchError}
               </p>
+              <button
+                type="button"
+                onClick={() => fetchAlerts(false, true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-colors cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>{isTa ? "மீண்டும் முயற்சிக்கவும் (Retry)" : "Retry Now"}</span>
+              </button>
+            </div>
+          ) : filteredAlerts.length === 0 ? (
+            <div className="py-16 text-center space-y-3 bg-white rounded-2xl border border-dashed border-slate-200 p-8">
+              {searchTerm.trim() ? (
+                <>
+                  <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm sm:text-base">
+                    {isTa
+                      ? `"${searchTerm}" என்ற பெயரில் எச்சரிக்கைகள் ஏதுமில்லை`
+                      : `No caution alerts found matching "${searchTerm}"`}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                  >
+                    {isTa ? "தேடலை நீக்குக (Clear Search)" : "Clear Search"}
+                  </button>
+                </>
+              ) : filterTab === "upcoming" && upcomingCount === 0 ? (
+                <>
+                  <div className="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm sm:text-base">
+                    {isTa ? "அடுத்த 60 நாட்களில் தொடங்கும் கண்ட காலங்கள் ஏதுமில்லை" : "No Critical Periods Entering in Next 60 Days"}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    {isTa
+                      ? `தற்போது நடப்பில் உள்ள கண்ட காலங்களைக் காண 'தற்போது நடப்பில் உள்ளவை' (${activeCount}) தாவலைத் தேர்ந்தெடுக்கவும்.`
+                      : `Switch to 'Active Now' (${activeCount}) tab to view clients currently in adverse periods.`}
+                  </p>
+                  {activeCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setFilterTab("active")}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>{isTa ? `நடப்பில் உள்ளவை காண (${activeCount})` : `View Active Now (${activeCount})`}</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm sm:text-base">
+                    {isTa ? "கண்ட கால எச்சரிக்கைகள் ஏதுமில்லை!" : "No Critical Caution Periods Found!"}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    {isTa
+                      ? "தற்போது உங்களுடைய சேமிக்கப்பட்ட ஜாதகங்களில் தீவிர மாரக/சடாஷ்டக தோஷங்கள் உள்ள நபர்கள் எவருமில்லை. அனைவரும் சீரான காலத்தில் உள்ளனர்."
+                      : "None of your saved clients are currently traversing severe Maraka or Shadashtaka periods. All charts are operating in balanced or favorable windows."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => fetchAlerts(false, true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{isTa ? "மீண்டும் சரிபார்க்க (Re-scan)" : "Re-scan Now"}</span>
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             filteredAlerts.map((item) => {

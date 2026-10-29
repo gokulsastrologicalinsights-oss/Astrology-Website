@@ -1,5 +1,5 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { Database } from "./types";
+import { Database } from "./types.ts";
 
 /**
  * Server-only Supabase Admin client with service_role privileges.

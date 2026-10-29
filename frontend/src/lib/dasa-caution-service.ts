@@ -11,7 +11,7 @@
 
 import fs from "fs";
 import path from "path";
-import { createAdminClient } from "./supabase/admin";
+import { createAdminClient } from "./supabase/admin.ts";
 import {
   HoroscopeResponse,
   DasaResponse,
@@ -19,14 +19,14 @@ import {
   FullHoroscopeResult,
   ShadbalaResponse,
   AshtakavargaResponse,
-} from "./types";
+} from "./types.ts";
 import {
   analyzeDasaBukthiPalangal,
   DasaBukthiAnalysis,
-} from "./dasa-bukthi-palangal";
-import { generateChildSubPeriods } from "./dasa-helpers";
-import { normalizePlanetName } from "./benefit-bhavas";
-import { validateAndNormalizePhone } from "./phone-utils";
+} from "./dasa-bukthi-palangal.ts";
+import { generateChildSubPeriods } from "./dasa-helpers.ts";
+import { normalizePlanetName } from "./benefit-bhavas.ts";
+import { validateAndNormalizePhone } from "./phone-utils.ts";
 
 export type CautionSeverity = "critical" | "moderate";
 export type RiskDomain = "health" | "finance" | "career" | "relationships" | "general";
@@ -264,6 +264,25 @@ function formatIsoToDisplayDate(iso: string): string {
   return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
 }
 
+interface CautionCacheEntry {
+  timestamp: number;
+  data: {
+    alerts: DasaCautionItem[];
+    activeCount: number;
+    upcomingCount: number;
+    todayKolkata: string;
+    totalScanned: number;
+    queryError: string | null;
+  };
+}
+
+const CAUTION_CACHE = new Map<string, CautionCacheEntry>();
+const CACHE_TTL_MS = 180_000; // 3 minutes
+
+export function invalidateCautionCache() {
+  CAUTION_CACHE.clear();
+}
+
 /**
  * Core Scanner: Inspects saved charts for the authenticated user and flags
  * active or upcoming critical Dasa-Bhuktis.
@@ -271,13 +290,24 @@ function formatIsoToDisplayDate(iso: string): string {
 export async function getTodayDasaCautionAlerts(
   userId: string,
   isAdmin: boolean = false,
-  lang: "ta" | "en" = "ta"
+  lang: "ta" | "en" = "ta",
+  forceFresh: boolean = false
 ): Promise<{
   alerts: DasaCautionItem[];
   activeCount: number;
   upcomingCount: number;
   todayKolkata: string;
+  totalScanned?: number;
+  queryError?: string | null;
 }> {
+  const cacheKey = `${userId}_${isAdmin}_${lang}`;
+  if (!forceFresh) {
+    const cached = CAUTION_CACHE.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+  }
+
   // Today's date in Asia/Kolkata
   const kolkataDate = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -295,6 +325,7 @@ export async function getTodayDasaCautionAlerts(
   const adminClient = createAdminClient();
   let savedList: any[] = [];
 
+  let queryError: string | null = null;
   try {
     let query = adminClient
       .from("saved_horoscopes")
@@ -305,12 +336,31 @@ export async function getTodayDasaCautionAlerts(
     if (!isAdmin) {
       query = query.eq("user_id", userId);
     }
-    const { data, error } = await query;
-    if (!error && data) {
+    const { data, error } = await query.limit(25);
+    if (error) {
+      console.warn("[CAUTION SCAN PRIMARY QUERY FAILED]", error.message);
+      // Fallback with limit 12 to avoid statement timeout
+      let fallbackQuery = adminClient
+        .from("saved_horoscopes")
+        .select(
+          "id, user_id, person_name, birth_date, horoscope:calculation_result->horoscope, dasa:calculation_result->dasa, customer:calculation_result->customer, created_at, updated_at"
+        )
+        .order("created_at", { ascending: false });
+      if (!isAdmin) {
+        fallbackQuery = fallbackQuery.eq("user_id", userId);
+      }
+      const { data: fbData, error: fbError } = await fallbackQuery.limit(12);
+      if (fbError) {
+        queryError = fbError.message;
+      } else if (fbData) {
+        savedList = fbData;
+      }
+    } else if (data) {
       savedList = data;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.warn("Could not fetch saved_horoscopes from Supabase:", err);
+    queryError = err?.message || String(err);
   }
 
   // 2. Load sent alerts to know if already notified
@@ -345,6 +395,7 @@ export async function getTodayDasaCautionAlerts(
     const ashtakavarga: AshtakavargaResponse | undefined = record.ashtakavarga || record.calculation_result?.ashtakavarga;
 
     if (!horoscope || !dasa || !dasa.dasa_tree) {
+      console.log(`[CAUTION SCAN SKIP] Record ${record.id} (${record.person_name}) missing horoscope or dasa`);
       continue;
     }
 
@@ -639,12 +690,20 @@ export async function getTodayDasaCautionAlerts(
   const activeCount = alerts.filter((a) => a.isActiveNow).length;
   const upcomingCount = alerts.filter((a) => a.isUpcoming).length;
 
-  return {
+  const result = {
     alerts,
     activeCount,
     upcomingCount,
     todayKolkata: kolkataDate,
+    totalScanned: savedList.length,
+    queryError,
   };
+
+  if (!queryError) {
+    CAUTION_CACHE.set(cacheKey, { timestamp: Date.now(), data: result });
+  }
+
+  return result;
 }
 
 /**
@@ -708,6 +767,7 @@ export async function markDasaCautionAlertSent(params: {
   }
 
   saveLocalCautionAlerts(localAlerts);
+  invalidateCautionCache();
 
   return { success: true, sent_at: nowIso };
 }
