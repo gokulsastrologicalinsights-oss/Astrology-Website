@@ -21,7 +21,8 @@
     "test:medical-astrology": "node --experimental-strip-types scripts/test-medical-astrology-frontend.mjs",
     "test:birth-time-12h": "node --experimental-strip-types scripts/test-birth-time-12h.mjs",
     "test:graha-colors": "node --experimental-strip-types scripts/test-graha-dignity-colors.mjs",
-    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs && node scripts/test-transit-watch.mjs && node scripts/test-d1-d9.mjs && node scripts/test-dosha-ui-integration.mjs && node scripts/test-dosha-persistence-and-restoration.mjs && node scripts/test-predictions-engine-frontend.mjs && node --experimental-strip-types scripts/test-medical-astrology-frontend.mjs && node --experimental-strip-types scripts/test-birth-time-12h.mjs && node --experimental-strip-types scripts/test-graha-dignity-colors.mjs"
+    "test:dasa-caution": "node scripts/test-dasa-caution-integration.mjs",
+    "test": "node scripts/test-chart-correctness.mjs && node scripts/test-dasa-five-levels.mjs && node scripts/test-auth-integration.mjs && node --experimental-strip-types scripts/test-destiny-card.mjs && node scripts/test-transit-watch.mjs && node scripts/test-d1-d9.mjs && node scripts/test-dosha-ui-integration.mjs && node scripts/test-dosha-persistence-and-restoration.mjs && node scripts/test-predictions-engine-frontend.mjs && node --experimental-strip-types scripts/test-medical-astrology-frontend.mjs && node --experimental-strip-types scripts/test-birth-time-12h.mjs && node --experimental-strip-types scripts/test-graha-dignity-colors.mjs && node scripts/test-dasa-caution-integration.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
