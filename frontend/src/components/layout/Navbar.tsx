@@ -14,7 +14,6 @@ import {
   Menu,
   X,
   Compass,
-  Activity,
   LogOut,
   Shield,
   LayoutDashboard,
@@ -186,39 +185,9 @@ export function Navbar() {
           icon: Compass,
         },
         {
-          title: language === "ta" ? "எனது சுயவிவரம்" : "My Profile & Account",
-          href: "/dashboard",
-          icon: User,
-        },
-        {
           title: language === "ta" ? "பிறந்தநாள் நினைவூட்டல்" : "Birthday Wishes & Alerts",
           action: () => setIsBirthdayOpen(true),
           icon: Cake,
-        },
-      ],
-    },
-    {
-      id: "resources",
-      label: language === "ta" ? "ஆதாரங்கள்" : "Resources",
-      icon: BookOpen,
-      href: "/remedies",
-      isActive: false,
-      hasDropdown: true,
-      children: [
-        {
-          title: language === "ta" ? "பரிகாரங்கள் & வழிமுறைகள்" : "Remedies & Vedic Mantras",
-          href: "/remedies",
-          icon: Flame,
-        },
-        {
-          title: language === "ta" ? "சுப முகூர்த்த காலண்டர்" : "Auspicious Dates Finder",
-          href: "/muhurta",
-          icon: Calendar,
-        },
-        {
-          title: language === "ta" ? "எஃபிமெரிஸ் கணித உறுதிமொழி" : "XALEN Ephemeris Core",
-          href: "/dashboard",
-          icon: Activity,
         },
       ],
     },

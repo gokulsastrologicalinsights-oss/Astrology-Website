@@ -13,13 +13,8 @@ import {
   Calendar,
   Flame,
   Database,
-  User,
-  Settings,
   Cake,
-  Phone,
   BookOpen,
-  GraduationCap,
-  Activity,
   HeartHandshake,
   Heart,
   ShieldCheck,
@@ -30,14 +25,12 @@ import {
   Zap,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
-import { HelpModal } from "@/components/layout/HelpModal";
 
 export default function AstrologyToolsPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [isBirthdayOpen, setIsBirthdayOpen] = useState(false);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user)) {
@@ -191,14 +184,6 @@ interface AstrologyToolCard {
   // Section 2: Workspace / Practice Cards
   const workspaceTools = [
     {
-      id: "profile",
-      titleTa: "எனது சுயவிவரம்",
-      titleEn: "My Profile",
-      href: "/dashboard",
-      icon: User,
-      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
-    },
-    {
       id: "saved-charts",
       titleTa: "சேமிக்கப்பட்ட ஜாதகங்கள்",
       titleEn: "Saved Horoscopes",
@@ -213,50 +198,6 @@ interface AstrologyToolCard {
       action: () => setIsBirthdayOpen(true),
       icon: Cake,
       color: "text-amber-600 border-amber-300 bg-amber-50",
-    },
-    {
-      id: "contacts",
-      titleTa: "வாடிக்கையாளர் தொடர்புகள்",
-      titleEn: "Customer Contacts",
-      href: "/horoscopes",
-      icon: Phone,
-      color: "text-emerald-600 border-emerald-300 bg-emerald-50",
-    },
-    {
-      id: "settings",
-      titleTa: "அமைப்புகள்",
-      titleEn: "Account & Settings",
-      href: "/dashboard",
-      icon: Settings,
-      color: "text-[#8190A6] border-slate-300 bg-slate-50",
-    },
-  ];
-
-  // Section 3: Resources
-  const resourceTools = [
-    {
-      id: "remedies-guide",
-      titleTa: "நவகிரக ஆலயங்கள் & மந்திரங்கள்",
-      titleEn: "Temples & Mantras",
-      href: "/remedies",
-      icon: Flame,
-      color: "text-amber-600 border-amber-300 bg-amber-50",
-    },
-    {
-      id: "ephemeris",
-      titleTa: "எஃபிமெரிஸ் கணித முறை",
-      titleEn: "XALEN Ephemeris Engine",
-      href: "/dashboard",
-      icon: Activity,
-      color: "text-emerald-600 border-emerald-300 bg-emerald-50",
-    },
-    {
-      id: "platform-guide",
-      titleTa: "தள வழிகாட்டி & ஆவணங்கள்",
-      titleEn: "Help & User Guide",
-      action: () => setIsHelpOpen(true),
-      icon: GraduationCap,
-      color: "text-indigo-600 border-indigo-300 bg-indigo-50",
     },
   ];
 
@@ -374,67 +315,6 @@ interface AstrologyToolCard {
         </div>
       </div>
 
-      {/* Section 3: ஆதாரங்கள் (Resources) */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 shrink-0">
-            <BookOpen className="w-5 h-5 text-[#B4872B]" />
-            <h2 className="text-base sm:text-lg font-bold text-[#183047]">
-              {language === "ta" ? "ஆதாரங்கள்" : "Resources"}
-            </h2>
-          </div>
-          <div className="flex-1 h-px bg-[#D9DEE7]" />
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-          {resourceTools.map((card) => {
-            const Icon = card.icon;
-            if (card.action) {
-              return (
-                <button
-                  key={card.id}
-                  type="button"
-                  onClick={card.action}
-                  className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group cursor-pointer"
-                >
-                  <div
-                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
-                  >
-                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
-                    {language === "ta" ? card.titleTa : card.titleEn}
-                  </div>
-                  <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
-                    {language === "ta" ? card.titleEn : card.titleTa}
-                  </div>
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                key={card.id}
-                href={card.href!}
-                className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
-              >
-                <div
-                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
-                >
-                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                </div>
-                <div className="text-xs sm:text-sm font-semibold text-[#183047] group-hover:text-[#153F6B] leading-tight line-clamp-2">
-                  {language === "ta" ? card.titleTa : card.titleEn}
-                </div>
-                <div className="text-[10px] text-[#8190A6] mt-0.5 truncate hidden sm:block">
-                  {language === "ta" ? card.titleEn : card.titleTa}
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Engine & Calculation Integrity Banner */}
       <div className="p-4 rounded-2xl bg-white border border-[#D9DEE7] flex items-center gap-3 text-xs text-[#52667E] shadow-2xs">
         <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -448,7 +328,6 @@ interface AstrologyToolCard {
 
       {/* Modals */}
       <BirthdayReminderModal isOpen={isBirthdayOpen} onClose={() => setIsBirthdayOpen(false)} />
-      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
 }

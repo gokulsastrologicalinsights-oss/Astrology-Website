@@ -15,7 +15,6 @@ import {
   Layers,
   ShieldCheck,
   ChevronRight,
-  User,
   PlusCircle,
   ExternalLink,
   HeartHandshake,
@@ -23,9 +22,7 @@ import {
   Hash,
   Flame,
   Briefcase,
-  Settings,
   Cake,
-  Phone,
   Eye,
   CalendarCheck,
 } from "lucide-react";
@@ -166,14 +163,6 @@ interface AstrologyToolCard {
   // Section 2: Workspace / Practice Cards
   const workspaceTools = [
     {
-      id: "profile",
-      titleTa: "எனது சுயவிவரம்",
-      titleEn: "My Profile",
-      href: "/dashboard",
-      icon: User,
-      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
-    },
-    {
       id: "saved-charts",
       titleTa: "சேமிக்கப்பட்ட ஜாதகங்கள்",
       titleEn: "Saved Horoscopes",
@@ -188,22 +177,6 @@ interface AstrologyToolCard {
       action: () => setIsBirthdayOpen(true),
       icon: Cake,
       color: "text-amber-600 border-amber-300 bg-amber-50",
-    },
-    {
-      id: "contacts",
-      titleTa: "வாடிக்கையாளர் தொடர்புகள்",
-      titleEn: "Customer Contacts",
-      href: "/horoscopes",
-      icon: Phone,
-      color: "text-emerald-600 border-emerald-300 bg-emerald-50",
-    },
-    {
-      id: "settings",
-      titleTa: "அமைப்புகள்",
-      titleEn: "Account & Settings",
-      href: "/dashboard",
-      icon: Settings,
-      color: "text-[#8190A6] border-slate-300 bg-slate-50",
     },
   ];
 
