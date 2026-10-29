@@ -14,6 +14,7 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    git \
     pkg-config \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -24,8 +25,14 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Install maturin for PyO3 wheel compilation
 RUN pip install --no-cache-dir maturin>=1.7.0
 
-# Copy Rust ephemeris source
+# Copy Rust ephemeris source if present in context, or clone from repository
+# (Render and CI docker builders do not recursively clone git submodules by default)
 COPY xalen-ephemeris /build/xalen-ephemeris
+RUN if [ ! -f /build/xalen-ephemeris/crates/xalen-python/Cargo.toml ]; then \
+        echo "xalen-ephemeris source unpopulated in Docker context. Cloning repository..." && \
+        rm -rf /build/xalen-ephemeris && \
+        git clone --depth 1 https://github.com/gokulsastrologicalinsights-oss/xalen-ephemeris.git /build/xalen-ephemeris; \
+    fi
 
 # Build xalen wheel
 WORKDIR /build/xalen-ephemeris/crates/xalen-python
@@ -38,9 +45,10 @@ FROM python:3.12-slim-bookworm AS runtime
 
 WORKDIR /app
 
-# Install runtime C libraries required by Swiss Ephemeris and ReportLab/HarfBuzz
+# Install runtime C libraries required by Swiss Ephemeris and ReportLab/HarfBuzz, plus curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     libfreetype6 \
     libharfbuzz0b \
     libfribidi0 \

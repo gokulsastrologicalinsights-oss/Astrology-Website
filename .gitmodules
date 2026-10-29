@@ -1,0 +1,3 @@
+[submodule "xalen-ephemeris"]
+	path = xalen-ephemeris
+	url = https://github.com/gokulsastrologicalinsights-oss/xalen-ephemeris.git

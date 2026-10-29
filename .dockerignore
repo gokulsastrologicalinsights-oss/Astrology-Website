@@ -1,0 +1,40 @@
+# Git and VCS
+.git
+.gitignore
+.dockerignore
+.gitmodules
+
+# Environments & Python Cache
+.venv
+venv
+**/__pycache__
+**/*.py[cod]
+**/*.pyo
+.pytest_cache
+
+# Rust build artifacts & Windows binaries
+**/target
+**/*.pyd
+**/*.pdb
+**/*.exe
+**/*.dll
+**/*.so
+**/*.dylib
+
+# Node.js / Frontend
+node_modules
+frontend/node_modules
+.next
+frontend/.next
+out
+frontend/out
+build
+
+# Artifacts & Local logs
+*.log
+scratch
+docs/*.pdf
+sample_*.pdf
+test_*.pdf
+browser_audit_screenshots
+browser_test_screenshots
