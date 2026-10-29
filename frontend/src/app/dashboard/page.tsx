@@ -28,8 +28,10 @@ import {
   Flame,
   Heart,
   BookOpen,
+  ShieldAlert,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
+import { DasaCautionReminderModal } from "@/components/caution/DasaCautionReminderModal";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -37,6 +39,8 @@ export default function DashboardPage() {
   const { user, session, isAuthenticated, isLoading, logout } = useAuth();
 
   const [isBirthdayModalOpen, setIsBirthdayModalOpen] = useState(false);
+  const [isCautionModalOpen, setIsCautionModalOpen] = useState(false);
+  const [cautionAlertsCount, setCautionAlertsCount] = useState<number>(0);
   const [totalHoroscopesCount, setTotalHoroscopesCount] = useState<number>(0);
   const [engineHealth, setEngineHealth] = useState<HealthResponse | null>(null);
 
@@ -131,6 +135,21 @@ export default function DashboardPage() {
           >
             <Cake className="w-3.5 h-3.5 text-amber-600" />
             <span>{language === "ta" ? "பிறந்தநாள் நினைவூட்டல்" : "Birthday Wishes"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsCautionModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-300 shadow-xs transition-colors cursor-pointer relative"
+            title={language === "ta" ? "தசா-புத்தி கண்ட கால எச்சரிக்கை" : "Dasa Caution Alerts"}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+            <span>{language === "ta" ? "கண்ட கால எச்சரிக்கை" : "Caution Alerts"}</span>
+            {cautionAlertsCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-600 text-white font-extrabold leading-none animate-pulse">
+                {cautionAlertsCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -371,6 +390,15 @@ export default function DashboardPage() {
       <BirthdayReminderModal
         isOpen={isBirthdayModalOpen}
         onClose={() => setIsBirthdayModalOpen(false)}
+        autoCheckOnLogin={true}
+      />
+
+      {/* Dasa Caution Reminder Modal */}
+      <DasaCautionReminderModal
+        isOpen={isCautionModalOpen}
+        onClose={() => setIsCautionModalOpen(false)}
+        autoCheckOnLogin={true}
+        onAlertsCountChange={setCautionAlertsCount}
       />
     </div>
   );
