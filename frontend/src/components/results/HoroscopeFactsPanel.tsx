@@ -46,7 +46,6 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
   RefreshCw,
@@ -1529,16 +1528,6 @@ export function HoroscopeFactsPanel({
                         ஜன்ம ராசி ({moon?.sign_name_tamil || getRasiNameTamil(moon?.sign_name)}) அடிப்படையிலான தற்போதைய கோசார பலன்கள்
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href="/tools/transit-watch"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D9DEE7] bg-[#F2F3F5] hover:bg-[#E2E8F0] text-xs font-bold text-[#153F6B] transition-colors"
-                    >
-                      <span>முழு கோசார கடிகாரம்</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
                   </div>
                 </div>
 

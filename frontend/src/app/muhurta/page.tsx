@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { FeatureGuard } from "@/components/auth/FeatureGuard";
 import {
   LayoutDashboard,
   Sparkles,
@@ -109,7 +110,7 @@ function MuhurtaContent() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumbs
         items={[
@@ -191,14 +192,16 @@ function MuhurtaContent() {
 
 export default function MuhurtaPage() {
   return (
-    <React.Suspense
-      fallback={
-        <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#E8EEF7]">
-          <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <MuhurtaContent />
-    </React.Suspense>
+    <FeatureGuard permission="panchang_muhurta">
+      <React.Suspense
+        fallback={
+          <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#E8EEF7]">
+            <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <MuhurtaContent />
+      </React.Suspense>
+    </FeatureGuard>
   );
 }

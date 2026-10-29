@@ -68,7 +68,9 @@ class RuleManagementService:
             "compound", "planet_sign", "planet_house", "planet_conjunction",
             "planet_aspect", "house_lord_placement", "house_occupancy",
             "planet_nakshatra", "planet_dignity", "lagna_sign",
-            "dasa_active", "kp_sub_lord", "mutual_exchange"
+            "dasa_active", "kp_sub_lord", "mutual_exchange",
+            "kp_significator", "barren_fruitful_sign", "badhaka_maraka",
+            "mute_voice_sign", "punarphoo", "magi_aspect"
         }
 
         if cond_type not in supported_types:

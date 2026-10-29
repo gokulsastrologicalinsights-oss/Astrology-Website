@@ -18,6 +18,7 @@ from app.schemas.pdf_report import (
     MuhurtaCertificatePdfRequest,
     PanchaPakshiPdfReportRequest,
     GemstoneRudrakshaPlaybookPdfRequest,
+    MarriageCompatibilityPdfReportRequest,
 )
 from app.schemas.common import BirthInput
 from app.services.pdf_report_engine import (
@@ -29,6 +30,7 @@ from app.services.pdf_report_engine import (
     generate_muhurta_certificate_pdf_bytes,
     generate_pancha_pakshi_pdf_bytes,
     generate_gemstone_rudraksha_playbook_pdf_bytes,
+    generate_marriage_compatibility_pdf_bytes,
 )
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.kp_engine.kp_chart_repository import get_kp_chart
@@ -432,4 +434,67 @@ async def generate_gemstone_rudraksha_pdf_endpoint(
     except Exception as exc:
         logger.error("Error generating Gemstone & Rudraksha Playbook PDF: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Gemstone & Rudraksha PDF generation failed: {str(exc)}")
+
+
+@studio_router.post("/marriage-compatibility/pdf", summary="Generate Marriage Compatibility & 36 Ashta Kuta PDF Report")
+async def generate_marriage_compatibility_pdf_endpoint(
+    request: MarriageCompatibilityPdfReportRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Compiles a comprehensive bilingual Kundli Matching & 36 Ashta Kuta Compatibility Report PDF."""
+    try:
+        report_data = request.report_data
+        if not report_data and request.saved_report_id:
+            clean_id = _validate_uuid(request.saved_report_id)
+            supabase = get_supabase_client()
+            if not supabase:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database service unavailable. Database configuration missing.",
+                )
+            resp = supabase.table("saved_marriage_reports").select("*").eq("id", clean_id).execute()
+            if resp.data and len(resp.data) > 0:
+                row = resp.data[0]
+                report_data = row.get("report_data")
+            else:
+                raise HTTPException(status_code=404, detail="Saved marriage compatibility report not found.")
+
+        if isinstance(report_data, str):
+            try:
+                report_data = json.loads(report_data)
+            except Exception as parse_err:
+                logger.error("Failed to parse report_data JSON string: %s", parse_err)
+                raise HTTPException(status_code=422, detail="Invalid JSON in report_data.")
+        elif hasattr(report_data, "model_dump"):
+            report_data = report_data.model_dump(mode="json")
+        elif hasattr(report_data, "dict"):
+            report_data = report_data.dict()
+
+        if not report_data or not isinstance(report_data, dict):
+            raise HTTPException(status_code=422, detail="Either valid report_data dictionary or saved_report_id required.")
+
+        groom_p = report_data.get("groom_profile")
+        groom_p = groom_p if isinstance(groom_p, dict) else {}
+        bride_p = report_data.get("bride_profile")
+        bride_p = bride_p if isinstance(bride_p, dict) else {}
+        groom_name = (groom_p.get("name") or "Groom").replace(" ", "_")
+        bride_name = (bride_p.get("name") or "Bride").replace(" ", "_")
+        lang = request.language or "en"
+        filename = f"Marriage_Compatibility_{groom_name}_{bride_name}_{lang}.pdf"
+
+        pdf_bytes = generate_marriage_compatibility_pdf_bytes(report_data, language=lang)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error generating Marriage Compatibility PDF: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Marriage Compatibility PDF generation failed: {str(exc)}")
+
 

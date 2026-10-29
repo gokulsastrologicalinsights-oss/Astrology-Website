@@ -249,3 +249,19 @@ class GemstoneRudrakshaPlaybookPdfRequest(BaseModel):
         description="'en' or 'ta'"
     )
 
+
+
+class MarriageCompatibilityPdfReportRequest(BaseModel):
+    """Request model for generating Marriage Compatibility & 36 Ashta Kuta PDF Report."""
+    report_data: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Pre-calculated MarriageCompatibilityResponse payload.",
+    )
+    saved_report_id: Optional[str] = Field(
+        None,
+        description="UUID of saved marriage compatibility report.",
+    )
+    language: str = Field(
+        "en",
+        description="'en' or 'ta'",
+    )

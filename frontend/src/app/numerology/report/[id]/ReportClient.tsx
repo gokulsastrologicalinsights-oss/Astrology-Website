@@ -68,7 +68,7 @@ export default function ReportClient({ reportId }: ReportClientProps) {
 
   if (loading || authLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+      <div className="w-full px-4 py-20 text-center">
         <Loader2 className="w-8 h-8 mx-auto animate-spin text-[#B8860B] mb-3" />
         <p className="text-sm text-[#64748B]">Loading saved numerology report #{reportId.slice(0, 8)}...</p>
       </div>
@@ -828,7 +828,7 @@ export default function ReportClient({ reportId }: ReportClientProps) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Navigation Breadcrumbs & Back Link */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Breadcrumbs

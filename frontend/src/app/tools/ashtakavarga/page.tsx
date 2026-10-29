@@ -148,7 +148,7 @@ function AshtakavargaContent() {
       if (!session?.access_token) return;
       setLoadingSavedList(true);
       try {
-        const resp = await fetch("/api/horoscopes?limit=50", {
+        const resp = await fetch("/api/horoscopes?limit=1000", {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -297,7 +297,7 @@ function AshtakavargaContent() {
     : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[

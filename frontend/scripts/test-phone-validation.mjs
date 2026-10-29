@@ -82,13 +82,13 @@ assert(uae.whatsappNumber === "971501234567", "WhatsApp UAE number digits only")
 
 console.log("\n=== 5. Testing WhatsApp Birthday Link Generation ===");
 const waLink = generateWhatsAppBirthdayLink("919876543210", "Ananya Sharma", "en");
-assert(waLink.startsWith("https://wa.me/919876543210?text="), "WhatsApp link starts with https://wa.me/919876543210?text=");
+assert(waLink.startsWith("https://api.whatsapp.com/send/?phone=919876543210&text="), "WhatsApp link starts with https://api.whatsapp.com/send/?phone=919876543210&text=");
 assert(!waLink.includes("+"), "WhatsApp link contains NO leading plus sign");
 assert(!waLink.includes(" "), "WhatsApp link contains NO unencoded spaces");
 assert(waLink.includes(encodeURIComponent("Ananya Sharma")), "Personalized with customer name");
 
 const waLinkTa = generateWhatsAppBirthdayLink("919876543210", "விஜய் முருகன்", "ta");
-assert(waLinkTa.startsWith("https://wa.me/919876543210?text="), "Tamil WhatsApp link generated");
+assert(waLinkTa.startsWith("https://api.whatsapp.com/send/?phone=919876543210&text="), "Tamil WhatsApp link generated");
 assert(waLinkTa.includes(encodeURIComponent("விஜய் முருகன்")), "Tamil personalized name encoded");
 
 // Never generate a WhatsApp URL for an empty or invalid number

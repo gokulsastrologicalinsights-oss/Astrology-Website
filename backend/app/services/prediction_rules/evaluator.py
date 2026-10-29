@@ -57,9 +57,9 @@ EXALTATION_SIGNS: Dict[str, int] = {
     "Jupiter": 4, "Venus": 12, "Saturn": 7, "Rahu": 2, "Ketu": 8
 }
 
-DEBILITATION_SIGNS: Dict[str, int] = {
+DEBILITATION_SIGNS: Dict[str, Union[int, Set[int]]] = {
     "Sun": 7, "Moon": 8, "Mars": 4, "Mercury": 12,
-    "Jupiter": 10, "Venus": 6, "Saturn": 1, "Rahu": 8, "Ketu": 2
+    "Jupiter": 10, "Venus": 6, "Saturn": 1, "Rahu": {8, 9}, "Ketu": {2, 3}
 }
 
 OWN_SIGNS: Dict[str, Set[int]] = {
@@ -114,7 +114,12 @@ class ChartContext:
     ):
         self.horoscope = horoscope
         self.dasa_data = dasa_data
-        self.kp_data = kp_data
+        self.kp_data = kp_data or {}
+        if isinstance(self.kp_data, dict):
+            if "cuspal_analysis" in self.kp_data and "cusp_details" not in self.kp_data:
+                self.kp_data["cusp_details"] = self.kp_data["cuspal_analysis"]
+            if "significators" in self.kp_data and "planet_significators" not in self.kp_data:
+                self.kp_data["planet_significators"] = self.kp_data["significators"]
         self.metadata = horoscope.metadata
 
         # D1 Ascendant
@@ -140,6 +145,28 @@ class ChartContext:
                 "nakshatra_pada": p.nakshatra.pada if p.nakshatra else 1,
                 "star_lord": getattr(p.nakshatra, "lord", ""),
             }
+
+        # Include Ascendant / Lagna into D1 lookups for Nakshatra evaluation
+        if hasattr(horoscope, "ascendant") and horoscope.ascendant:
+            asc = horoscope.ascendant
+            asc_nak_name = getattr(asc.nakshatra, "name", "Unknown") if getattr(asc, "nakshatra", None) else "Unknown"
+            asc_pada = getattr(asc.nakshatra, "pada", 1) if getattr(asc, "nakshatra", None) else 1
+            asc_star_lord = getattr(asc.nakshatra, "lord", "") if getattr(asc, "nakshatra", None) else ""
+            asc_entry = {
+                "name": "Ascendant",
+                "sign_index": asc.sign_index,
+                "sign_name": asc.sign_name,
+                "sign_name_tamil": getattr(asc, "sign_name_tamil", ""),
+                "degree_in_sign": asc.degree_in_sign,
+                "longitude": asc.degree,
+                "house": 1,
+                "is_retrograde": False,
+                "nakshatra_name": asc_nak_name,
+                "nakshatra_pada": asc_pada,
+                "star_lord": asc_star_lord,
+            }
+            self.d1_planets["Ascendant"] = asc_entry
+            self.d1_planets["Lagna"] = asc_entry
 
         # D1 House Occupants & Lords
         self.d1_house_occupants: Dict[int, List[str]] = {h: [] for h in range(1, 13)}
@@ -285,6 +312,7 @@ class RuleEvaluationResult:
             "chart_evidence": self.evidence,
             "match_reasons": self.reasons,
             "source_reference": self.rule.source_reference,
+            "applicable_gender": getattr(self.rule, "applicable_gender", "both"),
             "limitations": self.rule.limitations_ta if use_ta and self.rule.limitations_ta else self.rule.limitations_en,
             "limitations_en": self.rule.limitations_en,
             "limitations_ta": self.rule.limitations_ta,
@@ -342,7 +370,11 @@ class AstrologicalRuleEvaluator:
         default_scope: str = "d1"
     ) -> Tuple[bool, List[str], List[str]]:
         """Recursively evaluate declarative condition node."""
-        cond_type = node.get("condition_type", "").lower()
+        cond_type = (node.get("condition_type") or node.get("type") or "").lower()
+        if cond_type == "planet_house_placement":
+            cond_type = "planet_house"
+        elif cond_type == "planet_sign_placement":
+            cond_type = "planet_sign"
 
         # 1. Compound Operator Node (AND, OR, NOT)
         if cond_type == "compound":
@@ -610,9 +642,9 @@ class AstrologicalRuleEvaluator:
 
             return False, [], ["Incomplete house_occupancy specification"]
 
-        # 8. Planet Nakshatra Condition
-        elif cond_type == "planet_nakshatra":
-            planet = node.get("planet")
+        # 8. Planet / Lagna Nakshatra Condition
+        elif cond_type in ("planet_nakshatra", "lagna_nakshatra", "ascendant_nakshatra"):
+            planet = node.get("planet") or ("Ascendant" if "lagna" in cond_type or "ascendant" in cond_type else "Moon")
             target_nak = node.get("nakshatra")
             target_pada = node.get("pada")
 
@@ -662,8 +694,13 @@ class AstrologicalRuleEvaluator:
                     evidence_str = f"{planet} is exalted (Uchcha) in {p_info['sign_name']} in {chart.upper()}"
             elif dignity == "debilitated":
                 deb_sign = DEBILITATION_SIGNS.get(planet)
-                if deb_sign and sign_idx == deb_sign:
-                    matched = True
+                if deb_sign is not None:
+                    if isinstance(deb_sign, (set, list, tuple)):
+                        if sign_idx in deb_sign:
+                            matched = True
+                    elif sign_idx == deb_sign:
+                        matched = True
+                if matched:
                     evidence_str = f"{planet} is debilitated (Neecha) in {p_info['sign_name']} in {chart.upper()}"
             elif dignity == "own_sign":
                 own_set = OWN_SIGNS.get(planet, set())
@@ -788,5 +825,423 @@ class AstrologicalRuleEvaluator:
                 reas = [f"House {h1} and House {h2} lords have exchanged signs"]
                 return True, ev, reas
             return False, [], []
+
+        # 14. Barren / Fruitful Sign Condition
+        elif cond_type == "barren_fruitful_sign":
+            target_type = node.get("target_type", "cusp")
+            target_val = node.get("target_value")
+            nature = node.get("sign_nature", "fruitful").lower()
+            chart = node.get("chart", default_scope).lower()
+
+            FRUITFUL = {4, 8, 12}
+            BARREN = {1, 3, 5, 6, 10}
+            SEMI_FRUITFUL = {2, 7, 9, 10}
+
+            if target_type == "cusp":
+                h = int(target_val)
+                sign_idx = ctx.d1_house_signs.get(h) if chart == "d1" else None
+                desc = f"House {h} cusp"
+            else:
+                p_info = ctx.get_planet(str(target_val), chart)
+                sign_idx = p_info["sign_index"] if p_info else None
+                desc = f"Planet {target_val}"
+
+            if not sign_idx:
+                return False, [], [f"{desc} sign position not found"]
+
+            sign_name = INDEX_TO_SIGN_NAME.get(sign_idx, f"Sign {sign_idx}")
+            matched = False
+            if nature == "fruitful" and sign_idx in FRUITFUL:
+                matched = True
+            elif nature == "barren" and sign_idx in BARREN:
+                matched = True
+            elif nature == "semi_fruitful" and sign_idx in SEMI_FRUITFUL:
+                matched = True
+
+            if matched:
+                ev = [f"{desc} is in {sign_name} which is classically classified as a {nature} sign"]
+                reas = [f"{desc} meets {nature} sign requirement in {chart.upper()}"]
+                return True, ev, reas
+            return False, [], []
+
+        # 15. Badhaka & Maraka Condition
+        elif cond_type == "badhaka_maraka":
+            check = (node.get("check") or node.get("check_role") or "badhaka").lower()
+            target_house = node.get("house")
+            planet = node.get("planet")
+            cusp = node.get("cusp")
+
+            if ctx.d1_lagna_sign in (1, 4, 7, 10):
+                badhaka_house = 11
+                lagna_type = "Moveable (Cardinal)"
+            elif ctx.d1_lagna_sign in (2, 5, 8, 11):
+                badhaka_house = 9
+                lagna_type = "Fixed"
+            else:
+                badhaka_house = 7
+                lagna_type = "Common (Mutable)"
+
+            if check == "badhaka":
+                if target_house is not None:
+                    if int(target_house) == badhaka_house:
+                        return True, [f"House {target_house} is the Badhaka Sthana for {lagna_type} Lagna ({INDEX_TO_SIGN_NAME.get(ctx.d1_lagna_sign)})"], [f"Badhaka house {badhaka_house} active"]
+                if planet:
+                    p_info = ctx.get_planet(planet, "d1")
+                    if p_info and p_info["house"] == badhaka_house:
+                        return True, [f"{planet} occupies Badhaka House {badhaka_house} for {lagna_type} Lagna"], [f"{planet} is in Badhaka Sthana"]
+                # If neither planet nor target_house is explicitly specified, evaluate cuspal / KP significator link (e.g. 8th cusp CSL connection)
+                check_cusp = int(cusp if cusp is not None else 8)
+                if ctx.kp_data and "cusp_details" in ctx.kp_data:
+                    cusps = ctx.kp_data.get("cusp_details", [])
+                    cd = next((c for c in cusps if c.get("house") == check_cusp), None)
+                    if cd:
+                        sl = cd.get("sub_lord", "")
+                        planet_sigs = ctx.kp_data.get("planet_significators", [])
+                        p_entry = next((ps for ps in planet_sigs if ps.get("planet", "").lower() == sl.lower()), None)
+                        signified = p_entry.get("signified_houses", []) if p_entry else []
+                        if badhaka_house in signified or 2 in signified or 7 in signified:
+                            ev = [f"Cusp {check_cusp} Sub-Lord ({sl}) signifies Badhaka/Maraka house ({[h for h in (badhaka_house, 2, 7) if h in signified]}) for {lagna_type} Lagna"]
+                            reas = [f"Cusp {check_cusp} Sub-Lord connects to Badhaka/Maraka house"]
+                            return True, ev, reas
+                return False, [], []
+
+            elif check in ("maraka", "both", "badhaka_maraka"):
+                if target_house is not None:
+                    if int(target_house) in (2, 7):
+                        return True, [f"House {target_house} is a Maraka Sthana (Death-inflicting house)"], [f"Maraka house {target_house} active"]
+                if planet:
+                    p_info = ctx.get_planet(planet, "d1")
+                    if p_info and p_info["house"] in (2, 7):
+                        return True, [f"{planet} occupies Maraka House {p_info['house']} ({p_info['sign_name']})"], [f"{planet} is placed in Maraka house"]
+                check_cusp = int(cusp if cusp is not None else 8)
+                if ctx.kp_data and "cusp_details" in ctx.kp_data:
+                    cusps = ctx.kp_data.get("cusp_details", [])
+                    cd = next((c for c in cusps if c.get("house") == check_cusp), None)
+                    if cd:
+                        sl = cd.get("sub_lord", "")
+                        planet_sigs = ctx.kp_data.get("planet_significators", [])
+                        p_entry = next((ps for ps in planet_sigs if ps.get("planet", "").lower() == sl.lower()), None)
+                        signified = p_entry.get("signified_houses", []) if p_entry else []
+                        matches = [h for h in (2, 7, badhaka_house) if h in signified]
+                        if matches:
+                            ev = [f"Cusp {check_cusp} Sub-Lord ({sl}) signifies Maraka/Badhaka houses {matches}"]
+                            reas = [f"Cusp {check_cusp} Sub-Lord links to {matches}"]
+                            return True, ev, reas
+                return False, [], []
+
+        # 16. Mute & Voice Signs Condition
+        elif cond_type == "mute_voice_sign":
+            sign_type = node.get("sign_type", "mute").lower()
+            planet = node.get("planet")
+            house = node.get("house")
+
+            MUTE_SIGNS = {4, 8, 12}
+            VOICE_SIGNS = {3, 7, 11, 2, 6, 9}
+
+            target_sign = None
+            desc = ""
+            if planet:
+                p_info = ctx.get_planet(planet, "d1")
+                if p_info:
+                    target_sign = p_info["sign_index"]
+                    desc = f"{planet} in {p_info['sign_name']}"
+            elif house is not None:
+                h = int(house)
+                target_sign = ctx.d1_house_signs.get(h)
+                desc = f"House {h} cusp ({INDEX_TO_SIGN_NAME.get(target_sign)})"
+
+            if not target_sign:
+                return False, [], ["Target sign not determined"]
+
+            if sign_type == "mute" and target_sign in MUTE_SIGNS:
+                return True, [f"{desc} is located in a classical Mute sign ({INDEX_TO_SIGN_NAME.get(target_sign)})"], [f"Mute sign active"]
+            elif sign_type == "voice" and target_sign in VOICE_SIGNS:
+                return True, [f"{desc} is located in a classical Voice/Musical sign ({INDEX_TO_SIGN_NAME.get(target_sign)})"], [f"Voice sign active"]
+            return False, [], []
+
+        # 17. Punarphoo Condition (Saturn-Moon Marital Delay & Cancellation)
+        elif cond_type == "punarphoo":
+            check_cancellation = node.get("check_cancellation", False)
+
+            sa = ctx.get_planet("Saturn", "d1")
+            mo = ctx.get_planet("Moon", "d1")
+            su = ctx.get_planet("Sun", "d1")
+
+            if not sa or not mo:
+                return False, [], ["Saturn or Moon data missing"]
+
+            is_same_sign = (sa["sign_index"] == mo["sign_index"])
+            sa_star = sa.get("star_lord", "").lower()
+            mo_star = mo.get("star_lord", "").lower()
+            star_conn = (sa_star == "moon" or mo_star == "saturn")
+            dist_sa_to_mo = ((mo["sign_index"] - sa["sign_index"]) % 12) + 1
+            is_aspect = (dist_sa_to_mo in (3, 7, 10))
+
+            has_punarphoo = is_same_sign or star_conn or is_aspect
+            if not has_punarphoo:
+                return False, [], []
+
+            is_cancelled = False
+            cancel_reasons = []
+            if su:
+                if su["sign_index"] in (sa["sign_index"], mo["sign_index"]):
+                    is_cancelled = True
+                    cancel_reasons.append("Sun conjoins Saturn or Moon in same sign")
+                su_star = su.get("star_lord", "").lower()
+                if su_star in ("saturn", "moon"):
+                    is_cancelled = True
+                    cancel_reasons.append(f"Sun is in the star of {su_star.capitalize()}")
+
+            if check_cancellation:
+                if is_cancelled:
+                    return True, [f"Punarphoo Delay is Cancelled: {'; '.join(cancel_reasons)}"], ["Cancellation of Punarphoo verified"]
+                return False, [], []
+            else:
+                if not is_cancelled:
+                    ev_notes = []
+                    if is_same_sign: ev_notes.append(f"Moon and Saturn conjoin in {mo['sign_name']}")
+                    if star_conn: ev_notes.append("Saturn-Moon star connection detected")
+                    if is_aspect: ev_notes.append(f"Saturn casts {dist_sa_to_mo}th aspect on Moon")
+                    return True, [f"Active Punarphoo Yoga: {'; '.join(ev_notes)} (causes delay/obstacles in marital timing)"], ["Punarphoo connection active"]
+                return False, [], ["Punarphoo is cancelled by Sun association"]
+
+        # 18. Magi Astrology Sexual Aspect Condition
+        elif cond_type == "magi_aspect":
+            p1 = node.get("planet1")
+            p2 = node.get("planet2")
+            max_orb = float(node.get("orb_degrees", 8.0))
+
+            p1_info = ctx.get_planet(p1, "d1")
+            p2_info = ctx.get_planet(p2, "d1")
+
+            if not p1_info or not p2_info:
+                return False, [], [f"Planets {p1} or {p2} not found"]
+
+            ang_dist = circular_distance_deg(p1_info["longitude"], p2_info["longitude"])
+            aspects_targets = [(0.0, "Conjunction"), (90.0, "Square"), (120.0, "Trine"), (180.0, "Opposition")]
+
+            for tgt_deg, asp_name in aspects_targets:
+                diff = abs(ang_dist - tgt_deg)
+                if diff <= max_orb:
+                    ev = [f"Magi Sexual Aspect: {p1} ({p1_info['sign_name']} {p1_info['degree_in_sign']:.2f}°) forms {asp_name} ({ang_dist:.2f}°, orb {diff:.2f}°) with {p2} ({p2_info['sign_name']} {p2_info['degree_in_sign']:.2f}°)"]
+                    reas = [f"Valid {asp_name} detected between {p1} and {p2} within {max_orb}° orb"]
+                    return True, ev, reas
+
+            sign_dist = ((p2_info["sign_index"] - p1_info["sign_index"]) % 12) + 1
+            if sign_dist in (1, 4, 5, 7, 9, 10):
+                asp_label = "Conjunction" if sign_dist == 1 else ("Trine" if sign_dist in (5, 9) else ("Square" if sign_dist in (4, 10) else "Opposition"))
+                ev = [f"Magi Sign-Based Aspect ({asp_label}): {p1} in {p1_info['sign_name']} and {p2} in {p2_info['sign_name']}"]
+                reas = [f"{asp_label} alignment between {p1} and {p2}"]
+                return True, ev, reas
+
+            return False, [], []
+
+        # 19. KP Cuspal Significator Condition
+        elif cond_type == "kp_significator":
+            cusp = int(node.get("cusp", 7))
+            raw_target_houses = node.get("houses") if node.get("houses") is not None else node.get("required_houses", [])
+            target_houses = raw_target_houses if isinstance(raw_target_houses, list) else [raw_target_houses]
+            target_set = set(int(h) for h in target_houses)
+            match_mode = (node.get("match_mode") or "any").lower()
+
+            if not ctx.kp_data or "cusp_details" not in ctx.kp_data:
+                lord = ctx.d1_house_lords.get(cusp)
+                lord_p = ctx.get_planet(lord, "d1") if lord else None
+                if lord_p and lord_p["house"] in target_set:
+                    return True, [f"Cusp {cusp} Lord ({lord}) occupies House {lord_p['house']} signifying target matters {list(target_set)}"], [f"Cusp {cusp} connected with target houses"]
+                return False, [], ["KP significator details not loaded"]
+
+            cusps = ctx.kp_data.get("cusp_details", [])
+            target_detail = next((c for c in cusps if c.get("house") == cusp), None)
+            if not target_detail:
+                return False, [], [f"KP Cusp {cusp} not found"]
+
+            sl = target_detail.get("sub_lord", "")
+            planet_sigs = ctx.kp_data.get("planet_significators", [])
+            p_entry = next((ps for ps in planet_sigs if ps.get("planet", "").lower() == sl.lower()), None)
+            signified = p_entry.get("signified_houses", []) if p_entry else []
+
+            matches = [h for h in signified if h in target_set]
+            p_info = ctx.get_planet(sl, "d1")
+            if p_info and p_info.get("house") in target_set and p_info.get("house") not in matches:
+                matches.append(p_info["house"])
+
+            if match_mode == "all":
+                is_satisfied = bool(target_set and target_set.issubset(set(matches)))
+            else:
+                is_satisfied = len(matches) > 0
+
+            if is_satisfied:
+                ev = [f"KP Cusp {cusp} Sub-Lord ({sl}) signifies required houses {matches} (Full significations: {signified})"]
+                reas = [f"Sub-lord {sl} links to key houses {matches} (mode: {match_mode})"]
+                return True, ev, reas
+
+            return False, [], []
+
+        # 20. Planetary Avastha Condition (Bala, Kumara, Yuva, Vriddha, Mrita & Aspect Loss)
+        elif cond_type == "planetary_avastha":
+            req_planet = node.get("planet", "any")
+            stage = (node.get("stage") or "").lower()
+            loses_aspect = node.get("loses_aspect_potency", False)
+            chart = node.get("chart", default_scope).lower()
+
+            target_planets = [req_planet] if req_planet != "any" else list(ctx.d1_planets.keys())
+            matched_events = []
+
+            for p_name in target_planets:
+                p_info = ctx.get_planet(p_name, chart)
+                if not p_info:
+                    continue
+                deg = p_info["degree_in_sign"]
+
+                is_bala = (0.0 <= deg < 6.0)
+                is_kumara = (6.0 <= deg < 12.0)
+                is_yuva = (12.0 <= deg < 18.0)
+                is_vriddha = (18.0 <= deg < 24.0)
+                is_mrita = (24.0 <= deg <= 30.0)
+
+                cur_stage = "bala" if is_bala else ("kumara" if is_kumara else ("yuva" if is_yuva else ("vriddha" if is_vriddha else "mrita")))
+                cur_stage_ta = "பால அவஸ்தை (குழந்தை பருவம்)" if is_bala else ("குமார பருவம்" if is_kumara else ("யுவ பருவம் (இளமை)" if is_yuva else ("முதிர்ந்த பருவம்" if is_vriddha else "மிரித அவஸ்தை (முதுமை பருவம்)")))
+
+                match_found = False
+                if stage in ("bala", "child") and is_bala:
+                    match_found = True
+                elif stage in ("kumara", "youth") and is_kumara:
+                    match_found = True
+                elif stage in ("yuva", "adult") and is_yuva:
+                    match_found = True
+                elif stage in ("vriddha", "advanced") and is_vriddha:
+                    match_found = True
+                elif stage in ("mrita", "old", "senile") and is_mrita:
+                    match_found = True
+                elif loses_aspect and (is_bala or is_mrita):
+                    match_found = True
+
+                if match_found:
+                    aspect_loss_note = " மற்றும் அதன் பார்வை வலுவை முழுதாக இழக்கிறது" if (is_bala or is_mrita) else ""
+                    matched_events.append(
+                        f"{p_name} is at {deg:.2f}° in {p_info['sign_name']} ({cur_stage_ta}{aspect_loss_note})"
+                    )
+
+            if matched_events:
+                ev = [f"Planetary Avastha: {', '.join(matched_events)}"]
+                reas = ["Planet occupies an avastha degree threshold matching classical canon"]
+                return True, ev, reas
+            return False, [], [f"No planet matched avastha '{stage or 'loses_aspect'}' in {chart.upper()}"]
+
+        # 21. Combustion & Classical Aspect Potency Loss Condition
+        elif cond_type == "combustion_aspect_loss":
+            req_planet = node.get("planet", "any")
+            check_exemptions = node.get("check_exemptions", True)
+            chart = node.get("chart", default_scope).lower()
+
+            sun_info = ctx.get_planet("Sun", chart)
+            if not sun_info:
+                return False, [], [f"Sun position not found in {chart.upper()}"]
+
+            # Classical combustion orbs (in degrees)
+            combustion_limits = {
+                "Mars": 17.0,
+                "Jupiter": 11.0,
+                "Venus": 10.0,
+                "Saturn": 15.0,
+            }
+
+            # Check exemptions explicitly if requested
+            if check_exemptions and req_planet in ("Moon", "Mercury", "Rahu", "Ketu"):
+                p_info = ctx.get_planet(req_planet, chart)
+                if not p_info:
+                    return False, [], [f"Planet {req_planet} not found in {chart.upper()}"]
+                diff = abs(sun_info["longitude"] - p_info["longitude"])
+                if diff > 180.0:
+                    diff = 360.0 - diff
+                if diff <= 12.0:
+                    reason_map = {
+                        "Moon": "Moon near Sun forms Amavasya (அமாவாசை), exempt from combustion aspect blemish",
+                        "Mercury": "Mercury travels adjacent to Sun forming Budhaditya Yoga, exempt from combustion aspect blemish",
+                        "Rahu": "Rahu near Sun causes Solar Eclipse, no combustion blemish on the node itself",
+                        "Ketu": "Ketu near Sun causes Solar Eclipse, no combustion blemish on the node itself",
+                    }
+                    ev = [f"{req_planet} is within {diff:.2f}° of Sun: {reason_map.get(req_planet)}"]
+                    return True, ev, ["Classical exemption from combustion aspect loss confirmed"]
+                return False, [], [f"{req_planet} is not within conjunction range of Sun"]
+
+            # Check vulnerable planets: Mars, Jupiter, Venus, Saturn
+            candidates = [req_planet] if req_planet != "any" else list(combustion_limits.keys())
+            combust_matches = []
+
+            for p_name in candidates:
+                if p_name not in combustion_limits:
+                    continue
+                p_info = ctx.get_planet(p_name, chart)
+                if not p_info:
+                    continue
+
+                diff = abs(sun_info["longitude"] - p_info["longitude"])
+                if diff > 180.0:
+                    diff = 360.0 - diff
+
+                limit = combustion_limits[p_name]
+                if p_name == "Venus" and p_info.get("is_retrograde"):
+                    limit = 8.0
+
+                if diff <= limit:
+                    combust_matches.append(
+                        f"{p_name} ({p_info['sign_name']} {p_info['degree_in_sign']:.2f}°) is within {diff:.2f}° of Sun (limit {limit:.1f}°), causing Astangata (அஸ்தங்கம்) and total loss of aspectual potency"
+                    )
+
+            if combust_matches:
+                ev = [f"Combustion Aspect Loss: {'; '.join(combust_matches)}"]
+                reas = ["Planet is combust (Astangata) with the Sun and loses its aspectual strength"]
+                return True, ev, reas
+            return False, [], [f"No combust planet found among {candidates} in {chart.upper()}"]
+
+        # 22. Graha Yuddha (Planetary War & Defeat Aspect Loss)
+        elif cond_type == "graha_yuddha":
+            req_planet = node.get("planet", "any")
+            req_status = node.get("status", "defeated")  # "defeated", "victor", or "any_war"
+            max_orb = float(node.get("max_orb", 1.0))
+            chart = node.get("chart", default_scope).lower()
+
+            tara_grahas = ["Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+            war_matches = []
+
+            # Compare all pairs of Tara grahas
+            for i in range(len(tara_grahas)):
+                for j in range(i + 1, len(tara_grahas)):
+                    p1_name = tara_grahas[i]
+                    p2_name = tara_grahas[j]
+                    p1 = ctx.get_planet(p1_name, chart)
+                    p2 = ctx.get_planet(p2_name, chart)
+                    if not p1 or not p2:
+                        continue
+
+                    # Must be in the same sign and within max_orb
+                    if p1["sign_index"] == p2["sign_index"]:
+                        diff = abs(p1["degree_in_sign"] - p2["degree_in_sign"])
+                        if diff <= max_orb:
+                            if p1["degree_in_sign"] >= p2["degree_in_sign"]:
+                                victor, defeated = p1, p2
+                            else:
+                                victor, defeated = p2, p1
+
+                            matched_this_pair = False
+                            if req_status == "any_war":
+                                matched_this_pair = (req_planet == "any" or req_planet in (p1_name, p2_name))
+                            elif req_status == "victor":
+                                matched_this_pair = (req_planet == "any" or req_planet == victor["name"])
+                            elif req_status == "defeated":
+                                matched_this_pair = (req_planet == "any" or req_planet == defeated["name"])
+
+                            if matched_this_pair:
+                                war_matches.append(
+                                    f"Graha Yuddha in {victor['sign_name']}: Victor={victor['name']} ({victor['degree_in_sign']:.2f}°), Defeated={defeated['name']} ({defeated['degree_in_sign']:.2f}°, orb {diff:.2f}°). Defeated planet loses all aspect potency (பார்வை வலுவை முழுதாக இழக்கும்)"
+                                )
+
+            if war_matches:
+                ev = [f"Planetary War: {'; '.join(war_matches)}"]
+                reas = ["Planets are engaged in Graha Yuddha within 1.0° orb in the same sign"]
+                return True, ev, reas
+            return False, [], [f"No Graha Yuddha event matching status '{req_status}' in {chart.upper()}"]
 
         return False, [], [f"Unsupported condition type '{cond_type}'"]

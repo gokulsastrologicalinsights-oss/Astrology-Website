@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { FeatureGuard } from "@/components/auth/FeatureGuard";
 import { getActiveCalculation } from "@/lib/storage";
 import {
   getProblemTaxonomy,
@@ -28,7 +29,7 @@ import {
 } from "@/lib/types";
 import { PersonalizedRemedySection } from "@/components/remedies/PersonalizedRemedySection";
 import { PilgrimageCircuitView } from "@/components/remedies/PilgrimageCircuitView";
-import { GemstoneAdvisoryView } from "@/components/remedies/GemstoneAdvisoryView";
+import { SannuRitualsExplorer } from "@/components/remedies/SannuRitualsExplorer";
 import {
   Flame,
   Compass,
@@ -85,9 +86,11 @@ function RemediesHubContent() {
   const horoscopeId = searchParams.get("horoscope_id");
 
   // Active tab state
+  const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<
-    "analysis" | "taxonomy" | "catalog" | "temples" | "pilgrimage" | "gemstones" | "eligibility" | "sources"
+    "analysis" | "taxonomy" | "catalog" | "temples" | "pilgrimage" | "eligibility" | "sources" | "rituals"
   >(() => {
+    if (tabParam === "rituals") return "rituals";
     return horoscopeId ? "analysis" : "taxonomy";
   });
 
@@ -322,7 +325,7 @@ function RemediesHubContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumbs
         items={[
@@ -449,6 +452,26 @@ function RemediesHubContent() {
 
         <button
           type="button"
+          onClick={() => setActiveTab("rituals")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === "rituals"
+              ? "bg-white text-amber-950 shadow-2xs border border-amber-300 ring-2 ring-amber-100"
+              : "text-[#52667E] hover:text-[#102A4C]"
+          }`}
+        >
+          <Flame className="w-4 h-4 text-amber-600" />
+          <span>
+            {language === "ta"
+              ? "வேத சடங்குகள் & நட்சத்திரங்கள்"
+              : "Vedic Rituals & Nakshatras"}
+          </span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-900 font-bold">
+            Sannu Ahmed
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("taxonomy")}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === "taxonomy"
@@ -521,26 +544,6 @@ function RemediesHubContent() {
               : "Navagraha Pilgrimage Circuit"}
           </span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-900 font-bold">
-            New
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("gemstones")}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === "gemstones"
-              ? "bg-white text-[#102A4C] shadow-2xs border border-[#DDE5F0]"
-              : "text-[#52667E] hover:text-[#102A4C]"
-          }`}
-        >
-          <Sparkles className="w-4 h-4 text-emerald-600" />
-          <span>
-            {language === "ta"
-              ? "ரத்தின ஆலோசனை & பாதுகாப்பு"
-              : "Gemstone Prescription & Safety"}
-          </span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-900 font-bold">
             New
           </span>
         </button>
@@ -1198,20 +1201,10 @@ function RemediesHubContent() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB: Astrological Gemstone (Ratna) Advisory & Safety Audit */}
-      {/* ========================================================================= */}
-      {!loading && activeTab === "gemstones" && (
-        <GemstoneAdvisoryView
-          analysisResult={analysisResult}
-          horoscopeId={horoscopeId}
-        />
-      )}
-
-      {/* ========================================================================= */}
       {/* TAB 4: Vedic Eligibility Safeguard Tool */}
       {/* ========================================================================= */}
       {!loading && activeTab === "eligibility" && (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
           <div className="p-6 rounded-3xl border border-[#DDE5F0] bg-white shadow-xs space-y-5">
             <div>
               <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 border border-indigo-200 text-indigo-800 uppercase tracking-wider mb-2">
@@ -1364,7 +1357,7 @@ function RemediesHubContent() {
       {/* TAB 5: Canonical Shastra Sources */}
       {/* ========================================================================= */}
       {!loading && activeTab === "sources" && (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
           <div className="p-4 rounded-2xl border border-[#DDE5F0] bg-white shadow-2xs">
             <h2 className="font-serif font-bold text-base text-[#102A4C]">
               Canonical Classical Reference Citations
@@ -1414,22 +1407,33 @@ function RemediesHubContent() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* TAB: Sannu Ahmed Vedic Rituals & Remedies Explorer */}
+      {/* ========================================================================= */}
+      {!loading && activeTab === "rituals" && (
+        <SannuRitualsExplorer
+          initialDiagnostic={analysisResult?.sannu_rituals_diagnostic || undefined}
+        />
+      )}
     </div>
   );
 }
 
 export default function RemediesHubPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-7xl mx-auto px-4 py-20 text-center text-xs text-[#52667E]">
-          <div className="inline-block animate-spin w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full mb-3" />
-          <p>Loading Remedies & Pariharam Hub...</p>
-        </div>
-      }
-    >
-      <RemediesHubContent />
-    </Suspense>
+    <FeatureGuard permission="remedies">
+      <Suspense
+        fallback={
+          <div className="w-full px-4 py-20 text-center text-xs text-[#52667E]">
+            <div className="inline-block animate-spin w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full mb-3" />
+            <p>Loading Remedies & Pariharam Hub...</p>
+          </div>
+        }
+      >
+        <RemediesHubContent />
+      </Suspense>
+    </FeatureGuard>
   );
 }
 

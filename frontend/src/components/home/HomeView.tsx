@@ -13,7 +13,6 @@ import {
   Database,
   Calendar,
   Layers,
-  Clock,
   ShieldCheck,
   ChevronRight,
   User,
@@ -22,7 +21,6 @@ import {
   HeartHandshake,
   Heart,
   Hash,
-  Home as HomeIcon,
   Flame,
   Briefcase,
   Settings,
@@ -140,22 +138,6 @@ interface AstrologyToolCard {
       color: "text-[#B4872B] border-[#B4872B]/40 bg-[#FAF2DE]/50",
     },
     {
-      id: "transit-watch",
-      titleTa: "கோச்சார ஜாதகம்",
-      titleEn: "KP Transit Watch",
-      href: "/tools/transit-watch",
-      icon: Clock,
-      color: "text-teal-600 border-teal-300 bg-teal-50",
-    },
-    {
-      id: "d1-d9",
-      titleTa: "D1/D9 சக்கரங்கள்",
-      titleEn: "D1 Rasi & D9 Navamsa",
-      href: "/tools/d1-d9",
-      icon: Compass,
-      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
-    },
-    {
       id: "numerology",
       titleTa: "எண் கணிதம்",
       titleEn: "Numerology System",
@@ -172,28 +154,12 @@ interface AstrologyToolCard {
       color: "text-emerald-600 border-emerald-300 bg-emerald-50",
     },
     {
-      id: "vastu",
-      titleTa: "வாஸ்து சாஸ்திரம்",
-      titleEn: "Vastu Shastra Assessment",
-      href: "/vastu",
-      icon: HomeIcon,
-      color: "text-cyan-600 border-cyan-300 bg-cyan-50",
-    },
-    {
       id: "remedies",
       titleTa: "பரிகாரங்கள் & ஆலயங்கள்",
       titleEn: "Remedies & Pariharam",
       href: "/remedies",
       icon: Flame,
       color: "text-amber-700 border-amber-300 bg-amber-50",
-    },
-    {
-      id: "destiny-card",
-      titleTa: "விதி அட்டை",
-      titleEn: "Destiny Card Snapshot",
-      href: "/tools/horoscope?tab=destiny-card",
-      icon: Sparkles,
-      color: "text-purple-600 border-purple-300 bg-purple-50",
     },
   ];
 
@@ -242,7 +208,7 @@ interface AstrologyToolCard {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* 1. Personalized Welcome Header */}
       <div className="rounded-2xl bg-white border border-[#D9DEE7] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">

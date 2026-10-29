@@ -304,7 +304,7 @@ function MuhurtaStudioInner() {
     <div className="min-h-screen bg-[#F4F6F9] text-[#102A4C]">
       {/* Top Header & Breadcrumbs */}
       <div className="bg-white border-b border-[#DDE5F0] sticky top-0 z-20 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-4">
           <Breadcrumbs
             items={[
               { label: language === "ta" ? "முகப்பு" : "Home", href: "/" },
@@ -351,7 +351,7 @@ function MuhurtaStudioInner() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
         {/* 1. PREMIER OCCASIONS HERO SELECTOR */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">

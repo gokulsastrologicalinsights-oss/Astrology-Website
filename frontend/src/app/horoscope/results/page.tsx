@@ -29,9 +29,12 @@ import { MedicalAstrologySection } from "@/components/results/MedicalAstrologySe
 import { DoshaSection } from "@/components/results/DoshaSection";
 import { NabhashaSection } from "@/components/results/NabhashaSection";
 import { AshtakavargaSection } from "@/components/results/AshtakavargaSection";
-import { DestinyCard } from "@/components/results/DestinyCard";
-import { DivisionalChartsSection } from "@/components/results/DivisionalChartsSection";
 import { AstrologicalPredictionsSection } from "@/components/results/AstrologicalPredictionsSection";
+import { DasaBukthiPalangalSection } from "@/components/results/DasaBukthiPalangalSection";
+import { GkTransitMatchingCard } from "@/components/results/GkTransitMatchingCard";
+import { Recent15DayPastEventsCard } from "@/components/results/Recent15DayPastEventsCard";
+import { MarcBoneyMilestonesCard } from "@/components/results/MarcBoneyMilestonesCard";
+import { GemstoneDownload } from "@/components/results/GemstoneDownload";
 import {
   calculateNabhasha,
   calculateAshtakavarga,
@@ -75,6 +78,7 @@ import {
   Layers,
   Star,
   Radio,
+  Gem,
 } from "lucide-react";
 
 function HoroscopeResultsContent() {
@@ -101,13 +105,22 @@ function HoroscopeResultsContent() {
   // Main Tabs: "horoscope" (ஜாதகம்) | "consultation" (ஆலோசனை) | "reports" (அறிக்கைகள் மற்றும் பதிவிறக்கங்கள்)
   const [mainTab, setMainTab] = useState<"horoscope" | "consultation" | "reports">("horoscope");
 
-  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "divisional" | "destiny-card"
+  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download"
   const [secondaryTab, setSecondaryTab] = useState<
-    "chart" | "facts" | "planets" | "dasa" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "divisional" | "destiny-card"
+    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download"
   >(() => {
-    const validSecondary = ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "medical", "doshas", "divisional", "destiny-card"];
-    if (tabParam && validSecondary.includes(tabParam)) {
-      return tabParam as any;
+    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download"];
+    if (tabParam && (validSecondary.includes(tabParam) || ["dasa_palangal", "palangal", "dasa-bukthi-palangal"].includes(tabParam))) {
+      return (tabParam === "dasa_palangal" || tabParam === "palangal" || tabParam === "dasa-bukthi-palangal") ? "dasa-palangal" : (tabParam as any);
+    }
+    if (tabParam && ["transits", "transit", "gochara", "gocharam", "gk-transits"].includes(tabParam)) {
+      return "transits";
+    }
+    if (tabParam && ["milestones", "life-milestones", "marc-boney", "events"].includes(tabParam)) {
+      return "milestones";
+    }
+    if (tabParam && ["gemstone", "gemstones", "gemstone-download", "gemstonedownload", "ratna"].includes(tabParam.toLowerCase())) {
+      return "gemstone-download";
     }
     if (tabParam && ["d1-d9", "varga", "vargas", "shodashvarga"].includes(tabParam)) {
       return "divisional";
@@ -174,9 +187,13 @@ function HoroscopeResultsContent() {
     }
   };
 
-  // Auto-fetch live ephemeris transits when navigating to Ashtakavarga tab
+  // Auto-fetch live ephemeris transits when navigating to Ashtakavarga, Transits, Dasa-Palangal, or Milestones tab
   useEffect(() => {
-    if (secondaryTab === "ashtakavarga" && !liveTransitsData && !isLoadingTransits) {
+    if (
+      (secondaryTab === "ashtakavarga" || secondaryTab === "transits" || secondaryTab === "dasa-palangal" || secondaryTab === "milestones") &&
+      !liveTransitsData &&
+      !isLoadingTransits
+    ) {
       fetchLiveTransits();
     }
   }, [secondaryTab, liveTransitsData, isLoadingTransits, fetchLiveTransits]);
@@ -192,9 +209,14 @@ function HoroscopeResultsContent() {
   useEffect(() => {
     const noteKey = `horoscope_notes_${idParam || result?.savedId || "active"}`;
     const stored = localStorage.getItem(noteKey);
-    if (stored) {
-      setConsultationNotes(stored);
-    }
+    setConsultationNotes(stored || "");
+  }, [idParam, result?.savedId]);
+
+  // Ensure live transits state is clean on horoscope change
+  useEffect(() => {
+    setShowTransits(false);
+    setLiveTransitsData(null);
+    setShowTransitTable(false);
   }, [idParam, result?.savedId]);
 
   // Handle URL hash or tab parameters
@@ -205,12 +227,21 @@ function HoroscopeResultsContent() {
       setMainTab("consultation");
     } else if (tabParam === "reports") {
       setMainTab("reports");
-    } else if (tabParam && ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "doshas", "divisional", "destiny-card"].includes(tabParam)) {
+    } else if (tabParam && ["dasa-palangal", "dasa_palangal", "palangal", "dasa-bukthi-palangal"].includes(tabParam)) {
+      setMainTab("horoscope");
+      setSecondaryTab("dasa-palangal");
+    } else if (tabParam && ["transits", "transit", "gochara", "gocharam", "gk-transits"].includes(tabParam)) {
+      setMainTab("horoscope");
+      setSecondaryTab("transits");
+    } else if (tabParam && ["milestones", "life-milestones", "marc-boney", "events"].includes(tabParam)) {
+      setMainTab("horoscope");
+      setSecondaryTab("milestones");
+    } else if (tabParam && ["chart", "facts", "planets", "dasa", "ashtakavarga", "yogas", "doshas", "milestones", "gemstone-download"].includes(tabParam)) {
       setMainTab("horoscope");
       setSecondaryTab(tabParam as any);
-    } else if (tabParam && ["d1-d9", "varga", "vargas", "shodashvarga"].includes(tabParam)) {
+    } else if (tabParam && ["gemstone", "gemstones", "gemstonedownload", "ratna"].includes(tabParam.toLowerCase())) {
       setMainTab("horoscope");
-      setSecondaryTab("divisional");
+      setSecondaryTab("gemstone-download");
     }
   }, [tabParam]);
 
@@ -323,7 +354,7 @@ function HoroscopeResultsContent() {
       setIsLoadingSaved(true);
       setLoadError(null);
       setResult(null);
-      fetch(`/api/horoscopes/${idParam}`)
+      fetch(`/api/horoscopes/${idParam}`, { cache: "no-store" })
         .then(async (res) => {
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
@@ -333,11 +364,20 @@ function HoroscopeResultsContent() {
         })
         .then((data) => {
           const item = data.horoscope;
-          const calc = item.calculation_result;
+          const calc = item.calculation_result || {};
+          const calcTime = calc.calculatedAt
+            ? new Date(calc.calculatedAt).getTime()
+            : 0;
+          const updateTime = item.updated_at
+            ? new Date(item.updated_at).getTime()
+            : 0;
+          const createTime = item.created_at
+            ? new Date(item.created_at).getTime()
+            : 0;
+          // Only flag as "edited without recalc" if metadata was modified without updating the calculation snapshot
           const isEdited =
-            item.updated_at &&
-            item.created_at &&
-            new Date(item.updated_at).getTime() - new Date(item.created_at).getTime() > 1000;
+            updateTime > createTime + 3000 &&
+            (!calcTime || updateTime - calcTime > 10000);
 
           // Auto-heal dasa tree to ensure accurate canonical Vedic house occupancies
           if (calc.horoscope?.planets && calc.horoscope?.ascendant && calc.dasa?.dasa_tree) {
@@ -648,7 +688,7 @@ function HoroscopeResultsContent() {
   const calculatedAge = calculateCalendarAge(clientInputs.birthDate);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-5">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 md:py-8 space-y-5">
       {/* 1. Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Breadcrumbs
@@ -949,6 +989,13 @@ function HoroscopeResultsContent() {
           {/* MAIN TAB 1: HOROSCOPE */}
           {mainTab === "horoscope" && (
             <div className="space-y-5">
+              {/* Recent 15-Day Past Events Flashback & Client Verification */}
+              <Recent15DayPastEventsCard
+                horoscope={horoscope}
+                dasa={dasa}
+                liveTransits={liveTransitsData}
+              />
+
               {/* Secondary Tabs (Screenshot 3 Reference: ஜாதகம் | உண்மைகள் | கிரக நிலைகள் | தசா புத்தி | அஷ்டகவர்க பலன்கள் | யோகங்கள் | விதி அட்டை) */}
               <div className="flex items-center gap-2 border-b border-[#D9DEE7] overflow-x-auto pb-0.5 text-xs font-semibold">
                 <button
@@ -1001,6 +1048,56 @@ function HoroscopeResultsContent() {
 
                 <button
                   type="button"
+                  onClick={() => setSecondaryTab("dasa-palangal")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "dasa-palangal"
+                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold bg-[#FAF2DE]/40"
+                      : "text-[#B4872B] hover:text-[#8C6D23] font-semibold"
+                  }`}
+                  title={language === "ta" ? "விம்சோத்தரி தசா புத்தி பலன்கள் (கிருஷன் காந்த் பரத்வாஜ் முறை)" : "Vimshottari Dasa Bukthi Palangal"}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#B4872B]" />
+                  <span>{language === "ta" ? "தசா புத்தி பலன்கள்" : "Dasa Bukthi Palangal"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSecondaryTab("transits")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "transits"
+                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold bg-[#FAF2DE]/40"
+                      : "text-[#52667E] hover:text-[#183047]"
+                  }`}
+                  title={
+                    language === "ta"
+                      ? "திருப்பூர் ஸ்ரீ எஸ். கோபாலகிருஷ்ணன் (ஜிகே) சந்திர நாடி துல்லிய கோச்சார பலன்கள்"
+                      : "Tirupur S. Gopalakrishnan Accurate Transit Predictions"
+                  }
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
+                  <span>{language === "ta" ? "கோச்சார பலன்கள் (GK Transits)" : "GK Transit Predictions"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSecondaryTab("milestones")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "milestones"
+                      ? "border-b-2 border-indigo-600 text-indigo-700 font-bold bg-indigo-50/50"
+                      : "text-indigo-600 hover:text-indigo-800 font-semibold"
+                  }`}
+                  title={
+                    language === "ta"
+                      ? "மார்க் போனி & கே.என். ராவ்: 8 முக்கிய வாழ்க்கை நிகழ்வுகள் கணிப்பு"
+                      : "Marc Boney & K.N. Rao Major Life Milestones Predictor"
+                  }
+                >
+                  <Award className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>{language === "ta" ? "வாழ்க்கை மைல்கற்கள் (Marc Boney)" : "Life Milestones (Marc Boney)"}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSecondaryTab("ashtakavarga")}
                   className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap ${
                     secondaryTab === "ashtakavarga"
@@ -1041,33 +1138,26 @@ function HoroscopeResultsContent() {
 
                 <button
                   type="button"
-                  onClick={() => setSecondaryTab("divisional")}
-                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap ${
-                    secondaryTab === "divisional"
-                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold"
-                      : "text-[#52667E] hover:text-[#183047]"
+                  onClick={() => setSecondaryTab("gemstone-download")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "gemstone-download"
+                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold bg-[#FAF2DE]/50"
+                      : "text-amber-800 hover:text-amber-950 font-semibold"
                   }`}
+                  title={
+                    language === "ta"
+                      ? "ரத்ன சமாதானம்: ஜோதிட ரத்தின வழிகாட்டி & புனிதக் கையேடு பதிவிறக்கம் (GemstoneDownload)"
+                      : "GemstoneDownload: Astrological Gem Solutions (Ratna Samadhan) & PDF Playbook Download"
+                  }
                 >
-                  {language === "ta" ? "வர்க்க சக்கரங்கள் (D1 - D60)" : "Divisional Charts (D1 - D60)"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSecondaryTab("destiny-card")}
-                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                    secondaryTab === "destiny-card"
-                      ? "border-b-2 border-[#B4872B] text-[#B4872B] font-bold"
-                      : "text-amber-800 hover:text-amber-950"
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#B4872B]" />
-                  <span>{language === "ta" ? "விதி அட்டை" : "Destiny Card"}</span>
+                  <Gem className="w-3.5 h-3.5 text-[#B4872B]" />
+                  <span>{language === "ta" ? "ரத்தின வழிகாட்டி (GemstoneDownload)" : "GemstoneDownload"}</span>
                 </button>
               </div>
 
               {/* Sub-Tab 1: CHARTS - 2 Classical Charts (Rasi D1 & Navamsa D9) with Live Planetary Transits */}
               {secondaryTab === "chart" && (
-                <div className="space-y-6">
+                <div className="max-w-7xl mx-auto w-full space-y-6">
                   {/* Style Switcher Bar & Live Transit Toggle */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="text-xs text-[#8190A6]">
@@ -1320,13 +1410,44 @@ function HoroscopeResultsContent() {
                     </div>
                   </div>
 
+                  {/* Dasa Bukthi Palangal Quick Access Banner inside Chart Tab */}
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-[#153F6B] via-[#102d4d] to-[#183047] border border-[#B4872B]/40 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#B4872B] text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Sparkles className="w-5 h-5 text-amber-100" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-white">
+                            {language === "ta" ? "தசா புத்தி பலன்கள் (Dasa Bukthi Palangal)" : "Dasa Bukthi Palangal & Timings"}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#B4872B]/30 border border-[#B4872B]/60 text-amber-200">
+                            {language === "ta" ? "விம்சோத்தரி முறை" : "Krishan Kant Bhardwaj Canon"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-white/80">
+                          {language === "ta"
+                            ? "இந்த ஜாதகத்தின் தசா-புக்தி அதிபதிகளின் தூர கணிப்பு, ஷட்பலம், அஷ்டகவர்க்கம் மற்றும் நேரடி பலன்களைக் காணுங்கள்."
+                            : "Analyze real-time Mahadasha-Antardasha life predictions, Bhavat Bhavam distance, Shadbala, and Sun transits."}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSecondaryTab("dasa-palangal")}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white text-xs font-bold shrink-0 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <span>{language === "ta" ? "தசா பலன்களைக் காண்க ➔" : "View Dasa Predictions ➔"}</span>
+                    </button>
+                  </div>
+
                   {/* Astrological Conditions & Predictions Engine directly below D1 & D9 charts */}
                   <AstrologicalPredictionsSection
                     horoscopeResult={result}
                     language={language}
                   />
 
-                  {/* Summary & Destiny Card Banner beneath Charts */}
+                  {/* Summary & Remedies Fast Action Banner beneath Charts */}
                   <div className="p-4 rounded-xl bg-white border border-[#D9DEE7] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B4872B] shrink-0">
@@ -1334,12 +1455,12 @@ function HoroscopeResultsContent() {
                       </div>
                       <div>
                         <h4 className="text-xs sm:text-sm font-bold text-[#183047]">
-                          {language === "ta" ? "வேத விதி அட்டை மற்றும் பரிகாரங்கள்" : "Vedic Destiny Card & Remedies"}
+                          {language === "ta" ? "ஜோதிட பரிகாரங்கள் & ரத்தின வழிகாட்டி" : "Astrological Remedies & Gemstone Advisory"}
                         </h4>
                         <p className="text-[11px] text-[#8190A6]">
                           {language === "ta"
-                            ? "லக்னம், ராசி, நட்சத்திரம் மற்றும் நடப்பு தசா அடங்கிய பகிர்வு அட்டை."
-                            : "Verified astrological identity card ready to export and share."}
+                            ? "கிரக தோஷங்களுக்கான வேத பரிகாரங்கள், நவகிரக ஆலயங்கள் மற்றும் ரத்தின பரிந்துரைகள்."
+                            : "Vedic remedial measures, temple circuits, and gemstone recommendations."}
                         </p>
                       </div>
                     </div>
@@ -1353,10 +1474,11 @@ function HoroscopeResultsContent() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => setSecondaryTab("destiny-card")}
+                        onClick={() => setSecondaryTab("gemstone-download")}
                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer"
                       >
-                        <span>{language === "ta" ? "அட்டையைக் காண்க" : "View Destiny Card"}</span>
+                        <Gem className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "ரத்தின வழிகாட்டி" : "Gemstone Advisory"}</span>
                       </button>
                     </div>
                   </div>
@@ -1376,24 +1498,28 @@ function HoroscopeResultsContent() {
 
               {/* Sub-Tab 2: FACTS & PANCHANG (ஜாதக விவரங்கள் / உண்மைகள் - 6 Categories Dashboard) */}
               {secondaryTab === "facts" && (
-                <HoroscopeFactsPanel
-                  result={result}
-                  onCalculateExtensions={handleCalculateVedicExtensions}
-                  isCalculatingExtensions={isCalculatingExtensions}
-                  initialCategory={(searchParams.get("category") as FactCategory) || "basic"}
-                />
+                <div className="max-w-7xl mx-auto w-full">
+                  <HoroscopeFactsPanel
+                    result={result}
+                    onCalculateExtensions={handleCalculateVedicExtensions}
+                    isCalculatingExtensions={isCalculatingExtensions}
+                    initialCategory={(searchParams.get("category") as FactCategory) || "basic"}
+                  />
+                </div>
               )}
 
               {/* Sub-Tab 3: PLANETARY POSITIONS */}
               {secondaryTab === "planets" && (
-                <div className="bg-white rounded-xl border border-[#D9DEE7] p-4 sm:p-5 shadow-2xs space-y-3">
-                  <h3 className="font-serif text-lg font-bold text-[#183047]">
-                    {t.tabPlanets}
-                  </h3>
-                  <PlanetaryTable
-                    planets={horoscope.planets}
-                    ascendant={horoscope.ascendant}
-                  />
+                <div className="max-w-7xl mx-auto w-full">
+                  <div className="bg-white rounded-xl border border-[#D9DEE7] p-4 sm:p-5 shadow-2xs space-y-3">
+                    <h3 className="font-serif text-lg font-bold text-[#183047]">
+                      {t.tabPlanets}
+                    </h3>
+                    <PlanetaryTable
+                      planets={horoscope.planets}
+                      ascendant={horoscope.ascendant}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -1407,6 +1533,52 @@ function HoroscopeResultsContent() {
                     birthTime={clientInputs?.birthTime}
                     timezone={clientInputs?.timezone}
                     kp={kp}
+                    onViewPalangal={() => setSecondaryTab("dasa-palangal")}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 4b: DASA BUKTHI PALANGAL (Vimshottari Predictions - Krishan Kant Bhardwaj) */}
+              {secondaryTab === "dasa-palangal" && (
+                <div className="max-w-7xl mx-auto w-full space-y-4">
+                  <DasaBukthiPalangalSection
+                    horoscope={horoscope}
+                    dasa={dasa}
+                    shadbala={result.shadbala || (horoscope as any).shadbala}
+                    ashtakavarga={horoscope.ashtakavarga || result.ashtakavarga}
+                    birthDate={clientInputs?.birthDate}
+                    birthTime={clientInputs?.birthTime}
+                    timezone={clientInputs?.timezone}
+                    onNavigateToTab={(tab) => setSecondaryTab(tab as any)}
+                    liveTransits={liveTransitsData}
+                    isLoadingTransits={isLoadingTransits}
+                    onFetchTransits={fetchLiveTransits}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 4c: GK TRANSIT PREDICTIONS (Tirupur S. Gopalakrishnan Chandra Nadi Transits) */}
+              {secondaryTab === "transits" && (
+                <div className="space-y-4">
+                  <GkTransitMatchingCard
+                    horoscope={horoscope}
+                    liveTransits={liveTransitsData}
+                    isLoadingTransits={isLoadingTransits}
+                    onRefreshTransits={fetchLiveTransits}
+                    dasaLord={dasa?.active_period?.mahadasha}
+                    bukthiLord={dasa?.active_period?.antardasha}
+                    andharaLord={dasa?.active_period?.pratyantardasha}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 4d: MARC BONEY & K.N. RAO MAJOR LIFE MILESTONES */}
+              {secondaryTab === "milestones" && (
+                <div className="space-y-4">
+                  <MarcBoneyMilestonesCard
+                    horoscope={horoscope}
+                    dasa={dasa}
+                    liveTransits={liveTransitsData}
                   />
                 </div>
               )}
@@ -1466,39 +1638,15 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 8: DIVISIONAL CHARTS (D1 - D60) */}
-              {secondaryTab === "divisional" && (
-                <div className="space-y-5">
-                  <DivisionalChartsSection
-                    horoscope={horoscope}
-                    vargaD1D9={horoscope.varga_d1_d9 || (result as any).varga_d1_d9}
-                    shodashvarga={(horoscope as any).shodashvarga || (result as any).shodashvarga}
-                    clientInputs={clientInputs}
-                    savedHoroscopeId={result.savedId || idParam || undefined}
-                    onUpdateVargaData={(varga, shodash) => {
-                      setResult((prev) => {
-                        if (!prev) return null;
-                        const updated: FullHoroscopeResult = {
-                          ...prev,
-                          horoscope: {
-                            ...prev.horoscope,
-                            varga_d1_d9: varga,
-                            ...(shodash ? { shodashvarga: shodash } : {}),
-                          },
-                          ...(shodash ? { shodashvarga: shodash } : {}),
-                        };
-                        saveActiveCalculation(updated);
-                        return updated;
-                      });
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Sub-Tab 9: DESTINY CARD */}
-              {secondaryTab === "destiny-card" && (
+              {/* Sub-Tab 8: GEMSTONE DOWNLOAD */}
+              {secondaryTab === "gemstone-download" && (
                 <div className="space-y-4">
-                  <DestinyCard result={result} />
+                  <GemstoneDownload
+                    horoscope={horoscope}
+                    clientInputs={clientInputs}
+                    doshas={horoscope.doshas || (result as any).doshas}
+                    onNavigateTab={(t) => setSecondaryTab(t as any)}
+                  />
                 </div>
               )}
             </div>
@@ -1566,7 +1714,7 @@ function HoroscopeResultsContent() {
               </div>
 
               {/* Consultation Quick Links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-white border border-[#D9DEE7] shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-[#153F6B]">
                     <ShieldCheck className="w-4 h-4 text-[#153F6B]" />
@@ -1587,23 +1735,23 @@ function HoroscopeResultsContent() {
 
                 <div className="p-4 rounded-xl bg-white border border-[#D9DEE7] shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-[#153F6B]">
-                    <Compass className="w-4 h-4 text-[#B4872B]" />
-                    <span>{language === "ta" ? "D1 & D9 முழு ஒப்பீட்டு ஆய்வு" : "Full D1 / D9 Varga Analysis"}</span>
+                    <Gem className="w-4 h-4 text-[#B4872B]" />
+                    <span>{language === "ta" ? "ரத்தின வழிகாட்டி (GemstoneDownload)" : "GemstoneDownload Advisory"}</span>
                   </div>
                   <p className="text-xs text-[#8190A6]">
                     {language === "ta"
-                      ? "வர்கோத்தம கிரகங்கள் மற்றும் புஷ்கர நவாம்ச நிலைகளை விரிவாகக் காண்க."
-                      : "Detailed comparative dignity analysis between Rasi and Navamsa charts."}
+                      ? "ரத்ன சமாதானம்: 3 தூண் ரத்தினங்கள், உடல் எடைக்கேற்ற ரட்டி அளவுகள் மற்றும் கையேடு பதிவிறக்கம்."
+                      : "Personalized 3-Pillar Gems, proportional weight formulas, and downloadable PDF playbook."}
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       setMainTab("horoscope");
-                      setSecondaryTab("divisional");
+                      setSecondaryTab("gemstone-download");
                     }}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4872B] hover:underline pt-1 cursor-pointer"
                   >
-                    <span>{language === "ta" ? "வர்க்க ஆய்வுக்குச் செல்க →" : "Open Varga Analysis →"}</span>
+                    <span>{language === "ta" ? "ரத்தின வழிகாட்டிக்குச் செல்க →" : "Open GemstoneDownload →"}</span>
                   </button>
                 </div>
               </div>
@@ -1613,7 +1761,7 @@ function HoroscopeResultsContent() {
           {/* MAIN TAB 3: REPORTS & DOWNLOADS */}
           {mainTab === "reports" && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* 1. Print / PDF */}
                 <div className="bg-white rounded-xl border border-[#D9DEE7] p-5 shadow-2xs space-y-3 flex flex-col justify-between">
                   <div className="space-y-2">
@@ -1639,35 +1787,40 @@ function HoroscopeResultsContent() {
                   </button>
                 </div>
 
-                {/* 2. Destiny Card */}
-                <div className="bg-white rounded-xl border border-[#D9DEE7] p-5 shadow-2xs space-y-3 flex flex-col justify-between">
+                {/* 2. GemstoneDownload Playbook PDF */}
+                <div className="bg-white rounded-xl border-2 border-[#D8BD80] p-5 shadow-2xs space-y-3 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-[#B4872B] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl">
+                    {language === "ta" ? "புதிய அம்சம்" : "FEATURED"}
+                  </div>
                   <div className="space-y-2">
                     <div className="w-10 h-10 rounded-lg bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center text-[#B4872B]">
-                      <Sparkles className="w-5 h-5" />
+                      <Gem className="w-5 h-5" />
                     </div>
                     <h3 className="font-bold text-sm text-[#183047]">
-                      {language === "ta" ? "வேத விதி அட்டை" : "Vedic Destiny Card"}
+                      {language === "ta"
+                        ? "ரத்தின கையேடு (GemstoneDownload)"
+                        : "GemstoneDownload Playbook"}
                     </h3>
                     <p className="text-xs text-[#8190A6]">
                       {language === "ta"
-                        ? "லக்னம், ராசி மற்றும் நடப்பு தசா அடங்கிய பகிர்வு அட்டை."
-                        : "High-resolution mobile-friendly astrological summary card."}
+                        ? "ரத்ன சமாதானம்: 3 தூண் ரத்தினங்கள், மந்திரங்கள் மற்றும் ருத்ராட்ச சாஸ்திர PDF கையேடு."
+                        : "3-Pillar Gems, body weight formulas, mantras, and Rudraksha sanctification PDF."}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       setMainTab("horoscope");
-                      setSecondaryTab("destiny-card");
+                      setSecondaryTab("gemstone-download");
                     }}
-                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#B4872B] to-[#D8BD80] hover:from-[#9B7322] hover:to-[#B4872B] text-[#0F2942] text-xs font-bold shadow-2xs transition-all cursor-pointer"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>{language === "ta" ? "அட்டையைப் பதிவிறக்கு" : "View & Download Card"}</span>
+                    <Gem className="w-3.5 h-3.5" />
+                    <span>{language === "ta" ? "வழிகாட்டி & PDF (GemstoneDownload)" : "Open GemstoneDownload"}</span>
                   </button>
                 </div>
 
-                {/* 3. CSV Planetary Positions */}
+                {/* 4. CSV Planetary Positions */}
                 <div className="bg-white rounded-xl border border-[#D9DEE7] p-5 shadow-2xs space-y-3 flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
@@ -1794,7 +1947,7 @@ export default function HoroscopeResultsPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-5xl mx-auto px-4 py-20 text-center">
+        <div className="w-full px-4 py-20 text-center">
           <div className="inline-block animate-spin w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full mb-4" />
           <p className="text-sm text-[#8190A6]">Loading horoscope...</p>
         </div>

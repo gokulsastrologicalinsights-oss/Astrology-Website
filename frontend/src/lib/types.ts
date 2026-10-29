@@ -805,6 +805,7 @@ export interface FullHoroscopeResult {
     timezone: string;
     ayanamsaId: number;
     houseSystemId: number;
+    gender?: string;
   };
 }
 
@@ -3459,6 +3460,7 @@ export interface RemedyAnalysisResponse {
   classical_disclaimer_en: string;
   classical_disclaimer_ta: string;
   status: string;
+  sannu_rituals_diagnostic?: SannuKarmaDiagnosticResponse | null;
 }
 
 export interface LiveRemedyAnalysisRequest {
@@ -3702,6 +3704,12 @@ export interface GemstoneAdvisoryResponse {
   prohibited_gemstones: ProhibitedGemstoneItem[];
   anukula_vs_pratikula_doctrine_en?: Record<string, any> | null;
   anukula_vs_pratikula_doctrine_ta?: Record<string, any> | null;
+  karma_doctrine_en?: Record<string, any> | null;
+  karma_doctrine_ta?: Record<string, any> | null;
+  grahabalabal_principles_en?: Record<string, any> | null;
+  grahabalabal_principles_ta?: Record<string, any> | null;
+  consecration_protocol_en?: Record<string, any> | null;
+  consecration_protocol_ta?: Record<string, any> | null;
   recommended_rudraksha?: RudrakshaRecommendationSummary | null;
   rudraksha_catalog?: RudrakshaItem[];
   conflicting_combinations_warning_en: string[];
@@ -3895,6 +3903,7 @@ export interface UnifiedMarriageRequest {
   birth_time_uncertainty_seconds?: number;
   start_year?: number | null;
   end_year?: number | null;
+  force_timing_scan?: boolean;
 }
 
 export interface UnifiedMarriageResponse {
@@ -3906,6 +3915,181 @@ export interface UnifiedMarriageResponse {
   timing?: UnifiedTimingReport | null;
   reconciliation_rule_id: string;
   reconciliation_provenance: RuleProvenanceTag;
+  metadata: CalculationMetadata;
+}
+
+// ---------------------------------------------------------------------------
+// Life Partner & Spouse Nature, Character & Type Prediction
+// ---------------------------------------------------------------------------
+
+export interface SpousePlanetInfluence {
+  planet: string;
+  planet_tamil: string;
+  status: "OCCUPANT" | "ASPECT";
+  influence_type: string;
+  influence_type_tamil: string;
+  spouse_type_en: string;
+  spouse_type_ta: string;
+  characteristics_en: string[];
+  characteristics_ta: string[];
+  positives_en: string[];
+  positives_ta: string[];
+  watchouts_en: string[];
+  watchouts_ta: string[];
+}
+
+export interface SeventhLordElementalAnalysis {
+  lord_planet: string;
+  lord_planet_tamil: string;
+  sign: string;
+  sign_tamil: string;
+  sign_number: number;
+  house_placement: number;
+  dignity: string;
+  dignity_tamil: string;
+  element: "Fire" | "Earth" | "Air" | "Water";
+  element_tamil: string;
+  elemental_traits_en: string[];
+  elemental_traits_ta: string[];
+  description_en: string;
+  description_ta: string;
+}
+
+export interface SpouseSignAnalysis {
+  sign: string;
+  sign_tamil: string;
+  sign_number: number;
+  ruler: string;
+  ruler_tamil: string;
+  temperament_en: string;
+  temperament_ta: string;
+  core_traits_en: string[];
+  core_traits_ta: string[];
+}
+
+export interface DesireVsRealityAnalysis {
+  lagna_sign: string;
+  lagna_sign_tamil: string;
+  seventh_from_lagna_sign: string;
+  seventh_from_lagna_sign_tamil: string;
+  reality_description_en: string;
+  reality_description_ta: string;
+
+  moon_sign: string;
+  moon_sign_tamil: string;
+  seventh_from_moon_sign: string;
+  seventh_from_moon_sign_tamil: string;
+  desire_description_en: string;
+  desire_description_ta: string;
+
+  synthesis_en: string;
+  synthesis_ta: string;
+}
+
+export interface SpouseKarakasAnalysis {
+  venus_sign: string;
+  venus_sign_tamil: string;
+  venus_house: number;
+  venus_dignity: string;
+  venus_dignity_tamil: string;
+  venus_description_en: string;
+  venus_description_ta: string;
+
+  jupiter_sign: string;
+  jupiter_sign_tamil: string;
+  jupiter_house: number;
+  jupiter_dignity: string;
+  jupiter_dignity_tamil: string;
+  jupiter_description_en: string;
+  jupiter_description_ta: string;
+
+  mars_sign: string;
+  mars_sign_tamil: string;
+  mars_house: number;
+  mars_dignity: string;
+  mars_dignity_tamil: string;
+  mars_description_en: string;
+  mars_description_ta: string;
+
+  mars_venus_synergy_en: string;
+  mars_venus_synergy_ta: string;
+  gender_specific_insight_en: string;
+  gender_specific_insight_ta: string;
+}
+
+export interface NavamsaD9SpouseProfile {
+  d9_lagna_sign: string;
+  d9_lagna_sign_tamil: string;
+  d9_seventh_sign: string;
+  d9_seventh_sign_tamil: string;
+  d9_seventh_lord: string;
+  d9_seventh_lord_tamil: string;
+  d9_seventh_occupants: string[];
+  inner_nature_en: string;
+  inner_nature_ta: string;
+  marital_bond_en: string;
+  marital_bond_ta: string;
+}
+
+export interface SpouseTraitScores {
+  romantic_loving_score: number;
+  romantic_loving_analysis_en: string;
+  romantic_loving_analysis_ta: string;
+
+  loyalty_faithfulness_score: number;
+  loyalty_faithfulness_analysis_en: string;
+  loyalty_faithfulness_analysis_ta: string;
+
+  intelligence_education_score: number;
+  intelligence_education_analysis_en: string;
+  intelligence_education_analysis_ta: string;
+
+  physical_charm_score: number;
+  physical_charm_analysis_en: string;
+  physical_charm_analysis_ta: string;
+}
+
+export interface SpouseRemedies {
+  primary_gemstone_en: string;
+  primary_gemstone_ta: string;
+  fasting_day_en: string;
+  fasting_day_ta: string;
+  auspicious_colors_en: string[];
+  auspicious_colors_ta: string[];
+  mantra_en: string;
+  mantra_ta: string;
+  practical_advice_en: string;
+  practical_advice_ta: string;
+}
+
+export interface SpousePredictionRequest {
+  birth: BirthInput;
+  gender?: "male" | "female" | "other";
+}
+
+export interface SpousePredictionResponse {
+  native_gender: string;
+  ascendant_sign: string;
+  ascendant_sign_tamil: string;
+  moon_sign: string;
+  moon_sign_tamil: string;
+
+  seventh_sign: SpouseSignAnalysis;
+  seventh_lord: SeventhLordElementalAnalysis;
+  planets_in_seventh: SpousePlanetInfluence[];
+  aspecting_planets: SpousePlanetInfluence[];
+
+  desire_vs_reality: DesireVsRealityAnalysis;
+  karakas: SpouseKarakasAnalysis;
+  navamsa_d9: NavamsaD9SpouseProfile;
+  trait_scores: SpouseTraitScores;
+  remedies: SpouseRemedies;
+
+  summary_headline_en: string;
+  summary_headline_ta: string;
+  summary_text_en: string;
+  summary_text_ta: string;
+
   metadata: CalculationMetadata;
 }
 
@@ -4093,6 +4277,12 @@ export interface MarriageCompatibilityResponse {
   groom_d9_chart?: any;
   bride_d9_chart?: any;
   final_assessment: FinalAssessmentSummary;
+}
+
+export interface MarriageCompatibilityPdfReportRequest {
+  report_data?: MarriageCompatibilityResponse | Record<string, any>;
+  saved_report_id?: string | null;
+  language?: "en" | "ta";
 }
 
 export interface RuleRegisterItem {
@@ -4606,6 +4796,7 @@ export interface EvaluatedPredictionRule {
   chart_evidence: string[];
   match_reasons: string[];
   source_reference?: string;
+  applicable_gender?: string;
   limitations?: string;
   limitations_en?: string;
   limitations_ta?: string;
@@ -4619,6 +4810,7 @@ export interface EvaluatePredictionRulesRequest {
   chart_scope?: string;
   astrology_system?: string;
   language?: string;
+  gender?: string;
   dasa?: Record<string, any>;
   kp?: Record<string, any>;
   custom_rules?: any[];
@@ -4686,3 +4878,752 @@ export interface GemstoneRudrakshaPlaybookPdfRequest {
 }
 
 
+
+
+// ============================================================================
+// 28 Nakshatras Shastra & Electional Suitability Types
+// ============================================================================
+
+export interface PadaDetail {
+  pada_number: number;
+  degree_range: string;
+  traits: string;
+  dosha_status: string;
+  dosha_affects?: string | null;
+  remedy?: string | null;
+}
+
+export interface NakshatraItem {
+  id: number;
+  name: string;
+  name_tamil: string;
+  alternate_names: string[];
+  span_zodiac: string;
+  degree_start: number;
+  degree_end: number;
+  functional_nature: string;
+  functional_nature_tamil: string;
+  gender: string;
+  result_grade: string;
+  ruling_deity: string;
+  ruling_planet: string;
+  gaze_direction: string;
+  gaze_direction_tamil: string;
+  caste: string;
+  motivation: string;
+  sight_quality: string;
+  luminary_type: string;
+  kula_type: string;
+  num_stars: number;
+  symbol_shape: string;
+  favourable_actions: string[];
+  inauspicious_for: string[];
+  ascendant_indications: string;
+  moon_indications: string;
+  rules_over: string[];
+  places: string[];
+  objects: string[];
+  abstracts: string[];
+  padas: PadaDetail[];
+  general_remedy?: string | null;
+}
+
+export interface FunctionalNatureGroup {
+  name_en: string;
+  name_ta: string;
+  nakshatras: string[];
+  nakshatra_ids: number[];
+  suitable_actions_en: string;
+  suitable_actions_ta: string;
+  nature_type: string;
+}
+
+export interface NakshatraSummaryTableRow {
+  num: number;
+  name: string;
+  gender: string;
+  result: string;
+  nature: string;
+  ruled_by: string;
+  direction: string;
+}
+
+export interface ActivityCheckResult {
+  valid: boolean;
+  nakshatra_id: number;
+  nakshatra_name: string;
+  nakshatra_name_tamil: string;
+  activity_queried: string;
+  functional_nature: string;
+  result_grade: string;
+  is_suitable: boolean;
+  recommendation: string;
+  matched_favourable_points: string[];
+  matched_inauspicious_points: string[];
+  nature_guidance: string;
+}
+
+export interface PadaDoshaResult {
+  valid: boolean;
+  nakshatra_id: number;
+  nakshatra_name: string;
+  nakshatra_name_tamil: string;
+  pada: number;
+  degree_range: string;
+  traits: string;
+  dosha_status: string;
+  has_dosha: boolean;
+  is_severe_gandanta: boolean;
+  dosha_affects?: string | null;
+  remedial_upaya?: string | null;
+  ruling_deity: string;
+  gaze_direction: string;
+}
+
+
+export interface EbookTreatiseChapter {
+  id: string;
+  number: number;
+  title_en: string;
+  title_ta: string;
+  content_en: string;
+  content_ta: string;
+  key_takeaway: string;
+}
+
+export interface EbookTreatise {
+  title: string;
+  title_tamil: string;
+  subtitle: string;
+  subtitle_tamil: string;
+  author_tradition: string;
+  chapters: EbookTreatiseChapter[];
+}
+
+export interface NakshatraPredictionDetail {
+  valid: boolean;
+  nakshatra_id: number;
+  name: string;
+  name_tamil: string;
+  alternate_names: string[];
+  span_zodiac: string;
+  functional_nature: string;
+  functional_nature_tamil: string;
+  gender: string;
+  result_grade: string;
+  ruling_deity: string;
+  ruling_planet: string;
+  gaze_direction: string;
+  gaze_direction_tamil: string;
+  caste: string;
+  motivation: string;
+  sight_quality: string;
+  luminary_type: string;
+  kula_type: string;
+  num_stars: number;
+  symbol_shape: string;
+  moon_prediction: string;
+  ascendant_prediction: string;
+  rules_over: string[];
+  places: string[];
+  objects: string[];
+  abstracts: string[];
+  favourable_actions: string[];
+  inauspicious_for: string[];
+  general_remedy?: string | null;
+  selected_pada?: number | null;
+  selected_pada_detail?: {
+    pada_number: number;
+    degree_range: string;
+    traits: string;
+    dosha_status: string;
+    dosha_affects?: string | null;
+    remedy?: string | null;
+  } | null;
+  all_padas: Array<{
+    pada_number: number;
+    degree_range: string;
+    traits: string;
+    dosha_status: string;
+    dosha_affects?: string | null;
+    remedy?: string | null;
+  }>;
+}
+
+
+// ==========================================
+// JAMAKKOL PRASANAM (ஜாமக்கோள் பிரசன்னம்) TYPES
+// ==========================================
+
+export interface JamakkolPrasanamRequest {
+  query_datetime: string;
+  latitude: number;
+  longitude: number;
+  timezone?: string;
+  ayanamsa_id?: number;
+  query_text?: string;
+  query_category?: string;
+  querent_seed?: number;
+}
+
+export interface PillarDetail {
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  longitude: number;
+  degree_in_sign: number;
+  dms: string;
+  lord_en: string;
+  lord_ta: string;
+  nature: string;
+  nature_ta: string;
+  direction_en: string;
+  direction_ta: string;
+  nakshatra_name?: string;
+  pada?: number;
+  surya_veethi?: string;
+  surya_veethi_en?: string;
+  distance_from_arudham?: number;
+  calculation_basis?: string;
+}
+
+export interface ThreePillars {
+  udhayam: PillarDetail;
+  aarudham: PillarDetail;
+  kavippu: PillarDetail;
+}
+
+export interface JamaGrahaItem {
+  id: string;
+  name_en: string;
+  name_ta: string;
+  symbol: string;
+  classical_name_ta: string;
+  is_benefic: boolean;
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  degree_in_sign: number;
+  dms: string;
+  signification_en: string;
+  signification_ta: string;
+  color: string;
+}
+
+export interface JamakkolTransitPlanetItem {
+  name_en: string;
+  name_ta: string;
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  longitude: number;
+  degree_in_sign: number;
+  dms: string;
+  is_retrograde: boolean;
+  speed: number;
+  nakshatra: string;
+}
+
+export interface HousePlacementItem {
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  nature: string;
+  nature_ta: string;
+  lord_en: string;
+  lord_ta: string;
+  direction_en: string;
+  direction_ta: string;
+  house_from_udhayam: number;
+  house_from_aarudham: number;
+  is_udhayam: boolean;
+  is_aarudham: boolean;
+  is_kavippu: boolean;
+  jama_grahas: JamaGrahaItem[];
+  transit_planets: JamakkolTransitPlanetItem[];
+}
+
+export interface PredictionVerdict {
+  status: "favorable" | "delayed_success" | "unfavorable";
+  score: number;
+  verdict_title_en: string;
+  verdict_title_ta: string;
+  verdict_summary_en: string;
+  verdict_summary_ta: string;
+  pillar_dynamics_en: string;
+  pillar_dynamics_ta: string;
+  kavippu_impact_en: string;
+  kavippu_impact_ta: string;
+  directional_guidance_en: string;
+  directional_guidance_ta: string;
+  timing_of_event_en: string;
+  timing_of_event_ta: string;
+  category_specific_insights_en: string[];
+  category_specific_insights_ta: string[];
+  remedial_measures_en: string[];
+  remedial_measures_ta: string[];
+}
+
+export interface JamamInfo {
+  period_type: string;
+  jamam_number: number;
+  jamam_start_local: string;
+  jamam_end_local: string;
+  jamam_ruler_en: string;
+  jamam_ruler_ta: string;
+  jamam_ruler_symbol: string;
+  is_benefic_ruler: boolean;
+  weekday_lord_en: string;
+  weekday_lord_ta: string;
+  progress_percent: number;
+}
+
+export interface JamakkolSolarInfo {
+  sunrise_local: string;
+  sunset_local: string;
+  is_day: boolean;
+  day_duration: string;
+  night_duration: string;
+  dinamana_ghatikas: number;
+  surya_veethi: string;
+  surya_veethi_en: string;
+}
+
+export interface ClassicalRulesAnalysis {
+  watch_time_relation: {
+    relation_type: string;
+    house_from_udayam: number;
+    result: string;
+    description_en: string;
+    description_ta: string;
+  };
+  facing_direction: {
+    facing_type: string;
+    facing_name_ta: string;
+    house_from_sun: number;
+    applicable: boolean;
+    result: string;
+    description_en: string;
+    description_ta: string;
+  };
+  rising_nature: {
+    nature_type: string;
+    nature_name_ta: string;
+    applicable: boolean;
+    result: string;
+    description_en: string;
+    description_ta: string;
+  };
+  subh_balance: {
+    is_subh_udayam: boolean;
+    is_subh_arudam: boolean;
+    applicable: boolean;
+    result: string;
+    description_en: string;
+    description_ta: string;
+  };
+  lord_connections: {
+    udayam_lord: string;
+    tenth_lord: string;
+    eleventh_lord: string;
+    tenth_lord_connected: boolean;
+    tenth_lord_connection_type?: string | null;
+    eleventh_lord_connected: boolean;
+    eleventh_lord_connection_type?: string | null;
+    parivartana_udayam_10th: boolean;
+    parivartana_udayam_11th: boolean;
+    udayam_lord_debilitated: boolean;
+    tenth_lord_bhava: number;
+    tenth_lord_query_signification_en: string;
+    tenth_lord_query_signification_ta: string;
+  };
+  kavippu_afflictions: {
+    kavippu_bhava_from_udayam: number;
+    kavippu_in_2nd: boolean;
+    kavippu_in_11th: boolean;
+    afflicted_transit_planets: string[];
+    afflicted_jama_grahas: string[];
+    afflicted_bhava_meaning_en: string;
+    afflicted_bhava_meaning_ta: string;
+  };
+  approaching_planets: Array<{
+    name_en: string;
+    name_ta: string;
+    location: string;
+    timeline: string;
+    karakatwa_en: string;
+    karakatwa_ta: string;
+  }>;
+  crossed_planets: Array<{
+    name_en: string;
+    name_ta: string;
+    location: string;
+    timeline: string;
+    karakatwa_en: string;
+    karakatwa_ta: string;
+  }>;
+  planets_in_udayam: Array<{
+    name_en: string;
+    name_ta: string;
+    degree: string;
+    is_debilitated: boolean;
+    karakatwa_en: string;
+    karakatwa_ta: string;
+  }>;
+  exalted_debilitated_audit: {
+    exalted_planets: string[];
+    debilitated_planets: string[];
+    debilitated_in_udayam: boolean;
+    chatterbox_warning: boolean;
+    warning_text_en: string;
+    warning_text_ta: string;
+  };
+  relationship_analysis?: Record<string, {
+    title_en: string;
+    title_ta: string;
+    planet: string;
+    karak_bhava: number;
+    verdict: string;
+    verdict_ta: string;
+    description_en: string;
+    description_ta: string;
+  }>;
+  politics_govt_analysis?: {
+    kavippu_in_5th_house: boolean;
+    powerful_post_eligible: boolean;
+    central_govt_ticket_eligible: boolean;
+    panchayat_election_favorable: boolean;
+    sun_afflicted: boolean;
+    posts_breakdown: Record<string, {
+      post_en: string;
+      post_ta: string;
+      status: string;
+      status_ta: string;
+      reasons_en: string;
+      reasons_ta: string;
+    }>;
+    summary_en: string;
+    summary_ta: string;
+  };
+  foreign_travel_analysis?: {
+    snake_approaching_udayam: boolean;
+    udayam_lord_exalted: boolean;
+    can_travel: boolean;
+    citizenship_green_card_favorable: boolean;
+    travel_purpose_en: string;
+    travel_purpose_ta: string;
+    afflicted_lords: string[];
+    kavippu_in_travel_houses: string[];
+    verdict_en: string;
+    verdict_ta: string;
+  };
+  court_case_analysis?: {
+    udayam_lord_in_3_or_11_exalted: boolean;
+    kavippu_in_7th_house: boolean;
+    seventh_lord_has_kavippu: boolean;
+    kavippu_in_11th_house: boolean;
+    mercury_debilitated: boolean;
+    moon_in_udayam_fast_verdict: boolean;
+    venus_in_udayam_money_victory: boolean;
+    jupiter_in_udayam_settlement: boolean;
+    snake_in_udayam_crisis: boolean;
+    verdict_en: string;
+    verdict_ta: string;
+  };
+  loans_analysis?: {
+    loan_approved: boolean;
+    sixth_lord_afflicted: boolean;
+    kavippu_in_2_or_11: boolean;
+    scale_indicators_en: string[];
+    scale_indicators_ta: string[];
+    verdict_en: string;
+    verdict_ta: string;
+  };
+  agriculture_borewell_rain_analysis?: {
+    kavippu_in_4th_house: boolean;
+    crop_indicated_en: string;
+    crop_indicated_ta: string;
+    rain_expected: boolean;
+    rain_verdict_en: string;
+    rain_verdict_ta: string;
+    borewell_water_available: boolean;
+    borewell_drilling_bit_warning: boolean;
+    water_depth_en: string;
+    water_depth_ta: string;
+    water_direction_en: string;
+    water_direction_ta: string;
+  };
+  share_market_analysis?: {
+    can_buy_shares: boolean;
+    kavippu_in_speculative_house: boolean;
+    verdict_en: string;
+    verdict_ta: string;
+    commodities: Record<string, {
+      commodity_en: string;
+      commodity_ta: string;
+      planet: string;
+      trend: string;
+      trend_type: 'bullish' | 'bearish' | 'steady';
+    }>;
+  };
+  kavippu_bhava_effect?: {
+    en: string;
+    ta: string;
+  };
+  udayam_lord_thought?: {
+    en: string;
+    ta: string;
+  };
+  conjoined_inner_outer_planets?: Array<{
+    sign_index: number;
+    sign_name_en: string;
+    sign_name_ta: string;
+    transit_planets: string[];
+    jama_grahas: string[];
+    effect_en: string;
+    effect_ta: string;
+  }>;
+  parivartana_exchanges?: Array<{
+    planet_1: string;
+    sign_1: string;
+    planet_2: string;
+    sign_2: string;
+    description_en: string;
+    description_ta: string;
+  }>;
+  eighth_lord_in_udayam?: {
+    eighth_lord: string;
+    is_in_udayam: boolean;
+    warning_en: string;
+    warning_ta: string;
+  };
+  snake_udayam_analysis?: {
+    snake_approaching: boolean;
+    snake_in_udayam: boolean;
+    effect_en: string;
+    effect_ta: string;
+  };
+  evil_spirits_black_magic_analysis?: {
+    querent_under_evil_spirits: boolean;
+    black_magic_present: boolean;
+    black_magic_cannot_harm_querent: boolean;
+    haunted_residence_mandi_in_4th: boolean;
+    mandi_bhava_from_udayam: number;
+    afflicted_jeeva_karakas: Array<{
+      planet: string;
+      person_en: string;
+      person_ta: string;
+    }>;
+    perpetrator_profile: {
+      planet: string;
+      description_en: string;
+      description_ta: string;
+    };
+    divine_trance_or_hallucination: boolean;
+    severe_evil_possession_transit: boolean;
+    summary_en: string;
+    summary_ta: string;
+  };
+  natural_unnatural_death_analysis?: {
+    jupiter_influences_udayam: boolean;
+    mandi_influences_udayam: boolean;
+    death_nature: string;
+    death_nature_ta: string;
+  };
+  rain_disaster_catastrophe_analysis?: {
+    cyclone_protection_active: boolean;
+    cyclone_verdict_en: string;
+    cyclone_verdict_ta: string;
+    calamity_significations: Record<string, string>;
+  };
+  muhurta_analysis?: {
+    marriage_muhurta: {
+      is_auspicious: boolean;
+      verdict_en: string;
+      verdict_ta: string;
+      udayam_groom_sign: string;
+      arudam_bride_sign: string;
+      u_a_distance: number;
+      lords_debilitated: boolean;
+      lords_with_kavippu: boolean;
+      sevenths_afflicted: boolean;
+    };
+    couple_reunion: {
+      is_golden_hour: boolean;
+      mediator_advice_en: string;
+      mediator_advice_ta: string;
+    };
+    business_startup_muhurta: {
+      is_auspicious: boolean;
+      verdict_en: string;
+      verdict_ta: string;
+    };
+    construction_muhurta: {
+      is_auspicious: boolean;
+      verdict_en: string;
+      verdict_ta: string;
+    };
+    documentation_call_muhurta: {
+      is_auspicious: boolean;
+      verdict_en: string;
+      verdict_ta: string;
+    };
+    loan_application_muhurta: {
+      is_auspicious: boolean;
+      verdict_en: string;
+      verdict_ta: string;
+    };
+    travel_muhurta: {
+      saturn_approaching_delay: boolean;
+      verdict_en: string;
+      verdict_ta: string;
+    };
+    current_approaching_signification: {
+      planet: string;
+      advice_en: string;
+      advice_ta: string;
+      auspicious_activities: string[];
+    };
+  };
+  planet_attributes_table?: Record<string, {
+    rays: number;
+    age: string;
+    height: string;
+    places_en: string;
+    places_ta: string;
+    direction_en: string;
+    direction_ta: string;
+  }>;
+}
+
+export interface JamakkolPrasanamResponse {
+  query_datetime: string;
+  query_text?: string;
+  query_category?: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    timezone: string;
+  };
+  solar_info: JamakkolSolarInfo;
+  jamam_info: JamamInfo;
+  three_pillars: ThreePillars;
+  jama_grahas: JamaGrahaItem[];
+  transit_planets: JamakkolTransitPlanetItem[];
+  house_placements: HousePlacementItem[];
+  prediction_verdict: PredictionVerdict;
+  classical_rules: ClassicalRulesAnalysis;
+}
+
+
+// ─── Sannu Ahmed: Vedic Astrology Rituals & Remedies Types ───────────────────
+
+export interface NakshatraRitualItem {
+  number: number;
+  name: string;
+  name_ta: string;
+  ruling_planet: string;
+  ruling_deity: string;
+  ruling_deity_ta: string;
+  karmic_theme: string;
+  animal_yoni: string;
+  yoni_instinct: string;
+  tattva: string;
+  symbol: string;
+  esoteric_symbol_meaning: string;
+  sacred_geometry: string;
+  sound_mantra: string;
+  sound_mantra_bija?: string | null;
+  sound_mantra_ta: string;
+  japa_count: number;
+  offerings_dravya: string;
+  ritual_procedure: string;
+  sacred_tree: string;
+}
+
+export interface NakshatraRitualsListResponse {
+  total_nakshatras: number;
+  items: NakshatraRitualItem[];
+}
+
+export interface SannuKnowledgeOverviewResponse {
+  source: Record<string, any>;
+  karma_architecture: Record<string, any>;
+  soul_body_circuit: Record<string, any>;
+  propitiation_vs_empowerment: Record<string, any>;
+  planetary_weakness_atlas: Record<string, any>;
+  house_weakness_manifestation: Record<string, any>;
+  nakshatra_doshas: Record<string, any>;
+  sacred_timing_rules: Record<string, any>;
+}
+
+export interface KarmaRitualsAnalysisRequest {
+  horoscope_id?: string | null;
+  ascendant_sign?: string | null;
+  moon_sign?: string | null;
+  moon_nakshatra?: string | null;
+  running_mahadasha?: string | null;
+  running_bhukti?: string | null;
+  chart_snapshot?: Record<string, any> | null;
+}
+
+export interface SannuKarmaDiagnosticResponse {
+  moon_nakshatra_ritual?: NakshatraRitualItem | Record<string, any> | null;
+  detected_nakshatra_doshas: Array<{
+    dosha_type: string;
+    severity: string;
+    title_en: string;
+    title_ta: string;
+    description_en: string;
+    description_ta: string;
+    shanti_procedure_en: string;
+    shanti_procedure_ta: string;
+  }>;
+  threefold_karma_blueprint: {
+    sanchita: {
+      summary_en: string;
+      summary_ta: string;
+      markers: Array<{ graha?: string; factor: string; lesson_en: string; lesson_ta: string }>;
+      dissolution_path: string;
+    };
+    prarabdha: {
+      summary_en: string;
+      summary_ta: string;
+      markers: Array<{ graha?: string; factor: string; impact_en: string; impact_ta: string }>;
+      alleviation_path: string;
+    };
+    kriyamana: {
+      summary_en: string;
+      summary_ta: string;
+      protocol: Array<{ practice: string; cadence: string; objective_en: string; objective_ta: string }>;
+    };
+  };
+  psychological_and_karmic_diagnostics: Array<{
+    graha: string;
+    title_en: string;
+    title_ta: string;
+    karmic_theme: string;
+    house_occupied?: number | null;
+    house_manifestation?: { bhava_name: string; impact_en: string; impact_ta: string; tantric_key: string } | null;
+    psychological_symptoms: string[];
+    karmic_symptoms: string[];
+    tantric_insight: string;
+  }>;
+  propitiation_vs_empowerment_status: Array<{
+    graha: string;
+    action_type: 'propitiation_only' | 'empowerment_allowed' | string;
+    badge_en: string;
+    badge_ta: string;
+    justification_en: string;
+    justification_ta: string;
+    beeja_mantra?: { mantra: string; iast: string; ta: string; effect: string } | null;
+    charity_prescribed?: { items: string; spiritual_reason: string } | null;
+    gemstone_rules?: { gem: string; metal: string; finger: string; caution: string } | null;
+  }>;
+  sacred_timing_and_routine: {
+    pushya_nakshatra_guidelines: Record<string, any>;
+    lunar_tithi_observances: Record<string, any>;
+    eclipse_safeguards: Record<string, any>;
+    active_dasha_hora_tip: string;
+  };
+}

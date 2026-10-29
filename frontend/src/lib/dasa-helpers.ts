@@ -195,7 +195,9 @@ export interface ActiveHierarchy {
 
 export function findActiveHierarchy(
   tree: DasaPeriodNode[],
-  targetJd: number
+  targetJd: number,
+  utcOffsetHours: number = 0,
+  birthDate?: string
 ): ActiveHierarchy | null {
   if (!tree || tree.length === 0) return null;
   if (targetJd < tree[0].start_jd || targetJd >= tree[tree.length - 1].end_jd) {
@@ -226,7 +228,11 @@ export function findActiveHierarchy(
     }
     if (matched) {
       result[key] = matched;
-      currentList = matched.sub_periods;
+      if (matched.sub_periods && matched.sub_periods.length > 0) {
+        currentList = matched.sub_periods;
+      } else {
+        currentList = generateChildSubPeriods(matched, utcOffsetHours, birthDate);
+      }
     } else {
       break;
     }
@@ -473,4 +479,51 @@ export function generateChildSubPeriods(
   }
 
   return children;
+}
+
+/**
+ * Automatically calculates expanded row keys for the active path up to maxExpandDepth.
+ * Used to expand the current Dasa, Bhukti, and sub-divisions when the table is opened.
+ */
+export function getActivePathExpandedKeys(
+  tree: DasaPeriodNode[] | undefined,
+  targetJd: number,
+  utcOffsetHours: number = 0,
+  birthDate?: string,
+  maxExpandDepth: number = 3
+): Record<string, boolean> {
+  const map: Record<string, boolean> = {};
+  if (!tree || tree.length === 0 || !targetJd) return map;
+
+  const recurse = (nodes: DasaPeriodNode[], prefix: string, currDepth: number) => {
+    for (let idx = 0; idx < nodes.length; idx++) {
+      const n = nodes[idx];
+      const k = prefix ? `${prefix}-${idx}` : `${idx}`;
+      if (targetJd >= n.start_jd && targetJd < n.end_jd) {
+        map[k] = true;
+        if (currDepth < maxExpandDepth) {
+          const ch =
+            n.sub_periods && n.sub_periods.length > 0
+              ? n.sub_periods
+              : generateChildSubPeriods(n, utcOffsetHours, birthDate);
+          if (ch && ch.length > 0) {
+            recurse(ch, k, currDepth + 1);
+          }
+        }
+        break;
+      }
+    }
+  };
+
+  tree.forEach((m, mIdx) => {
+    if (targetJd >= m.start_jd && targetJd < m.end_jd) {
+      const bList =
+        m.sub_periods && m.sub_periods.length > 0
+          ? m.sub_periods
+          : generateChildSubPeriods(m, utcOffsetHours, birthDate);
+      recurse(bList, `${mIdx}`, 2);
+    }
+  });
+
+  return map;
 }

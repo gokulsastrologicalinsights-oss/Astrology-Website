@@ -402,3 +402,109 @@ def test_controlled_chart_calculation_consistency():
     assert "Report Verification" in p9_text
     assert "Official Certification" not in p9_text
 
+
+
+def test_marriage_compatibility_pdf_generation():
+    """Verify Marriage Compatibility PDF generator produces a multi-page document with brand headers and blessing."""
+    from app.services.pdf_report_engine import generate_marriage_compatibility_pdf_bytes
+
+    sample_payload = {
+        "groom_profile": {
+            "name": "Karthik",
+            "birth_date": "1992-04-14",
+            "birth_time": "05:30:00",
+            "ascendant_sign": "Aries",
+            "ascendant_sign_tamil": "மேஷம்",
+            "moon_sign": "Leo",
+            "moon_sign_tamil": "சிம்மம்",
+            "moon_nakshatra": "Magha",
+            "moon_nakshatra_tamil": "மகம்",
+            "moon_pada": 1,
+        },
+        "bride_profile": {
+            "name": "Priya",
+            "birth_date": "1994-08-20",
+            "birth_time": "14:15:00",
+            "ascendant_sign": "Scorpio",
+            "ascendant_sign_tamil": "விருச்சிகம்",
+            "moon_sign": "Sagittarius",
+            "moon_sign_tamil": "தனுசு",
+            "moon_nakshatra": "Moola",
+            "moon_nakshatra_tamil": "மூலம்",
+            "moon_pada": 2,
+        },
+        "composite_assessment": {
+            "overall_outcome": "FAVOURABLE_UNDER_SELECTED_RULES",
+            "overall_outcome_label_en": "FAVORABLE FOR MARRIAGE",
+            "overall_outcome_label_ta": "திருமணத்திற்கு மிகச் சாதகமானது",
+            "explanation_en": "Strong composite alignment across traditional and modern astrological factors.",
+            "explanation_ta": "பாரம்பரிய மற்றும் நவீன ஜோதிட முறைப்படி மிகச் சிறந்த பொருத்தம்.",
+            "major_supportive_indicators": ["Tamil 10 Poruthams 8.0/10 with Rajju and Vedha clean."],
+            "major_challenging_indicators": ["Kuja Dosha mild in groom chart."],
+            "category_verdicts": {
+                "tamil_porutham": {"category_id": "tamil_porutham", "status": "FAVORABLE"},
+                "ashtakoota": {"category_id": "ashtakoota", "status": "FAVORABLE"},
+                "kuja_samadosham": {"category_id": "kuja_samadosham", "status": "INDETERMINATE"},
+                "papasamya": {"category_id": "papasamya", "status": "UNFAVORABLE"},
+                "vedic_individual": {"category_id": "vedic_individual", "status": "MIXED"},
+                "synastry": {"category_id": "synastry", "status": "MIXED"},
+                "kp_promise": {"category_id": "kp_promise", "status": "UNFAVORABLE"},
+                "kp_timing": {"category_id": "kp_timing", "status": "MIXED"},
+            },
+        },
+        "tamil_porutham": {"total_score": 8.0, "max_score": 10, "poruthams": []},
+        "ashtakoota": {"total_points": 26.5, "max_points": 36.0, "minimum_threshold": 18.0, "kootas": {}},
+        "dosha_analysis": {
+            "mutual_kuja_balance": "BALANCED",
+            "groom_kuja": {"is_present": False},
+            "bride_kuja": {"is_present": False},
+            "groom_papasamya": {"total_papam": 2.5},
+            "bride_papasamya": {"total_papam": 3.0},
+        },
+        "groom_vedic": {"summary_en": "7th house clean, Venus exalted."},
+        "bride_vedic": {"summary_en": "7th house aspected by benefic Jupiter."},
+        "synastry": {},
+        "kp_marriage": {
+            "groom_7th_csl_planet": "Jupiter",
+            "groom_7th_csl_promise": "Positive",
+            "bride_7th_csl_planet": "Venus",
+            "bride_7th_csl_promise": "Mixed",
+        },
+        "timing_analysis": {
+            "groom_active_dasa_bhukti": "Jupiter - Saturn",
+            "bride_active_dasa_bhukti": "Mercury - Venus",
+            "matrimonial_window_assessment": "High matrimonial activation.",
+        },
+        "groom_chart": {"ascendant": {"sign_index": 1}, "planets": []},
+        "bride_chart": {"ascendant": {"sign_index": 8}, "planets": []},
+        "groom_d9_chart": {"ascendant": {"sign_index": 5}, "planets": []},
+        "bride_d9_chart": {"ascendant": {"sign_index": 4}, "planets": []},
+    }
+
+    # Test PDF generation in English and Tamil
+    pdf_bytes_en = generate_marriage_compatibility_pdf_bytes(sample_payload, language="en")
+    assert len(pdf_bytes_en) > 10000
+
+    pdf_bytes_ta = generate_marriage_compatibility_pdf_bytes(sample_payload, language="ta")
+    assert len(pdf_bytes_ta) > 10000
+
+    reader = pypdf.PdfReader(BytesIO(pdf_bytes_ta))
+    assert len(reader.pages) == 7
+
+    page_1_text = reader.pages[0].extract_text()
+    assert "Gokul's Astrological Insights" in page_1_text
+    assert "165, Sakreeshwari Nagar" in page_1_text
+    assert "9444 55 9071" in page_1_text
+
+    page_7_text = reader.pages[6].extract_text()
+    assert "sikiram kalyanam nadakanum" in page_7_text
+
+    # Test Endpoint
+    res = client.post(
+        "/api/v1/reports/marriage-compatibility/pdf",
+        json={"report_data": sample_payload, "language": "ta"},
+    )
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/pdf"
+    assert "Marriage_Compatibility_Karthik_Priya_ta.pdf" in res.headers["content-disposition"]
+    assert len(res.content) > 10000

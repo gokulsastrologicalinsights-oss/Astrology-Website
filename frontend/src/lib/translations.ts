@@ -89,6 +89,7 @@ export interface TranslationDictionary {
   tabPlanets: string;
   tabHouses: string;
   tabDasa: string;
+  tabDasaPalangal: string;
   tabKp: string;
   tabPanchang: string;
   tabNabhasha: string;
@@ -97,6 +98,7 @@ export interface TranslationDictionary {
   tabMedicalAstrology: string;
   tabDoshas: string;
   tabDestinyCard: string;
+  tabGemstoneDownload: string;
   destinyCardTitle: string;
   destinyCardSubtitle: string;
   destinyCardDownload: string;
@@ -477,7 +479,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     fieldName: "Full Name",
     fieldNamePlaceholder: "e.g., Sundar Raman",
     fieldDate: "Birth Date",
-    fieldTime: "Birth Time (24-Hour)",
+    fieldTime: "Birth Time (12-Hour)",
     fieldTimeConfirmed: "Birth time is confirmed & accurate",
     fieldTimeUnknownNotice:
       "Note: When birth time is approximate or unknown, 12:00 PM is used to calculate planetary signs and Moon nakshatra. Ascendant (Lagna), house cusps, and KP sub-lords require confirmed birth time.",
@@ -496,7 +498,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     submitButton: "Calculate Complete Horoscope",
 
     valDateRequired: "Please enter a valid birth date (YYYY-MM-DD).",
-    valTimeRequired: "Please enter a valid birth time (HH:MM or HH:MM:SS).",
+    valTimeRequired: "Please enter a valid birth time (e.g. 10:30 or 10:30:00).",
     valPlaceRequired: "Please enter or select a birth location.",
     valLatInvalid: "Latitude must be between -90.0 and +90.0 degrees.",
     valLonInvalid: "Longitude must be between -180.0 and +180.0 degrees.",
@@ -509,6 +511,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabPlanets: "Planetary Positions",
     tabHouses: "Bhavas (Houses)",
     tabDasa: "Vimshottari Dasa",
+    tabDasaPalangal: "Dasa Bukthi Palangal",
     tabKp: "KP System",
     tabPanchang: "Panchang",
     tabNabhasha: "Nabhasha Yogas",
@@ -517,6 +520,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabMedicalAstrology: "Medical Astrology",
     tabDoshas: "Doshas",
     tabDestinyCard: "Destiny Card",
+    tabGemstoneDownload: "GemstoneDownload",
     destinyCardTitle: "Vedic Destiny Card",
     destinyCardSubtitle:
       "Authoritative birth identity summary card backed by XALEN ephemeris calculation.",
@@ -917,7 +921,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     fieldName: "முழு பெயர்",
     fieldNamePlaceholder: "எ.கா: சுந்தர் ராமன்",
     fieldDate: "பிறந்த தேதி",
-    fieldTime: "பிறந்த நேரம் (24 மணி நேரம்)",
+    fieldTime: "பிறந்த நேரம் (12 மணி நேரம்)",
     fieldTimeConfirmed: "பிறந்த நேரம் உறுதி செய்யப்பட்டது",
     fieldTimeUnknownNotice:
       "குறிப்பு: பிறந்த நேரம் தோராயமாகவோ தெரியாமலோ இருந்தால், மதியம் 12:00 மணி நிலவரப்படி கிரக நிலைகளும் சந்திர நட்சத்திரமும் கணக்கிடப்படும். லக்னம், பாவங்கள் மற்றும் கே.பி உப-அதிபதிகளுக்கு சரியான பிறந்த நேரம் அவசியம்.",
@@ -936,7 +940,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     submitButton: "முழு ஜாதகத்தைக் கணிக்க",
 
     valDateRequired: "சரியான பிறந்த தேதியை உள்ளிடவும் (YYYY-MM-DD).",
-    valTimeRequired: "சரியான பிறந்த நேரத்தை உள்ளிடவும் (HH:MM அல்லது HH:MM:SS).",
+    valTimeRequired: "சரியான பிறந்த நேரத்தை உள்ளிடவும் (எ.கா: 10:30 அல்லது 10:30:00).",
     valPlaceRequired: "பிறந்த ஊர் அல்லது நகரத்தைத் தேர்ந்தெடுக்கவும்.",
     valLatInvalid: "அட்சரேகை -90.0 முதல் +90.0 பாகைக்குள் இருக்க வேண்டும்.",
     valLonInvalid: "தீர்க்கரேகை -180.0 முதல் +180.0 பாகைக்குள் இருக்க வேண்டும்.",
@@ -949,6 +953,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabPlanets: "கிரக நிலைகள்",
     tabHouses: "பாவகங்கள்",
     tabDasa: "விம்சோத்தரி தசை",
+    tabDasaPalangal: "தசா புத்தி பலன்கள்",
     tabKp: "கே.பி முறை",
     tabPanchang: "பஞ்சாங்கம்",
     tabNabhasha: "நபச யோகங்கள்",
@@ -957,6 +962,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabMedicalAstrology: "மருத்துவ ஜோதிடம்",
     tabDoshas: "தோஷங்கள்",
     tabDestinyCard: "விதி அட்டை",
+    tabGemstoneDownload: "ரத்தின வழிகாட்டி & பதிவிறக்கம் (GemstoneDownload)",
     destinyCardTitle: "வேத விதி அட்டை",
     destinyCardSubtitle:
       "XALEN வானியல் கணிப்பின் மூலம் பெறப்பட்ட அதிகாரப்பூர்வ ஜாதக அடையாள அட்டை.",

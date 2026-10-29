@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { UserRole } from "./supabase/types";
 import { createClient } from "./supabase/client";
 import type { Session } from "@supabase/supabase-js";
+import {
+  PermissionKey,
+  UserPermissions,
+  UserSubscription,
+  DEFAULT_PERMISSIONS,
+  hasUserPermission,
+  isSubscriptionActive as checkIsSubscriptionActive,
+} from "./permissions";
 
 export interface AuthUser {
   id: string;
@@ -14,6 +22,8 @@ export interface AuthUser {
   role: UserRole;
   mustChangePassword: boolean;
   createdAt?: string;
+  subscription?: UserSubscription;
+  permissions?: UserPermissions;
 }
 
 interface AuthContextType {
@@ -23,6 +33,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   mustChangePassword: boolean;
+  subscription: UserSubscription | null;
+  permissions: UserPermissions;
+  hasPermission: (key: PermissionKey) => boolean;
+  isSubscriptionActive: boolean;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -34,6 +48,10 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   mustChangePassword: false,
+  subscription: null,
+  permissions: DEFAULT_PERMISSIONS,
+  hasPermission: () => true,
+  isSubscriptionActive: true,
   refreshUser: async () => {},
   logout: async () => {},
 });
@@ -119,6 +137,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const hasPermission = useCallback(
+    (key: PermissionKey) => hasUserPermission(user, key),
+    [user]
+  );
+
+  const activeSub = checkIsSubscriptionActive(user);
+
+  const permissions: UserPermissions =
+    user?.role === "admin"
+      ? DEFAULT_PERMISSIONS
+      : user?.permissions || DEFAULT_PERMISSIONS;
+
   const value: AuthContextType = {
     user,
     session,
@@ -126,6 +156,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     mustChangePassword: !!user?.mustChangePassword,
+    subscription: user?.subscription || null,
+    permissions,
+    hasPermission,
+    isSubscriptionActive: activeSub,
     refreshUser,
     logout,
   };

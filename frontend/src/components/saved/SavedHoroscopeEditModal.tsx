@@ -8,6 +8,7 @@ import { formatSerialNumber } from "@/lib/formatters";
 import { COMMON_TIMEZONES } from "@/lib/cities";
 import { calculateFullHoroscopeSuite } from "@/lib/api";
 import { saveActiveCalculation } from "@/lib/storage";
+import { prepareCalculationSnapshot } from "@/lib/horoscope-storage-utils";
 import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
 import {
   X,
@@ -24,6 +25,7 @@ import {
   Layers,
   Sparkles,
   Phone,
+  ExternalLink,
 } from "lucide-react";
 
 interface SavedHoroscopeEditModalProps {
@@ -58,7 +60,6 @@ export function SavedHoroscopeEditModal({
   // Status states
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [isCalculatingNew, setIsCalculatingNew] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -143,7 +144,7 @@ export function SavedHoroscopeEditModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Action 1: Save Changes to Existing Record (without recalculating snapshot)
+  // Save Changes to Existing Record: recalculates and updates in-place without duplicating
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -153,62 +154,12 @@ export function SavedHoroscopeEditModal({
 
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/horoscopes/${horoscope.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          person_name: personName.trim(),
-          customer_full_name: personName.trim(),
-          birth_date: birthDate,
-          birth_time: birthTime.trim(),
-          timezone: timezone.trim(),
-          birthplace: birthplace.trim(),
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          ayanamsa_id: ayanamsaId,
-          house_system_id: houseSystemId,
-          customer_phone: customerPhone.trim() || undefined,
-          country_code: countryCode,
-          customer_id: horoscope.customer_id || undefined,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update horoscope record.");
-      }
-
-      setSuccessMessage(
-        language === "ta"
-          ? "ஜாதக விவரங்கள் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டன."
-          : "Horoscope details updated successfully."
-      );
-      onSuccess();
-      setTimeout(() => {
-        onClose();
-      }, 700);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to save horoscope changes.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Action 2: Recalculate as New Horoscope (generates fresh calculation and saves as new record)
-  const handleRecalculateAsNew = async () => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    if (!validate()) return;
-
-    setIsCalculatingNew(true);
-    try {
-      // 1. Run full calculation suite
       const formattedTime =
         birthTime.includes(":") && birthTime.split(":").length === 2
           ? `${birthTime}:00`
           : birthTime;
 
+      // 1. Recalculate astronomical positions with the edited birth details
       const calcResult = await calculateFullHoroscopeSuite({
         fullName: personName.trim(),
         birthDate,
@@ -224,17 +175,19 @@ export function SavedHoroscopeEditModal({
         includeOuterPlanets: true,
       });
 
-      // 2. Persist to database as a NEW saved horoscope
-      const saveRes = await fetch("/api/horoscopes", {
-        method: "POST",
+      // 2. Prepare snapshot and update existing horoscope record in-place via PUT
+      const idempotencyKey =
+        (horoscope as any).calculation_result?.idempotency_key ||
+        `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const compactedSnapshot = prepareCalculationSnapshot(calcResult, idempotencyKey);
+
+      const res = await fetch(`/api/horoscopes/${horoscope.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           person_name: personName.trim(),
           customer_full_name: personName.trim(),
           birth_date: birthDate,
-          customer_phone: customerPhone.trim(),
-          country_code: countryCode,
-          customer_id: horoscope.customer_id || undefined,
           birth_time: formattedTime,
           timezone: timezone.trim(),
           birthplace: birthplace.trim(),
@@ -242,30 +195,39 @@ export function SavedHoroscopeEditModal({
           longitude: Number(longitude),
           ayanamsa_id: ayanamsaId,
           house_system_id: houseSystemId,
-          calculation_result: calcResult,
+          customer_phone: customerPhone.trim() || undefined,
+          country_code: countryCode,
+          customer_id: horoscope.customer_id || undefined,
+          calculation_result: compactedSnapshot,
         }),
       });
 
-      const saveData = await saveRes.json();
-      if (!saveRes.ok) {
-        throw new Error(saveData.error || "Failed to save recalculated horoscope.");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update horoscope record.");
       }
 
-      const newRecord = saveData.horoscope;
+      // Update client-side active calculation session cache
       saveActiveCalculation({
         ...calcResult,
-        savedId: newRecord.id,
-        displayNumber: newRecord.display_number,
+        savedId: horoscope.id,
+        displayNumber: horoscope.display_number,
         isSaved: true,
       });
 
+      setSuccessMessage(
+        language === "ta"
+          ? "ஜாதக விவரங்கள் மற்றும் கணிப்புகள் வெற்றிகரமாக மாற்றியமைக்கப்பட்டன."
+          : "Horoscope details and calculations updated successfully."
+      );
       onSuccess();
-      onClose();
-      router.push(`/horoscope/results?id=${newRecord.id}`);
+      setTimeout(() => {
+        onClose();
+      }, 700);
     } catch (err: any) {
-      setErrorMessage(err.message || "Recalculation failed.");
+      setErrorMessage(err.message || "Failed to save horoscope changes.");
     } finally {
-      setIsCalculatingNew(false);
+      setIsSaving(false);
     }
   };
 
@@ -408,7 +370,7 @@ export function SavedHoroscopeEditModal({
             <div>
               <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-[#B8860B]" />
-                <span>{t.fieldTime} (HH:MM or HH:MM:SS) *</span>
+                <span>{language === "ta" ? "பிறந்த நேரம் (24h)" : "Birth Time (24h)"} (HH:MM:SS) *</span>
               </label>
               <input
                 type="text"
@@ -552,20 +514,20 @@ export function SavedHoroscopeEditModal({
             </div>
           </div>
 
-          {/* Explanatory Distinction Notice */}
-          <div className="p-3.5 rounded-xl bg-[#FAF7F0] border border-[#D8BD80]/60 text-xs text-[#64748B] space-y-1">
-            <div className="font-semibold text-[#0F172A] flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5 text-[#B8860B]" />
+          {/* Explanatory In-Place Replacement Notice */}
+          <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+            <div className="font-semibold flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-amber-700" />
               <span>
                 {language === "ta"
-                  ? "விவரங்களைப் புதுப்பித்தல் vs மறு கணிப்பு"
-                  : "Metadata Update vs. Recalculation"}
+                  ? "தரவு புதுப்பித்தல் (In-Place Update)"
+                  : "In-Place Data Replacement"}
               </span>
             </div>
-            <p className="leading-relaxed">
+            <p className="leading-relaxed text-amber-800">
               {language === "ta"
-                ? "'மாற்றங்களைச் சேமி' என்பது நிரந்தர வரிசை எண்ணை மாற்றாமல் விவரங்களை மட்டுமே புதுப்பிக்கும். புதிய ஜோதிட கணிப்பு முடிவுகள் வேண்டுமெனில் 'புதிய ஜாதகமாகக் கணக்கிடுக' என்பதைப் பயன்படுத்தவும்."
-                : "'Save Changes' updates stored metadata without altering the permanent serial number or existing calculation snapshot. To produce updated astronomical planetary positions and dasas, use 'Calculate as New Horoscope'."}
+                ? `சேமிக்கும்போது இம்மாற்றங்கள் இந்த ஜாதகத்தின் (${serialText}) முந்தைய தரவை நேரடியாக மாற்றியமைக்கும். புதிய இரட்டை ஜாதகம் (Duplicate) உருவாகாது.`
+                : `Saving will replace the calculation and birth data for Horoscope ${serialText} in-place without creating a duplicate record.`}
             </p>
           </div>
 
@@ -574,7 +536,7 @@ export function SavedHoroscopeEditModal({
             <button
               type="button"
               onClick={onClose}
-              disabled={isSaving || isCalculatingNew}
+              disabled={isSaving}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#475569] transition-colors cursor-pointer"
             >
               {t.back}
@@ -582,23 +544,31 @@ export function SavedHoroscopeEditModal({
 
             <button
               type="button"
-              onClick={handleRecalculateAsNew}
-              disabled={isSaving || isCalculatingNew}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#D8BD80] bg-[#FAF2DE] hover:bg-[#FAF6EC] text-xs font-bold text-[#784E0E] shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+              onClick={() => {
+                onClose();
+                router.push(`/horoscope?edit_id=${horoscope.id}`);
+              }}
+              disabled={isSaving}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#D9DEE7] bg-white hover:bg-[#F2F3F5] text-xs font-semibold text-[#153F6B] transition-colors cursor-pointer"
+              title="Open full interactive form to edit this horoscope"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#B8860B]" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#153F6B]" />
               <span>
-                {isCalculatingNew ? t.recalculatingAsNew : t.recalculateAsNewButton}
+                {language === "ta" ? "முழு படிவத்தில் திருத்துக" : "Open in Full Form"}
               </span>
             </button>
 
             <button
               type="submit"
-              disabled={isSaving || isCalculatingNew}
+              disabled={isSaving}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5 text-[#D8BD80]" />
-              <span>{isSaving ? t.savingChanges : t.saveChangesButton}</span>
+              <span>
+                {isSaving
+                  ? (language === "ta" ? "கணக்கிட்டுச் சேமிக்கப்படுகிறது..." : "Saving & Recalculating...")
+                  : (language === "ta" ? "மாற்றங்களைச் சேமி (Replace Data)" : "Save & Replace Data")}
+              </span>
             </button>
           </div>
         </form>

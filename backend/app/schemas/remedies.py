@@ -252,6 +252,7 @@ class RemedyAnalysisResponse(BaseModel):
     is_stale: bool = False
     input_fingerprint: str
     status: str = "complete" # "complete", "insufficient_data"
+    sannu_rituals_diagnostic: Optional[Dict[str, Any]] = Field(None, description="Sannu Ahmed Vedic Rituals & Karma Diagnostic (Nakshatra rituals, doshas, 3-fold karma, propitiation vs empowerment)")
 
 
 class LiveRemedyAnalysisRequest(BaseModel):
@@ -491,6 +492,12 @@ class GemstoneAdvisoryResponse(BaseModel):
     prohibited_gemstones: List[ProhibitedGemstoneItem] = Field(default_factory=list)
     anukula_vs_pratikula_doctrine_en: Optional[Dict[str, Any]] = None
     anukula_vs_pratikula_doctrine_ta: Optional[Dict[str, Any]] = None
+    karma_doctrine_en: Optional[Dict[str, Any]] = None
+    karma_doctrine_ta: Optional[Dict[str, Any]] = None
+    grahabalabal_principles_en: Optional[Dict[str, Any]] = None
+    grahabalabal_principles_ta: Optional[Dict[str, Any]] = None
+    consecration_protocol_en: Optional[Dict[str, Any]] = None
+    consecration_protocol_ta: Optional[Dict[str, Any]] = None
     recommended_rudraksha: Optional[RudrakshaRecommendationSummary] = None
     rudraksha_catalog: List[RudrakshaItem] = Field(default_factory=list)
     conflicting_combinations_warning_en: List[str] = Field(default_factory=list)
@@ -539,6 +546,72 @@ class RudrakshaRecommendationRequest(BaseModel):
     has_kaal_sarp: bool = False
     debilitated_planets: List[str] = Field(default_factory=list)
     combust_planets: List[str] = Field(default_factory=list)
+
+
+# ─── Sannu Ahmed Rituals & Remedies Schemas ──────────────────────────────────
+
+class NakshatraRitualItem(BaseModel):
+    """Sacred geometry, sound, and offering rituals for one of the 27 Nakshatras."""
+    number: int
+    name: str
+    name_ta: str
+    ruling_planet: str
+    ruling_deity: str
+    ruling_deity_ta: str
+    karmic_theme: str
+    animal_yoni: str
+    yoni_instinct: str
+    tattva: str
+    symbol: str
+    esoteric_symbol_meaning: str
+    sacred_geometry: str
+    sound_mantra: str
+    sound_mantra_bija: Optional[str] = None
+    sound_mantra_ta: str
+    japa_count: int = 108
+    offerings_dravya: str
+    ritual_procedure: str
+    sacred_tree: str
+
+
+class NakshatraRitualsListResponse(BaseModel):
+    """Response containing all 27 Nakshatras sacred rituals."""
+    total_nakshatras: int
+    items: List[NakshatraRitualItem]
+
+
+class SannuKnowledgeOverviewResponse(BaseModel):
+    """Overview of Sannu Ahmed's Vedic Astrology Rituals & Remedies knowledge base."""
+    source: Dict[str, Any]
+    karma_architecture: Dict[str, Any]
+    soul_body_circuit: Dict[str, Any]
+    propitiation_vs_empowerment: Dict[str, Any]
+    planetary_weakness_atlas: Dict[str, Any]
+    house_weakness_manifestation: Dict[str, Any]
+    nakshatra_doshas: Dict[str, Any]
+    sacred_timing_rules: Dict[str, Any]
+
+
+class KarmaRitualsAnalysisRequest(BaseModel):
+    """Request payload to diagnose chart karma and rituals using Sannu Ahmed's framework."""
+    horoscope_id: Optional[str] = None
+    ascendant_sign: Optional[str] = None
+    moon_sign: Optional[str] = None
+    moon_nakshatra: Optional[str] = None
+    running_mahadasha: Optional[str] = None
+    running_bhukti: Optional[str] = None
+    chart_snapshot: Optional[Dict[str, Any]] = None
+
+
+class SannuKarmaDiagnosticResponse(BaseModel):
+    """Full Sannu Ahmed Karma and Rituals diagnostic response."""
+    moon_nakshatra_ritual: Optional[Dict[str, Any]] = None
+    detected_nakshatra_doshas: List[Dict[str, Any]] = Field(default_factory=list)
+    threefold_karma_blueprint: Dict[str, Any]
+    psychological_and_karmic_diagnostics: List[Dict[str, Any]] = Field(default_factory=list)
+    propitiation_vs_empowerment_status: List[Dict[str, Any]] = Field(default_factory=list)
+    sacred_timing_and_routine: Dict[str, Any]
+
 
 
 

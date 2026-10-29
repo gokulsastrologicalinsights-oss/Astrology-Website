@@ -440,6 +440,104 @@ export function PersonalizedRemedySection({
         </div>
       )}
 
+      {/* Sannu Ahmed Vedic Karma & Nakshatra Rituals Diagnostic */}
+      {analysis.sannu_rituals_diagnostic && (
+        <div className="rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/30 to-purple-50/40 p-5 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                <Flame className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif text-base font-bold text-[#102A4C]">
+                    {language === "ta"
+                      ? "வேத கர்ம பரிசீலனை & நட்சத்திர சடங்கு (சன்னு அஹ்மத்)"
+                      : "Vedic Karma & Nakshatra Ritual Diagnostic"}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                    Sannu Ahmed
+                  </span>
+                </div>
+                <p className="text-xs text-[#52667E]">
+                  Soul-Body-Energy Circuit • Rekha (Geometry) • Shabda (Sound) • Dravya (Offerings)
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/remedies?tab=rituals"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition-colors shrink-0"
+            >
+              <Flame className="w-3.5 h-3.5" />
+              <span>
+                {language === "ta"
+                  ? "முழு சடங்கு களஞ்சியம் திற"
+                  : "Open Rituals Explorer"}
+              </span>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Nakshatra Ritual */}
+            <div className="p-3.5 rounded-xl bg-white/95 border border-amber-200 space-y-1.5 shadow-2xs">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-amber-900 block">
+                Janma Nakshatra • {(analysis.sannu_rituals_diagnostic.moon_nakshatra_ritual as any)?.name_en || "Birth Star"}
+              </span>
+              <p className="font-bold text-xs text-[#102A4C]">
+                {(analysis.sannu_rituals_diagnostic.moon_nakshatra_ritual as any)?.symbol || "Nakshatra"} ({(analysis.sannu_rituals_diagnostic.moon_nakshatra_ritual as any)?.ruling_deity_en || "Deity"})
+              </p>
+              <div className="text-[11px] text-[#52667E] space-y-0.5">
+                <p><strong>Geometry (Rekha):</strong> {(analysis.sannu_rituals_diagnostic.moon_nakshatra_ritual as any)?.sacred_geometry || "Sacred Triangle/Circle"}</p>
+                <p><strong>Sound (Shabda):</strong> <code className="text-purple-900 font-bold">{(analysis.sannu_rituals_diagnostic.moon_nakshatra_ritual as any)?.sound_mantra || "Om"}</code></p>
+                <p><strong>Tree (Vriksha):</strong> {(analysis.sannu_rituals_diagnostic.moon_nakshatra_ritual as any)?.sacred_tree || "Nakshatra Vriksha"}</p>
+              </div>
+            </div>
+
+            {/* Karmic Classification */}
+            <div className="p-3.5 rounded-xl bg-white/95 border border-purple-200 space-y-1.5 shadow-2xs">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-purple-900 block">
+                3-Fold Karmic Blueprint
+              </span>
+              <p className="font-bold text-xs text-purple-950">
+                Prarabdha Karma (Ripe for Experiencing)
+              </p>
+              <p className="text-[11px] text-[#52667E] leading-relaxed">
+                {analysis.sannu_rituals_diagnostic.threefold_karma_blueprint?.prarabdha?.summary_en || "Prarabdha karmic seeds manifesting through current planetary dasha."}
+              </p>
+              <span className="inline-block text-[10px] text-purple-800 font-semibold bg-purple-50 px-2 py-0.5 rounded">
+                Path: {analysis.sannu_rituals_diagnostic.threefold_karma_blueprint?.prarabdha?.alleviation_path || "Propitiation (Shanti) & conscious sadhana"}
+              </span>
+            </div>
+
+            {/* Doshas & Safeguards */}
+            <div className="p-3.5 rounded-xl bg-white/95 border border-slate-200 space-y-1.5 shadow-2xs">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-700 block">
+                Doshas & Timing Advisories
+              </span>
+              {analysis.sannu_rituals_diagnostic.detected_nakshatra_doshas && analysis.sannu_rituals_diagnostic.detected_nakshatra_doshas.length > 0 ? (
+                <div className="space-y-1">
+                  {analysis.sannu_rituals_diagnostic.detected_nakshatra_doshas.map((d: any, i: number) => (
+                    <div key={i} className="text-[11px] text-rose-800 font-medium">
+                      ⚠️ <strong className="font-bold">{d.title_en || d.dosha_type}</strong> ({d.severity})
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-emerald-700 font-semibold">
+                  ✓ No severe Gandanta or Abhukta Mula knot afflictions detected.
+                </p>
+              )}
+              {analysis.sannu_rituals_diagnostic.sacred_timing_and_routine?.active_dasha_hora_tip && (
+                <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+                  {analysis.sannu_rituals_diagnostic.sacred_timing_and_routine.active_dasha_hora_tip}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3. Diagnosed Chart Factors Grid */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

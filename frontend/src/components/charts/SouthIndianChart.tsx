@@ -4,6 +4,8 @@ import React from "react";
 import { HoroscopeResponse, PlanetInfo } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaShort } from "@/lib/translations";
+import { getGrahaDignity } from "@/lib/dignity";
+import { DignityLegend } from "@/components/charts/DignityLegend";
 
 interface SouthIndianChartProps {
   horoscope: HoroscopeResponse;
@@ -17,6 +19,7 @@ interface SouthIndianChartProps {
   showTransits?: boolean;
   isSaved?: boolean;
   highlightLagnaBlue?: boolean;
+  showDignityLegend?: boolean;
 }
 
 // Fixed mapping of 4x4 grid cells to Zodiac Sign indices (1-12)
@@ -61,6 +64,7 @@ export function SouthIndianChart({
   showTransits = false,
   isSaved,
   highlightLagnaBlue,
+  showDignityLegend = true,
 }: SouthIndianChartProps) {
   const { language } = useLanguage();
   const ascendant = ascendantOverride || horoscope.ascendant;
@@ -192,14 +196,36 @@ export function SouthIndianChart({
               {cellPlanets.map((p) => {
                 const shortName = getGrahaShort(p.name, language);
                 const degInt = Math.floor(p.degree_in_sign || 0);
+                const dignity = getGrahaDignity(
+                  p.name,
+                  cell.signIndex,
+                  ascendant.sign_index,
+                  p.degree_in_sign,
+                  p.house
+                );
+
                 return (
                   <div
                     key={p.name}
-                    className={`${textClass} font-semibold text-[#183047] leading-tight tracking-tight flex items-center justify-center gap-0.5 whitespace-nowrap`}
-                    title={`${p.name} (${p.degree_in_sign.toFixed(2)}°) in ${p.sign_name}`}
+                    className={`${textClass} font-semibold leading-tight tracking-tight flex items-center justify-center gap-0.5 whitespace-nowrap`}
+                    title={language === "ta" ? dignity.tooltipTa : dignity.tooltipEn}
                   >
-                    {degInt > 0 && <span className="font-mono">{degInt}-</span>}
-                    <span className={language === "ta" ? "font-tamil" : ""}>{shortName}</span>
+                    {degInt > 0 && <span className="font-mono opacity-75">{degInt}-</span>}
+                    <span
+                      className={`font-bold transition-colors ${dignity.colorClass} ${
+                        language === "ta" ? "font-tamil" : ""
+                      }`}
+                    >
+                      {shortName}
+                    </span>
+                    {(dignity.status === "ucham_dikbala" || dignity.status === "neecham_dikbala") && (
+                      <span
+                        className="text-[#CA8A04] font-bold text-[0.8em] leading-none"
+                        title={language === "ta" ? "திக் பலம் (Dik Balam)" : "Dik Balam"}
+                      >
+                        ⚡
+                      </span>
+                    )}
                     {p.is_retrograde && (
                       <span
                         className="text-red-600 font-bold ml-0.5 text-[0.85em] leading-none"
@@ -252,14 +278,21 @@ export function SouthIndianChart({
           list.map((p) => {
             const shortName = getGrahaShort(p.name, language);
             const degInt = Math.floor(p.degree_in_sign || 0);
+            const dignity = getGrahaDignity(
+              p.name,
+              signIndex,
+              ascendant.sign_index,
+              p.degree_in_sign,
+              p.house
+            );
             return (
               <div
                 key={`tr-${p.name}`}
                 className="px-1 py-0.5 bg-[#FAF2DE] border border-[#B8862B]/60 rounded-xs text-[8.5px] sm:text-[9.5px] font-bold text-[#8C6D23] leading-none tracking-tight flex items-center justify-center gap-0.5 shadow-2xs font-mono"
-                title={`${p.name} (Transit ${p.degree_in_sign.toFixed(2)}°) in ${p.sign_name}`}
+                title={`${language === "ta" ? "கோசாரம்" : "Transit"}: ${language === "ta" ? dignity.tooltipTa : dignity.tooltipEn}`}
               >
                 <span className="text-[7px] text-[#B45309] font-sans font-extrabold">TR</span>
-                <span>{shortName}</span>
+                <span className={dignity.status !== "none" ? dignity.colorClass : ""}>{shortName}</span>
                 <span>{degInt}°</span>
                 {p.is_retrograde && (
                   <span className="text-red-600 font-bold text-[7.5px]">
@@ -358,6 +391,9 @@ export function SouthIndianChart({
           {renderNatalGrid()}
         </div>
       )}
+
+      {/* Navagraha Dignity & Directional Strength (Dik Balam) Color Legend */}
+      {showDignityLegend && <DignityLegend className="mt-2.5 w-full max-w-md sm:max-w-lg lg:max-w-xl" />}
     </div>
   );
 }

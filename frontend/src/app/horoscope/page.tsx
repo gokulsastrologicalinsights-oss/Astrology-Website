@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { getMetadata, calculateFullHoroscopeSuite, ApiError } from "@/lib/api";
 import { searchLocations, LocationSearchResult } from "@/lib/geocoding";
-import { saveActiveCalculation } from "@/lib/storage";
+import { saveActiveCalculation, clearActiveCalculation } from "@/lib/storage";
 import {
   AyanamsaOption,
   HouseSystemOption,
@@ -14,6 +14,7 @@ import {
 import { COMMON_TIMEZONES } from "@/lib/cities";
 import { prepareCalculationSnapshot } from "@/lib/horoscope-storage-utils";
 import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
+import { parse12HourTimeTo24, parse24To12 } from "@/lib/formatters";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useAuth } from "@/lib/auth-context";
@@ -29,15 +30,26 @@ import {
   Phone,
   Users,
   CheckCircle2,
+  Edit3,
+  RotateCcw,
 } from "lucide-react";
 
-export default function HoroscopeFormPage() {
+function HoroscopeFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit_id");
   const { language, t } = useLanguage();
   const { isAuthenticated } = useAuth();
 
+  // Edit Mode state
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [editingDisplayNumber, setEditingDisplayNumber] = useState<number | null>(null);
+  const [isLoadingEditData, setIsLoadingEditData] = useState<boolean>(false);
+  const [editLoadError, setEditLoadError] = useState<string | null>(null);
+
   // Customer & Form Fields
   const [fullName, setFullName] = useState("");
+  const [gender, setGender] = useState<"male" | "female">("male");
   const [birthDate, setBirthDate] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -48,7 +60,8 @@ export default function HoroscopeFormPage() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
-  const [birthTime, setBirthTime] = useState("");
+  const [birthTime12, setBirthTime12] = useState("");
+  const [birthPeriod, setBirthPeriod] = useState<"AM" | "PM">("AM");
   const [isTimeConfirmed, setIsTimeConfirmed] = useState(true);
 
   // Location Fields
@@ -92,11 +105,166 @@ export default function HoroscopeFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
 
+  const formRef = useRef<HTMLFormElement | null>(null);
   const locationSearchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    document.title = `${t.formTitle} | ${t.brandName}`;
-  }, [t.formTitle, t.brandName]);
+    if (isEditMode && editingDisplayNumber) {
+      document.title = `${language === "ta" ? `ஜாதக எண் ${editingDisplayNumber} திருத்துதல்` : `Edit Horoscope No. ${editingDisplayNumber}`} | ${t.brandName}`;
+    } else {
+      document.title = `${t.formTitle} | ${t.brandName}`;
+    }
+  }, [isEditMode, editingDisplayNumber, language, t.formTitle, t.brandName]);
+
+  // Helper to ensure the detail form page is 100% clean and fresh for new horoscope generation
+  const resetFormToCleanState = useCallback(() => {
+    setFullName("");
+    setGender("male");
+    setBirthDate("");
+    setCountryCode("+91");
+    setCustomerPhone("");
+    setCustomerId(null);
+    setCustomerSearch("");
+    setShowCustomerDropdown(false);
+    setBirthTime12("");
+    setBirthPeriod("AM");
+    setIsTimeConfirmed(true);
+    setLocationQuery("");
+    setLocationResults([]);
+    setIsSearchingLocation(false);
+    setLatitude("");
+    setLongitude("");
+    setTimezone(() => {
+      if (typeof window !== "undefined") {
+        try {
+          return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata";
+        } catch {
+          return "Asia/Kolkata";
+        }
+      }
+      return "Asia/Kolkata";
+    });
+    setSelectedAyanamsa(0);
+    setSelectedHouseSystem(0);
+    setIncludePanchang(true);
+    setIncludeOuterPlanets(true);
+    setErrors({});
+    setCalculationError(null);
+    setIsEditMode(false);
+    setEditingDisplayNumber(null);
+    setEditLoadError(null);
+    clearActiveCalculation();
+
+    // Reset native DOM form controls directly to eliminate browser autofill and bfcache restoration
+    if (formRef.current) {
+      try {
+        formRef.current.reset();
+        const inputs = formRef.current.querySelectorAll("input");
+        inputs.forEach((input) => {
+          if (input.type !== "checkbox" && input.type !== "submit" && input.type !== "button") {
+            input.value = "";
+          }
+        });
+      } catch {
+        // Safe fallback
+      }
+    }
+  }, []);
+
+  // Manual reset that also cleans URL query parameter if present
+  const handleManualClear = useCallback(() => {
+    resetFormToCleanState();
+    if (editId) {
+      router.replace("/horoscope");
+    }
+  }, [editId, resetFormToCleanState, router]);
+
+  // Enforce 100% fresh, blank form state whenever opening this page for new horoscope creation
+  useEffect(() => {
+    if (!editId) {
+      resetFormToCleanState();
+    }
+  }, [editId, resetFormToCleanState]);
+
+  // Listen to browser pageshow events (e.g. Back/Forward navigation or bfcache restoration)
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (!editId || e.persisted) {
+        if (!editId) {
+          resetFormToCleanState();
+        }
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [editId, resetFormToCleanState]);
+
+  // Load existing horoscope details ONLY if edit_id is explicitly present in query parameters
+  useEffect(() => {
+    if (!editId) {
+      return;
+    }
+
+    setIsEditMode(true);
+    setIsLoadingEditData(true);
+    setEditLoadError(null);
+
+    fetch(`/api/horoscopes/${editId}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Failed to load horoscope for editing.");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        const item = data.horoscope;
+        if (!item) return;
+
+        setFullName(item.person_name || "");
+        const savedGender =
+          (item as any).gender ||
+          item.calculation_result?.clientInputs?.gender ||
+          item.calculation_result?.customer?.gender ||
+          item.calculation_result?.horoscope?.request?.gender ||
+          "male";
+        setGender(savedGender === "female" ? "female" : "male");
+        setBirthDate(item.birth_date || "");
+        setCountryCode(item.customer_country_code || item.country_code || "+91");
+        setCustomerPhone(
+          item.customer_phone || item.normalized_phone || item.whatsapp_number || ""
+        );
+        setCustomerId(item.customer_id || null);
+
+        if (item.birth_time) {
+          const parsed = parse24To12(item.birth_time);
+          setBirthTime12(parsed.time12);
+          setBirthPeriod(parsed.period);
+        }
+
+        setLocationQuery(item.birthplace || "");
+        setLatitude(typeof item.latitude === "number" ? item.latitude : "");
+        setLongitude(typeof item.longitude === "number" ? item.longitude : "");
+        setTimezone(item.timezone || "Asia/Kolkata");
+        if (typeof item.ayanamsa_id === "number") {
+          setSelectedAyanamsa(item.ayanamsa_id);
+        }
+        if (typeof item.house_system_id === "number") {
+          setSelectedHouseSystem(item.house_system_id);
+        }
+        setEditingDisplayNumber(item.display_number || null);
+      })
+      .catch((err) => {
+        console.error("Error loading horoscope for editing:", err);
+        setEditLoadError(err.message || "Failed to load horoscope for editing.");
+      })
+      .finally(() => {
+        setIsLoadingEditData(false);
+      });
+  }, [editId]);
 
   // Fetch backend metadata options on mount
   useEffect(() => {
@@ -133,16 +301,25 @@ export default function HoroscopeFormPage() {
   // Handle selecting an existing customer
   const handleSelectCustomer = (customer: any) => {
     setFullName(customer.full_name || "");
+    if (customer.gender) {
+      setGender(customer.gender === "female" ? "female" : "male");
+    }
     setBirthDate(customer.birth_date || "");
     setCountryCode(customer.country_code || "+91");
     setCustomerPhone(customer.phone_number || customer.normalized_phone || "");
     setCustomerId(customer.id);
+    if (customer.birth_time) {
+      const parsed = parse24To12(customer.birth_time);
+      setBirthTime12(parsed.time12);
+      setBirthPeriod(parsed.period);
+    }
     setShowCustomerDropdown(false);
     setErrors((prev) => ({
       ...prev,
       fullName: "",
       birthDate: "",
       customerPhone: "",
+      birthTime: "",
     }));
   };
 
@@ -216,8 +393,21 @@ export default function HoroscopeFormPage() {
       }
     }
 
-    if (isTimeConfirmed && !birthTime) {
-      newErrors.birthTime = t.valTimeRequired;
+    if (isTimeConfirmed) {
+      if (!birthTime12.trim()) {
+        newErrors.birthTime =
+          language === "ta"
+            ? "சரியான பிறந்த நேரத்தை உள்ளிடவும் (எ.கா: 10:30)."
+            : t.valTimeRequired;
+      } else {
+        const parsed = parse12HourTimeTo24(birthTime12, birthPeriod);
+        if (!parsed.isValid) {
+          newErrors.birthTime =
+            language === "ta"
+              ? parsed.errorTa || "செல்லுபடியற்ற பிறந்த நேரம் (01:00 முதல் 12:59 வரை இருக்க வேண்டும்)."
+              : parsed.errorEn || "Please enter a valid 12-hour birth time (01:00 to 12:59) with AM or PM.";
+        }
+      }
     }
 
     if (latitude === "" || isNaN(Number(latitude)) || Number(latitude) < -90 || Number(latitude) > 90) {
@@ -248,14 +438,27 @@ export default function HoroscopeFormPage() {
     setIsSubmitting(true);
 
     // If time is unconfirmed, standard astronomical default is 12:00:00 PM local
-    const finalTime = isTimeConfirmed ? birthTime : "12:00:00";
-    const formattedTime = finalTime.includes(":") && finalTime.split(":").length === 2
-      ? `${finalTime}:00`
-      : finalTime;
+    let formattedTime = "12:00:00";
+    if (isTimeConfirmed) {
+      const parsed = parse12HourTimeTo24(birthTime12, birthPeriod);
+      if (!parsed.isValid || !parsed.time24) {
+        setErrors((prev) => ({
+          ...prev,
+          birthTime:
+            language === "ta"
+              ? parsed.errorTa || "செல்லுபடியற்ற பிறந்த நேரம்."
+              : parsed.errorEn || "Please enter a valid 12-hour birth time.",
+        }));
+        setIsSubmitting(false);
+        return;
+      }
+      formattedTime = parsed.time24;
+    }
 
     try {
       const fullResult = await calculateFullHoroscopeSuite({
         fullName: fullName.trim() || undefined,
+        gender,
         birthDate,
         birthTime: formattedTime,
         isTimeConfirmed,
@@ -269,7 +472,9 @@ export default function HoroscopeFormPage() {
         includeOuterPlanets,
       });
 
-      // Automatic Saving Workflow (Server authoritatively authenticates via session cookie)
+      // Saving Workflow: If editing an existing horoscope, update it in-place via PUT
+      // (replacing the data without creating duplicate records).
+      // If creating fresh, insert a new record via POST.
       let savedId: string | undefined = undefined;
       let displayNumber: number | undefined = undefined;
       let isSaved = false;
@@ -277,55 +482,96 @@ export default function HoroscopeFormPage() {
 
       const idempotencyKey = `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      try {
-        const compactedSnapshot = prepareCalculationSnapshot(fullResult, idempotencyKey);
-        const saveRes = await fetch("/api/horoscopes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idempotency_key: idempotencyKey,
-            person_name: fullName.trim(),
-            customer_full_name: fullName.trim(),
-            birth_date: birthDate,
-            customer_phone: customerPhone.trim(),
-            country_code: countryCode,
-            customer_id: customerId || undefined,
-            birth_time: formattedTime,
-            timezone: timezone.trim(),
-            birthplace: locationQuery.trim() || `Coordinates: ${latitude}, ${longitude}`,
-            latitude: Number(latitude),
-            longitude: Number(longitude),
-            ayanamsa_id: selectedAyanamsa,
-            house_system_id: selectedHouseSystem,
-            calculation_result: compactedSnapshot,
-          }),
-        });
+      if (isEditMode && editId) {
+        try {
+          const compactedSnapshot = prepareCalculationSnapshot(fullResult, idempotencyKey);
+          const updateRes = await fetch(`/api/horoscopes/${editId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              person_name: fullName.trim(),
+              customer_full_name: fullName.trim(),
+              gender,
+              birth_date: birthDate,
+              birth_time: formattedTime,
+              customer_phone: customerPhone.trim(),
+              country_code: countryCode,
+              customer_id: customerId || undefined,
+              timezone: timezone.trim(),
+              birthplace: locationQuery.trim() || `Coordinates: ${latitude}, ${longitude}`,
+              latitude: Number(latitude),
+              longitude: Number(longitude),
+              ayanamsa_id: selectedAyanamsa,
+              house_system_id: selectedHouseSystem,
+              calculation_result: compactedSnapshot,
+            }),
+          });
 
-        if (saveRes.ok) {
-          const saveData = await saveRes.json();
-          if (saveData.horoscope) {
-            savedId = saveData.horoscope.id;
-            displayNumber = saveData.horoscope.display_number;
+          if (updateRes.ok) {
+            const updateData = await updateRes.json();
+            savedId = updateData.horoscope?.id || editId;
+            displayNumber = updateData.horoscope?.display_number || editingDisplayNumber || undefined;
             isSaved = true;
-          }
-        } else {
-          const errData = await saveRes.json().catch(() => ({}));
-          // If 401 unauthorized, user is simply an unauthenticated guest; don't report error
-          if (saveRes.status === 401) {
-            saveErrorMsg = undefined;
           } else {
-            saveErrorMsg = errData.error || "Automatic save failed.";
+            const errData = await updateRes.json().catch(() => ({}));
+            saveErrorMsg = errData.error || "Failed to update horoscope record.";
           }
+        } catch (updateErr: any) {
+          console.error("Failed to update existing horoscope in-place:", updateErr);
+          saveErrorMsg = updateErr?.message || "Network error during horoscope update.";
         }
-      } catch (saveErr: any) {
-        console.warn("Auto-save attempt failed:", saveErr);
-        saveErrorMsg = saveErr?.message || "Network error during automatic save.";
+      } else {
+        try {
+          const compactedSnapshot = prepareCalculationSnapshot(fullResult, idempotencyKey);
+          const saveRes = await fetch("/api/horoscopes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              idempotency_key: idempotencyKey,
+              person_name: fullName.trim(),
+              customer_full_name: fullName.trim(),
+              gender,
+              birth_date: birthDate,
+              customer_phone: customerPhone.trim(),
+              country_code: countryCode,
+              customer_id: customerId || undefined,
+              birth_time: formattedTime,
+              timezone: timezone.trim(),
+              birthplace: locationQuery.trim() || `Coordinates: ${latitude}, ${longitude}`,
+              latitude: Number(latitude),
+              longitude: Number(longitude),
+              ayanamsa_id: selectedAyanamsa,
+              house_system_id: selectedHouseSystem,
+              calculation_result: compactedSnapshot,
+            }),
+          });
+
+          if (saveRes.ok) {
+            const saveData = await saveRes.json();
+            if (saveData.horoscope) {
+              savedId = saveData.horoscope.id;
+              displayNumber = saveData.horoscope.display_number;
+              isSaved = true;
+            }
+          } else {
+            const errData = await saveRes.json().catch(() => ({}));
+            // If 401 unauthorized, user is simply an unauthenticated guest; don't report error
+            if (saveRes.status === 401) {
+              saveErrorMsg = undefined;
+            } else {
+              saveErrorMsg = errData.error || "Automatic save failed.";
+            }
+          }
+        } catch (saveErr: any) {
+          console.warn("Auto-save attempt failed:", saveErr);
+          saveErrorMsg = saveErr?.message || "Network error during automatic save.";
+        }
       }
 
       const finalResult = {
         ...fullResult,
-        savedId,
-        displayNumber,
+        savedId: savedId || (isEditMode && editId ? editId : undefined),
+        displayNumber: displayNumber || (isEditMode && editingDisplayNumber ? editingDisplayNumber : undefined),
         isSaved,
         saveError: saveErrorMsg,
         idempotencyKey,
@@ -335,8 +581,9 @@ export default function HoroscopeFormPage() {
       saveActiveCalculation(finalResult);
 
       // Navigate to results
-      if (savedId) {
-        router.push(`/horoscope/results?id=${savedId}`);
+      const destId = savedId || (isEditMode && editId ? editId : undefined);
+      if (destId) {
+        router.push(`/horoscope/results?id=${destId}`);
       } else {
         router.push("/horoscope/results");
       }
@@ -363,8 +610,39 @@ export default function HoroscopeFormPage() {
     }
   };
 
+  if (isLoadingEditData) {
+    return (
+      <div className="min-h-[calc(100vh-14rem)] flex flex-col items-center justify-center p-8 space-y-4 bg-[#FAF8F5]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+        <p className="text-sm font-semibold text-[#102A4C]">
+          {language === "ta"
+            ? "ஜாதக விவரங்கள் ஏற்றப்படுகின்றன..."
+            : "Loading horoscope details for editing..."}
+        </p>
+      </div>
+    );
+  }
+
+  if (editLoadError) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
+        <AlertCircle className="w-10 h-10 text-rose-600 mx-auto" />
+        <h2 className="text-lg font-bold text-slate-800">
+          {language === "ta" ? "ஜாதகத்தை ஏற்ற முடியவில்லை" : "Could not load horoscope"}
+        </h2>
+        <p className="text-sm text-slate-600">{editLoadError}</p>
+        <Link
+          href="/horoscopes"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#102A4C] text-white text-xs font-semibold hover:bg-[#1E3A61]"
+        >
+          {language === "ta" ? "எனது ஜாதகங்கள்" : "Back to My Horoscopes"}
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Navigation Breadcrumbs & Back Link */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Breadcrumbs
@@ -374,39 +652,89 @@ export default function HoroscopeFormPage() {
               href: "/tools",
             },
             {
-              label: language === "ta" ? "ஜாதகம் மற்றும் கே.பி. ஜோதிடம்" : "Horoscope / KP System",
-              href: "/tools/horoscope",
+              label: language === "ta" ? "எனது ஜாதகங்கள்" : "My Horoscopes",
+              href: "/horoscopes",
             },
-            {
-              label: language === "ta" ? "ஜாதகம் கணிக்க" : "Create Horoscope",
-            },
+            ...(isEditMode
+              ? [
+                  {
+                    label:
+                      language === "ta"
+                        ? `ஜாதக எண் ${editingDisplayNumber || ""} திருத்துதல்`
+                        : `Edit Horoscope No. ${editingDisplayNumber || ""}`,
+                  },
+                ]
+              : [
+                  {
+                    label: language === "ta" ? "ஜாதகம் கணிக்க" : "Create Horoscope",
+                  },
+                ]),
           ]}
         />
 
         <Link
-          href="/tools/horoscope"
+          href={isEditMode && editId ? `/horoscope/results?id=${editId}` : "/tools/horoscope"}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#52667E] hover:text-[#102A4C] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>
-            {language === "ta"
-              ? "ஜாதகக் கருவிகள் அடைவு"
-              : "Back to Horoscope / KP Tools"}
+            {isEditMode
+              ? (language === "ta" ? "ஜாதக முடிவுகளுக்குத் திரும்பு" : "Return to Horoscope View")
+              : (language === "ta" ? "ஜாதகக் கருவிகள் அடைவு" : "Back to Horoscope / KP Tools")}
           </span>
         </Link>
       </div>
+
+      {/* Edit Mode Notification Banner */}
+      {isEditMode && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 shadow-2xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <Edit3 className="w-5 h-5 text-amber-700 shrink-0 mt-0.5 sm:mt-0" />
+            <div>
+              <div className="font-bold text-sm">
+                {language === "ta"
+                  ? `ஜாதக எண் ${editingDisplayNumber || ""} (${fullName || "—"}) திருத்துதல்`
+                  : `Editing Horoscope No. ${editingDisplayNumber || ""} (${fullName || "Unnamed"})`}
+              </div>
+              <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
+                {language === "ta"
+                  ? "நீங்கள் செய்யும் மாற்றங்கள் இந்த ஜாதகத்தின் முந்தைய தரவை நேரடியாக மாற்றியமைக்கும் (Replace). புதிய இரட்டை ஜாதகம் (Duplicate) உருவாகாது."
+                  : "Any edits you make will replace this horoscope's data in-place without creating a duplicate record."}
+              </p>
+            </div>
+          </div>
+          {editId && (
+            <Link
+              href={`/horoscope/results?id=${editId}`}
+              className="px-3 py-1.5 rounded-lg border border-amber-400 bg-white hover:bg-amber-100 text-amber-900 text-xs font-semibold shrink-0 transition-colors"
+            >
+              {language === "ta" ? "ரத்து / பின்செல்க" : "Cancel & View"}
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Page Header */}
       <div className="text-center max-w-2xl mx-auto mb-10">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF2DE] border border-[#D8BD80] text-xs font-semibold text-[#8C6D23] mb-3">
           <Compass className="w-3.5 h-3.5" />
-          <span>{language === "ta" ? "ஜாதகக் கணிப்பு படிவம்" : "Horoscope Input Form"}</span>
+          <span>
+            {isEditMode
+              ? (language === "ta" ? `ஜாதக எண் ${editingDisplayNumber || ""} திருத்துதல்` : `Edit Horoscope No. ${editingDisplayNumber || ""}`)
+              : (language === "ta" ? "ஜாதகக் கணிப்பு படிவம்" : "Horoscope Input Form")}
+          </span>
         </div>
         <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#0F172A]">
-          {t.formTitle}
+          {isEditMode
+            ? (language === "ta" ? `ஜாதகத்தைத் திருத்துக (எண் ${editingDisplayNumber || ""})` : `Edit Horoscope (No. ${editingDisplayNumber || ""})`)
+            : t.formTitle}
         </h1>
         <p className="mt-2 text-xs sm:text-sm text-[#64748B]">
-          {t.formSubtitle}
+          {isEditMode
+            ? (language === "ta"
+                ? "பிறப்பு விவரங்கள் அல்லது அமைப்புகளை மாற்றி புதிய கணிப்புகளை இந்த ஜாதகத்தில் சேமிக்கலாம்."
+                : "Modify birth information or calculation parameters to replace this horoscope's data.")
+            : t.formSubtitle}
         </p>
       </div>
 
@@ -423,17 +751,34 @@ export default function HoroscopeFormPage() {
 
       {/* Main Form Card */}
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
         className="bg-white rounded-xl border border-[#E2DCD5] shadow-xs p-6 sm:p-8 space-y-8"
         noValidate
+        autoComplete="off"
       >
         {/* SECTION 1: Personal & Time */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#E2DCD5]">
-            <User className="w-4 h-4 text-[#B8860B]" />
-            <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-[#0F172A]">
-              {t.sectionPersonal}
-            </h3>
+          <div className="flex items-center justify-between pb-2 border-b border-[#E2DCD5]">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-[#B8860B]" />
+              <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-[#0F172A]">
+                {t.sectionPersonal}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={handleManualClear}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Reset all fields to clean empty form"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+              <span>
+                {isEditMode
+                  ? (language === "ta" ? "புதிய படிவத்திற்கு மாறுக (Start Clean Form)" : "Start Clean New Form")
+                  : (language === "ta" ? "படிவத்தை சுத்தப்படுத்துக (Clear All)" : "Clear Form")}
+              </span>
+            </button>
           </div>
 
           {/* Existing Client Selector */}
@@ -452,8 +797,10 @@ export default function HoroscopeFormPage() {
                       setFullName("");
                       setBirthDate("");
                       setCustomerPhone("");
+                      setBirthTime12("");
+                      setBirthPeriod("AM");
                     }}
-                    className="text-[11px] font-semibold text-rose-600 hover:underline"
+                    className="text-[11px] font-semibold text-rose-600 hover:underline cursor-pointer"
                   >
                     {language === "ta" ? "புதிய வாடிக்கையாளர் (Reset)" : "Clear / New Customer"}
                   </button>
@@ -461,6 +808,8 @@ export default function HoroscopeFormPage() {
               </div>
               <select
                 id="customerSelect"
+                name="customer_select_clean"
+                autoComplete="off"
                 value={customerId || ""}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -508,8 +857,14 @@ export default function HoroscopeFormPage() {
               </label>
               <input
                 id="fullName"
+                name="person_full_name_clean"
                 type="text"
                 required
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-form-type="other"
+                data-lpignore="true"
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);
@@ -527,6 +882,41 @@ export default function HoroscopeFormPage() {
               )}
             </div>
 
+            {/* Gender Selection */}
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1">
+                {language === "ta" ? "பாலினம் (Gender)" : "Gender"}{" "}
+                <span className="text-rose-600">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2 h-[42px]">
+                <button
+                  type="button"
+                  onClick={() => setGender("male")}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                    gender === "male"
+                      ? "bg-[#102A4C] text-white border-[#102A4C] shadow-sm ring-2 ring-[#B8860B]/40"
+                      : "bg-[#FFFDF9] text-[#334155] border-[#D8BD80]/80 hover:bg-[#F5F2EB]"
+                  }`}
+                >
+                  <span className="text-sm">👨</span>
+                  <span>{language === "ta" ? "ஆண் (Male)" : "Male"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender("female")}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                    gender === "female"
+                      ? "bg-[#881337] text-white border-[#881337] shadow-sm ring-2 ring-[#B8860B]/40"
+                      : "bg-[#FFFDF9] text-[#334155] border-[#D8BD80]/80 hover:bg-[#F5F2EB]"
+                  }`}
+                >
+                  <span className="text-sm">👩</span>
+                  <span>{language === "ta" ? "பெண் (Female)" : "Female"}</span>
+                </button>
+              </div>
+            </div>
+
+
             {/* Customer WhatsApp Number & Country Code (Optional) */}
             <div>
               <label htmlFor="customerPhone" className="block text-xs font-semibold text-[#334155] mb-1">
@@ -535,6 +925,8 @@ export default function HoroscopeFormPage() {
               <div className="flex gap-2">
                 <select
                   id="countryCode"
+                  name="country_code_clean"
+                  autoComplete="off"
                   value={countryCode}
                   onChange={(e) => {
                     setCountryCode(e.target.value);
@@ -551,7 +943,13 @@ export default function HoroscopeFormPage() {
                 <div className="flex-1 relative">
                   <input
                     id="customerPhone"
+                    name="customer_phone_clean"
                     type="tel"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-form-type="other"
+                    data-lpignore="true"
                     value={customerPhone}
                     onChange={(e) => {
                       setCustomerPhone(e.target.value);
@@ -584,8 +982,12 @@ export default function HoroscopeFormPage() {
               </label>
               <input
                 id="birthDate"
+                name="birth_date_clean"
                 type="date"
                 required
+                autoComplete="off"
+                data-form-type="other"
+                data-lpignore="true"
                 value={birthDate}
                 onChange={(e) => {
                   setBirthDate(e.target.value);
@@ -602,29 +1004,68 @@ export default function HoroscopeFormPage() {
               )}
             </div>
 
-            {/* Birth Time */}
+            {/* Birth Time (12 hrs with AM or PM drop down) */}
             <div>
-              <label htmlFor="birthTime" className="block text-xs font-semibold text-[#334155] mb-1">
+              <label htmlFor="birthTime12" className="block text-xs font-semibold text-[#334155] mb-1">
                 {t.fieldTime} {isTimeConfirmed && <span className="text-rose-600">*</span>}
               </label>
-              <input
-                id="birthTime"
-                type="time"
-                step="1"
-                disabled={!isTimeConfirmed}
-                value={birthTime}
-                onChange={(e) => {
-                  setBirthTime(e.target.value);
-                  setErrors((prev) => ({ ...prev, birthTime: "" }));
-                }}
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-sm text-[#0F172A] bg-[#FFFDF9] disabled:bg-[#F1EBE4] disabled:text-[#94A3B8] focus:ring-1 ${
-                  errors.birthTime
-                    ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
-                    : "border-[#D8BD80]/80 focus:border-[#B8860B] focus:ring-[#B8860B]"
-                }`}
-              />
-              {errors.birthTime && (
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <input
+                    id="birthTime12"
+                    name="birth_time_clean"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-form-type="other"
+                    data-lpignore="true"
+                    disabled={!isTimeConfirmed}
+                    value={birthTime12}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (/pm/i.test(val)) {
+                        setBirthPeriod("PM");
+                        val = val.replace(/pm/gi, "").trim();
+                      } else if (/am/i.test(val)) {
+                        setBirthPeriod("AM");
+                        val = val.replace(/am/gi, "").trim();
+                      }
+                      setBirthTime12(val);
+                      setErrors((prev) => ({ ...prev, birthTime: "" }));
+                    }}
+                    placeholder={language === "ta" ? "10:30 அல்லது 10:30:00" : "10:30 or 10:30:00"}
+                    className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-mono text-[#0F172A] bg-[#FFFDF9] disabled:bg-[#F1EBE4] disabled:text-[#94A3B8] focus:ring-1 ${
+                      errors.birthTime
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
+                        : "border-[#D8BD80]/80 focus:border-[#B8860B] focus:ring-[#B8860B]"
+                    }`}
+                  />
+                </div>
+                <select
+                  id="birthPeriod"
+                  name="birth_period_clean"
+                  autoComplete="off"
+                  disabled={!isTimeConfirmed}
+                  value={birthPeriod}
+                  onChange={(e) => {
+                    setBirthPeriod(e.target.value as "AM" | "PM");
+                    setErrors((prev) => ({ ...prev, birthTime: "" }));
+                  }}
+                  className="w-24 sm:w-28 px-3 py-2.5 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-sm font-semibold text-[#0F172A] disabled:bg-[#F1EBE4] disabled:text-[#94A3B8] focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+              {errors.birthTime ? (
                 <p className="mt-1 text-xs text-rose-600">{errors.birthTime}</p>
+              ) : (
+                <p className="mt-1 text-[11px] text-[#64748B]">
+                  {language === "ta"
+                    ? "12 மணி நேர வடிவம் (எ.கா: 10:30 அல்லது 10:30:00) மற்றும் AM / PM தேர்ந்தெடுக்கவும்."
+                    : "12-hour format (e.g. 10:30 or 10:30:00) with AM / PM dropdown."}
+                </p>
               )}
             </div>
 
@@ -666,8 +1107,13 @@ export default function HoroscopeFormPage() {
             <div className="relative">
               <input
                 id="placeSearch"
+                name="place_search_clean"
                 type="text"
                 autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-form-type="other"
+                data-lpignore="true"
                 value={locationQuery}
                 onChange={(e) => handleLocationQueryChange(e.target.value)}
                 onFocus={() => {
@@ -731,11 +1177,15 @@ export default function HoroscopeFormPage() {
               </label>
               <input
                 id="latitude"
+                name="latitude_clean"
                 type="number"
                 step="0.0001"
                 min="-90"
                 max="90"
                 required
+                autoComplete="off"
+                data-form-type="other"
+                data-lpignore="true"
                 value={latitude}
                 onChange={(e) => {
                   setLatitude(e.target.value === "" ? "" : parseFloat(e.target.value));
@@ -760,11 +1210,15 @@ export default function HoroscopeFormPage() {
               </label>
               <input
                 id="longitude"
+                name="longitude_clean"
                 type="number"
                 step="0.0001"
                 min="-180"
                 max="180"
                 required
+                autoComplete="off"
+                data-form-type="other"
+                data-lpignore="true"
                 value={longitude}
                 onChange={(e) => {
                   setLongitude(e.target.value === "" ? "" : parseFloat(e.target.value));
@@ -789,6 +1243,8 @@ export default function HoroscopeFormPage() {
               </label>
               <select
                 id="timezone"
+                name="timezone_clean"
+                autoComplete="off"
                 value={timezone}
                 onChange={(e) => {
                   setTimezone(e.target.value);
@@ -823,6 +1279,8 @@ export default function HoroscopeFormPage() {
               </label>
               <select
                 id="ayanamsa"
+                name="ayanamsa_clean"
+                autoComplete="off"
                 value={selectedAyanamsa}
                 onChange={(e) => setSelectedAyanamsa(parseInt(e.target.value, 10))}
                 className="w-full px-3 py-2.5 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-xs text-[#0F172A] focus:border-[#B8860B]"
@@ -842,6 +1300,8 @@ export default function HoroscopeFormPage() {
               </label>
               <select
                 id="houseSystem"
+                name="house_system_clean"
+                autoComplete="off"
                 value={selectedHouseSystem}
                 onChange={(e) => setSelectedHouseSystem(parseInt(e.target.value, 10))}
                 className="w-full px-3 py-2.5 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-xs text-[#0F172A] focus:border-[#B8860B]"
@@ -884,22 +1344,50 @@ export default function HoroscopeFormPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 px-6 rounded-lg text-sm font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+            className="w-full py-3.5 px-6 rounded-lg text-sm font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-[#D8BD80]" />
-                <span>{t.calculating}</span>
+                <span>
+                  {isEditMode
+                    ? (language === "ta" ? "கணக்கிட்டுப் புதுப்பிக்கப்படுகிறது..." : "Updating & Recalculating...")
+                    : t.calculating}
+                </span>
               </>
             ) : (
               <>
-                <Compass className="w-4 h-4 text-[#D8BD80]" />
-                <span>{t.submitButton}</span>
+                {isEditMode ? (
+                  <CheckCircle2 className="w-4 h-4 text-[#D8BD80]" />
+                ) : (
+                  <Compass className="w-4 h-4 text-[#D8BD80]" />
+                )}
+                <span>
+                  {isEditMode
+                    ? (language === "ta"
+                        ? "ஜாதகத்தைப் புதுப்பித்துக் கணக்கிடுக (Replace Data)"
+                        : "Update Horoscope (Replace Data)")
+                    : t.submitButton}
+                </span>
               </>
             )}
           </button>
         </div>
       </form>
     </div>
+  );
+}
+
+export default function HoroscopeFormPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#FAF8F5]">
+          <div className="w-8 h-8 border-4 border-[#B8860B] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <HoroscopeFormContent />
+    </Suspense>
   );
 }

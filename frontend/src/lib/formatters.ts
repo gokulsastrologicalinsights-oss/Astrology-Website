@@ -151,3 +151,122 @@ export function calculateCalendarAge(birthDateStr?: string | null): number | nul
   return age >= 0 ? age : null;
 }
 
+export interface ParsedTime12Result {
+  isValid: boolean;
+  time24?: string;
+  errorEn?: string;
+  errorTa?: string;
+}
+
+/**
+ * Parses a 12-hour time string (e.g. "10:30" or "10:30:15") and AM/PM period
+ * into an authoritative 24-hour "HH:MM:SS" string for astronomical calculation.
+ */
+export function parse12HourTimeTo24(
+  timeStr: string | null | undefined,
+  period: "AM" | "PM"
+): ParsedTime12Result {
+  if (!timeStr || !timeStr.trim()) {
+    return {
+      isValid: false,
+      errorEn: "Birth time is required.",
+      errorTa: "பிறந்த நேரம் தேவை.",
+    };
+  }
+
+  let clean = timeStr.trim().replace(/\./g, ":");
+
+  // If user pasted or typed AM/PM into the text box, detect and strip
+  let detectedPeriod = period;
+  if (/am/i.test(clean)) {
+    detectedPeriod = "AM";
+    clean = clean.replace(/am/gi, "").trim();
+  } else if (/pm/i.test(clean)) {
+    detectedPeriod = "PM";
+    clean = clean.replace(/pm/gi, "").trim();
+  }
+
+  const match = clean.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (!match) {
+    return {
+      isValid: false,
+      errorEn: "Please enter time in HH:MM or HH:MM:SS format (e.g. 10:30).",
+      errorTa: "வடிவம் HH:MM அல்லது HH:MM:SS ஆக இருக்க வேண்டும் (எ.கா: 10:30).",
+    };
+  }
+
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const seconds = match[3] !== undefined ? parseInt(match[3], 10) : 0;
+
+  if (isNaN(hours) || hours < 1 || hours > 12) {
+    return {
+      isValid: false,
+      errorEn: "Hours must be between 1 and 12 in 12-hour format.",
+      errorTa: "12 மணி நேர அமைப்பில் மணி 1 முதல் 12 வரை இருக்க வேண்டும்.",
+    };
+  }
+
+  if (isNaN(minutes) || minutes < 0 || minutes > 59) {
+    return {
+      isValid: false,
+      errorEn: "Minutes must be between 00 and 59.",
+      errorTa: "நிமிடம் 00 முதல் 59 வரை இருக்க வேண்டும்.",
+    };
+  }
+
+  if (isNaN(seconds) || seconds < 0 || seconds > 59) {
+    return {
+      isValid: false,
+      errorEn: "Seconds must be between 00 and 59.",
+      errorTa: "வினாடி 00 முதல் 59 வரை இருக்க வேண்டும்.",
+    };
+  }
+
+  let hours24 = hours;
+  if (detectedPeriod === "AM") {
+    if (hours === 12) {
+      hours24 = 0;
+    }
+  } else {
+    // PM
+    if (hours !== 12) {
+      hours24 = hours + 12;
+    }
+  }
+
+  const hh = hours24.toString().padStart(2, "0");
+  const mm = minutes.toString().padStart(2, "0");
+  const ss = seconds.toString().padStart(2, "0");
+
+  return {
+    isValid: true,
+    time24: `${hh}:${mm}:${ss}`,
+  };
+}
+
+/**
+ * Splits a 24-hour time string into a 12-hour display string and AM/PM period.
+ */
+export function parse24To12(time24?: string | null): { time12: string; period: "AM" | "PM" } {
+  if (!time24 || !time24.trim()) {
+    return { time12: "", period: "AM" };
+  }
+  const clean = time24.trim();
+  const match = clean.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) {
+    return { time12: clean, period: "AM" };
+  }
+  const hours24 = parseInt(match[1], 10);
+  const minutes = match[2];
+  const seconds = match[3];
+  if (isNaN(hours24)) return { time12: clean, period: "AM" };
+
+  const period: "AM" | "PM" = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  const hh = hours12.toString().padStart(2, "0");
+  const time12 = seconds && seconds !== "00" ? `${hh}:${minutes}:${seconds}` : `${hh}:${minutes}`;
+
+  return { time12, period };
+}
+

@@ -17,10 +17,14 @@ import {
   Sparkles,
   Edit2,
   Check,
+  Eye,
+  EyeOff,
+  Copy,
 } from "lucide-react";
 import {
   SUPPORTED_COUNTRY_CODES,
   generateWhatsAppBirthdayLink,
+  getBirthdayWishMessageText,
 } from "@/lib/phone-utils";
 
 export interface BirthdayCelebrant {
@@ -61,6 +65,11 @@ export function BirthdayReminderModal({
   const [todayKolkata, setTodayKolkata] = useState<string>("");
   const [markingId, setMarkingId] = useState<string | null>(null);
 
+  // Wish Language: Default to Tamil as requested
+  const [wishLang, setWishLang] = useState<"ta" | "en">("ta");
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   // State for inline "Add Number / Update Contact"
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCountryCode, setEditCountryCode] = useState<string>("+91");
@@ -81,7 +90,7 @@ export function BirthdayReminderModal({
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/customers/birthdays?lang=${language}`);
+      const res = await fetch(`/api/customers/birthdays?lang=${wishLang}`);
       if (res.ok) {
         const data = await res.json();
         setCelebrants(data.celebrants || []);
@@ -101,7 +110,7 @@ export function BirthdayReminderModal({
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, language]);
+  }, [isAuthenticated, wishLang]);
 
   // Initial check on login
   useEffect(() => {
@@ -168,7 +177,7 @@ export function BirthdayReminderModal({
       const newWaLink = generateWhatsAppBirthdayLink(
         updatedCust.whatsapp_number,
         updatedCust.full_name,
-        language
+        wishLang
       );
       setCelebrants((prev) =>
         prev.map((c) =>
@@ -192,6 +201,15 @@ export function BirthdayReminderModal({
       setContactSaveError(err.message || "Failed to save phone number.");
     } finally {
       setIsSavingContact(false);
+    }
+  };
+
+  const handleCopyWish = (celebrant: BirthdayCelebrant) => {
+    const text = getBirthdayWishMessageText(celebrant.fullName, wishLang);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedId(celebrant.id);
+      setTimeout(() => setCopiedId(null), 2500);
     }
   };
 
@@ -264,158 +282,261 @@ export function BirthdayReminderModal({
             </div>
           ) : (
             <div className="space-y-3.5">
-              <div className="flex items-center justify-between text-xs text-[#64748B] px-1">
-                <span>
-                  {language === "ta" ? "கொண்டாட்டக்காரர்கள்:" : "Celebrants found:"}{" "}
-                  <strong className="text-[#0F172A]">{celebrants.length}</strong>
-                </span>
-                <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md font-medium">
-                  {language === "ta" ? "வாட்ஸ்அப் லிங்க் அனுப்பியதும் குறிக்கவும்" : "Manual Wish Confirmation Required"}
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B] px-1 bg-amber-50/60 p-2.5 rounded-xl border border-amber-200/70">
+                <div className="flex items-center gap-2">
+                  <span>
+                    {language === "ta" ? "கொண்டாட்டக்காரர்கள்:" : "Celebrants found:"}{" "}
+                    <strong className="text-[#0F172A]">{celebrants.length}</strong>
+                  </span>
+                  <span className="text-[11px] text-amber-700 bg-amber-100/70 border border-amber-200 px-2 py-0.5 rounded-md font-medium hidden sm:inline">
+                    {language === "ta" ? "வாட்ஸ்அப் லிங்க் அனுப்பியதும் குறிக்கவும்" : "Manual Status Confirmation"}
+                  </span>
+                </div>
+
+                {/* Wish Language Selector */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-[#334155]">
+                    {language === "ta" ? "வாழ்த்து மொழி:" : "Wish Language:"}
+                  </span>
+                  <div className="inline-flex rounded-lg border border-[#CBD5E1] p-0.5 bg-white shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => setWishLang("ta")}
+                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+                        wishLang === "ta"
+                          ? "bg-[#102A4C] text-white shadow-xs"
+                          : "text-[#64748B] hover:text-[#0F172A]"
+                      }`}
+                    >
+                      தமிழ்
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWishLang("en")}
+                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+                        wishLang === "en"
+                          ? "bg-[#102A4C] text-white shadow-xs"
+                          : "text-[#64748B] hover:text-[#0F172A]"
+                      }`}
+                    >
+                      English
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {celebrants.map((celebrant) => (
-                <div
-                  key={celebrant.id}
-                  className="p-4 rounded-xl border border-[#E2DCD5] bg-[#FAF8F5] hover:bg-white transition-all space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <h4 className="font-serif font-bold text-base text-[#0F172A]">
-                        {celebrant.fullName}
-                      </h4>
-                      <div className="flex items-center gap-3 text-xs text-[#64748B] mt-1 flex-wrap">
-                        <span className="flex items-center gap-1 font-mono">
-                          <Calendar className="w-3.5 h-3.5 text-[#B8860B]" />
-                          <span>DOB: {celebrant.birthDate}</span>
-                        </span>
+              {celebrants.map((celebrant) => {
+                const activeWaLink =
+                  celebrant.hasValidPhone && celebrant.whatsappNumber
+                    ? generateWhatsAppBirthdayLink(
+                        celebrant.whatsappNumber,
+                        celebrant.fullName,
+                        wishLang
+                      )
+                    : celebrant.whatsappLink;
 
-                        {celebrant.normalizedPhone ? (
-                          <span className="flex items-center gap-1 font-mono text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            <Phone className="w-3 h-3 text-emerald-600" />
-                            <span>{celebrant.normalizedPhone}</span>
+                return (
+                  <div
+                    key={celebrant.id}
+                    className="p-4 rounded-xl border border-[#E2DCD5] bg-[#FAF8F5] hover:bg-white transition-all space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-serif font-bold text-base text-[#0F172A]">
+                          {celebrant.fullName}
+                        </h4>
+                        <div className="flex items-center gap-3 text-xs text-[#64748B] mt-1 flex-wrap">
+                          <span className="flex items-center gap-1 font-mono">
+                            <Calendar className="w-3.5 h-3.5 text-[#B8860B]" />
+                            <span>DOB: {celebrant.birthDate}</span>
                           </span>
-                        ) : (
-                          <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[11px] font-medium flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>{language === "ta" ? "வாட்ஸ்அப் எண் சேர்க்கப்படவில்லை" : "WhatsApp number not added."}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Wish Status Badge */}
-                    <div>
-                      {celebrant.wishSent ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>
-                            {language === "ta"
-                              ? "வாழ்த்து அனுப்பப்பட்டது"
-                              : "Wish Sent"}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300">
-                          <Clock className="w-3.5 h-3.5 text-amber-700" />
-                          <span>
-                            {language === "ta"
-                              ? "வாழ்த்து அனுப்பப்படவில்லை"
-                              : "Pending Wish"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Warning if no valid phone */}
-                  {!celebrant.hasValidPhone && (
-                    <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>
-                        {celebrant.warningMessage ||
-                          (language === "ta"
-                            ? "வாட்ஸ்அப் எண் சேர்க்கப்படவில்லை."
-                            : "WhatsApp number not added.")}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Action Controls */}
-                  <div className="space-y-3 pt-2 border-t border-[#E8DEC8]">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        {/* 1. WhatsApp Click-to-Chat Button */}
-                        {celebrant.hasValidPhone && celebrant.whatsappLink ? (
-                          <a
-                            href={celebrant.whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#1EBE5D] shadow-xs transition-colors"
-                            title="Opens WhatsApp with prefilled personalized message. Opening WhatsApp does not mark wish as sent."
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            <span>
-                              {language === "ta"
-                                ? "வாட்ஸ்அப் வாழ்த்து அனுப்பு"
-                                : "Send Birthday Wish via WhatsApp"}
+                          {celebrant.normalizedPhone ? (
+                            <span className="flex items-center gap-1 font-mono text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              <Phone className="w-3 h-3 text-emerald-600" />
+                              <span>{celebrant.normalizedPhone}</span>
                             </span>
-                            <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                          </a>
-                        ) : (
-                          /* Optional "Add Number" or "Update Contact" Action */
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (editingId === celebrant.id) {
-                                setEditingId(null);
-                              } else {
-                                setEditingId(celebrant.id);
-                                setEditPhone(celebrant.phoneNumber || "");
-                                setEditCountryCode(celebrant.countryCode || "+91");
-                                setContactSaveError(null);
-                              }
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors"
-                          >
-                            <Edit2 className="w-3.5 h-3.5 text-amber-800" />
-                            <span>
-                              {language === "ta"
-                                ? "எண்ணைச் சேர்க்கவும்"
-                                : "Add Number / Update Contact"}
+                          ) : (
+                            <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[11px] font-medium flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                              <span>{language === "ta" ? "வாட்ஸ்அப் எண் சேர்க்கப்படவில்லை" : "WhatsApp number not added."}</span>
                             </span>
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
 
-                      {/* 2. Manual status update confirmation */}
+                      {/* Wish Status Badge */}
                       <div>
                         {celebrant.wishSent ? (
-                          <span className="text-[11px] text-[#64748B]">
-                            Confirmed by admin
-                            {celebrant.wishSentAt
-                              ? ` on ${new Date(celebrant.wishSentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                              : ""}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleMarkWishSent(celebrant.id)}
-                            disabled={markingId === celebrant.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#102A4C] bg-white hover:bg-[#F1ECE4] border border-[#CBD5E1] transition-colors disabled:opacity-50"
-                          >
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>
-                              {markingId === celebrant.id
-                                ? "Saving..."
-                                : language === "ta"
-                                ? "வாழ்த்தியதாகக் குறிக்கவும்"
-                                : "Mark Wish as Sent"}
+                              {language === "ta"
+                                ? "வாழ்த்து அனுப்பப்பட்டது"
+                                : "Wish Sent"}
                             </span>
-                          </button>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                            <Clock className="w-3.5 h-3.5 text-amber-700" />
+                            <span>
+                              {language === "ta"
+                                ? "வாழ்த்து அனுப்பப்படவில்லை"
+                                : "Pending Wish"}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Warning if no valid phone */}
+                    {!celebrant.hasValidPhone && (
+                      <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>
+                          {celebrant.warningMessage ||
+                            (language === "ta"
+                              ? "வாட்ஸ்அப் எண் சேர்க்கப்படவில்லை."
+                              : "WhatsApp number not added.")}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Action Controls */}
+                    <div className="space-y-3 pt-2 border-t border-[#E8DEC8]">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {/* 1. WhatsApp Click-to-Chat Button */}
+                          {celebrant.hasValidPhone && activeWaLink ? (
+                            <a
+                              href={activeWaLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#1EBE5D] shadow-xs transition-colors"
+                              title="Opens WhatsApp with prefilled personalized message. Opening WhatsApp does not mark wish as sent."
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              <span>
+                                {language === "ta"
+                                  ? "வாட்ஸ்அப் வாழ்த்து அனுப்பு"
+                                  : "Send Birthday Wish via WhatsApp"}
+                              </span>
+                              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                            </a>
+                          ) : (
+                            /* Optional "Add Number" or "Update Contact" Action */
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingId === celebrant.id) {
+                                  setEditingId(null);
+                                } else {
+                                  setEditingId(celebrant.id);
+                                  setEditPhone(celebrant.phoneNumber || "");
+                                  setEditCountryCode(celebrant.countryCode || "+91");
+                                  setContactSaveError(null);
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-amber-800" />
+                              <span>
+                                {language === "ta"
+                                  ? "எண்ணைச் சேர்க்கவும்"
+                                  : "Add Number / Update Contact"}
+                              </span>
+                            </button>
+                          )}
+
+                          {/* Preview Message Toggle */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewId(previewId === celebrant.id ? null : celebrant.id)
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#102A4C] bg-white hover:bg-[#F1ECE4] border border-[#CBD5E1] transition-colors"
+                            title={language === "ta" ? "வாழ்த்துச் செய்தியைக் காண்க" : "Preview birthday message"}
+                          >
+                            {previewId === celebrant.id ? (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 text-[#64748B]" />
+                                <span>{language === "ta" ? "மறை" : "Hide"}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="w-3.5 h-3.5 text-[#B8860B]" />
+                                <span>{language === "ta" ? "செய்தி" : "Preview"}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* 2. Manual status update confirmation */}
+                        <div>
+                          {celebrant.wishSent ? (
+                            <span className="text-[11px] text-[#64748B]">
+                              Confirmed by admin
+                              {celebrant.wishSentAt
+                                ? ` on ${new Date(celebrant.wishSentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                                : ""}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkWishSent(celebrant.id)}
+                              disabled={markingId === celebrant.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#102A4C] bg-white hover:bg-[#F1ECE4] border border-[#CBD5E1] transition-colors disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>
+                                {markingId === celebrant.id
+                                  ? "Saving..."
+                                  : language === "ta"
+                                  ? "வாழ்த்தியதாகக் குறிக்கவும்"
+                                  : "Mark Wish as Sent"}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Preview Box */}
+                      {previewId === celebrant.id && (
+                        <div className="p-3.5 bg-[#FFFDF9] rounded-xl border border-[#E2DCD5] space-y-2 text-xs shadow-inner animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-[#102A4C] border-b border-[#E8DEC8] pb-1.5">
+                            <span className="flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-[#B8860B]" />
+                              <span>
+                                {language === "ta"
+                                  ? "வாழ்த்து செய்தி முன்னோட்டம்:"
+                                  : "Birthday Message Preview:"}
+                              </span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyWish(celebrant)}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#102A4C] hover:text-[#B8860B] px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
+                            >
+                              {copiedId === celebrant.id ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-600" />
+                                  <span className="text-emerald-700 font-bold">
+                                    {language === "ta" ? "நகலெடுக்கப்பட்டது!" : "Copied!"}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3 text-[#B8860B]" />
+                                  <span>{language === "ta" ? "நகலெடு" : "Copy Message"}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-[#E8DEC8] text-xs font-sans text-[#334155] whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto">
+                            {getBirthdayWishMessageText(celebrant.fullName, wishLang)}
+                          </div>
+                        </div>
+                      )}
 
                     {/* 3. Inline Contact Update Form when expanded */}
                     {editingId === celebrant.id && (
@@ -483,7 +604,8 @@ export function BirthdayReminderModal({
                     )}
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
         </div>

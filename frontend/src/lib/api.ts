@@ -98,6 +98,11 @@ import {
   RudrakshaCatalogResponse,
   RudrakshaRecommendationRequest,
   RudrakshaRecommendationSummary,
+  NakshatraRitualItem,
+  NakshatraRitualsListResponse,
+  SannuKnowledgeOverviewResponse,
+  KarmaRitualsAnalysisRequest,
+  SannuKarmaDiagnosticResponse,
   UnifiedMarriageRequest,
   UnifiedMarriageResponse,
   MarriageCompatibilityRequest,
@@ -117,7 +122,19 @@ import {
   MuhurtaCertificatePdfRequest,
   PanchaPakshiPdfReportRequest,
   GemstoneRudrakshaPlaybookPdfRequest,
+  MarriageCompatibilityPdfReportRequest,
   SavedHoroscopeWritingListResponse,
+  SpousePredictionRequest,
+  SpousePredictionResponse,
+  NakshatraItem,
+  FunctionalNatureGroup,
+  NakshatraSummaryTableRow,
+  ActivityCheckResult,
+  PadaDoshaResult,
+  EbookTreatise,
+  NakshatraPredictionDetail,
+  JamakkolPrasanamRequest,
+  JamakkolPrasanamResponse,
 } from "./types";
 
 
@@ -509,6 +526,7 @@ export interface ClientHoroscopeFormData {
   houseSystemId: number;
   includePanchang: boolean;
   includeOuterPlanets: boolean;
+  gender?: "male" | "female" | string;
 }
 
 /**
@@ -537,6 +555,7 @@ export async function calculateFullHoroscopeSuite(
     include_ashtakavarga: true,
     include_vedic_yogas: true,
     include_doshas: true,
+    gender: form.gender || "male",
   });
 
   // 2. Calculate Vimshottari Dasa (complete 5 levels: Maha -> Antar -> Pratyantar -> Sookshma -> Prana)
@@ -588,6 +607,7 @@ export async function calculateFullHoroscopeSuite(
       timezone: form.timezone,
       ayanamsaId: form.ayanamsaId,
       houseSystemId: form.houseSystemId,
+      gender: form.gender || "male",
     },
   };
 }
@@ -1592,6 +1612,39 @@ export async function getRudrakshaRecommendation(
   });
 }
 
+// ─── Sannu Ahmed: Vedic Astrology Rituals & Remedies API ─────────────────────
+
+export async function getSannuRitualsKnowledge(): Promise<SannuKnowledgeOverviewResponse> {
+  return request<SannuKnowledgeOverviewResponse>("/api/v1/remedies/sannu-knowledge");
+}
+
+export async function getNakshatraRituals(): Promise<NakshatraRitualsListResponse> {
+  return request<NakshatraRitualsListResponse>("/api/v1/remedies/nakshatra-rituals");
+}
+
+export async function getNakshatraRitualByName(name: string): Promise<NakshatraRitualItem> {
+  return request<NakshatraRitualItem>(`/api/v1/remedies/nakshatra-rituals/${encodeURIComponent(name)}`);
+}
+
+export async function getNakshatraDoshas(): Promise<Record<string, any>> {
+  return request<Record<string, any>>("/api/v1/remedies/nakshatra-doshas");
+}
+
+export async function analyzeKarmaRituals(
+  req: KarmaRitualsAnalysisRequest,
+  token?: string
+): Promise<SannuKarmaDiagnosticResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SannuKarmaDiagnosticResponse>("/api/v1/remedies/analyze-karma-rituals", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+
 
 // ------------------------------------------------------------------------------
 // KP Events & Prediction API Functions
@@ -2169,3 +2222,138 @@ export async function downloadGemstoneRudrakshaPlaybookPdf(
   return response.blob();
 }
 
+
+
+/**
+ * Download Marriage Compatibility & 36 Ashta Kuta PDF Report (POST /api/v1/reports/marriage-compatibility/pdf)
+ */
+export async function downloadMarriageCompatibilityPdf(
+  req: MarriageCompatibilityPdfReportRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/marriage-compatibility/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate Marriage Compatibility PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+
+/**
+ * 23b. Life Partner & Spouse Prediction (POST /api/v1/predictions/spouse)
+ */
+export async function predictSpouseEvent(
+  req: SpousePredictionRequest,
+  token?: string
+): Promise<SpousePredictionResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SpousePredictionResponse>("/api/v1/predictions/spouse", {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 27. Nakshatras Shastra Catalog (GET /api/v1/nakshatras)
+ */
+export async function fetchNakshatras(params?: {
+  nature?: string;
+  direction?: string;
+  gender?: string;
+  result?: string;
+  search?: string;
+}): Promise<NakshatraItem[]> {
+  const query = new URLSearchParams();
+  if (params?.nature) query.set("nature", params.nature);
+  if (params?.direction) query.set("direction", params.direction);
+  if (params?.gender) query.set("gender", params.gender);
+  if (params?.result) query.set("result", params.result);
+  if (params?.search) query.set("search", params.search);
+  const qStr = query.toString();
+  return request<NakshatraItem[]>(`/api/v1/nakshatras${qStr ? `?${qStr}` : ""}`);
+}
+
+/**
+ * 28. Functional Natures Summary (GET /api/v1/nakshatras/functional-natures)
+ */
+export async function fetchFunctionalNatures(): Promise<Record<string, FunctionalNatureGroup>> {
+  return request<Record<string, FunctionalNatureGroup>>("/api/v1/nakshatras/functional-natures");
+}
+
+/**
+ * 29. Canonical Summary Table (GET /api/v1/nakshatras/summary-table)
+ */
+export async function fetchNakshatraSummaryTable(): Promise<NakshatraSummaryTableRow[]> {
+  return request<NakshatraSummaryTableRow[]>("/api/v1/nakshatras/summary-table");
+}
+
+/**
+ * 30. Check Activity Electional Suitability (POST /api/v1/nakshatras/check-activity)
+ */
+export async function checkActivitySuitability(
+  activity: string,
+  nakshatra: string
+): Promise<ActivityCheckResult> {
+  return request<ActivityCheckResult>("/api/v1/nakshatras/check-activity", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ activity, nakshatra }),
+  });
+}
+
+/**
+ * 31. Pada Dosha Diagnostic (POST /api/v1/nakshatras/pada-dosha)
+ */
+export async function checkPadaDosha(
+  nakshatra: string,
+  pada: number
+): Promise<PadaDoshaResult> {
+  return request<PadaDoshaResult>("/api/v1/nakshatras/pada-dosha", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nakshatra, pada }),
+  });
+}
+
+/**
+ * 32. Nakshatra E-Book Treatise (GET /api/v1/nakshatras/treatise)
+ */
+export async function fetchEbookTreatise(): Promise<EbookTreatise> {
+  return request<EbookTreatise>("/api/v1/nakshatras/treatise");
+}
+
+/**
+ * 33. Nakshatra Prediction Report (GET /api/v1/nakshatras/prediction/{identifier})
+ */
+export async function fetchNakshatraPrediction(
+  identifier: string,
+  pada?: number
+): Promise<NakshatraPredictionDetail> {
+  const qStr = pada ? `?pada=${pada}` : "";
+  return request<NakshatraPredictionDetail>(`/api/v1/nakshatras/prediction/${encodeURIComponent(identifier)}${qStr}`);
+}
+
+export async function calculateJamakkolPrasanam(
+  payload: JamakkolPrasanamRequest
+): Promise<JamakkolPrasanamResponse> {
+  return request<JamakkolPrasanamResponse>("/api/v1/jamakkol-prasanam/calculate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

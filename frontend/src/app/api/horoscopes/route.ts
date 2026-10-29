@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.trim() || "";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
-    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "6", 10) || 6));
+    const limit = Math.max(1, Math.min(1000, parseInt(searchParams.get("limit") || "6", 10) || 6));
     const offset = (page - 1) * limit;
     const viewAll = searchParams.get("all") === "true";
 
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("saved_horoscopes")
       .select(
-        "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, calculation_result, created_at, updated_at",
+        "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at",
         { count: "exact" }
       );
 
@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.ilike("person_name", `%${search}%`);
+      const sanitized = search.replace(/[,()]/g, " ").trim();
+      query = query.or(`person_name.ilike.%${sanitized}%,birthplace.ilike.%${sanitized}%`);
     }
 
     // Display saved horoscopes in descending order of generation/creation time (newest first)
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
     );
 
     let enrichedHoroscopes = (horoscopes || []).map((h) => {
-      const calc = h.calculation_result || {};
+      const calc = (h as any).calculation_result || {};
       const savedCust = calc.customer;
       let matchedCust = savedCust?.id ? customerById.get(savedCust.id) : undefined;
       if (!matchedCust) {
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
       const hasPhone = !!matchedCust?.normalized_phone && !matchedCust?.is_legacy_without_phone;
 
       // Clean calculation_result from lightweight listing to preserve bandwidth
-      const { calculation_result: _, ...cleanHoro } = h;
+      const { calculation_result: _, ...cleanHoro } = h as any;
 
       const resolvedBirthTime =
         (h.birth_time && typeof h.birth_time === "string" && h.birth_time.trim()) ||
@@ -121,6 +122,7 @@ export async function GET(request: NextRequest) {
 
       return {
         ...cleanHoro,
+        gender: calc.clientInputs?.gender || (h as any).gender || "male",
         birth_time: resolvedBirthTime,
         customer_id: matchedCust?.id || savedCust?.id || null,
         customer: hasPhone ? matchedCust : null,
@@ -338,22 +340,26 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    const effectiveGender = (body.gender || calculation_result?.clientInputs?.gender || "male").toLowerCase();
     const structuredSnapshot = {
       schema_version: "1.0.0",
       idempotency_key: effectiveIdempotencyKey,
       calculatedAt: calculation_result.calculatedAt || new Date().toISOString(),
-      clientInputs: calculation_result.clientInputs || {
-        fullName: trimmedName,
-        birthDate: birth_date,
-        birthTime: birth_time,
-        isTimeConfirmed: true,
-        locationName: (birthplace || "Unknown Location").trim(),
-        latitude,
-        longitude,
-        timezone: (timezone || "UTC").trim(),
-        ayanamsaId: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
-        houseSystemId: typeof house_system_id === "number" ? house_system_id : 2,
-      },
+      clientInputs: calculation_result.clientInputs
+        ? { ...calculation_result.clientInputs, gender: effectiveGender }
+        : {
+            fullName: trimmedName,
+            birthDate: birth_date,
+            birthTime: birth_time,
+            gender: effectiveGender,
+            isTimeConfirmed: true,
+            locationName: (birthplace || "Unknown Location").trim(),
+            latitude,
+            longitude,
+            timezone: (timezone || "UTC").trim(),
+            ayanamsaId: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
+            houseSystemId: typeof house_system_id === "number" ? house_system_id : 2,
+          },
       horoscope: calculation_result.horoscope,
       dasa: dasaPayload,
       kp: calculation_result.kp,

@@ -19,6 +19,7 @@ import {
   formatCalendarAge,
   findActiveHierarchy,
   generateChildSubPeriods,
+  getActivePathExpandedKeys,
   VIMSHOTTARI_YEARS,
 } from "@/lib/dasa-helpers";
 import {
@@ -48,6 +49,7 @@ interface DasaTimelineProps {
   horoscope?: HoroscopeResponse;
   kp?: KpResponse;
   kpEventAnalysis?: KpEventAnalysisResponse | null;
+  onViewPalangal?: () => void;
 }
 
 /**
@@ -68,6 +70,18 @@ function dateToJd(isoDateStr: string): number {
     32045 +
     0.5
   );
+}
+
+/**
+ * Returns today's Gregorian calendar date in local YYYY-MM-DD format.
+ * Ensures the date is exact as per the particular day the chart is opened.
+ */
+function getTodayIsoString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatMoonLon(deg: number): string {
@@ -376,6 +390,7 @@ export function DasaTimeline({
   horoscope,
   kp,
   kpEventAnalysis,
+  onViewPalangal,
 }: DasaTimelineProps) {
   const { language, t } = useLanguage();
 
@@ -489,13 +504,11 @@ export function DasaTimeline({
 
   const utcOffsetHours = dasa?.metadata?.utc_offset_hours || 0;
 
-  // Selected date for active period detection (defaults to target_date or today)
+  // Selected date for active period detection:
+  // Defaults to today's local date ("on that particular date we opened")
   const defaultTargetDate = useMemo(() => {
-    if (dasa?.active_period?.target_date_iso) {
-      return dasa.active_period.target_date_iso;
-    }
-    return new Date().toISOString().split("T")[0];
-  }, [dasa]);
+    return getTodayIsoString();
+  }, []);
 
   const [selectedDate, setSelectedDate] = useState<string>(defaultTargetDate);
   const [showLegend, setShowLegend] = useState<boolean>(false);
@@ -515,7 +528,7 @@ export function DasaTimeline({
       return { activeHierarchy: null, selectedDateAge: null, targetJd: tJd };
     }
 
-    const hierarchy = findActiveHierarchy(tree, tJd);
+    const hierarchy = findActiveHierarchy(tree, tJd, utcOffsetHours, resolvedBirthDate);
 
     let ageStr: string | null = null;
     if (resolvedBirthDate) {
@@ -526,7 +539,7 @@ export function DasaTimeline({
     }
 
     return { activeHierarchy: hierarchy, selectedDateAge: ageStr, targetJd: tJd };
-  }, [dasa, selectedDate, resolvedBirthDate, language]);
+  }, [dasa, selectedDate, resolvedBirthDate, language, utcOffsetHours]);
 
   // State 1: Expand/collapse state for each Mahadasha chart card
   // By default, all Mahadasha cards are open so charts are shown side by side
@@ -541,27 +554,33 @@ export function DasaTimeline({
   });
 
   // State 2: Expand/collapse state for Bhukti and deeper rows
-  // By default, expand the currently active Bhukti row to reveal nested Pratyantardasa rows (as in screenshot)
+  // On initial mount, auto-expand the active path (active Bhukti + active Antharam) for today's opening date
   const [expandedRowKeys, setExpandedRowKeys] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
     if (dasa?.dasa_tree) {
-      const tJd = defaultTargetDate ? dateToJd(defaultTargetDate) : 0;
-      dasa.dasa_tree.forEach((m, mIdx) => {
-        if (tJd >= m.start_jd && tJd < m.end_jd) {
-          const bList =
-            m.sub_periods && m.sub_periods.length > 0
-              ? m.sub_periods
-              : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
-          bList.forEach((b, bIdx) => {
-            if (tJd >= b.start_jd && tJd < b.end_jd) {
-              map[`${mIdx}-${bIdx}`] = true;
-            }
-          });
-        }
-      });
+      const tJd = dateToJd(defaultTargetDate);
+      return getActivePathExpandedKeys(dasa.dasa_tree, tJd, utcOffsetHours, resolvedBirthDate, 3);
     }
-    return map;
+    return {};
   });
+
+  // Whenever targetJd or dasa changes (e.g. date picker changed or new horoscope loaded),
+  // automatically ensure the active path for that date is expanded and active Mahadasha card is open
+  useEffect(() => {
+    if (!dasa?.dasa_tree || targetJd <= 0) return;
+    const activeKeys = getActivePathExpandedKeys(
+      dasa.dasa_tree,
+      targetJd,
+      utcOffsetHours,
+      resolvedBirthDate,
+      3
+    );
+    setExpandedRowKeys((prev) => ({ ...prev, ...activeKeys }));
+    dasa.dasa_tree.forEach((m, mIdx) => {
+      if (targetJd >= m.start_jd && targetJd < m.end_jd) {
+        setExpandedMahaKeys((prev) => ({ ...prev, [mIdx]: true }));
+      }
+    });
+  }, [targetJd, dasa, utcOffsetHours, resolvedBirthDate]);
 
   const toggleMaha = (idx: number) => {
     setExpandedMahaKeys((prev) => ({ ...prev, [idx]: !prev[idx] }));
@@ -638,44 +657,20 @@ export function DasaTimeline({
   };
 
   const expandActivePath = () => {
-    if (!dasa?.dasa_tree) return;
-    const mahaMap: Record<number, boolean> = {};
-    const rowMap: Record<string, boolean> = {};
-
+    if (!dasa?.dasa_tree || targetJd <= 0) return;
+    const activeKeys = getActivePathExpandedKeys(
+      dasa.dasa_tree,
+      targetJd,
+      utcOffsetHours,
+      resolvedBirthDate,
+      5
+    );
+    setExpandedRowKeys((prev) => ({ ...prev, ...activeKeys }));
     dasa.dasa_tree.forEach((m, mIdx) => {
       if (targetJd >= m.start_jd && targetJd < m.end_jd) {
-        mahaMap[mIdx] = true;
-        const recurseActive = (
-          nodes: DasaPeriodNode[],
-          prefix: string,
-          currDepth: number
-        ) => {
-          nodes.forEach((n, idx) => {
-            const k = `${prefix}-${idx}`;
-            if (targetJd >= n.start_jd && targetJd < n.end_jd) {
-              rowMap[k] = true;
-              if (currDepth < 5) {
-                const ch =
-                  n.sub_periods && n.sub_periods.length > 0
-                    ? n.sub_periods
-                    : generateChildSubPeriods(n, utcOffsetHours, resolvedBirthDate);
-                if (ch.length > 0) {
-                  recurseActive(ch, k, currDepth + 1);
-                }
-              }
-            }
-          });
-        };
-        const bList =
-          m.sub_periods && m.sub_periods.length > 0
-            ? m.sub_periods
-            : generateChildSubPeriods(m, utcOffsetHours, resolvedBirthDate);
-        recurseActive(bList, `${mIdx}`, 2);
+        setExpandedMahaKeys((prev) => ({ ...prev, [mIdx]: true }));
       }
     });
-
-    setExpandedMahaKeys((prev) => ({ ...prev, ...mahaMap }));
-    setExpandedRowKeys((prev) => ({ ...prev, ...rowMap }));
   };
 
   // Derive or extract authoritative Birth Dasa Balance
@@ -944,6 +939,22 @@ export function DasaTimeline({
                     </strong>
                   </span>
                 )}
+                {activeHierarchy.sookshmadasha && (
+                  <span>
+                    / {language === "ta" ? "சூட்சுமம்:" : "Sookshma:"}{" "}
+                    <strong className="text-purple-700">
+                      {getLordName(activeHierarchy.sookshmadasha.lord, language)}
+                    </strong>
+                  </span>
+                )}
+                {activeHierarchy.pranadasha && (
+                  <span>
+                    / {language === "ta" ? "பிராணன்:" : "Prana:"}{" "}
+                    <strong className="text-rose-700">
+                      {getLordName(activeHierarchy.pranadasha.lord, language)}
+                    </strong>
+                  </span>
+                )}
                 {selectedDateAge && (
                   <span>• {language === "ta" ? "வயது:" : "Age:"} {selectedDateAge}</span>
                 )}
@@ -967,12 +978,33 @@ export function DasaTimeline({
 
             <button
               type="button"
+              onClick={() => setSelectedDate(getTodayIsoString())}
+              className="px-2 py-1 rounded-lg border border-[#D9DEE7] bg-white hover:bg-[#F2F4F8] text-[#183047] font-semibold transition-colors cursor-pointer text-xs"
+              title={language === "ta" ? "இன்றைய தேதிக்கு மாற்று" : "Reset to Today's date"}
+            >
+              {language === "ta" ? "இன்று" : "Today"}
+            </button>
+
+            <button
+              type="button"
               onClick={expandActivePath}
               className="px-2.5 py-1 rounded-lg border border-[#B4872B] bg-[#FAF2DE] text-[#8C6D23] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer hover:bg-[#F2E5C5]"
             >
               <Sparkles className="w-3 h-3 text-[#B4872B]" />
               <span>{language === "ta" ? "நடப்பு பாதை" : "Active Path"}</span>
             </button>
+
+            {onViewPalangal && (
+              <button
+                type="button"
+                onClick={onViewPalangal}
+                className="px-2.5 py-1 rounded-lg border border-[#153F6B] bg-[#153F6B] hover:bg-[#102d4d] text-white font-bold inline-flex items-center gap-1 transition-all shadow-xs cursor-pointer text-xs"
+                title={language === "ta" ? "தசா புத்தி பலன்கள் (Dasa Bukthi Palangal)" : "View Dasa Bukthi Predictions"}
+              >
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span>{language === "ta" ? "தசா பலன்கள் ➔" : "Predictions ➔"}</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1143,7 +1175,7 @@ function MahadashaCard({
     <div
       className={`bg-white rounded-xl border overflow-hidden shadow-xs transition-shadow hover:shadow-md ${
         isMahaActive
-          ? "border-[#103A60] ring-1 ring-[#103A60]/30"
+          ? "border-2 border-[#103A60] ring-2 ring-[#103A60]/20 shadow-md"
           : "border-[#D9DEE7]"
       }`}
     >
@@ -1178,7 +1210,7 @@ function MahadashaCard({
             )}
           </button>
 
-          <div className="font-bold text-xs sm:text-sm flex items-center gap-1">
+          <div className="font-bold text-xs sm:text-sm flex items-center gap-1.5 flex-wrap">
             <span>{pShort}</span>
             <span
               className={`font-semibold ${
@@ -1187,6 +1219,12 @@ function MahadashaCard({
             >
               ({sShort})
             </span>
+            {isMahaActive && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900 tracking-wide ml-1 shadow-2xs whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse" />
+                {language === "ta" ? "நடப்பு தசா" : "Active Dasa"}
+              </span>
+            )}
           </div>
         </div>
 
@@ -1338,13 +1376,87 @@ function DasaTableRow({
     return node.duration_years || (node.duration_days ? node.duration_days / 365.25 : undefined);
   }, [parentFullYears, node.lord, node.duration_years, node.duration_days]);
 
-  // Row styling
-  // In the screenshot:
-  // Active Bhukti row has a dark slate-grey background (#717A8A / #64748B) with white text.
-  // Inactive rows alternate between white and very light grey-blue (#F8FAFC).
-  // Child rows have left indentation on the first column.
-  const isDepth2 = depth === 2;
-  const isHighlightActive = isCurrentlyActive && isDepth2;
+  // Row styling and active badges per depth
+  let rowBgClass =
+    depth % 2 === 0
+      ? "bg-white hover:bg-[#F2F4F8]"
+      : "bg-[#F8FAFC] hover:bg-[#F2F4F8]";
+  let textColorClass = "text-[#183047]";
+  let starLordColorClass = "text-[#0284C7]";
+  let dateTextClass = "text-[#334155]";
+  let ageColorClass = "text-[#D97706]";
+  let durationTextClass = "text-[#183047] font-medium";
+  let bhavasTextClass = "text-[#183047] font-semibold";
+  let activeBadge: React.ReactNode = null;
+  let toggleBtnClass = "bg-[#153F6B] hover:bg-[#0D2F4E] text-white";
+
+  if (isCurrentlyActive) {
+    if (depth === 2) {
+      // Level 2: Active Bukthi
+      rowBgClass = "bg-[#103A60] text-white font-bold border-l-4 border-l-amber-400 shadow-xs";
+      textColorClass = "text-white font-bold";
+      starLordColorClass = "text-sky-200";
+      dateTextClass = "text-sky-100 font-medium";
+      ageColorClass = "text-amber-300 font-bold";
+      durationTextClass = "text-white font-bold";
+      bhavasTextClass = "text-amber-200 font-bold";
+      toggleBtnClass = "bg-[#0F2942] text-white border border-white/30 hover:bg-[#081B2E]";
+      activeBadge = (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900 tracking-wide ml-1.5 shadow-2xs whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse" />
+          {language === "ta" ? "நடப்பு புக்தி" : "Active Bhukti"}
+        </span>
+      );
+    } else if (depth === 3) {
+      // Level 3: Active Antharam (Pratyantardasa)
+      rowBgClass = "bg-[#FAF2DE] text-[#183047] font-bold border-l-4 border-l-[#B4872B] ring-1 ring-[#D8BD80]/80 shadow-2xs";
+      textColorClass = "text-[#183047] font-bold";
+      starLordColorClass = "text-[#0284C7] font-bold";
+      dateTextClass = "text-[#183047] font-medium";
+      ageColorClass = "text-[#B4872B] font-bold";
+      durationTextClass = "text-[#183047] font-bold";
+      bhavasTextClass = "text-[#153F6B] font-bold";
+      toggleBtnClass = "bg-[#B4872B] hover:bg-[#8C6D23] text-white";
+      activeBadge = (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#B4872B] text-white tracking-wide ml-1.5 shadow-2xs whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          {language === "ta" ? "நடப்பு அந்தரம்" : "Active Antharam"}
+        </span>
+      );
+    } else if (depth === 4) {
+      // Level 4: Active Sookshmadasha
+      rowBgClass = "bg-purple-100/90 text-purple-950 font-bold border-l-4 border-l-purple-600 ring-1 ring-purple-300 shadow-2xs";
+      textColorClass = "text-purple-950 font-bold";
+      starLordColorClass = "text-purple-700 font-bold";
+      dateTextClass = "text-purple-900 font-medium";
+      ageColorClass = "text-purple-700 font-bold";
+      durationTextClass = "text-purple-950 font-bold";
+      bhavasTextClass = "text-purple-900 font-bold";
+      toggleBtnClass = "bg-purple-700 hover:bg-purple-800 text-white";
+      activeBadge = (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-600 text-white tracking-wide ml-1.5 shadow-2xs whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          {language === "ta" ? "நடப்பு சூட்சுமம்" : "Active Sookshma"}
+        </span>
+      );
+    } else if (depth === 5) {
+      // Level 5: Active Pranadasha
+      rowBgClass = "bg-emerald-100/90 text-emerald-950 font-bold border-l-4 border-l-emerald-600 ring-1 ring-emerald-300 shadow-2xs";
+      textColorClass = "text-emerald-950 font-bold";
+      starLordColorClass = "text-emerald-700 font-bold";
+      dateTextClass = "text-emerald-900 font-medium";
+      ageColorClass = "text-emerald-700 font-bold";
+      durationTextClass = "text-emerald-950 font-bold";
+      bhavasTextClass = "text-emerald-900 font-bold";
+      toggleBtnClass = "bg-emerald-700 hover:bg-emerald-800 text-white";
+      activeBadge = (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white tracking-wide ml-1.5 shadow-2xs whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          {language === "ta" ? "நடப்பு பிராணன்" : "Active Prana"}
+        </span>
+      );
+    }
+  }
 
   return (
     <>
@@ -1352,13 +1464,7 @@ function DasaTableRow({
         onClick={() => hasChildren && onToggleRow(rowKey)}
         className={`transition-colors text-xs select-none ${
           hasChildren ? "cursor-pointer" : ""
-        } ${
-          isHighlightActive
-            ? "bg-[#717A8A] text-white font-bold"
-            : depth % 2 === 0
-            ? "bg-white hover:bg-[#F2F4F8]"
-            : "bg-[#F8FAFC] hover:bg-[#F2F4F8]"
-        }`}
+        } ${rowBgClass}`}
       >
         {/* Col 1: Bukthi Name + Star Lord + Expand/Collapse Square Button */}
         <td className="py-1.5 px-2.5 whitespace-nowrap">
@@ -1375,11 +1481,7 @@ function DasaTableRow({
                   onToggleRow(rowKey);
                 }}
                 aria-label={isExpanded ? "Collapse" : "Expand"}
-                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-xs sm:rounded-sm flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition-colors ${
-                  isHighlightActive
-                    ? "bg-[#0F2942] text-white border border-white/30 hover:bg-[#081B2E]"
-                    : "bg-[#153F6B] hover:bg-[#0D2F4E] text-white"
-                }`}
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-xs sm:rounded-sm flex items-center justify-center shrink-0 cursor-pointer shadow-2xs transition-colors ${toggleBtnClass}`}
               >
                 {isExpanded ? (
                   <Minus className="w-2.5 h-2.5 stroke-[3]" />
@@ -1391,44 +1493,33 @@ function DasaTableRow({
               <span className="w-3.5 sm:w-4 inline-block shrink-0" />
             )}
 
-            <div className="flex items-center gap-1">
-              <span
-                className={`font-semibold ${
-                  isHighlightActive ? "text-white font-bold" : "text-[#183047]"
-                }`}
-              >
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className={`font-semibold ${textColorClass}`}>
                 {pShort}
               </span>
-              <span
-                className={`text-[11px] font-medium ${
-                  isHighlightActive ? "text-sky-200" : "text-[#0284C7]"
-                }`}
-              >
+              <span className={`text-[11px] font-medium ${starLordColorClass}`}>
                 ({sShort})
               </span>
+              {activeBadge}
             </div>
           </div>
         </td>
 
         {/* Col 2: From Date */}
         <td
-          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${
-            isHighlightActive ? "text-white" : "text-[#334155]"
-          }`}
+          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${dateTextClass}`}
         >
           {sDateStr}
         </td>
 
         {/* Col 3: To Date + Age (e.g. 09/04/1994 (14Y 1M)) */}
         <td className="py-1.5 px-2 font-mono text-[11px] whitespace-nowrap">
-          <span className={isHighlightActive ? "text-white" : "text-[#334155]"}>
+          <span className={dateTextClass}>
             {eDateStr}
           </span>
           {ageStr && (
             <span
-              className={`text-[10px] sm:text-[11px] ml-1 font-medium ${
-                isHighlightActive ? "text-amber-200 font-bold" : "text-[#D97706]"
-              }`}
+              className={`text-[10px] sm:text-[11px] ml-1 font-medium ${ageColorClass}`}
             >
               ({ageStr})
             </span>
@@ -1437,18 +1528,14 @@ function DasaTableRow({
 
         {/* Col 4: Duration (e.g. 0.4.27, 1.2.0, 0.2.0) */}
         <td
-          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${
-            isHighlightActive ? "text-white font-bold" : "text-[#183047] font-medium"
-          }`}
+          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${durationTextClass}`}
         >
           {durationStr}
         </td>
 
         {/* Col 5: Benefit Bhavas (e.g. 7 | 6 | 7 | 3, 8) */}
         <td
-          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${
-            isHighlightActive ? "text-white font-bold" : "text-[#183047] font-semibold"
-          }`}
+          className={`py-1.5 px-2 font-mono text-[11px] whitespace-nowrap ${bhavasTextClass}`}
           title={`Benefit Bhavas: ${benefitBhavas}`}
         >
           {benefitBhavas}

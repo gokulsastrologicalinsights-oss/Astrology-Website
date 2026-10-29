@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { FeatureGuard } from "@/components/auth/FeatureGuard";
 import {
   KpRequest,
   KpResponse,
@@ -258,7 +259,7 @@ function AdvancedKpContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
@@ -294,14 +295,6 @@ function AdvancedKpContent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/tools/transit-watch"
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-[#8C6D23] bg-[#FAF2DE] border border-[#D8BD80] hover:bg-[#F2E5C2] transition-colors flex items-center gap-1.5 shadow-2xs"
-          >
-            <Clock className="w-3.5 h-3.5 text-[#B8862B]" />
-            <span>{language === "ta" ? "KP கோசாரம்" : "KP Transit Watch"}</span>
-          </Link>
-
           <Link
             href="/tools"
             className="px-4 py-2 rounded-xl text-xs font-semibold text-[#52667E] border border-[#DDE5F0] hover:bg-[#F8FAFC] transition-colors"
@@ -731,14 +724,16 @@ function AdvancedKpContent() {
 
 export default function AdvancedKpPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#E8EEF7]">
-          <div className="w-8 h-8 border-4 border-[#B8862B] border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <AdvancedKpContent />
-    </Suspense>
+    <FeatureGuard permission="kp_astrology">
+      <Suspense
+        fallback={
+          <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center bg-[#E8EEF7]">
+            <div className="w-8 h-8 border-4 border-[#B8862B] border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <AdvancedKpContent />
+      </Suspense>
+    </FeatureGuard>
   );
 }

@@ -957,6 +957,34 @@ async def generate_remedy_analysis(
     # Ranking
     recommendations = rank_and_retrieve_remedies(context, factors, remedies, temples)
 
+    # Sannu Ahmed Vedic Rituals & Karma Diagnostic
+    planets_dict: Dict[str, Dict[str, Any]] = {}
+    planets_raw = chart_data.get("planets") or []
+    if isinstance(planets_raw, list):
+        for p in planets_raw:
+            p_name = _norm(p.get("name") or p.get("planet"))
+            if p_name:
+                planets_dict[p_name] = p
+    elif isinstance(planets_raw, dict):
+        for k, v in planets_raw.items():
+            planets_dict[_norm(k)] = v
+
+    from app.services.remedy_engine.sannu_rituals_engine import SannuRitualsEngine
+    sannu_diagnostic = SannuRitualsEngine.diagnose_chart_karma_and_rituals(
+        lagna_sign=context.lagna_sign,
+        moon_sign=context.moon_sign,
+        moon_nakshatra=context.moon_nakshatra,
+        planets_dict=planets_dict,
+        running_mahadasha=context.running_mahadasha,
+        running_bhukti=context.running_bhukti,
+        yogakaraka_planets=context.yogakaraka_planets,
+        functional_benefics=context.functional_benefics,
+        functional_malefics=context.functional_malefics,
+        combust_planets=context.combust_planets,
+        debilitated_planets=context.debilitated_planets,
+        dusthana_planets=context.dusthana_planets,
+    )
+
     fingerprint_seed = {
         "lagna": context.lagna_sign,
         "moon": context.moon_sign,
@@ -980,4 +1008,5 @@ async def generate_remedy_analysis(
         is_stale=False,
         input_fingerprint=input_fingerprint,
         status="complete",
+        sannu_rituals_diagnostic=sannu_diagnostic,
     )

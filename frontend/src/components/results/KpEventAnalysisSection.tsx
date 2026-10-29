@@ -91,7 +91,7 @@ export function KpEventAnalysisSection({
   useEffect(() => {
     if (isAuthenticated) {
       setIsLoadingSavedList(true);
-      fetch("/api/horoscopes?limit=50")
+      fetch("/api/horoscopes?limit=1000")
         .then((res) => (res.ok ? res.json() : Promise.reject("Failed to fetch")))
         .then((data) => {
           if (data?.horoscopes) {

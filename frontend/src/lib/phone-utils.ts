@@ -184,6 +184,53 @@ export function validateAndNormalizePhone(
 }
 
 /**
+ * Returns the plain-text birthday wish message for the specified recipient and language.
+ */
+export function getBirthdayWishMessageText(
+  customerName?: string | null,
+  lang: "en" | "ta" = "ta"
+): string {
+  const trimmedName = (customerName || "").trim();
+  const safeName = trimmedName || (lang === "ta" ? "அன்பரே" : "Valued Client");
+
+  return lang === "ta"
+    ? `வணக்கம், ${safeName}
+
+உங்களுக்கு இனிய பிறந்தநாள் நல்வாழ்த்துகள்! 🎉
+
+இந்த ஆண்டு உங்கள் வாழ்வில் நல்ல ஆரோக்கியம், மனநிம்மதி, மகிழ்ச்சி, செல்வச் செழிப்பு என அனைத்தும் நிறையட்டும். இறைவனின் அருளால் உங்கள் ஆசைகள் அனைத்தும் நிறைவேற மனதார வாழ்த்துகிறோம்! 🙏✨
+
+🎁 **உங்களுக்காக ஒரு சிறிய பிறந்தநாள் பரிசு!** 🔮
+
+எங்களது சேவையைப் பயன்படுத்திய அனுபவம் உங்களுக்குப் பிடித்திருந்தால், Google-ல் ⭐⭐⭐⭐⭐ 5-Star Review வழங்கி உங்கள் கருத்தைப் பகிருங்கள். அதற்கு எங்களின் அன்பான நன்றியாக, **ஒரு இலவச ஜோதிட ஆலோசனையைப்** பெற்றுக்கொள்ளுங்கள்! ❤️
+
+⭐ Google Review: https://share.google/iwcotLgirm9CMBQsu
+
+மீண்டும் ஒருமுறை இனிய பிறந்தநாள் வாழ்த்துகள்! உங்கள் வாழ்க்கை எப்போதும் மகிழ்ச்சியாக அமையட்டும்! 💐
+
+அன்புடன்,
+**கோகுல் முருகன்**
+*Gokul’s Astrological Insights* 🔱`
+    : `Dear ${safeName},
+
+Wishing you a very Happy Birthday! 🎉
+
+May this year bring you good health, peace of mind, happiness, and prosperity in abundance. With divine blessings, we wholeheartedly wish that all your aspirations come true! 🙏✨
+
+🎁 **A Small Birthday Gift For You!** 🔮
+
+If you loved our service, please share your thoughts with a ⭐⭐⭐⭐⭐ 5-Star Review on Google. As our token of heartfelt gratitude, claim a **FREE astrological consultation**! ❤️
+
+⭐ Google Review: https://share.google/iwcotLgirm9CMBQsu
+
+Once again, wishing you a very Happy Birthday! May your life always be filled with happiness! 💐
+
+Warm regards,
+**Gokul Murugan**
+*Gokul’s Astrological Insights* 🔱`;
+}
+
+/**
  * Generates an authentic WhatsApp click-to-chat link with personalized birthday message.
  * Strict requirement: Use the international number format in the WhatsApp link,
  * without the leading plus sign, spaces, or punctuation.
@@ -192,7 +239,7 @@ export function validateAndNormalizePhone(
 export function generateWhatsAppBirthdayLink(
   whatsappNumber?: string | null,
   customerName?: string | null,
-  lang: "en" | "ta" = "en"
+  lang: "en" | "ta" = "ta"
 ): string {
   if (!whatsappNumber) return "";
 
@@ -202,15 +249,11 @@ export function generateWhatsAppBirthdayLink(
     return "";
   }
 
-  const safeName = (customerName || "").trim() || "Valued Client";
-
-  const messageText =
-    lang === "ta"
-      ? `வணக்கம் ${safeName}! கோகுல் ஜோதிட ஆராய்ச்சி மையம் (Gokul's Astrological Insights) சார்பாக தங்களுக்கு இனிய பிறந்தநாள் நல்வாழ்த்துகள்! இந்த ஆண்டு உங்களுக்கு ஆயுள், ஆரோக்கியம், அமைதி, மகிழ்ச்சி மற்றும் சகல சௌபாக்கியங்களையும் வழங்க இறைவனை பிரார்த்திக்கிறோம். வாழ்த்துகளுடன், கோகுல் முருகன்.`
-      : `Dear ${safeName}, Warm greetings from Gokul's Astrological Insights! Wishing you a very Happy Birthday! May the cosmic alignments bless you with health, prosperity, peace, and abundance in the year ahead. With warm regards, Gokul Murugan.`;
-
+  const messageText = getBirthdayWishMessageText(customerName, lang);
   const encodedText = encodeURIComponent(messageText);
-  return `https://wa.me/${cleanWaNumber}?text=${encodedText}`;
+  // Using direct api.whatsapp.com/send/ endpoint instead of wa.me shortlink.
+  // wa.me's HTTP 302 redirect has a known server-side bug that corrupts 4-byte UTF-8 emojis into %EF%BF%BD (diamond replacement characters).
+  return `https://api.whatsapp.com/send/?phone=${cleanWaNumber}&text=${encodedText}`;
 }
 
 /**

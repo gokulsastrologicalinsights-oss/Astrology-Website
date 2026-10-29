@@ -4,6 +4,7 @@ import React from "react";
 import { PlanetaryKpPosition, CalculationMetadata } from "@/lib/types";
 import { formatDms } from "@/lib/formatters";
 import { getGrahaName, getRasiName, getLordName } from "@/lib/translations";
+import { getGrahaDignity } from "@/lib/dignity";
 
 interface KpBirthChartTabProps {
   planets: PlanetaryKpPosition[];
@@ -85,10 +86,13 @@ export function KpBirthChartTab({ planets, metadata, language }: KpBirthChartTab
           <tbody className="divide-y divide-[#F1F5F9] text-[#1E293B]">
             {planets.map((p) => {
               const signDeg = p.longitude % 30.0;
+              const dignity = getGrahaDignity(p.planet, p.sign_index, undefined, signDeg);
               return (
                 <tr key={p.planet} className="hover:bg-[#FAF6EC]/60 transition-colors">
-                  <td className="px-3 py-2.5 font-bold text-[#102A4C] whitespace-nowrap">
-                    {getGrahaName(p.planet, language)}
+                  <td className="px-3 py-2.5 font-bold whitespace-nowrap">
+                    <span className={dignity.colorClass}>
+                      {getGrahaName(p.planet, language)}
+                    </span>
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono text-xs">
                     {formatDms(signDeg)} in {getRasiName(p.sign_index, language)}

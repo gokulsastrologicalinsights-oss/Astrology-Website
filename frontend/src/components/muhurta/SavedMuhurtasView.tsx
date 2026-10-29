@@ -392,7 +392,7 @@ export function SavedMuhurtasView() {
       {/* Side-by-Side Comparison Matrix Modal */}
       {isCompareModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-5xl w-full shadow-2xl border border-slate-200 space-y-6 my-8">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-7xl w-full shadow-2xl border border-slate-200 space-y-6 my-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2">
                 <span className="p-2 rounded-xl bg-purple-100 text-purple-800">

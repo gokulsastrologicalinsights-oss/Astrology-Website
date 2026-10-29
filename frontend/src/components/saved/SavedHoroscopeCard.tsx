@@ -107,6 +107,17 @@ export function SavedHoroscopeCard({
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FAF2DE] text-[#B4872B] border border-[#D8BD80]">
                   {idNumber}
                 </span>
+                {(horoscope as any).gender && (
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                    (horoscope as any).gender === "female"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : "bg-blue-50 text-blue-700 border-blue-200"
+                  }`}>
+                    {(horoscope as any).gender === "female"
+                      ? (language === "ta" ? "👩 பெண்" : "👩 Female")
+                      : (language === "ta" ? "👨 ஆண்" : "👨 Male")}
+                  </span>
+                )}
                 <h3
                   className="font-bold text-sm sm:text-base text-[#183047] truncate"
                   title={displayName}
@@ -236,6 +247,16 @@ export function SavedHoroscopeCard({
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
+
+              {/* Dasa Bukthi Palangal Direct Action */}
+              <Link
+                href={`/horoscope/results?id=${horoscope.id}&tab=dasa-palangal`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-300 hover:border-[#B4872B] bg-amber-50/80 hover:bg-amber-100 text-xs font-semibold text-[#8C6D23] transition-colors"
+                title={language === "ta" ? "தசா புத்தி பலன்கள் (Dasa Bukthi Palangal)" : "Dasa Bukthi Palangal"}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#B4872B]" />
+                <span className="hidden sm:inline">{language === "ta" ? "தசா பலன்" : "Dasa Palan"}</span>
+              </Link>
 
               {/* View Action Button matching Screenshot 2 */}
               <Link

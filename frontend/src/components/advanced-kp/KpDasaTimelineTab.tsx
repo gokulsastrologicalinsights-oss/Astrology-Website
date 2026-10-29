@@ -134,26 +134,46 @@ export function KpDasaTimelineTab({ dasaHierarchy, language }: KpDasaTimelineTab
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F1F5F9] text-[#1E293B]">
-              {dasaHierarchy.mahadashas.map((md, idx) => (
-                <tr key={idx} className="hover:bg-[#FAF6EC]/60 transition-colors">
-                  <td className="px-3 py-2 text-xs font-mono text-[#64748B]">{idx + 1}</td>
-                  <td className="px-3 py-2 font-bold text-[#102A4C] whitespace-nowrap">
-                    {getLordName(md.lord, language)}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">
-                    {formatDate(md.start_date)}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">
-                    {formatDate(md.end_date)}
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono text-xs text-[#475569]">
-                    {md.duration_days.toFixed(1)}
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold text-[#102A4C] font-mono text-xs">
-                    {(md.duration_days / 365.25).toFixed(2)} y
-                  </td>
-                </tr>
-              ))}
+              {dasaHierarchy.mahadashas.map((md, idx) => {
+                const todayIso = new Date().toISOString().split("T")[0];
+                const sDate = (md.start_date || "").split("T")[0];
+                const eDate = (md.end_date || "").split("T")[0];
+                const isCurrent = sDate && eDate && todayIso >= sDate && todayIso < eDate;
+
+                return (
+                  <tr
+                    key={idx}
+                    className={`transition-colors ${
+                      isCurrent
+                        ? "bg-[#FAF2DE] font-bold text-[#102A4C] border-l-4 border-l-[#B8862B]"
+                        : "hover:bg-[#FAF6EC]/60"
+                    }`}
+                  >
+                    <td className="px-3 py-2 text-xs font-mono text-[#64748B]">{idx + 1}</td>
+                    <td className="px-3 py-2 font-bold text-[#102A4C] whitespace-nowrap">
+                      <span>{getLordName(md.lord, language)}</span>
+                      {isCurrent && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900 tracking-wide ml-2 shadow-2xs whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse" />
+                          {language === "ta" ? "நடப்பு தசா" : "Active Dasa"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">
+                      {formatDate(md.start_date)}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">
+                      {formatDate(md.end_date)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-xs text-[#475569]">
+                      {md.duration_days.toFixed(1)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold text-[#102A4C] font-mono text-xs">
+                      {(md.duration_days / 365.25).toFixed(2)} y
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

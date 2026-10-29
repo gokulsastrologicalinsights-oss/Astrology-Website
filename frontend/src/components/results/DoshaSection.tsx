@@ -587,7 +587,7 @@ export function DoshaSection({
       {/* 5. Detailed Analytical Inspector Modal */}
       {selectedDosha && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl border-2 border-[#D8BD80] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-white rounded-2xl border-2 border-[#D8BD80] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-4 border-b border-[#E2DCD5]">
               <div className="space-y-1">

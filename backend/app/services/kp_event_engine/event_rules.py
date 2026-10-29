@@ -421,6 +421,30 @@ EVENT_REGISTRY: Dict[str, EventRule] = {
         red_hint="Spiritual journeys may take a backseat to mundane responsibilities.",
         description="Holy shrine visits, deeksha, mantra initiation, and inner retreat.",
     ),
+    "Critical longevity / Maraka period": EventRule(
+        name="Critical longevity / Maraka period",
+        category="Health",
+        supporting_houses=[2, 7, 8, 12],
+        denying_houses=[1, 5, 11],
+        primary_cusp=8,
+        is_gain_type=False,
+        green_hint="Heightened longevity vulnerability and Maraka-Badhaka operational phase; remedial health care strongly advised.",
+        orange_hint="Health sensitivity requires preventive wellness care and prudent medical attention.",
+        red_hint="Vitality remains safeguarded by benevolent life-affirming houses (1, 5, 11).",
+        description="Critical longevity evaluation, maraka-badhaka periods, and acute life vulnerability.",
+    ),
+    "Accident / Surgery": EventRule(
+        name="Accident / Surgery",
+        category="Health",
+        supporting_houses=[6, 8, 12],
+        denying_houses=[1, 5, 11],
+        primary_cusp=8,
+        is_gain_type=False,
+        green_hint="Elevation in accident or surgical intervention indicators; cautionary lifestyle and road safety advised.",
+        orange_hint="Mild risk of minor injury or routine medical procedure; standard precautions suffice.",
+        red_hint="Negligible indicators for accidents, traumatic injuries, or surgical intervention.",
+        description="Accidental physical trauma, surgeries, or unexpected medical intervention.",
+    ),
 }
 
 GAIN_TYPE_EVENTS: Set[str] = {

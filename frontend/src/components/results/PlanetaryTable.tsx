@@ -5,6 +5,8 @@ import { PlanetInfo, AscendantInfo } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaName, getRasiName, getNakshatraName, getLordName } from "@/lib/translations";
 import { formatDms } from "@/lib/formatters";
+import { getGrahaDignity } from "@/lib/dignity";
+import { DignityLegend } from "@/components/charts/DignityLegend";
 
 interface PlanetaryTableProps {
   planets: PlanetInfo[];
@@ -15,7 +17,8 @@ export function PlanetaryTable({ planets, ascendant }: PlanetaryTableProps) {
   const { language, t } = useLanguage();
 
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-[#E2DCD5] bg-white shadow-xs">
+    <div>
+      <div className="w-full overflow-x-auto rounded-lg border border-[#E2DCD5] bg-white shadow-xs">
       <table className="w-full text-left text-xs sm:text-sm text-[#1E293B]">
         <thead className="bg-[#FAF7F0] text-[#0F172A] border-b border-[#E2DCD5] uppercase text-[11px] tracking-wider font-semibold">
           <tr>
@@ -71,11 +74,30 @@ export function PlanetaryTable({ planets, ascendant }: PlanetaryTableProps) {
             const rasiLabel = getRasiName(p.sign_index, language);
             const nakshatraLabel = getNakshatraName(p.nakshatra.name, language);
             const lordLabel = getLordName(p.nakshatra.lord, language);
+            const dignity = getGrahaDignity(
+              p.name,
+              p.sign_index,
+              ascendant.sign_index,
+              p.degree_in_sign,
+              p.house
+            );
 
             return (
               <tr key={p.name} className="hover:bg-[#FAF8F5] transition-colors">
                 <td className="px-3 py-2 sm:px-4 sm:py-2.5 font-medium text-[#0F172A]">
-                  {planetLabel}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`font-bold transition-colors ${dignity.colorClass}`}>
+                      {planetLabel}
+                    </span>
+                    {dignity.status !== "none" && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold border ${dignity.badgeBgClass} ${dignity.badgeBorderClass}`}
+                        title={language === "ta" ? dignity.tooltipTa : dignity.tooltipEn}
+                      >
+                        {language === "ta" ? dignity.labelTa : dignity.labelEn}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-3 py-2 sm:px-4 sm:py-2.5 text-[#334155]">
                   {rasiLabel}
@@ -114,6 +136,10 @@ export function PlanetaryTable({ planets, ascendant }: PlanetaryTableProps) {
           })}
         </tbody>
       </table>
+    </div>
+
+      {/* Navagraha Dignity & Directional Strength (Dik Balam) Color Legend */}
+      <DignityLegend className="mt-3 w-full" />
     </div>
   );
 }

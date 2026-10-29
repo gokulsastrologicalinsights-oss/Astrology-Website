@@ -375,11 +375,12 @@ export async function listCustomersForUser(
     }
   }
 
-  // 3. Inspect saved_horoscopes in Supabase to extract customer profiles & detect legacy records
-  try {
-    let horoQuery = adminClient
-      .from("saved_horoscopes")
-      .select("id, user_id, person_name, birth_date, calculation_result, created_at, updated_at");
+  // 3. Inspect saved_horoscopes in Supabase only if customerMap is empty
+  if (customerMap.size === 0) {
+    try {
+      let horoQuery = adminClient
+        .from("saved_horoscopes")
+        .select("id, user_id, person_name, birth_date, calculation_result, created_at, updated_at");
     if (!isAdmin) {
       horoQuery = horoQuery.eq("user_id", userId);
     }
@@ -428,8 +429,9 @@ export async function listCustomersForUser(
         }
       }
     }
-  } catch (err) {
-    console.warn("Could not inspect saved_horoscopes for customers:", err);
+    } catch (err) {
+      console.warn("Could not inspect saved_horoscopes for customers:", err);
+    }
   }
 
   let results = Array.from(customerMap.values());

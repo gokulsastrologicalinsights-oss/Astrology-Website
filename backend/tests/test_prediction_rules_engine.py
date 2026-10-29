@@ -787,3 +787,50 @@ def test_unauthorized_user_cannot_modify_rules():
     )
     # Must be 401 Unauthorized or 403 Forbidden
     assert resp.status_code in (401, 403)
+
+
+# ===========================================================================
+# 18. Sexuality & Intimacy Gender Filtering (Male vs Female)
+# ===========================================================================
+
+def test_sexuality_rules_gender_filtering_e2e():
+    """Verify that under sexuality_intimacy rules are strictly filtered by gender."""
+    horoscope = make_sample_horoscope(
+        lagna_sign=1,
+        planets_spec={"Venus": (12, 10.0), "Mars": (7, 15.0), "Saturn": (7, 10.0)}
+    )
+
+    # 1. Evaluate with gender="male"
+    resp_male = client.post(
+        "/api/v1/rules/evaluate",
+        json={
+            "horoscope": horoscope.model_dump(),
+            "category_slug": "sexuality_intimacy",
+            "gender": "male",
+            "language": "ta"
+        }
+    )
+    assert resp_male.status_code == 200
+    data_male = resp_male.json()
+    assert data_male["total_rules_evaluated"] > 0
+    # No female-only rules allowed in male results
+    female_in_male = [r for r in data_male["results"] if r.get("applicable_gender") == "female"]
+    assert len(female_in_male) == 0, f"Found leaked female rules in male eval: {[r['rule_id'] for r in female_in_male]}"
+
+    # 2. Evaluate with gender="female"
+    resp_female = client.post(
+        "/api/v1/rules/evaluate",
+        json={
+            "horoscope": horoscope.model_dump(),
+            "category_slug": "sexuality_intimacy",
+            "gender": "female",
+            "language": "ta"
+        }
+    )
+    assert resp_female.status_code == 200
+    data_female = resp_female.json()
+    assert data_female["total_rules_evaluated"] > 0
+    # No male-only rules allowed in female results
+    male_in_female = [r for r in data_female["results"] if r.get("applicable_gender") == "male"]
+    assert len(male_in_female) == 0, f"Found leaked male rules in female eval: {[r['rule_id'] for r in male_in_female]}"
+

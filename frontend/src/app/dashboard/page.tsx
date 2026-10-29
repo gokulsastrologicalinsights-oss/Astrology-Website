@@ -79,7 +79,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumbs
         items={[
@@ -293,17 +293,6 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/tools/transit-watch"
-              className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-[#B8862B]" />
-                <span>KP Transit Watch</span>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-
-            <Link
               href="/tools/kp-events-prediction"
               className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
             >
@@ -321,17 +310,6 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Heart className="w-3.5 h-3.5 text-rose-600" />
                 <span>{language === "ta" ? "திருமண கணிப்பு" : "Marriage Prediction"}</span>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-
-            <Link
-              href="/tools/d1-d9"
-              className="flex items-center justify-between p-2 rounded-xl text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
-            >
-              <div className="flex items-center gap-2">
-                <Compass className="w-3.5 h-3.5 text-[#B8862B]" />
-                <span>{language === "ta" ? "D1/D9 ராசி & நவாம்சம்" : "D1 Rasi & D9 Navamsa"}</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] group-hover:translate-x-0.5 transition-transform" />
             </Link>

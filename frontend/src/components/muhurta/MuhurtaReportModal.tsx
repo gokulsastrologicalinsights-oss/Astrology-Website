@@ -112,7 +112,7 @@ export function MuhurtaReportModal({ isOpen, onClose, reportData }: MuhurtaRepor
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0 print:bg-white">
-      <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-[#DDE5F0] overflow-hidden flex flex-col max-h-[92vh] print:max-h-none print:shadow-none print:border-none">
+      <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-[#DDE5F0] overflow-hidden flex flex-col max-h-[92vh] print:max-h-none print:shadow-none print:border-none">
         {/* Modal Top Bar (Hidden on print) */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#DDE5F0] bg-[#F8FAFC] print:hidden">
           <div className="flex items-center gap-2">

@@ -240,7 +240,7 @@ export function FamilyNumerologyStudio() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-8 w-full py-6">
       {/* Title & Introduction */}
       <div className="bg-gradient-to-r from-amber-900/30 via-slate-900 to-indigo-950/40 p-6 md:p-8 rounded-2xl border border-amber-500/20 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

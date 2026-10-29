@@ -26,15 +26,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { TenantUserManager, TenantUser } from "@/components/admin/TenantUserManager";
 
-interface AdminUser {
-  id: string;
-  username: string;
-  display_name: string | null;
-  role: "admin" | "user";
-  must_change_password: boolean;
-  created_at: string;
-}
+type AdminUser = TenantUser;
 
 export default function AdminPage() {
   const { language, t } = useLanguage();
@@ -150,7 +144,7 @@ export default function AdminPage() {
 
   if (authLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-16 text-center">
+      <div className="w-full px-4 py-16 text-center">
         <div className="inline-block animate-spin w-8 h-8 border-4 border-[#B8860B] border-t-transparent rounded-full mb-4" />
         <p className="text-sm text-[#64748B]">{t.loading}</p>
       </div>
@@ -188,7 +182,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-6">
       <Breadcrumbs
         items={[
           {
@@ -348,86 +342,8 @@ export default function AdminPage() {
         </Link>
       </div>
 
-      {/* User Records Table */}
-      <div className="mt-8 rounded-2xl border border-[#E2DCD5] bg-white overflow-hidden shadow-xs">
-        <div className="p-5 border-b border-[#E2DCD5] flex items-center justify-between bg-[#FAF8F5]">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#B8860B]" />
-            <h2 className="font-serif text-base font-bold text-[#0F172A]">
-              {language === "ta" ? "பயனர் கணக்குகள் மேற்பார்வை" : "User Accounts Management"}
-            </h2>
-          </div>
-          <span className="text-xs text-[#64748B]">
-            {language === "ta" ? "நிர்வாக பார்வை மட்டும்" : "Admin-Only Authorization"}
-          </span>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-rose-50 border-b border-rose-200 text-rose-800 text-xs font-medium">
-            {error}
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#FAF8F5] text-[#475569] uppercase font-bold border-b border-[#E2DCD5]">
-              <tr>
-                <th className="px-5 py-3">{language === "ta" ? "பயனர் பெயர்" : "Username"}</th>
-                <th className="px-5 py-3">{language === "ta" ? "பெயர்" : "Display Name"}</th>
-                <th className="px-5 py-3">{language === "ta" ? "பாத்திரம்" : "Role"}</th>
-                <th className="px-5 py-3">{language === "ta" ? "கடவுச்சொல் மாற்றம்" : "Must Change Pwd"}</th>
-                <th className="px-5 py-3">{language === "ta" ? "பதிவு தேதி" : "Created At"}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2DCD5] text-[#334155]">
-              {loadingUsers ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#94A3B8]">
-                    <div className="inline-block animate-spin w-5 h-5 border-2 border-[#B8860B] border-t-transparent rounded-full mb-2" />
-                    <div>{language === "ta" ? "பயனர் விவரங்கள் ஏற்றப்படுகின்றன..." : "Loading user records..."}</div>
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#94A3B8]">
-                    {language === "ta" ? "பயனர்கள் எவரும் இல்லை." : "No registered user records found."}
-                  </td>
-                </tr>
-              ) : (
-                users.map((u) => (
-                  <tr key={u.id} className="hover:bg-[#FAF8F5]/80 transition-colors">
-                    <td className="px-5 py-3.5 font-bold text-[#0F172A]">{u.username}</td>
-                    <td className="px-5 py-3.5">{u.display_name || "—"}</td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          u.role === "admin"
-                            ? "bg-[#0F172A] text-white"
-                            : "bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]"
-                        }`}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {u.must_change_password ? (
-                        <span className="text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded text-[10px]">
-                          Required
-                        </span>
-                      ) : (
-                        <span className="text-[#94A3B8]">No</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-[#64748B]">
-                      {new Date(u.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Astrologer Rental Profiles & Selected Access Management Suite */}
+      <TenantUserManager users={users} onRefresh={fetchUsers} />
 
       {/* Saved Numerology Reports Audit Table */}
       <div className="mt-8 rounded-2xl border border-[#E2DCD5] bg-white overflow-hidden shadow-xs">

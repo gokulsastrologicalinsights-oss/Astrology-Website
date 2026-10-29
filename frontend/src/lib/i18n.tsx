@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { translations, LanguageCode, TranslationDictionary } from "./translations";
 
 interface LanguageContextType {
@@ -15,25 +15,26 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const STORAGE_KEY = "gokul_astrology_lang";
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<LanguageCode>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode;
-        if (stored === "en" || stored === "ta") {
-          return stored;
-        }
-      } catch {
-        // Ignore localStorage access errors
+  const [language, setLanguageState] = useState<LanguageCode>("en");
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode;
+      if (stored === "en" || stored === "ta") {
+        setLanguageState(stored);
+        document.documentElement.lang = stored;
       }
+    } catch {
+      // Ignore localStorage access errors
     }
-    return "en";
-  });
+  }, []);
 
   const setLanguage = (lang: LanguageCode) => {
     setLanguageState(lang);
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(STORAGE_KEY, lang);
+        document.documentElement.lang = lang;
       } catch {
         // Ignore
       }

@@ -48,7 +48,7 @@ class Settings(BaseModel):
     allowed_origin_regex: str | None = r"^https://.*\.vercel\.app$"
 
     # Security & limits
-    max_request_body_bytes: int = 1_048_576  # 1 MB max request body
+    max_request_body_bytes: int = 10_485_760  # 10 MB max request body (supports large Dasa trees & composite charts)
     rate_limit_per_minute: int = 60         # 60 requests/minute per client IP
 
     # Supported Ayanamsas (canonical IDs in XALEN)
@@ -63,6 +63,9 @@ class Settings(BaseModel):
         env_regex = os.getenv("ALLOWED_ORIGIN_REGEX")
         if env_regex is not None:
             self.allowed_origin_regex = env_regex if env_regex else None
+        env_body_limit = os.getenv("MAX_REQUEST_BODY_BYTES")
+        if env_body_limit and env_body_limit.isdigit():
+            self.max_request_body_bytes = int(env_body_limit)
         self.debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
 
 

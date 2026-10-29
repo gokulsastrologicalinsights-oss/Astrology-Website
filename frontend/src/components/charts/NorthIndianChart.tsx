@@ -5,6 +5,8 @@ import { HoroscopeResponse, PlanetInfo } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaShort } from "@/lib/translations";
 import { formatDm } from "@/lib/formatters";
+import { getGrahaDignity } from "@/lib/dignity";
+import { DignityLegend } from "@/components/charts/DignityLegend";
 
 interface NorthIndianChartProps {
   horoscope: HoroscopeResponse;
@@ -12,6 +14,7 @@ interface NorthIndianChartProps {
   showTransits?: boolean;
   isSaved?: boolean;
   highlightLagnaBlue?: boolean;
+  showDignityLegend?: boolean;
 }
 
 interface HouseLayout {
@@ -45,6 +48,7 @@ export function NorthIndianChart({
   showTransits = false,
   isSaved,
   highlightLagnaBlue,
+  showDignityLegend = true,
 }: NorthIndianChartProps) {
   const { language } = useLanguage();
   const { ascendant, planets, metadata } = horoscope;
@@ -226,6 +230,13 @@ export function NorthIndianChart({
                   {/* Occupant Natal Planets */}
                   {occupants.map((p, idx) => {
                     const shortName = getGrahaShort(p.name, language);
+                    const dignity = getGrahaDignity(
+                      p.name,
+                      h.signIndex,
+                      ascendant.sign_index,
+                      p.degree_in_sign,
+                      h.houseNumber
+                    );
                     const retro = p.is_retrograde
                       ? language === "ta"
                         ? "(வ)"
@@ -241,12 +252,15 @@ export function NorthIndianChart({
                         y={h.planetsY + yOffset}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fill="#0F172A"
+                        fill={dignity.colorHex}
                         fontSize={occupants.length > 3 ? "9.5" : occupants.length > 1 ? "11" : "12.5"}
-                        fontWeight={occupants.length <= 2 ? "600" : "500"}
+                        fontWeight={dignity.status !== "none" ? "700" : occupants.length <= 2 ? "600" : "500"}
                         className="select-none"
                       >
-                        {shortName} {retro}{" "}
+                        <title>{language === "ta" ? dignity.tooltipTa : dignity.tooltipEn}</title>
+                        {shortName}
+                        {(dignity.status === "ucham_dikbala" || dignity.status === "neecham_dikbala") && "⚡"}
+                        {retro ? ` ${retro}` : ""}{" "}
                         <tspan fill="#64748B" fontSize={occupants.length > 3 ? "8" : "9"} className="font-mono">
                           {formatDm(p.degree_in_sign)}
                         </tspan>
@@ -332,6 +346,9 @@ export function NorthIndianChart({
           {metadata.ayanamsa_name}
         </span>
       </div>
+
+      {/* Navagraha Dignity & Directional Strength (Dik Balam) Color Legend */}
+      {showDignityLegend && <DignityLegend className="mt-2.5 w-full" />}
     </div>
   );
 }

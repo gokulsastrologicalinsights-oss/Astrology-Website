@@ -121,8 +121,8 @@ async def evaluate_rules(
     dasa_data = request.dasa
     kp_data = request.kp
 
-    # If saved_horoscope_id is provided, fetch and verify ownership
-    if request.saved_horoscope_id:
+    # If horoscope is not directly supplied but saved_horoscope_id is provided, fetch from database
+    if not horoscope_data and request.saved_horoscope_id:
         supabase = get_supabase_client()
         if not supabase:
             raise HTTPException(
@@ -182,22 +182,48 @@ async def evaluate_rules(
     target_scope = (request.chart_scope or "both").lower()
     target_system = (request.astrology_system or "all").lower()
 
+    # Determine target gender for gender-sensitive rules (especially in sexuality_intimacy)
+    target_gender = (request.gender or "").strip().lower()
+    if not target_gender or target_gender == "chart":
+        if hasattr(horoscope_data, "request") and getattr(horoscope_data.request, "gender", None):
+            target_gender = str(horoscope_data.request.gender).strip().lower()
+        elif hasattr(horoscope_data, "gender") and getattr(horoscope_data, "gender", None):
+            target_gender = str(horoscope_data.gender).strip().lower()
+        elif isinstance(locals().get("calc_result"), dict):
+            target_gender = str(calc_result.get("clientInputs", {}).get("gender") or "").strip().lower()
+
+    if target_gender not in ("male", "female", "all"):
+        target_gender = "all"
+
     filtered_rules = []
     for r in all_rules:
         if not r.is_enabled:
+            continue
+        # Gender filtering
+        rule_gender = getattr(r, "applicable_gender", "both") or "both"
+        if target_gender == "male" and rule_gender == "female":
+            continue
+        if target_gender == "female" and rule_gender == "male":
             continue
         if target_category and target_category != "all":
             # Match category_slug, subcategory, or friendly aliases
             cat_matches = (
                 r.category_slug == target_category
                 or r.subcategory == target_category
-                or (target_category in ("sexuality_intimacy", "sexual_topics", "sexual") and r.category_slug == "sexuality_intimacy")
-                or (target_category in ("marriage", "marriage_relationships") and r.category_slug in ("marriage_relationships", "delayed_marriage", "second_marriage"))
-                or (target_category in ("first_marriage", "1st_marriage") and r.subcategory == "first_marriage")
-                or (target_category in ("second_marriage", "2nd_marriage") and (r.subcategory == "second_marriage" or r.category_slug == "second_marriage"))
-                or (target_category in ("job", "career", "career_profession") and (r.category_slug == "career_profession" or r.subcategory in ("job_prospects", "government_employment", "business_entrepreneurship")))
-                or (target_category in ("lagna", "lagna_characteristics") and r.subcategory in ("lagna_characteristics", "ascendant_lord"))
-                or (target_category in ("star", "nakshatra", "nakshatra_characteristics") and r.subcategory in ("nakshatra_characteristics", "nakshatra_pada_characteristics"))
+                or (target_category in ("sexuality_intimacy", "sexual_topics", "sexual") and (r.category_slug == "sexuality_intimacy" or "SEXI" in r.rule_id))
+                or (target_category in ("marriage", "marriage_relationships") and (r.category_slug in ("marriage_relationships", "delayed_marriage", "second_marriage") or "MARR" in r.rule_id or "MURL" in r.rule_id or "LOVE" in r.rule_id))
+                or (target_category in ("first_marriage", "1st_marriage") and (r.subcategory == "first_marriage" or "FIRST" in r.rule_id or r.rule_id in ("RULE-MURL-MARR-01", "RULE-MURL-EARLY-MARR")))
+                or (target_category in ("second_marriage", "2nd_marriage") and (r.subcategory == "second_marriage" or r.category_slug == "second_marriage" or "2ND" in r.rule_id or "REMARR" in r.rule_id))
+                or (target_category in ("job", "career", "career_profession") and (r.category_slug == "career_profession" or r.subcategory in ("job_prospects", "government_employment", "business_entrepreneurship", "promotion_advancement") or "JOB" in r.rule_id or "CAR" in r.rule_id))
+                or (target_category in ("lagna", "lagna_characteristics") and (r.subcategory in ("lagna_characteristics", "ascendant_lord") or "PERS" in r.rule_id or "LAG" in r.rule_id))
+                or (target_category in ("star", "nakshatra", "nakshatra_characteristics") and (r.subcategory in ("nakshatra_characteristics", "nakshatra_pada_characteristics") or "STAR" in r.rule_id or "NAK" in r.rule_id))
+                or (target_category in ("wealth_yogas", "wealth", "money") and (r.category_slug == "money_assets" or r.subcategory in ("wealth_yogas", "regular_income", "property_land")))
+                or (target_category in ("children_prospects", "children") and (r.category_slug == "family_children" or r.subcategory in ("children_prospects", "childbirth_indicators")))
+                or (target_category in ("foreign_travel", "travel") and (r.category_slug == "education_travel" or r.subcategory == "foreign_travel"))
+                or (target_category in ("health_vitality", "health") and (r.category_slug in ("health_vitality", "other_life_themes") or r.subcategory == "health_vitality"))
+                or (target_category in ("legal_disputes", "legal") and (r.category_slug in ("legal_disputes", "other_life_themes") or r.subcategory == "legal_disputes"))
+                or (target_category in ("longevity_death", "death", "longevity") and ("LONG" in r.rule_id or "DEATH" in r.rule_id or "SURG" in r.rule_id or "SUIC" in r.rule_id or r.category_slug == "longevity_death"))
+                or (target_category in ("event_timing", "event", "events") and ("EVENT" in r.rule_id or "UNTEN" in r.rule_id or "DECID" in r.rule_id or r.subcategory == "planetary_strengths"))
             )
             if not cat_matches:
                 continue
@@ -215,12 +241,40 @@ async def evaluate_rules(
     total_unevaluable = 0
 
     for rule in filtered_rules:
-        eval_res = AstrologicalRuleEvaluator.evaluate_rule(rule, ctx)
-        item_dict = eval_res.to_dict(language=request.language)
-        results.append(EvaluatedRuleItem(**item_dict))
-        if eval_res.matched:
-            total_matched += 1
-        elif eval_res.unevaluable:
+        try:
+            eval_res = AstrologicalRuleEvaluator.evaluate_rule(rule, ctx)
+            item_dict = eval_res.to_dict(language=request.language)
+            results.append(EvaluatedRuleItem(**item_dict))
+            if eval_res.matched:
+                total_matched += 1
+            elif eval_res.unevaluable:
+                total_unevaluable += 1
+        except Exception as rule_err:
+            results.append(
+                EvaluatedRuleItem(
+                    rule_id=rule.rule_id,
+                    version=getattr(rule, "version", 1),
+                    name=getattr(rule, "name_ta", getattr(rule, "name_en", rule.rule_id)),
+                    name_en=getattr(rule, "name_en", rule.rule_id),
+                    name_ta=getattr(rule, "name_ta", None),
+                    category_slug=getattr(rule, "category_slug", target_category or "general"),
+                    subcategory=getattr(rule, "subcategory", None),
+                    astrology_system=getattr(rule.astrology_system, "value", "vedic") if hasattr(rule.astrology_system, "value") else str(rule.astrology_system),
+                    chart_scope=getattr(rule.chart_scope, "value", "d1") if hasattr(rule.chart_scope, "value") else str(rule.chart_scope),
+                    calculation_mode=getattr(rule, "calculation_mode", "thirukanitha"),
+                    severity=getattr(rule.severity, "value", "neutral") if hasattr(rule.severity, "value") else str(rule.severity),
+                    status="unevaluable",
+                    matched=False,
+                    unevaluable=True,
+                    unevaluable_reason=str(rule_err),
+                    interpretation=getattr(rule, "interpretation_en", ""),
+                    interpretation_en=getattr(rule, "interpretation_en", ""),
+                    astrological_principle=getattr(rule, "astrological_principle_en", ""),
+                    astrological_principle_en=getattr(rule, "astrological_principle_en", ""),
+                    chart_evidence=[],
+                    match_reasons=[f"Evaluation exception: {str(rule_err)}"],
+                )
+            )
             total_unevaluable += 1
 
     return EvaluateRulesResponse(

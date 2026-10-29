@@ -144,6 +144,31 @@ class LagnaSignCondition(BaseCondition):
     chart: ChartScope = ChartScope.D1
 
 
+class PlanetaryAvasthaCondition(BaseCondition):
+    condition_type: str = "planetary_avastha"
+    planet: Optional[str] = "any"
+    stage: Optional[str] = None  # "bala", "kumara", "yuva", "vriddha", "mrita"
+    min_deg: Optional[float] = None
+    max_deg: Optional[float] = None
+    loses_aspect_potency: Optional[bool] = False
+    chart: ChartScope = ChartScope.D1
+
+
+class CombustionAspectLossCondition(BaseCondition):
+    condition_type: str = "combustion_aspect_loss"
+    planet: Optional[str] = "any"
+    check_exemptions: Optional[bool] = True
+    chart: ChartScope = ChartScope.D1
+
+
+class GrahaYuddhaCondition(BaseCondition):
+    condition_type: str = "graha_yuddha"
+    planet: Optional[str] = "any"
+    status: Optional[str] = "defeated"  # "defeated", "victor", "any_war"
+    max_orb: float = 1.0
+    chart: ChartScope = ChartScope.D1
+
+
 class CompoundCondition(BaseCondition):
     condition_type: str = "compound"
     operator: ConditionOperator
@@ -174,5 +199,6 @@ class AstrologicalRuleDefinition(BaseModel):
     limitations_en: Optional[str] = None
     limitations_ta: Optional[str] = None
     severity: SeverityLevel = SeverityLevel.NEUTRAL
+    applicable_gender: Optional[str] = Field("both", description="'male', 'female', or 'both'")
     is_enabled: bool = True
     is_draft: bool = False

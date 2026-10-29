@@ -15,7 +15,7 @@ export default function SavedReportDetailPage({ params }: PageProps) {
   return (
     <Suspense
       fallback={
-        <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <div className="w-full px-4 py-20 text-center">
           <Loader2 className="w-8 h-8 mx-auto animate-spin text-[#B8860B] mb-3" />
           <p className="text-sm text-[#64748B]">Loading saved report...</p>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -30,6 +30,9 @@ import {
   Layers,
   ArrowRight,
   Database,
+  Search,
+  X,
+  User,
 } from "lucide-react";
 
 function getUserDefaultTimezone(): string {
@@ -66,10 +69,13 @@ function MarriagePredictionContent() {
   const { session, isAuthenticated } = useAuth();
 
   // Mode: "manual" or "saved"
-  const [inputMode, setInputMode] = useState<"manual" | "saved">("manual");
+  const [inputMode, setInputMode] = useState<"manual" | "saved">(
+    savedIdParam ? "saved" : "manual"
+  );
   const [savedHoroscopes, setSavedHoroscopes] = useState<SavedHoroscopeItem[]>([]);
   const [selectedSavedId, setSelectedSavedId] = useState<string>(savedIdParam);
   const [loadingSavedList, setLoadingSavedList] = useState<boolean>(false);
+  const [chartSearchQuery, setChartSearchQuery] = useState<string>("");
 
   // Form Fields
   const [birthDate, setBirthDate] = useState<string>("1995-10-24");
@@ -81,6 +87,7 @@ function MarriagePredictionContent() {
   const [uncertaintySeconds, setUncertaintySeconds] = useState<number>(120);
   const [startYear, setStartYear] = useState<string>("2024");
   const [endYear, setEndYear] = useState<string>("2032");
+  const [forceTimingScan, setForceTimingScan] = useState<boolean>(false);
 
   // Form Validation State
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -105,39 +112,95 @@ function MarriagePredictionContent() {
     setSelectedSavedId(item.id);
   };
 
-  // Load saved horoscopes list if user is authenticated
-  useEffect(() => {
-    async function fetchSavedHoroscopes() {
-      if (!session?.access_token) return;
-      setLoadingSavedList(true);
-      try {
-        const resp = await fetch("/api/horoscopes?limit=50", {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          const items: SavedHoroscopeItem[] = data.horoscopes || [];
-          setSavedHoroscopes(items);
-          if (items.length > 0 && savedIdParam) {
-            const matched = items.find((h) => h.id === savedIdParam);
-            if (matched) {
-              populateFromSaved(matched);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to load saved horoscopes:", err);
-      } finally {
-        setLoadingSavedList(false);
+  // Load all saved horoscopes list with multi-page support if user is authenticated
+  const fetchSavedHoroscopes = useCallback(async () => {
+    setLoadingSavedList(true);
+    try {
+      const headers: Record<string, string> = {
+        Accept: "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
       }
-    }
 
+      let allItems: SavedHoroscopeItem[] = [];
+      let page = 1;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const queryParams = new URLSearchParams({
+          page: String(page),
+          limit: String(pageSize),
+        });
+
+        const resp = await fetch(`/api/horoscopes?${queryParams.toString()}`, {
+          headers,
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (!resp.ok) break;
+
+        const data = await resp.json();
+        const items: SavedHoroscopeItem[] = data.horoscopes || [];
+        allItems = allItems.concat(items);
+
+        if (items.length < pageSize || allItems.length >= (data.totalCount || 0)) {
+          hasMore = false;
+        } else {
+          page++;
+          if (page > 10) break; // Safety threshold (up to 10,000 horoscopes)
+        }
+      }
+
+      setSavedHoroscopes(allItems);
+      if (allItems.length > 0 && savedIdParam) {
+        const matched = allItems.find((h) => h.id === savedIdParam);
+        if (matched) {
+          populateFromSaved(matched);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load saved horoscopes:", err);
+    } finally {
+      setLoadingSavedList(false);
+    }
+  }, [session?.access_token, savedIdParam]);
+
+  useEffect(() => {
     if (isAuthenticated) {
       fetchSavedHoroscopes();
     }
-  }, [isAuthenticated, session?.access_token, savedIdParam]);
+  }, [isAuthenticated, fetchSavedHoroscopes]);
+
+  // Instant client-side search filtering across customer name, date of birth, time, birthplace, or chart #
+  const filteredSavedHoroscopes = useMemo(() => {
+    const q = chartSearchQuery.trim().toLowerCase();
+    if (!q) return savedHoroscopes;
+
+    return savedHoroscopes.filter((item) => {
+      const name = (item.person_name || "").toLowerCase();
+      const birthDate = (item.birth_date || "").toLowerCase();
+      const birthTime = (item.birth_time || "").toLowerCase();
+      const place = (item.birthplace || "").toLowerCase();
+      const dispNum = item.display_number ? String(item.display_number) : "";
+
+      return (
+        name.includes(q) ||
+        birthDate.includes(q) ||
+        birthTime.includes(q) ||
+        place.includes(q) ||
+        dispNum === q ||
+        `#${dispNum}` === q
+      );
+    });
+  }, [savedHoroscopes, chartSearchQuery]);
+
+  // Selected horoscope details for active confirmation card
+  const selectedHoroscope = useMemo(() => {
+    return savedHoroscopes.find((h) => h.id === selectedSavedId) || null;
+  }, [savedHoroscopes, selectedSavedId]);
 
   // Validate form fields
   const validateForm = (): boolean => {
@@ -204,8 +267,8 @@ function MarriagePredictionContent() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, forceScanOverride?: boolean) => {
+    if (e) e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
@@ -214,6 +277,7 @@ function MarriagePredictionContent() {
 
     // Format birth time to HH:MM:SS
     const formattedTime = birthTime.trim().length === 5 ? `${birthTime.trim()}:00` : birthTime.trim();
+    const isForce = forceScanOverride !== undefined ? forceScanOverride : forceTimingScan;
 
     const payload: UnifiedMarriageRequest = {
       birth: {
@@ -226,6 +290,7 @@ function MarriagePredictionContent() {
       birth_time_uncertainty_seconds: Number(uncertaintySeconds),
       start_year: startYear.trim() ? parseInt(startYear, 10) : undefined,
       end_year: endYear.trim() ? parseInt(endYear, 10) : undefined,
+      force_timing_scan: isForce,
     };
 
     try {
@@ -273,7 +338,7 @@ function MarriagePredictionContent() {
     <div className="min-h-screen bg-[#F8F9FA] pb-24 text-slate-800 antialiased overflow-x-hidden">
       {/* Top Header Banner */}
       <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="w-full px-4 py-6 sm:px-6 lg:px-8 2xl:px-10">
           <Breadcrumbs
             items={[
               { label: language === "ta" ? "முகப்பு" : "Home", href: "/" },
@@ -318,7 +383,7 @@ function MarriagePredictionContent() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8 max-w-full min-w-0">
+      <main className="w-full px-4 pt-6 sm:pt-8 sm:px-6 lg:px-8 2xl:px-10 min-w-0">
         {/* Epistemological & Scientific Disclaimer */}
         {showDisclaimers && (
           <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900 shadow-sm">
@@ -363,7 +428,7 @@ function MarriagePredictionContent() {
             </div>
 
             {/* Mode Toggle: Saved vs Manual */}
-            {isAuthenticated && savedHoroscopes.length > 0 && (
+            {isAuthenticated && (
               <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
                 <button
                   type="button"
@@ -374,18 +439,29 @@ function MarriagePredictionContent() {
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  Manual Entry
+                  {language === "ta" ? "நேரடி பதிவு" : "Manual Entry"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setInputMode("saved")}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  onClick={() => {
+                    setInputMode("saved");
+                    if (savedHoroscopes.length === 0) {
+                      fetchSavedHoroscopes();
+                    }
+                  }}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1.5 ${
                     inputMode === "saved"
                       ? "bg-white text-[#153F6B] shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  Saved Customer Charts ({loadingSavedList ? "..." : savedHoroscopes.length})
+                  <Database className="w-3.5 h-3.5 text-[#B4872B]" />
+                  <span>
+                    {language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Customer Charts"}
+                  </span>
+                  <span className="rounded-full bg-slate-200/80 px-1.5 py-0.2 text-[10px] text-slate-700">
+                    {loadingSavedList ? "..." : savedHoroscopes.length}
+                  </span>
                 </button>
               </div>
             )}
@@ -393,31 +469,168 @@ function MarriagePredictionContent() {
 
           {/* Saved Charts Selector */}
           {inputMode === "saved" && isAuthenticated && (
-            <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-              <label
-                htmlFor="saved-chart-select"
-                className="mb-2 block text-xs font-bold text-[#153F6B]"
-              >
-                Select from Saved Horoscopes:
-              </label>
-              <select
-                id="saved-chart-select"
-                value={selectedSavedId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedSavedId(id);
-                  const matched = savedHoroscopes.find((h) => h.id === id);
-                  if (matched) populateFromSaved(matched);
-                }}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm focus:border-[#153F6B] focus:outline-none focus:ring-1 focus:ring-[#153F6B]"
-              >
-                <option value="">-- Choose a saved chart --</option>
-                {savedHoroscopes.map((h) => (
-                  <option key={h.id} value={h.id}>
-                    {h.person_name} ({h.birth_date} {h.birth_time}) - {h.birthplace || "Location"}
-                  </option>
-                ))}
-              </select>
+            <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4 space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label
+                  htmlFor="saved-chart-search"
+                  className="text-xs font-bold text-[#153F6B] flex items-center gap-1.5"
+                >
+                  <Database className="w-4 h-4 text-[#B4872B]" />
+                  <span>
+                    {language === "ta"
+                      ? "சேமிக்கப்பட்ட வாடிக்கையாளர் ஜாதகத்தை தேர்ந்தெடுக்கவும்:"
+                      : "Select from Saved Customer Horoscopes:"}
+                  </span>
+                  <span className="text-[11px] font-normal text-slate-500">
+                    ({loadingSavedList ? (
+                      <span className="inline-flex items-center gap-1 text-[#153F6B]">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        {language === "ta" ? "ஏற்றுகிறது..." : "Loading..."}
+                      </span>
+                    ) : (
+                      `${savedHoroscopes.length} ${language === "ta" ? "மொத்த ஜாதகங்கள்" : "charts total"}`
+                    )})
+                  </span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => fetchSavedHoroscopes()}
+                  disabled={loadingSavedList}
+                  className="self-start sm:self-auto inline-flex items-center gap-1 text-xs text-[#153F6B] hover:text-[#1E4E8C] font-semibold py-1 px-2.5 rounded-lg border border-blue-200 bg-white hover:bg-blue-50 transition shadow-2xs"
+                  title={language === "ta" ? "மீண்டும் புதுப்பிக்க" : "Refresh list"}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingSavedList ? "animate-spin" : ""}`} />
+                  <span>{language === "ta" ? "புதுப்பி" : "Refresh"}</span>
+                </button>
+              </div>
+
+              {/* Search Option Input */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  id="saved-chart-search"
+                  type="text"
+                  value={chartSearchQuery}
+                  onChange={(e) => setChartSearchQuery(e.target.value)}
+                  placeholder={
+                    language === "ta"
+                      ? "வாடிக்கையாளர் பெயர், பிறந்த தேதி (YYYY-MM-DD), இடம் அல்லது ஜாதக எண் மூலம் தேடுக..."
+                      : "Search saved charts by customer name, birth date (YYYY-MM-DD), place, or chart #..."
+                  }
+                  className="w-full pl-9 pr-9 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B] shadow-2xs"
+                />
+                {chartSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setChartSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    title={language === "ta" ? "தேடலை நீக்கு" : "Clear search"}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {chartSearchQuery && (
+                <div className="flex items-center justify-between text-xs text-slate-600 px-0.5">
+                  <span>
+                    {language === "ta"
+                      ? `"${chartSearchQuery}" க்கான முடிவுகள்: ${filteredSavedHoroscopes.length} ஜாதகம்(கள்)`
+                      : `Results for "${chartSearchQuery}": ${filteredSavedHoroscopes.length} chart(s)`}
+                  </span>
+                  {filteredSavedHoroscopes.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setChartSearchQuery("")}
+                      className="text-blue-700 hover:underline font-semibold"
+                    >
+                      {language === "ta" ? "அனைத்தையும் காட்டு" : "Show all charts"}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {loadingSavedList ? (
+                <div className="py-4 flex items-center justify-center gap-2 text-slate-500 text-xs">
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#153F6B]" />
+                  <span>
+                    {language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள் ஏற்றப்படுகின்றன..." : "Loading saved customer horoscopes..."}
+                  </span>
+                </div>
+              ) : savedHoroscopes.length === 0 ? (
+                <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                  <p className="font-semibold">
+                    {language === "ta"
+                      ? "சேமிக்கப்பட்ட ஜாதகங்கள் எதுவும் இல்லை."
+                      : "No saved customer horoscopes found in this account."}
+                  </p>
+                  <p className="mt-1 text-slate-600">
+                    {language === "ta"
+                      ? "ஜாதக கணிப்பு பக்கத்தில் புதிய ஜாதகங்களை உருவாக்கி சேமிக்கலாம்."
+                      : "Generate and save charts using the Horoscope tool, or switch to Manual Entry."}
+                  </p>
+                </div>
+              ) : (
+                <>
+
+                  {/* Dropdown Chart Selection */}
+                  <div>
+                    <select
+                      id="saved-chart-select"
+                      value={selectedSavedId}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        setSelectedSavedId(id);
+                        const matched = savedHoroscopes.find((h) => h.id === id);
+                        if (matched) populateFromSaved(matched);
+                      }}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm focus:border-[#153F6B] focus:outline-none focus:ring-1 focus:ring-[#153F6B]"
+                    >
+                      <option value="">
+                        {filteredSavedHoroscopes.length === 0
+                          ? language === "ta" ? "-- பொருத்தமான ஜாதகங்கள் இல்லை --" : "-- No matching charts found --"
+                          : language === "ta" ? `-- ஜாதகத்தை தேர்ந்தெடுக்கவும் (${filteredSavedHoroscopes.length} கிடைத்துள்ளன) --` : `-- Choose a saved chart (${filteredSavedHoroscopes.length} available) --`}
+                      </option>
+                      {filteredSavedHoroscopes.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.display_number ? `#${h.display_number} - ` : ""}{h.person_name} ({h.birth_date} {h.birth_time}) - {h.birthplace || "Location"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Active Selected Horoscope Details Preview Card */}
+                  {selectedHoroscope && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                        <div>
+                          <div className="font-bold text-emerald-900 text-sm flex items-center gap-2">
+                            <span>{selectedHoroscope.person_name}</span>
+                            {selectedHoroscope.display_number && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-200/80 text-emerald-800">
+                                #{selectedHoroscope.display_number}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-emerald-800 text-xs mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
+                            <span>📅 {selectedHoroscope.birth_date}</span>
+                            <span>⏰ {selectedHoroscope.birth_time}</span>
+                            <span>📍 {selectedHoroscope.birthplace || "Coordinates"} ({Number(selectedHoroscope.latitude).toFixed(2)}°, {Number(selectedHoroscope.longitude).toFixed(2)}°)</span>
+                            <span>🌐 {selectedHoroscope.timezone}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="self-end sm:self-center shrink-0">
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-white/90 px-2.5 py-1 rounded-md border border-emerald-300 shadow-2xs">
+                          ✓ {language === "ta" ? "விவரங்கள் நிரப்பப்பட்டன" : "Fields Populated"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -738,6 +951,25 @@ function MarriagePredictionContent() {
                   <p className="mt-1 text-[11px] text-slate-500">
                     Must be ≥ Start Year (defaults to Start + 10).
                   </p>
+                </div>
+
+                {/* Force Timing Scan Option */}
+                <div className="flex items-start gap-2.5 pt-3 sm:col-span-2 lg:col-span-3 border-t border-slate-200/60 mt-1">
+                  <input
+                    type="checkbox"
+                    id="force-timing-checkbox"
+                    checked={forceTimingScan}
+                    onChange={(e) => setForceTimingScan(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#153F6B] focus:ring-[#153F6B] cursor-pointer"
+                  />
+                  <div>
+                    <label htmlFor="force-timing-checkbox" className="text-xs font-semibold text-slate-800 cursor-pointer">
+                      Enable Exploratory Timing Scan
+                    </label>
+                    <p className="text-[11px] text-slate-500">
+                      Evaluates Vimshottari Dasa-Bhukti and Jupiter-Saturn double transit confluence windows even if marriage promise is INDETERMINATE or delayed.
+                    </p>
+                  </div>
                 </div>
               </div>
               {validationErrors.years && (
@@ -1521,14 +1753,35 @@ function MarriagePredictionContent() {
 
                 {/* Case 4: Not Evaluated */}
                 {response.timing_status === "NOT_EVALUATED" && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
-                    <p className="font-semibold text-slate-800">Timing Scan Not Evaluated</p>
-                    <p className="mt-1 leading-relaxed">
-                      Timing scan is triggered exclusively when both KP and Vedic traditions concordantly
-                      support marriage promise (EVENT_INDICATED). For charts marked EVENT_NOT_INDICATED or
-                      INDETERMINATE, timing computation is intentionally bypassed to avoid false temporal
-                      projections.
-                    </p>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-5 text-xs text-slate-700">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-bold text-sm text-amber-900">Timing Scan Not Evaluated (Gatekeeper Active)</p>
+                        <p className="mt-1 leading-relaxed text-slate-600">
+                          By default, the timing scan is triggered exclusively when both KP and Vedic traditions concordantly
+                          support marriage promise (<span className="font-semibold text-emerald-800">EVENT_INDICATED</span>).
+                          For charts marked <span className="font-semibold text-amber-800">INDETERMINATE</span> (such as mixed significations, 8th lord influences, or delay indicators),
+                          timing computation is intentionally bypassed to avoid false temporal projections.
+                        </p>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForceTimingScan(true);
+                              handleSubmit(undefined, true);
+                            }}
+                            className="inline-flex items-center gap-2 rounded-lg bg-[#153F6B] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#102e4e] transition-colors cursor-pointer"
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Run Exploratory Timing Scan Anyway
+                          </button>
+                          <span className="text-[11px] text-slate-500">
+                            Evaluates Dasha-Bhukti and Jupiter-Saturn double transit confluence across your selected year range.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

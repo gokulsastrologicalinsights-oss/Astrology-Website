@@ -38,14 +38,20 @@ from app.schemas.remedies import (
     RudrakshaCatalogResponse,
     RudrakshaRecommendationRequest,
     RudrakshaRecommendationSummary,
+    NakshatraRitualItem,
+    NakshatraRitualsListResponse,
+    SannuKnowledgeOverviewResponse,
+    KarmaRitualsAnalysisRequest,
+    SannuKarmaDiagnosticResponse,
 )
 from app.services.remedy_engine.repository import remedy_repository
 from app.services.remedy_engine.validation import RemedyValidator
 from app.services.remedy_engine.eligibility import RemedyEligibilityEngine
-from app.services.remedy_engine.analysis import generate_remedy_analysis
+from app.services.remedy_engine.analysis import generate_remedy_analysis, extract_chart_context
 from app.services.remedy_engine.pilgrimage import PilgrimageCircuitEngine
 from app.services.remedy_engine.gemstone_advisory import GemstoneAdvisoryEngine
 from app.services.remedy_engine.rudraksha_advisory import RudrakshaAdvisoryEngine
+from app.services.remedy_engine.sannu_rituals_engine import SannuRitualsEngine
 from datetime import date
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.ephemeris import calculate_full_horoscope
@@ -746,6 +752,151 @@ async def get_rudraksha_recommendation(
         has_sade_sati=request.has_sade_sati,
         has_kaal_sarp=request.has_kaal_sarp,
     )
+
+
+# ------------------------------------------------------------------------------
+# 10. Sannu Ahmed: Vedic Astrology Rituals & Remedies Endpoints
+# ------------------------------------------------------------------------------
+
+@router.get(
+    "/sannu-knowledge",
+    response_model=SannuKnowledgeOverviewResponse,
+    summary="Get Sannu Ahmed Rituals & Remedies Knowledge Base",
+)
+async def get_sannu_rituals_knowledge() -> SannuKnowledgeOverviewResponse:
+    """Returns the comprehensive philosophical and practical knowledge base from Sannu Ahmed's
+    'Vedic Astrology Rituals & Remedies', including Threefold Karma, Soul-Body-Energy Circuit,
+    Propitiation vs Empowerment rules, Planetary Weakness Atlas, and Sacred Timing.
+    """
+    data = SannuRitualsEngine.get_knowledge_overview()
+    return SannuKnowledgeOverviewResponse(**data)
+
+
+@router.get(
+    "/nakshatra-rituals",
+    response_model=NakshatraRitualsListResponse,
+    summary="Get All 27 Nakshatras Sacred Rituals",
+)
+async def get_nakshatra_rituals() -> NakshatraRitualsListResponse:
+    """Returns the complete encyclopedia of all 27 Nakshatras sacred rituals:
+    Sacred Geometry (Rekha), Sound Mantra (Beeja), Dravya (Offerings), Deity, Animal Yoni, and Tattva.
+    """
+    items = SannuRitualsEngine.get_all_nakshatra_rituals()
+    return NakshatraRitualsListResponse(
+        total_nakshatras=len(items),
+        items=[NakshatraRitualItem(**item) for item in items],
+    )
+
+
+@router.get(
+    "/nakshatra-rituals/{name}",
+    response_model=NakshatraRitualItem,
+    summary="Get Single Nakshatra Sacred Ritual by Name",
+)
+async def get_nakshatra_ritual_by_name(name: str) -> NakshatraRitualItem:
+    """Returns sacred geometry, beeja mantra, dravya offerings, and procedure for a specific Nakshatra."""
+    item = SannuRitualsEngine.get_nakshatra_ritual_by_name(name)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Nakshatra ritual for '{name}' not found.",
+        )
+    return NakshatraRitualItem(**item)
+
+
+@router.get(
+    "/nakshatra-doshas",
+    summary="Get Nakshatra Doshas Knowledge & Shanti Protocols",
+)
+async def get_nakshatra_doshas() -> Dict[str, Any]:
+    """Returns canonical rules and pacification shantis for Gandanta Dosha, Abhukta Mula Dosha,
+    Vishaghati Nakshatras, and the Ashlesha-Magha Sarpa Dosha axis.
+    """
+    return SannuRitualsEngine.get_knowledge_overview()["nakshatra_doshas"]
+
+
+@router.post(
+    "/analyze-karma-rituals",
+    response_model=SannuKarmaDiagnosticResponse,
+    summary="Diagnose Chart Karma & Rituals (Sannu Ahmed Framework)",
+)
+async def analyze_chart_karma_and_rituals(
+    request: KarmaRitualsAnalysisRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> SannuKarmaDiagnosticResponse:
+    """Consumes horoscope ID, chart snapshot, or raw natal points to compute:
+    1. Moon Nakshatra sacred geometry, deity, animal yoni, element, and sound ritual.
+    2. Nakshatra Doshas (Gandanta knots, Abhukta Mula, Vishaghati channels).
+    3. Threefold Karma Breakdown (Sanchita past-life debt, Prarabdha active manifest, Kriyamana future prevention).
+    4. Weak Planet Psychological & Karmic Symptom atlas across 12 houses.
+    5. Propitiation (Shanti) vs. Empowerment (Shakti) classification for all 9 Grahas.
+    6. Sacred Timing Routine (Pushya Nakshatra, Horas, Tithis, Eclipse caveats).
+    """
+    chart_data: Dict[str, Any] = {}
+
+    # 1. If horoscope_id provided, fetch saved calculation
+    if request.horoscope_id:
+        clean_id = _validate_uuid(request.horoscope_id)
+        supabase = get_supabase_client()
+        if supabase:
+            try:
+                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+                if resp.data and len(resp.data) > 0:
+                    row = resp.data[0]
+                    calc_res = row.get("calculation_result") or {}
+                    chart_data = calc_res.get("horoscope") or {}
+            except Exception as err:
+                logger.warning(f"Error fetching horoscope {clean_id}: {err}")
+
+    # 2. Or if chart_snapshot provided
+    if not chart_data and request.chart_snapshot:
+        chart_data = request.chart_snapshot
+
+    # 3. If chart_data is available, extract full context
+    if chart_data:
+        context = extract_chart_context(chart_data)
+        planets_dict: Dict[str, Dict[str, Any]] = {}
+        planets_raw = chart_data.get("planets") or []
+        if isinstance(planets_raw, list):
+            for p in planets_raw:
+                p_name = str(p.get("name") or p.get("planet") or "").strip().lower()
+                if p_name:
+                    planets_dict[p_name] = p
+        elif isinstance(planets_raw, dict):
+            for k, v in planets_raw.items():
+                planets_dict[str(k).strip().lower()] = v
+
+        diagnostic = SannuRitualsEngine.diagnose_chart_karma_and_rituals(
+            lagna_sign=context.lagna_sign,
+            moon_sign=context.moon_sign,
+            moon_nakshatra=context.moon_nakshatra,
+            planets_dict=planets_dict,
+            running_mahadasha=context.running_mahadasha,
+            running_bhukti=context.running_bhukti,
+            yogakaraka_planets=context.yogakaraka_planets,
+            functional_benefics=context.functional_benefics,
+            functional_malefics=context.functional_malefics,
+            combust_planets=context.combust_planets,
+            debilitated_planets=context.debilitated_planets,
+            dusthana_planets=context.dusthana_planets,
+        )
+        return SannuKarmaDiagnosticResponse(**diagnostic)
+
+    # 4. Fallback for manual parameters
+    lagna = request.ascendant_sign or "Aries"
+    moon_s = request.moon_sign or "Aries"
+    moon_nak = request.moon_nakshatra or "Ashwini"
+
+    diagnostic = SannuRitualsEngine.diagnose_chart_karma_and_rituals(
+        lagna_sign=lagna,
+        moon_sign=moon_s,
+        moon_nakshatra=moon_nak,
+        planets_dict={},
+        running_mahadasha=request.running_mahadasha,
+        running_bhukti=request.running_bhukti,
+    )
+    return SannuKarmaDiagnosticResponse(**diagnostic)
+
 
 
 

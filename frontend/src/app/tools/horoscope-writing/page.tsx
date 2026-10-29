@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { FeatureGuard } from "@/components/auth/FeatureGuard";
 import {
   HoroscopeWritingRequest,
   HoroscopeWritingResponse,
@@ -133,7 +134,7 @@ function HoroscopeWritingContent() {
       if (!session?.access_token) return;
       setLoadingSavedList(true);
       try {
-        const resp = await fetch("/api/horoscopes?limit=50", {
+        const resp = await fetch("/api/horoscopes?limit=1000", {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -357,7 +358,7 @@ function HoroscopeWritingContent() {
     <div className="min-h-screen bg-[#F8FAFC] pb-16">
       {/* Top Breadcrumb & Header */}
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-4">
           <Breadcrumbs items={breadcrumbs} />
 
           <div className="mt-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -404,7 +405,7 @@ function HoroscopeWritingContent() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 space-y-6">
         {/* Input Configuration Card */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="bg-gradient-to-r from-[#153F6B] to-[#1E293B] text-white px-5 py-3.5 flex items-center justify-between">
@@ -1407,14 +1408,16 @@ function HoroscopeWritingContent() {
 
 export default function HoroscopeWritingPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-          <div className="w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <HoroscopeWritingContent />
-    </Suspense>
+    <FeatureGuard permission="tamil_horoscope">
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+            <div className="w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <HoroscopeWritingContent />
+      </Suspense>
+    </FeatureGuard>
   );
 }

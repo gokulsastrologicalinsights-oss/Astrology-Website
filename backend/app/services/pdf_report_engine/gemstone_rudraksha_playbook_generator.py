@@ -98,7 +98,7 @@ class PlaybookNumberedCanvas(canvas.Canvas):
         except Exception:
             self.setFont("Helvetica", 6.8)
         self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(MARGIN, 16, "© Gokul's Astrological Insights • Classical Ratna Shastra & Shiva Purana Rudraksha Canons")
+        self.drawString(MARGIN, 16, "© Gokul's Astrological Insights • Classical Ratna Shastra (Ratna Samadhan - Grahabalabal Method & Shiva Purana)")
 
         page_str = f"Page {self._pageNumber} of {page_count}"
         self.drawRightString(PAGE_WIDTH - MARGIN, 16, page_str)
@@ -138,8 +138,8 @@ def generate_gemstone_rudraksha_playbook_pdf_bytes(
     # --------------------------------------------------------------------------
     # PAGE 1: COVER, DOCTRINE & PILLARS 1 & 2
     # --------------------------------------------------------------------------
-    doc_title = "ரத்தின & ருத்ராட்ச சாஸ்திர புனிதக் கையேடு" if is_ta else "REMEDIAL GEMSTONE & RUDRAKSHA SANCTIFICATION PLAYBOOK"
-    doc_sub = "அனுகூல ரத்தின முறை, யோககாரக ஆதரவு, பிரதிகூல சாந்தி மற்றும் ருத்ராட்ச பிரதிஷ்டை நெறிமுறைகள்" if is_ta else "Classical Anukula Vada vs Pratikula Shanti, Yogakaraka Gems, Proportional Weights & Rudraksha Sanctification"
+    doc_title = "ரத்தின & ருத்ராட்ச சாஸ்திர புனிதக் கையேடு (ரத்ன சமாதானம்)" if is_ta else "REMEDIAL GEMSTONE & RUDRAKSHA SANCTIFICATION PLAYBOOK (RATNA SAMADHAN)"
+    doc_sub = "அனுகூல vs பிரதிகூல ரத்தின முறை, கிரகபலபலம் நெறிமுறை, யோககாரக ஆதரவு & ருத்ராட்ச பிரதிஷ்டை" if is_ta else "Classical Anukula Vada vs Pratikula Shanti, Grahabalabal Method, Yogakaraka Gems & Sanctification"
 
     story.append(Paragraph(f"<font color='{GOLD_PRIMARY.hexval()}'><b>{doc_title}</b></font>", styles["DocTitle"]))
     story.append(Paragraph(f"<font color='{NAVY_SECONDARY.hexval()}'>{doc_sub}</font>", styles["Subtitle"]))
@@ -157,7 +157,7 @@ def generate_gemstone_rudraksha_playbook_pdf_bytes(
         ],
         [
             Paragraph(f"<b>தற்போதைய தசை / Dasha:</b> {adv.running_mahadasha or 'N/A'}", styles["NormalSmall"]),
-            Paragraph(f"<b>சாஸ்திர விதி / Canon:</b> Brihat Samhita & Shiva Purana", styles["NormalSmall"]),
+            Paragraph(f"<b>சாஸ்திர விதி / Canon:</b> Ratna Samadhan (Grahabalabal) & Shiva Purana", styles["NormalSmall"]),
         ],
     ]
     t_bio = Table(bio_data, colWidths=[USABLE_WIDTH * 0.5, USABLE_WIDTH * 0.5])

@@ -263,6 +263,10 @@ class UnifiedMarriageRequest(BaseModel):
         None,
         description="Optional end year for timing scan (defaults to start_year + 10)"
     )
+    force_timing_scan: bool = Field(
+        False,
+        description="Force execution of Vimshottari & Double Transit timing scan even if marriage promise is INDETERMINATE."
+    )
 
     @model_validator(mode="after")
     def validate_timing_range(self) -> UnifiedMarriageRequest:

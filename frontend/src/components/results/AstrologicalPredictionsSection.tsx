@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
 import {
   FullHoroscopeResult,
   PredictionCategoryGroup,
@@ -44,6 +45,9 @@ import {
   Check,
   Trash2,
   Play,
+  Plane,
+  Scale,
+  Clock,
 } from "lucide-react";
 
 interface AstrologicalPredictionsSectionProps {
@@ -51,21 +55,60 @@ interface AstrologicalPredictionsSectionProps {
   language: "en" | "ta";
 }
 
-// Quick filter categories requested by user
+// Quick filter categories requested by user & extracted from classical documents
 const QUICK_FILTER_PILLS = [
-  { id: "all", label_en: "All Topics", label_ta: "அனைத்தும்", icon: Sparkles },
+  { id: "all", label_en: "All Topics (230+)", label_ta: "அனைத்தும் (230+)", icon: Sparkles },
   { id: "sexuality_intimacy", label_en: "Sexual Topics & Intimacy", label_ta: "தாம்பத்தியம் & காமம்", icon: Flame, isHighlight: true },
+  { id: "longevity_death", label_en: "Longevity & Death", label_ta: "ஆயுள் & மரண அமைப்பு", icon: ShieldAlert, isHighlight: true },
+  { id: "event_timing", label_en: "Event Timing (KP)", label_ta: "நிகழ்வு காலக் கணிப்பு (KP)", icon: Clock, isHighlight: true },
   { id: "marriage", label_en: "Marriage (General)", label_ta: "திருமணம்", icon: Heart },
+  { id: "marriage_timing", label_en: "Marriage Timing (D1/D9/Jaimini)", label_ta: "திருமண கால நிர்ணயம்", icon: Clock, isHighlight: true },
   { id: "first_marriage", label_en: "1st Marriage", label_ta: "முதல் திருமணம்", icon: Heart },
   { id: "second_marriage", label_en: "2nd Marriage", label_ta: "இரண்டாம் திருமணம்", icon: RefreshCw },
   { id: "job", label_en: "Job & Career", label_ta: "வேலை & உத்தியோகம்", icon: Briefcase },
   { id: "lagna", label_en: "Lagna Characters", label_ta: "லக்ன குணநலன்கள்", icon: Crown },
-  { id: "star", label_en: "Star Characteristics", label_ta: "நட்சத்திர குணங்கள்", icon: Star },
+  { id: "star", label_en: "Star Prediction (28 Nakshatras)", label_ta: "நட்சத்திர பலன்கள் (Star Prediction)", icon: Star, isHighlight: true },
   { id: "wealth_yogas", label_en: "Money & Wealth", label_ta: "தனம் & சொத்து", icon: Coins },
   { id: "children_prospects", label_en: "Children & Family", label_ta: "புத்திர பாக்கியம்", icon: Baby },
+  { id: "foreign_travel", label_en: "Foreign Travel", label_ta: "வெளிநாட்டுப் பயணம்", icon: Plane },
+  { id: "health_vitality", label_en: "Health & Cure", label_ta: "உடல் நலம் & குணம்", icon: ShieldCheck },
+  { id: "planetary_debilitation_aspects", label_en: "Debilitation & Aspect Loss", label_ta: "கிரக நீசம் & பார்வை இழப்பு", icon: Compass, isHighlight: true },
+  { id: "legal_disputes", label_en: "Litigation & Legal", label_ta: "வழக்கு & வெற்றி", icon: Scale },
 ];
 
 const LOCAL_STORAGE_CUSTOM_RULES_KEY = "antigravity_custom_astrology_rules";
+
+// Helper to sanitize Dasa data to avoid payload explosion (>1MB) while preserving full 3-level evaluation precision
+function sanitizeDasaForEvaluation(dasa: any) {
+  if (!dasa) return undefined;
+  return {
+    balance: dasa.balance,
+    current_period_path: dasa.current_period_path,
+    current_periods: dasa.current_periods,
+    mahadashas: Array.isArray(dasa.mahadashas)
+      ? dasa.mahadashas.slice(0, 12).map((m: any) => ({
+          lord: m.lord,
+          start_date: m.start_date,
+          end_date: m.end_date,
+          duration_years: m.duration_years,
+          bhuktis: Array.isArray(m.bhuktis)
+            ? m.bhuktis.map((b: any) => ({
+                lord: b.lord,
+                start_date: b.start_date,
+                end_date: b.end_date,
+                antardashas: Array.isArray(b.antardashas)
+                  ? b.antardashas.map((a: any) => ({
+                      lord: a.lord,
+                      start_date: a.start_date,
+                      end_date: a.end_date,
+                    }))
+                  : undefined,
+              }))
+            : undefined,
+        }))
+      : undefined,
+  };
+}
 
 export function AstrologicalPredictionsSection({
   horoscopeResult,
@@ -77,6 +120,23 @@ export function AstrologicalPredictionsSection({
   const [categoryGroups, setCategoryGroups] = useState<PredictionCategoryGroup[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
+  // Native Gender Detection & Filter State
+  const nativeGender: "male" | "female" = useMemo(() => {
+    const g =
+      (horoscopeResult.clientInputs as any)?.gender ||
+      (horoscopeResult.horoscope as any)?.request?.gender ||
+      (horoscopeResult as any)?.gender ||
+      "male";
+    return String(g).toLowerCase() === "female" ? "female" : "male";
+  }, [horoscopeResult]);
+
+  const [selectedGenderFilter, setSelectedGenderFilter] = useState<"chart" | "male" | "female" | "all">("chart");
+
+  const activeGender = useMemo(() => {
+    if (selectedGenderFilter === "chart") return nativeGender;
+    return selectedGenderFilter;
+  }, [selectedGenderFilter, nativeGender]);
 
   // Filter & Selection state
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("sexuality_intimacy");
@@ -110,14 +170,17 @@ export function AstrologicalPredictionsSection({
 
   // Modal State for Manual Condition Builder
   const [isAddRuleModalOpen, setIsAddRuleModalOpen] = useState<boolean>(false);
+  const [isManageCustomModalOpen, setIsManageCustomModalOpen] = useState<boolean>(false);
   const [newRuleNameEn, setNewRuleNameEn] = useState<string>("");
   const [newRuleNameTa, setNewRuleNameTa] = useState<string>("");
   const [newRuleCategory, setNewRuleCategory] = useState<string>("sexuality_intimacy");
+  const [newRuleSystem, setNewRuleSystem] = useState<"vedic" | "kp" | "combined">("vedic");
   const [newRuleScope, setNewRuleScope] = useState<string>("d1");
   const [newRuleSeverity, setNewRuleSeverity] = useState<string>("favorable");
-  const [newConditionType, setNewConditionType] = useState<string>("planet_conjunction");
+  const [newLogicalOperator, setNewLogicalOperator] = useState<"NONE" | "AND" | "OR" | "NOT">("NONE");
 
-  // Specific parameters for condition types
+  // Condition 1 parameters
+  const [newConditionType, setNewConditionType] = useState<string>("planet_conjunction");
   const [condPlanet1, setCondPlanet1] = useState<string>("Venus");
   const [condPlanet2, setCondPlanet2] = useState<string>("Rahu");
   const [condHouse, setCondHouse] = useState<number>(7);
@@ -125,6 +188,26 @@ export function AstrologicalPredictionsSection({
   const [condSign, setCondSign] = useState<number>(1);
   const [condNakshatra, setCondNakshatra] = useState<string>("Rohini");
   const [condMaxOrb, setCondMaxOrb] = useState<number>(8.0);
+  const [condDasaLevel, setCondDasaLevel] = useState<string>("mahadasha");
+  const [condDasaLord, setCondDasaLord] = useState<string>("Jupiter");
+  const [condCusp, setCondCusp] = useState<number>(7);
+  const [condSubLord, setCondSubLord] = useState<string>("Venus");
+  const [condHouse2, setCondHouse2] = useState<number>(11);
+
+  // Condition 2 parameters (for AND / OR compound conditions)
+  const [cond2Type, setCond2Type] = useState<string>("planet_house");
+  const [cond2Planet1, setCond2Planet1] = useState<string>("Mars");
+  const [cond2Planet2, setCond2Planet2] = useState<string>("Saturn");
+  const [cond2House, setCond2House] = useState<number>(7);
+  const [cond2PlacedInHouse, setCond2PlacedInHouse] = useState<number>(10);
+  const [cond2Sign, setCond2Sign] = useState<number>(1);
+  const [cond2Nakshatra, setCond2Nakshatra] = useState<string>("Ashwini");
+  const [cond2MaxOrb, setCond2MaxOrb] = useState<number>(8.0);
+  const [cond2DasaLevel, setCond2DasaLevel] = useState<string>("bhukti");
+  const [cond2DasaLord, setCond2DasaLord] = useState<string>("Venus");
+  const [cond2Cusp, setCond2Cusp] = useState<number>(7);
+  const [cond2SubLord, setCond2SubLord] = useState<string>("Mars");
+  const [cond2House2, setCond2House2] = useState<number>(11);
 
   // Descriptions & Reasons
   const [newInterpretationEn, setNewInterpretationEn] = useState<string>("");
@@ -186,9 +269,13 @@ export function AstrologicalPredictionsSection({
           chart_scope: chartScope,
           astrology_system: astrologySystem,
           language: language,
-          dasa: horoscopeResult.dasa as any,
+          gender: activeGender === "all" ? "all" : activeGender,
+          dasa: sanitizeDasaForEvaluation(horoscopeResult.dasa),
           kp: horoscopeResult.kp as any,
-          custom_rules: customRules.length > 0 ? customRules : undefined,
+          custom_rules:
+            customRules.length > 0
+              ? customRules.filter((r) => r.is_enabled !== false)
+              : undefined,
         };
 
         const resp = await evaluatePredictionRules(payload);
@@ -216,13 +303,14 @@ export function AstrologicalPredictionsSection({
       language,
       chartIdentityKey,
       customRules,
+      activeGender,
     ]
   );
 
   // Auto-run evaluation on mount or when chart or active filter changes
   useEffect(() => {
     executeEvaluation(activeCategoryFilter);
-  }, [activeCategoryFilter, chartScope, astrologySystem, chartIdentityKey, executeEvaluation]);
+  }, [activeCategoryFilter, chartScope, astrologySystem, chartIdentityKey, activeGender, executeEvaluation]);
 
   // Toggle card expansion
   const toggleExpand = (ruleId: string) => {
@@ -246,6 +334,13 @@ export function AstrologicalPredictionsSection({
       list = list.filter((r) => r.matched);
     }
 
+    // Strict gender filtering
+    if (activeGender === "male") {
+      list = list.filter((r) => r.applicable_gender !== "female");
+    } else if (activeGender === "female") {
+      list = list.filter((r) => r.applicable_gender !== "male");
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(
@@ -262,66 +357,165 @@ export function AstrologicalPredictionsSection({
     }
 
     return list;
-  }, [evaluationResults, showOnlyMatched, searchQuery]);
+  }, [evaluationResults, showOnlyMatched, searchQuery, activeGender]);
 
   const matchedCount = useMemo(() => {
     return evaluationResults ? evaluationResults.filter((r) => r.matched).length : 0;
   }, [evaluationResults]);
 
-  // Build declarative Condition Tree for custom rule builder
-  const buildCurrentConditionTree = () => {
-    switch (newConditionType) {
+  // Helper to build leaf condition node
+  const buildLeafNode = (
+    type: string,
+    p1: string,
+    p2: string,
+    h1: number,
+    h2: number,
+    sign: number,
+    nak: string,
+    orb: number,
+    scope: string,
+    dasaLvl: string,
+    dasaLrd: string,
+    cusp: number,
+    subLrd: string
+  ) => {
+    switch (type) {
       case "planet_conjunction":
         return {
           condition_type: "planet_conjunction",
-          planets: [condPlanet1, condPlanet2],
+          planets: [p1, p2],
           same_sign_only: true,
-          orb_degrees: Number(condMaxOrb) || 8.0,
-          chart: newRuleScope,
+          orb_degrees: Number(orb) || 8.0,
+          chart: scope,
         };
       case "planet_house":
         return {
           condition_type: "planet_house",
-          planet: condPlanet1,
-          house: Number(condHouse),
-          chart: newRuleScope,
+          planet: p1,
+          house: Number(h1),
+          chart: scope,
+        };
+      case "planet_sign":
+        return {
+          condition_type: "planet_sign",
+          planet: p1,
+          sign: Number(sign),
+          chart: scope,
         };
       case "house_lord_placement":
         return {
           condition_type: "house_lord_placement",
-          house: Number(condHouse),
-          placed_in_house: Number(condPlacedInHouse),
-          chart: newRuleScope,
-        };
-      case "planet_nakshatra":
-        return {
-          condition_type: "planet_nakshatra",
-          planet: condPlanet1,
-          nakshatra: condNakshatra,
-          chart: newRuleScope,
-        };
-      case "lagna_sign":
-        return {
-          condition_type: "lagna_sign",
-          sign: Number(condSign),
-          chart: newRuleScope,
+          house: Number(h1),
+          placed_in_house: Number(h2),
+          chart: scope,
         };
       case "planet_aspect":
         return {
           condition_type: "planet_aspect",
-          aspecting_planet: condPlanet1,
+          aspecting_planet: p1,
           target_type: "house",
-          target_value: Number(condHouse),
-          chart: newRuleScope,
+          target_value: Number(h1),
+          chart: scope,
+        };
+      case "planet_nakshatra":
+        return {
+          condition_type: "planet_nakshatra",
+          planet: p1,
+          nakshatra: nak,
+          chart: scope,
+        };
+      case "lagna_sign":
+        return {
+          condition_type: "lagna_sign",
+          sign: Number(sign),
+          chart: scope,
+        };
+      case "dasa_active":
+        return {
+          condition_type: "dasa_active",
+          level: dasaLvl,
+          lord: dasaLrd,
+        };
+      case "kp_sub_lord":
+        return {
+          condition_type: "kp_sub_lord",
+          cusp: Number(cusp),
+          sub_lord: subLrd,
+        };
+      case "kp_significator":
+        return {
+          condition_type: "kp_significator",
+          planet: p1,
+          house: Number(h1),
+        };
+      case "mutual_exchange":
+        return {
+          condition_type: "mutual_exchange",
+          house1: Number(h1),
+          house2: Number(h2),
+          chart: scope,
         };
       default:
         return {
           condition_type: "planet_house",
-          planet: condPlanet1,
-          house: Number(condHouse),
-          chart: newRuleScope,
+          planet: p1,
+          house: Number(h1),
+          chart: scope,
         };
     }
+  };
+
+  // Build declarative Condition Tree with logical operators (AND, OR, NOT)
+  const buildCurrentConditionTree = () => {
+    const cond1 = buildLeafNode(
+      newConditionType,
+      condPlanet1,
+      condPlanet2,
+      condHouse,
+      condPlacedInHouse,
+      condSign,
+      condNakshatra,
+      condMaxOrb,
+      newRuleScope,
+      condDasaLevel,
+      condDasaLord,
+      condCusp,
+      condSubLord
+    );
+
+    if (newLogicalOperator === "NONE") {
+      return cond1;
+    }
+
+    if (newLogicalOperator === "NOT") {
+      return {
+        condition_type: "compound",
+        operator: "NOT",
+        conditions: [cond1],
+      };
+    }
+
+    const cond2 = buildLeafNode(
+      cond2Type,
+      cond2Planet1,
+      cond2Planet2,
+      cond2House,
+      cond2PlacedInHouse,
+      cond2Sign,
+      cond2Nakshatra,
+      cond2MaxOrb,
+      newRuleScope,
+      cond2DasaLevel,
+      cond2DasaLord,
+      cond2Cusp,
+      cond2SubLord
+    );
+
+    return {
+      condition_type: "compound",
+      operator: newLogicalOperator,
+      conditions: [cond1, cond2],
+    };
   };
 
   // Test proposed new condition against the currently open chart inside modal
@@ -336,7 +530,7 @@ export function AstrologicalPredictionsSection({
         name_ta: newRuleNameTa || "முன்மொழியப்பட்ட தனிப்பயன் விதி",
         category_slug: newRuleCategory,
         subcategory: newRuleCategory,
-        astrology_system: "vedic",
+        astrology_system: newRuleSystem,
         chart_scope: newRuleScope,
         calculation_mode: "thirukanitha",
         condition_tree: buildCurrentConditionTree(),
@@ -403,7 +597,7 @@ export function AstrologicalPredictionsSection({
       name_ta: newRuleNameTa.trim() || newRuleNameEn.trim(),
       category_slug: newRuleCategory,
       subcategory: newRuleCategory,
-      astrology_system: "vedic",
+      astrology_system: newRuleSystem,
       chart_scope: newRuleScope,
       calculation_mode: "thirukanitha",
       condition_tree: buildCurrentConditionTree(),
@@ -449,6 +643,19 @@ export function AstrologicalPredictionsSection({
     setActiveCategoryFilter(newRuleCategory);
   };
 
+  // Toggle custom condition active state
+  const handleToggleCustomRule = (ruleId: string) => {
+    const updated = customRules.map((r) =>
+      r.rule_id === ruleId ? { ...r, is_enabled: r.is_enabled === false ? true : false } : r
+    );
+    setCustomRules(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_CUSTOM_RULES_KEY, JSON.stringify(updated));
+      } catch {}
+    }
+  };
+
   // Delete custom condition
   const handleDeleteCustomRule = (ruleId: string) => {
     const updated = customRules.filter((r) => r.rule_id !== ruleId);
@@ -481,6 +688,12 @@ export function AstrologicalPredictionsSection({
     { num: 10, name: "Makara (Capricorn)" },
     { num: 11, name: "Kumbha (Aquarius)" },
     { num: 12, name: "Meena (Pisces)" },
+  ];
+  const dasaLevelOptions = [
+    { id: "mahadasha", label: "Mahadasha (மகா தசை)" },
+    { id: "bhukti", label: "Bhukti / Antardasha (புக்தி)" },
+    { id: "antar", label: "Anthara (அந்தரம்)" },
+    { id: "any", label: "Any Active Level (ஏதேனும் ஒன்று)" },
   ];
 
   return (
@@ -542,9 +755,19 @@ export function AstrologicalPredictionsSection({
             <span>{language === "ta" ? "வடிகட்டும் தலைப்புகள் (தேர்வு செய்க):" : "Filter Categories (Click to Evaluate):"}</span>
           </div>
           {customRules.length > 0 && (
-            <span className="text-[11px] font-semibold text-[#8C6D23] bg-[#FAF2DE] px-2 py-0.5 rounded-full border border-[#D8BD80]">
-              {customRules.length} {language === "ta" ? "தனிப்பயன் விதிகள் சேர்க்கப்பட்டுள்ளன" : "custom conditions active"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-[#8C6D23] bg-[#FAF2DE] px-2 py-0.5 rounded-full border border-[#D8BD80]">
+                {customRules.filter((r) => r.is_enabled !== false).length} / {customRules.length}{" "}
+                {language === "ta" ? "தனிப்பயன் விதிகள் பயன்பாட்டில் உள்ளன" : "custom conditions active"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsManageCustomModalOpen(true)}
+                className="text-[11px] font-bold text-[#153F6B] hover:text-[#0E2845] underline cursor-pointer"
+              >
+                {language === "ta" ? "விதிகள் மேலாண்மை" : "Manage Rules"}
+              </button>
+            </div>
           )}
         </div>
 
@@ -699,6 +922,117 @@ export function AstrologicalPredictionsSection({
         </div>
       )}
 
+      {/* Sexuality & Intimacy Dedicated Gender Filter Banner */}
+      {activeCategoryFilter === "sexuality_intimacy" && (
+        <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border border-rose-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <span className="p-2 rounded-lg bg-[#881337] text-white shrink-0 shadow-xs">
+              <Flame className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-bold text-[#881337] text-sm">
+                  {language === "ta" ? "தாம்பத்தியம் & காமம் - பாலின அடிப்படையிலான ஜோதிட விதிகள்" : "Sexuality & Intimacy - Classical Gender-Filtered Rules"}
+                </h4>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                  nativeGender === "female"
+                    ? "bg-rose-100 text-rose-800 border-rose-300"
+                    : "bg-blue-100 text-blue-800 border-blue-300"
+                }`}>
+                  {nativeGender === "female"
+                    ? (language === "ta" ? "👩 ஜாதகர்: பெண் (Stri Jataka)" : "👩 Native: Female (Stri Jataka)")
+                    : (language === "ta" ? "👨 ஜாதகர்: ஆண் (Purusha)" : "👨 Native: Male (Purusha)")}
+                </span>
+              </div>
+              <p className="text-slate-600 text-xs mt-0.5">
+                {language === "ta"
+                  ? `இந்த ஜாதகரின் பாலினத்திற்குரிய (${nativeGender === "female" ? "பெண் / ஸ்திரீ" : "ஆண்"}) விதிகள் மட்டுமே துல்லியமாக சோதிக்கப்பட்டு காட்டப்படுகின்றன. எதிர் பாலின விதிகள் விலக்கப்பட்டுள்ளன.`
+                  : `Rules are strictly matched for this native's gender (${nativeGender === "female" ? "Female / Stri Jataka" : "Male / Purusha"}). Opposite gender rules are excluded.`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+            <span className="text-[11px] font-bold text-slate-700">
+              {language === "ta" ? "வடிகட்டி:" : "Filter:"}
+            </span>
+            <div className="inline-flex rounded-lg bg-white border border-[#D9DEE7] p-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setSelectedGenderFilter("chart")}
+                className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  selectedGenderFilter === "chart"
+                    ? (nativeGender === "female" ? "bg-rose-600 text-white" : "bg-[#102A4C] text-white")
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {nativeGender === "female" ? "👩 பெண் (Chart)" : "👨 ஆண் (Chart)"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedGenderFilter("male")}
+                className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  selectedGenderFilter === "male"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                👨 {language === "ta" ? "ஆண்" : "Male"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedGenderFilter("female")}
+                className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  selectedGenderFilter === "female"
+                    ? "bg-rose-600 text-white"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                👩 {language === "ta" ? "பெண்" : "Female"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedGenderFilter("all")}
+                className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  selectedGenderFilter === "all"
+                    ? "bg-slate-700 text-white"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                👥 {language === "ta" ? "அனைத்தும்" : "All"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Star Prediction Dedicated Banner */}
+      {activeCategoryFilter === "star" && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <span className="p-2 rounded-lg bg-[#153F6B] text-[#F3E5AB] shrink-0">
+              <Star className="w-4 h-4" />
+            </span>
+            <div>
+              <h4 className="font-bold text-[#0F2942] text-sm">
+                {language === "ta" ? "28 நட்சத்திர சாஸ்திர பலன்கள் (The Real Secrets of Vedic Astrology)" : "28 Nakshatras - Star Prediction & Shastra Secrets"}
+              </h4>
+              <p className="text-slate-600 mt-0.5 leading-relaxed">
+                {language === "ta"
+                  ? "சந்திரன் நின்ற நட்சத்திரம், லக்ன நட்சத்திரம், 4 பாத நயங்கள், குடும்ப தோஷங்கள் மற்றும் பரிகாரங்கள் உள்ளிட்ட 120+ சாஸ்திர விதிகள் இந்த ஜாதகத்தில் துல்லியமாக சோதிக்கப்படுகின்றன."
+                  : "Deterministic evaluation of Moon Star, Ascendant Star, Pada nuances, family doshas, and classical remedies across all 28 Nakshatras."}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/tools/nakshatras"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#153F6B] text-white font-bold whitespace-nowrap shadow-xs hover:bg-[#103052] transition-colors shrink-0"
+          >
+            <span>{language === "ta" ? "28 நட்சத்திர கருவிக்குச் செல்க" : "Open 28 Nakshatras Portal"}</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#F3E5AB]" />
+          </Link>
+        </div>
+      )}
+
       {/* 4. Results Display List / Empty States */}
       {isEvaluating ? (
         <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center">
@@ -795,6 +1129,25 @@ export function AstrologicalPredictionsSection({
                       <span className={`px-2 py-0.5 rounded font-bold border ${severityColor}`}>
                         {rule.severity.toUpperCase()}
                       </span>
+
+                      {/* Rule Gender Badge */}
+                      {rule.applicable_gender && rule.applicable_gender !== "both" ? (
+                        <span
+                          className={`px-2 py-0.5 rounded font-bold border ${
+                            rule.applicable_gender === "female"
+                              ? "bg-rose-50 text-rose-800 border-rose-300"
+                              : "bg-blue-50 text-blue-800 border-blue-300"
+                          }`}
+                        >
+                          {rule.applicable_gender === "female"
+                            ? (language === "ta" ? "👩 பெண் மட்டும் (ஸ்திரீ)" : "👩 Female Only")
+                            : (language === "ta" ? "👨 ஆண் மட்டும்" : "👨 Male Only")}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                          {language === "ta" ? "👥 பொதுவானது" : "👥 Both"}
+                        </span>
+                      )}
                     </div>
 
                     {/* Rule Title */}
@@ -886,17 +1239,42 @@ export function AstrologicalPredictionsSection({
                         </div>
                       )}
                       {isCustom && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCustomRule(rule.rule_id);
-                          }}
-                          className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer ml-auto"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>{language === "ta" ? "விதியை நீக்கு" : "Delete Rule"}</span>
-                        </button>
+                        <div className="flex items-center gap-2 ml-auto">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleCustomRule(rule.rule_id);
+                            }}
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded cursor-pointer border ${
+                              customRules.find((r) => r.rule_id === rule.rule_id)?.is_enabled !== false
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                                : "bg-gray-100 text-gray-500 border-gray-300 hover:bg-gray-200"
+                            }`}
+                          >
+                            <span>
+                              {customRules.find((r) => r.rule_id === rule.rule_id)?.is_enabled !== false
+                                ? language === "ta"
+                                  ? "இயக்கத்தில் உள்ளது"
+                                  : "Enabled"
+                                : language === "ta"
+                                ? "முடக்கப்பட்டுள்ளது"
+                                : "Disabled"}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCustomRule(rule.rule_id);
+                            }}
+                            className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{language === "ta" ? "விதியை நீக்கு" : "Delete Rule"}</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -910,7 +1288,7 @@ export function AstrologicalPredictionsSection({
       {/* 5. Modal Dialog: Add Condition Manually */}
       {isAddRuleModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#D9DEE7] shadow-2xl p-5 sm:p-6 space-y-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-[#D9DEE7] shadow-2xl p-5 sm:p-6 space-y-4">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#F2F3F5] pb-3">
               <div className="flex items-center gap-2">
@@ -970,8 +1348,8 @@ export function AstrologicalPredictionsSection({
                 </div>
               </div>
 
-              {/* Row 2: Category & Chart Scope */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Row 2: Category, System, Scope, Severity */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-[#183047] block">
                     {language === "ta" ? "பிரிவு (Category)" : "Category"}
@@ -990,6 +1368,21 @@ export function AstrologicalPredictionsSection({
                     <option value="nakshatra_characteristics">✨ Star Characteristics</option>
                     <option value="wealth_yogas">💰 Money & Wealth</option>
                     <option value="children_prospects">👶 Children & Family</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#183047] block">
+                    {language === "ta" ? "ஜோதிட முறை (System)" : "Astrology System"}
+                  </label>
+                  <select
+                    value={newRuleSystem}
+                    onChange={(e) => setNewRuleSystem(e.target.value as any)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-semibold"
+                  >
+                    <option value="vedic">Vedic (வேத ஜோதிடம்)</option>
+                    <option value="kp">KP System (கிருஷ்ணமூர்த்தி பத்ததி)</option>
+                    <option value="combined">Both / Combined (இரு முறைகளும்)</option>
                   </select>
                 </div>
 
@@ -1025,218 +1418,795 @@ export function AstrologicalPredictionsSection({
                 </div>
               </div>
 
-              {/* Row 3: Condition Type Selector */}
-              <div className="space-y-2 bg-[#F8FAFC] p-3 rounded-xl border border-[#E2E8F0]">
-                <label className="font-bold text-[#183047] block">
-                  {language === "ta" ? "நிபந்தனை வகை (Condition Logic):" : "Condition Type:"}
-                </label>
-                <select
-                  value={newConditionType}
-                  onChange={(e) => setNewConditionType(e.target.value)}
-                  className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-bold bg-white"
-                >
-                  <option value="planet_conjunction">இரண்டு கிரகங்கள் சேர்க்கை (Planet Conjunction, e.g. Venus + Rahu)</option>
-                  <option value="planet_house">ஒரு கிரகம் குறிப்பிட்ட பாவத்தில் (Planet in House, e.g. Sun in 10)</option>
-                  <option value="house_lord_placement">பாவாதிபதி அமர்ந்த இடம் (House Lord in House, e.g. 7th Lord in 11th)</option>
-                  <option value="planet_nakshatra">கிரகம் நின்ற நட்சத்திரம் (Planet in Star, e.g. Moon in Rohini)</option>
-                  <option value="lagna_sign">லக்னம் அமைந்த ராசி (Ascendant Sign, e.g. Aries, Taurus)</option>
-                  <option value="planet_aspect">கிரகப் பார்வை (Planet Aspecting House, e.g. Jupiter aspects 7th)</option>
-                </select>
-
-                {/* Dynamic Parameter Fields based on Condition Type */}
-                <div className="pt-2">
-                  {newConditionType === "planet_conjunction" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Planet 1</label>
-                        <select
-                          value={condPlanet1}
-                          onChange={(e) => setCondPlanet1(e.target.value)}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        >
-                          {planetOptions.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Planet 2</label>
-                        <select
-                          value={condPlanet2}
-                          onChange={(e) => setCondPlanet2(e.target.value)}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        >
-                          {planetOptions.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Max Orb (Degrees)</label>
-                        <input
-                          type="number"
-                          value={condMaxOrb}
-                          onChange={(e) => setCondMaxOrb(Number(e.target.value))}
-                          step="0.5"
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {newConditionType === "planet_house" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
-                        <select
-                          value={condPlanet1}
-                          onChange={(e) => setCondPlanet1(e.target.value)}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        >
-                          {planetOptions.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">House (1 - 12)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={condHouse}
-                          onChange={(e) => setCondHouse(Number(e.target.value))}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {newConditionType === "house_lord_placement" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Lord of House (1 - 12)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={condHouse}
-                          onChange={(e) => setCondHouse(Number(e.target.value))}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Placed in House (1 - 12)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={condPlacedInHouse}
-                          onChange={(e) => setCondPlacedInHouse(Number(e.target.value))}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {newConditionType === "planet_nakshatra" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
-                        <select
-                          value={condPlanet1}
-                          onChange={(e) => setCondPlanet1(e.target.value)}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        >
-                          {planetOptions.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Nakshatra</label>
-                        <select
-                          value={condNakshatra}
-                          onChange={(e) => setCondNakshatra(e.target.value)}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        >
-                          {nakshatraOptions.map((n) => (
-                            <option key={n} value={n}>{n}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {newConditionType === "lagna_sign" && (
-                    <div>
-                      <label className="text-[10px] font-bold text-[#8190A6]">Ascendant (Lagna) Sign</label>
-                      <select
-                        value={condSign}
-                        onChange={(e) => setCondSign(Number(e.target.value))}
-                        className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                      >
-                        {rashiOptions.map((r) => (
-                          <option key={r.num} value={r.num}>{r.num} - {r.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {newConditionType === "planet_aspect" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Aspecting Planet</label>
-                        <select
-                          value={condPlanet1}
-                          onChange={(e) => setCondPlanet1(e.target.value)}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        >
-                          {planetOptions.map((p) => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-[#8190A6]">Target House (1 - 12)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="12"
-                          value={condHouse}
-                          onChange={(e) => setCondHouse(Number(e.target.value))}
-                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
-                        />
-                      </div>
-                    </div>
-                  )}
+              {/* Row 3: Condition Builder & Logical Operators */}
+              <div className="space-y-3 bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0]">
+                {/* Logical Operator Header */}
+                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#E2E8F0] flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-[#183047]">
+                      {language === "ta" ? "தர்க்க இயக்கி (Logical Operator):" : "Logical Operator:"}
+                    </span>
+                    <select
+                      value={newLogicalOperator}
+                      onChange={(e) => setNewLogicalOperator(e.target.value as any)}
+                      className="rounded-lg border border-[#B4872B] px-2 py-1 text-xs font-bold bg-white text-[#B4872B]"
+                    >
+                      <option value="NONE">Single Condition (ஒரே நிபந்தனை)</option>
+                      <option value="AND">AND (மற்றும் — இரு நிபந்தனைகளும் பொருந்த வேண்டும்)</option>
+                      <option value="OR">OR (அல்லது — ஏதேனும் ஒன்று பொருந்தினால் போதும்)</option>
+                      <option value="NOT">NOT (இல்லை — நிபந்தனை அமையாத போது மட்டுமே)</option>
+                    </select>
+                  </div>
+                  <span className="text-[10px] text-[#8190A6]">
+                    {newLogicalOperator === "NONE" && (language === "ta" ? "ஒற்றை நிபந்தனை ஆய்வு" : "Evaluating 1 condition")}
+                    {newLogicalOperator === "AND" && (language === "ta" ? "Condition 1 AND Condition 2 இரண்டும் பூர்த்தியாக வேண்டும்" : "Requires both Cond 1 & Cond 2")}
+                    {newLogicalOperator === "OR" && (language === "ta" ? "Condition 1 அல்லது Condition 2 ஏதேனும் ஒன்று பூர்த்தியானால் போதும்" : "Matches if Cond 1 OR Cond 2 met")}
+                    {newLogicalOperator === "NOT" && (language === "ta" ? "Condition 1 ஜாதகத்தில் அமையாத போது விதி பொருந்தும்" : "Inverts Cond 1 (true when unmet)")}
+                  </span>
                 </div>
+
+                {/* Condition 1 */}
+                <div className="space-y-2 pt-1">
+                  <label className="font-bold text-[#183047] block flex items-center justify-between">
+                    <span>
+                      {newLogicalOperator !== "NONE"
+                        ? language === "ta"
+                          ? "முதன்மை நிபந்தனை 1 (Condition 1):"
+                          : "Primary Condition (Condition 1):"
+                        : language === "ta"
+                        ? "நிபந்தனை வகை (Condition Logic):"
+                        : "Condition Type:"}
+                    </span>
+                  </label>
+                  <select
+                    value={newConditionType}
+                    onChange={(e) => setNewConditionType(e.target.value)}
+                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-bold bg-white"
+                  >
+                    <option value="planet_conjunction">இரண்டு கிரகங்கள் சேர்க்கை (Planet Conjunction, e.g. Venus + Mars)</option>
+                    <option value="planet_house">ஒரு கிரகம் குறிப்பிட்ட பாவத்தில் (Planet in House, e.g. Saturn in 7th)</option>
+                    <option value="planet_sign">ஒரு கிரகம் குறிப்பிட்ட ராசியில் (Planet in Sign, e.g. Venus in Aries)</option>
+                    <option value="house_lord_placement">பாவாதிபதி அமர்ந்த இடம் (House Lord in House, e.g. 7th Lord in 10th)</option>
+                    <option value="planet_aspect">கிரகப் பார்வை (Planet Aspecting House, e.g. Mars aspects 10th)</option>
+                    <option value="planet_nakshatra">கிரகம் நின்ற நட்சத்திரம் (Planet in Nakshatra, e.g. Moon in Rohini)</option>
+                    <option value="lagna_sign">லக்னம் அமைந்த ராசி (Ascendant Sign, e.g. Taurus, Libra)</option>
+                    <option value="dasa_active">தசா-புக்தி அதிபதி நிலை (Active Dasa-Bhukti Lord)</option>
+                    <option value="kp_sub_lord">KP பாவ உப அதிபதி (KP Cusp Sub-Lord)</option>
+                    <option value="kp_significator">KP பாவ காரகர் (KP Planet Signifies House)</option>
+                    <option value="mutual_exchange">பரிவர்த்தனை யோகம் (Mutual Exchange of Lords / Parivartana)</option>
+                  </select>
+
+                  {/* Condition 1 Dynamic Parameters */}
+                  <div className="pt-1">
+                    {newConditionType === "planet_conjunction" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Planet 1</label>
+                          <select
+                            value={condPlanet1}
+                            onChange={(e) => setCondPlanet1(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Planet 2</label>
+                          <select
+                            value={condPlanet2}
+                            onChange={(e) => setCondPlanet2(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Max Orb (Degrees)</label>
+                          <input
+                            type="number"
+                            value={condMaxOrb}
+                            onChange={(e) => setCondMaxOrb(Number(e.target.value))}
+                            step="0.5"
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "planet_house" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                          <select
+                            value={condPlanet1}
+                            onChange={(e) => setCondPlanet1(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">House (1 - 12)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condHouse}
+                            onChange={(e) => setCondHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "planet_sign" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                          <select
+                            value={condPlanet1}
+                            onChange={(e) => setCondPlanet1(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Zodiac Sign</label>
+                          <select
+                            value={condSign}
+                            onChange={(e) => setCondSign(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {rashiOptions.map((r) => (
+                              <option key={r.num} value={r.num}>{r.num} - {r.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "house_lord_placement" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Lord of House (1 - 12)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condHouse}
+                            onChange={(e) => setCondHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Placed in House (1 - 12)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condPlacedInHouse}
+                            onChange={(e) => setCondPlacedInHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "planet_aspect" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Aspecting Planet</label>
+                          <select
+                            value={condPlanet1}
+                            onChange={(e) => setCondPlanet1(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Target House (1 - 12)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condHouse}
+                            onChange={(e) => setCondHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "planet_nakshatra" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                          <select
+                            value={condPlanet1}
+                            onChange={(e) => setCondPlanet1(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Nakshatra</label>
+                          <select
+                            value={condNakshatra}
+                            onChange={(e) => setCondNakshatra(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {nakshatraOptions.map((n) => (
+                              <option key={n} value={n}>{n}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "lagna_sign" && (
+                      <div>
+                        <label className="text-[10px] font-bold text-[#8190A6]">Ascendant (Lagna) Sign</label>
+                        <select
+                          value={condSign}
+                          onChange={(e) => setCondSign(Number(e.target.value))}
+                          className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                        >
+                          {rashiOptions.map((r) => (
+                            <option key={r.num} value={r.num}>{r.num} - {r.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {newConditionType === "dasa_active" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Dasa Level</label>
+                          <select
+                            value={condDasaLevel}
+                            onChange={(e) => setCondDasaLevel(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {dasaLevelOptions.map((d) => (
+                              <option key={d.id} value={d.id}>{d.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Ruling Lord</label>
+                          <select
+                            value={condDasaLord}
+                            onChange={(e) => setCondDasaLord(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "kp_sub_lord" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">KP Cusp (1 - 12)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condCusp}
+                            onChange={(e) => setCondCusp(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Sub-Lord Planet</label>
+                          <select
+                            value={condSubLord}
+                            onChange={(e) => setCondSubLord(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "kp_significator" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                          <select
+                            value={condPlanet1}
+                            onChange={(e) => setCondPlanet1(e.target.value)}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {planetOptions.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Signified House (1 - 12)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condHouse}
+                            onChange={(e) => setCondHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {newConditionType === "mutual_exchange" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">House 1 Lord</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condHouse}
+                            onChange={(e) => setCondHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">House 2 Lord (Parivartana)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={condPlacedInHouse}
+                            onChange={(e) => setCondPlacedInHouse(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Condition 2 (Shown when AND or OR is selected) */}
+                {(newLogicalOperator === "AND" || newLogicalOperator === "OR") && (
+                  <div className="space-y-2 pt-3 border-t border-[#E2E8F0]">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#153F6B]">
+                      <span className="bg-[#153F6B] text-white px-2 py-0.5 rounded text-[10px]">
+                        {newLogicalOperator}
+                      </span>
+                      <span>
+                        {language === "ta" ? "இரண்டாம் நிபந்தனை 2 (Condition 2):" : "Secondary Condition (Condition 2):"}
+                      </span>
+                    </div>
+
+                    <select
+                      value={cond2Type}
+                      onChange={(e) => setCond2Type(e.target.value)}
+                      className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047] font-bold bg-white"
+                    >
+                      <option value="planet_house">ஒரு கிரகம் குறிப்பிட்ட பாவத்தில் (Planet in House, e.g. Mars in 7th)</option>
+                      <option value="planet_sign">ஒரு கிரகம் குறிப்பிட்ட ராசியில் (Planet in Sign, e.g. Mars in Taurus)</option>
+                      <option value="planet_conjunction">இரண்டு கிரகங்கள் சேர்க்கை (Planet Conjunction, e.g. Saturn + Rahu)</option>
+                      <option value="house_lord_placement">பாவாதிபதி அமர்ந்த இடம் (House Lord in House, e.g. 5th Lord in 6th)</option>
+                      <option value="planet_aspect">கிரகப் பார்வை (Planet Aspecting House, e.g. Jupiter aspects 7th)</option>
+                      <option value="planet_nakshatra">கிரகம் நின்ற நட்சத்திரம் (Planet in Nakshatra)</option>
+                      <option value="lagna_sign">லக்னம் அமைந்த ராசி (Ascendant Sign)</option>
+                      <option value="dasa_active">தசா-புக்தி அதிபதி நிலை (Active Dasa-Bhukti Lord)</option>
+                      <option value="kp_sub_lord">KP பாவ உப அதிபதி (KP Cusp Sub-Lord)</option>
+                      <option value="kp_significator">KP பாவ காரகர் (KP Planet Signifies House)</option>
+                      <option value="mutual_exchange">பரிவர்த்தனை யோகம் (Mutual Exchange of Lords)</option>
+                    </select>
+
+                    {/* Condition 2 Dynamic Parameters */}
+                    <div className="pt-1">
+                      {cond2Type === "planet_conjunction" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Planet 1</label>
+                            <select
+                              value={cond2Planet1}
+                              onChange={(e) => setCond2Planet1(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Planet 2</label>
+                            <select
+                              value={cond2Planet2}
+                              onChange={(e) => setCond2Planet2(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Max Orb (Deg)</label>
+                            <input
+                              type="number"
+                              value={cond2MaxOrb}
+                              onChange={(e) => setCond2MaxOrb(Number(e.target.value))}
+                              step="0.5"
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "planet_house" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                            <select
+                              value={cond2Planet1}
+                              onChange={(e) => setCond2Planet1(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">House (1 - 12)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2House}
+                              onChange={(e) => setCond2House(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "planet_sign" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                            <select
+                              value={cond2Planet1}
+                              onChange={(e) => setCond2Planet1(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Zodiac Sign</label>
+                            <select
+                              value={cond2Sign}
+                              onChange={(e) => setCond2Sign(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {rashiOptions.map((r) => (
+                                <option key={r.num} value={r.num}>{r.num} - {r.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "house_lord_placement" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Lord of House (1 - 12)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2House}
+                              onChange={(e) => setCond2House(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Placed in House (1 - 12)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2PlacedInHouse}
+                              onChange={(e) => setCond2PlacedInHouse(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "planet_aspect" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Aspecting Planet</label>
+                            <select
+                              value={cond2Planet1}
+                              onChange={(e) => setCond2Planet1(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Target House (1 - 12)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2House}
+                              onChange={(e) => setCond2House(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "planet_nakshatra" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                            <select
+                              value={cond2Planet1}
+                              onChange={(e) => setCond2Planet1(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Nakshatra</label>
+                            <select
+                              value={cond2Nakshatra}
+                              onChange={(e) => setCond2Nakshatra(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {nakshatraOptions.map((n) => (
+                                <option key={n} value={n}>{n}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "lagna_sign" && (
+                        <div>
+                          <label className="text-[10px] font-bold text-[#8190A6]">Ascendant (Lagna) Sign</label>
+                          <select
+                            value={cond2Sign}
+                            onChange={(e) => setCond2Sign(Number(e.target.value))}
+                            className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                          >
+                            {rashiOptions.map((r) => (
+                              <option key={r.num} value={r.num}>{r.num} - {r.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {cond2Type === "dasa_active" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Dasa Level</label>
+                            <select
+                              value={cond2DasaLevel}
+                              onChange={(e) => setCond2DasaLevel(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {dasaLevelOptions.map((d) => (
+                                <option key={d.id} value={d.id}>{d.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Ruling Lord</label>
+                            <select
+                              value={cond2DasaLord}
+                              onChange={(e) => setCond2DasaLord(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "kp_sub_lord" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">KP Cusp (1 - 12)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2Cusp}
+                              onChange={(e) => setCond2Cusp(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Sub-Lord Planet</label>
+                            <select
+                              value={cond2SubLord}
+                              onChange={(e) => setCond2SubLord(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "kp_significator" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Planet</label>
+                            <select
+                              value={cond2Planet1}
+                              onChange={(e) => setCond2Planet1(e.target.value)}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            >
+                              {planetOptions.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">Signified House (1 - 12)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2House}
+                              onChange={(e) => setCond2House(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {cond2Type === "mutual_exchange" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">House 1 Lord</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2House}
+                              onChange={(e) => setCond2House(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-[#8190A6]">House 2 Lord</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="12"
+                              value={cond2PlacedInHouse}
+                              onChange={(e) => setCond2PlacedInHouse(Number(e.target.value))}
+                              className="w-full rounded border border-[#D9DEE7] p-1.5 text-xs bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* NOT Operator Explanatory Note */}
+                {newLogicalOperator === "NOT" && (
+                  <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-[11px] text-amber-800 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                    <span>
+                      {language === "ta"
+                        ? "குறிப்பு: மேலே குறிப்பிட்டுள்ள முதன்மை நிபந்தனை 1 ஜாதகத்தில் இல்லாத போது மட்டுமே இந்த விதி பூர்த்தியாகும்."
+                        : "Note: Inversion active. This rule evaluates to TRUE only when Primary Condition 1 is NOT met in the chart."}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Row 4: Description & Astrological Reason */}
+              {/* Row 4: Descriptions, Principles & References */}
               <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-[#183047] block">
-                    {language === "ta" ? "பலன் மற்றும் விளக்கம் (Prediction Description)" : "Prediction Description"}
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. When Venus conjoins Rahu, it magnifies passionate desires and aesthetic attraction..."
-                    value={newInterpretationEn}
-                    onChange={(e) => setNewInterpretationEn(e.target.value)}
-                    className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#183047] block">
+                      {language === "ta" ? "பலன் மற்றும் விளக்கம் (English)" : "Prediction Description (English)"}
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. When Venus conjoins Rahu, it magnifies passionate desires and aesthetic attraction..."
+                      value={newInterpretationEn}
+                      onChange={(e) => setNewInterpretationEn(e.target.value)}
+                      className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#183047] block">
+                      {language === "ta" ? "பலன் மற்றும் விளக்கம் (தமிழ்)" : "Prediction Description (Tamil)"}
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="உதா: சுக்கிரன்-ராகு சேர்க்கை தீவிர காமக் கவர்ச்சியையும் காதல் நாட்டத்தையும் தரும்..."
+                      value={newInterpretationTa}
+                      onChange={(e) => setNewInterpretationTa(e.target.value)}
+                      className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#183047] block">
+                      {language === "ta" ? "ஜோதிடக் காரணம் (English Principle)" : "Astrological Principle (English)"}
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Rahu amplifies the sensory qualities of Shukra, encouraging boundary-pushing romantic expression..."
+                      value={newPrincipleEn}
+                      onChange={(e) => setNewPrincipleEn(e.target.value)}
+                      className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#183047] block">
+                      {language === "ta" ? "ஜோதிடக் காரணம் (தமிழ் விளக்கம்)" : "Astrological Principle (Tamil)"}
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="உதா: சுக்கிரனின் காரகத்துவங்களான காமம், இன்பங்களை ராகு பலமடங்கு பெருக்குகிறார்..."
+                      value={newPrincipleTa}
+                      onChange={(e) => setNewPrincipleTa(e.target.value)}
+                      className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="font-bold text-[#183047] block">
-                    {language === "ta" ? "ஜோதிடக் காரணம் (Astrological Reason & Principle)" : "Astrological Principle & Reason"}
+                    {language === "ta" ? "நூல் மேற்கோள் (Classical Source / Author)" : "Classical Source Reference"}
                   </label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. Rahu amplifies the sensory qualities of Shukra, encouraging boundary-pushing romantic expression..."
-                    value={newPrincipleEn}
-                    onChange={(e) => setNewPrincipleEn(e.target.value)}
+                  <input
+                    type="text"
+                    placeholder="e.g. Jataka Tatva, Brihat Jataka, BPHS, KP Reader"
+                    value={newSourceRef}
+                    onChange={(e) => setNewSourceRef(e.target.value)}
                     className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"
                   />
                 </div>
@@ -1294,6 +2264,120 @@ export function AstrologicalPredictionsSection({
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Modal Dialog: Manage All Custom Rules */}
+      {isManageCustomModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto border border-[#D9DEE7] shadow-2xl p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F2F3F5] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#FAF2DE] text-[#B4872B] flex items-center justify-center">
+                  <Filter className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm sm:text-base text-[#183047]">
+                    {language === "ta" ? "தனிப்பயன் விதிகள் மேலாண்மை" : "Manage Custom Rules"}
+                  </h4>
+                  <p className="text-[11px] text-[#8190A6]">
+                    {language === "ta"
+                      ? "நீங்கள் உருவாக்கிய விதிகளை இயக்கலாம், முடக்கலாம் அல்லது நீக்கலாம்."
+                      : "Enable, disable, or delete custom astrological rules stored in your profile."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsManageCustomModalOpen(false)}
+                className="text-[#8190A6] hover:text-[#183047] p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {customRules.length === 0 ? (
+                <div className="text-center py-8 text-xs text-[#8190A6]">
+                  {language === "ta"
+                    ? "தற்போது தனிப்பயன் விதிகள் ஏதுமில்லை. '+ புதிய விதியைச் சேர்' பட்டனை அழுத்தவும்."
+                    : "No custom rules created yet. Click '+ Add Condition' to build one."}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {customRules.map((cr) => {
+                    const isEnabled = cr.is_enabled !== false;
+                    return (
+                      <div
+                        key={cr.rule_id}
+                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition-colors ${
+                          isEnabled
+                            ? "bg-[#F8FAFC] border-[#E2E8F0]"
+                            : "bg-gray-50 border-gray-200 opacity-60"
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-xs text-[#183047]">
+                            {language === "ta" && cr.name_ta ? cr.name_ta : cr.name_en}
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-[#8190A6]">
+                            <span className="uppercase font-semibold tracking-wider text-[#B4872B]">
+                              {cr.astrology_system || "vedic"}
+                            </span>
+                            <span>•</span>
+                            <span className="uppercase font-semibold text-[#153F6B]">
+                              {cr.chart_scope || "d1"}
+                            </span>
+                            <span>•</span>
+                            <span>{cr.category_slug}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCustomRule(cr.rule_id)}
+                            className={`px-2.5 py-1 rounded text-xs font-bold border transition-colors cursor-pointer ${
+                              isEnabled
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                                : "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-300"
+                            }`}
+                          >
+                            {isEnabled
+                              ? language === "ta"
+                                ? "இயக்கத்தில் உள்ளது"
+                                : "Enabled"
+                              : language === "ta"
+                              ? "முடக்கப்பட்டுள்ளது"
+                              : "Disabled"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCustomRule(cr.rule_id)}
+                            className="p-1.5 rounded text-rose-600 hover:text-rose-800 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title={language === "ta" ? "விதியை நீக்கு" : "Delete"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-[#F2F3F5]">
+              <button
+                type="button"
+                onClick={() => setIsManageCustomModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-[#153F6B] hover:bg-[#0E2845] text-white font-bold text-xs cursor-pointer"
+              >
+                {language === "ta" ? "முடிந்தது" : "Done"}
+              </button>
             </div>
           </div>
         </div>

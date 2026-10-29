@@ -11,8 +11,6 @@ import {
   Sparkles,
   Layers,
   Calendar,
-  Clock,
-  Home,
   Flame,
   Database,
   User,
@@ -135,22 +133,6 @@ interface AstrologyToolCard {
       color: "text-[#B4872B] border-[#B4872B]/40 bg-[#FAF2DE]/50",
     },
     {
-      id: "transit-watch",
-      titleTa: "கோச்சார ஜாதகம்",
-      titleEn: "KP Transit Watch",
-      href: "/tools/transit-watch",
-      icon: Clock,
-      color: "text-teal-600 border-teal-300 bg-teal-50",
-    },
-    {
-      id: "d1-d9",
-      titleTa: "வர்க்க சக்கரங்கள் (D1 - D60)",
-      titleEn: "Divisional Charts (D1 - D60)",
-      href: "/tools/d1-d9",
-      icon: Compass,
-      color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE]",
-    },
-    {
       id: "ashtakavarga",
       titleTa: "அஷ்டகவர்க்கம் & கக்ஷா கோச்சாரம்",
       titleEn: "Ashtakavarga & Kakshya Studio",
@@ -177,6 +159,16 @@ interface AstrologyToolCard {
       color: "text-emerald-600 border-emerald-300 bg-emerald-50",
     },
     {
+      id: "jamakkol-prasanam",
+      titleTa: "ஜாமக்கோள் பிரசன்னம்",
+      titleEn: "Jamakkol Prasanam Horary",
+      descriptionTa: "உதயம், ஆருடம், கவிப்பு மற்றும் 8 வெளிவட்ட ஜாமக் கோள்களைக் கொண்ட அதிவேக 16-ஜாம பிரசன்ன சக்கரம் & காரிய சித்தி தீர்ப்பு.",
+      descriptionEn: "Classical 16-Jamam horary astrology engine with Udhayam, Aarudham, Kavippu, and 8 outer Jama Grahas in a dual-ring South Indian chart.",
+      href: "/tools/jamakkol-prasanam",
+      icon: Compass,
+      color: "text-amber-600 border-amber-300 bg-amber-50",
+    },
+    {
       id: "pancha-pakshi",
       titleTa: "பஞ்ச பட்சி சாஸ்திரம்",
       titleEn: "Pancha Pakshi Shastra",
@@ -187,38 +179,12 @@ interface AstrologyToolCard {
       color: "text-teal-600 border-teal-300 bg-teal-50",
     },
     {
-      id: "vastu",
-      titleTa: "வாஸ்து சாஸ்திரம்",
-      titleEn: "Vastu Shastra Assessment",
-      href: "/vastu",
-      icon: Home,
-      color: "text-cyan-600 border-cyan-300 bg-cyan-50",
-    },
-    {
       id: "remedies",
       titleTa: "பரிகாரங்கள் & ஆலயங்கள்",
       titleEn: "Remedies & Pariharam",
       href: "/remedies",
       icon: Flame,
       color: "text-amber-700 border-amber-300 bg-amber-50",
-    },
-    {
-      id: "gemstones-rudraksha",
-      titleTa: "ரத்தினம் & ருத்ராட்ச ஆலோசனை",
-      titleEn: "Gemstone & Rudraksha Studio",
-      descriptionTa: "அனுகூல vs பிரதிகூல சாஸ்திர விதி, யோககாரக ஆதரவு ரத்தினங்கள், 1-14 முக ருத்ராட்சப் பொருத்தம் மற்றும் உடல் எடையிலான சரியான ரட்டி அளவீடு.",
-      descriptionEn: "Authentic Anukula vs Pratikula Shastra, Yogakaraka support stones, 1-to-14 Mukhi Rudraksha matrix, and body weight formulas.",
-      href: "/tools/gemstones-rudraksha",
-      icon: Sparkles,
-      color: "text-amber-600 border-amber-300 bg-amber-50",
-    },
-    {
-      id: "destiny-card",
-      titleTa: "விதி அட்டை",
-      titleEn: "Destiny Card Snapshot",
-      href: "/tools/horoscope?tab=destiny-card",
-      icon: Sparkles,
-      color: "text-purple-600 border-purple-300 bg-purple-50",
     },
   ];
 
@@ -269,14 +235,6 @@ interface AstrologyToolCard {
   // Section 3: Resources
   const resourceTools = [
     {
-      id: "vastu-guide",
-      titleTa: "வாஸ்து சாஸ்திர விதிகள்",
-      titleEn: "Vastu Shastra Principles",
-      href: "/vastu",
-      icon: Home,
-      color: "text-blue-600 border-blue-300 bg-blue-50",
-    },
-    {
       id: "remedies-guide",
       titleTa: "நவகிரக ஆலயங்கள் & மந்திரங்கள்",
       titleEn: "Temples & Mantras",
@@ -303,7 +261,7 @@ interface AstrologyToolCard {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumbs
         items={[

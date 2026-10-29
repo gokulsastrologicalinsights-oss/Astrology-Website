@@ -36,13 +36,15 @@ import {
   User,
   Home,
   Heart,
+  Star,
+  Lock,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 
 export function Navbar() {
   const pathname = usePathname();
   const { language, toggleLanguage, t } = useLanguage();
-  const { user, role, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, role, isAuthenticated, isLoading, logout, hasPermission } = useAuth();
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -112,7 +114,6 @@ export function Navbar() {
         pathname.startsWith("/horoscope") ||
         pathname.startsWith("/numerology") ||
         pathname.startsWith("/muhurta") ||
-        pathname.startsWith("/vastu") ||
         pathname.startsWith("/remedies"),
       hasDropdown: true,
       children: [
@@ -120,56 +121,49 @@ export function Navbar() {
           title: language === "ta" ? "ஜாதகம் (வேத & கே.பி)" : "Horoscope (Vedic & KP)",
           href: "/tools/horoscope",
           icon: Compass,
+          permission: "vedic",
         },
         {
           title: language === "ta" ? "பாரம்பரிய தமிழ் ஜாதகக் குறிப்பு" : "Horoscope Writing",
           href: "/tools/horoscope-writing",
           icon: BookOpen,
+          permission: "tamil_horoscope",
         },
         {
           title: language === "ta" ? "உயர்நிலை கே.பி. முறை" : "Advanced KP System",
           href: "/tools/advanced-kp",
           icon: Layers,
-        },
-        {
-          title: language === "ta" ? "கோச்சார ஜாதகம்" : "KP Transit Watch",
-          href: "/tools/transit-watch",
-          icon: Clock,
+          permission: "kp_astrology",
         },
         {
           title: language === "ta" ? "கே.பி. நிகழ்வு கணிப்பு" : "KP Events & Prediction",
           href: "/tools/kp-events-prediction",
           icon: Sparkles,
+          permission: "kp_astrology",
         },
         {
           title: language === "ta" ? "திருமண கணிப்பு" : "Marriage Prediction",
           href: "/tools/marriage-prediction",
           icon: Heart,
-        },
-        {
-          title: language === "ta" ? "D1 ராசி & D9 நவாம்சம்" : "D1 Rasi & D9 Navamsa",
-          href: "/tools/d1-d9",
-          icon: Compass,
+          permission: "marriage_matching",
         },
         {
           title: language === "ta" ? "எண் கணிதம்" : "Numerology System",
           href: "/tools/numerology",
           icon: Sparkles,
+          permission: "numerology",
         },
         {
           title: language === "ta" ? "தினசரி பஞ்சாங்கம் & முகூர்த்தம்" : "Daily Panchang & Muhurta",
           href: "/muhurta",
           icon: Calendar,
-        },
-        {
-          title: language === "ta" ? "வாஸ்து சாஸ்திரம்" : "Vastu Shastra Assessment",
-          href: "/vastu",
-          icon: Home,
+          permission: "panchang_muhurta",
         },
         {
           title: language === "ta" ? "பரிகாரங்கள் & நவகிரக ஆலயங்கள்" : "Remedies & Pariharam Hub",
           href: "/remedies",
           icon: Flame,
+          permission: "remedies",
         },
       ],
     },
@@ -207,15 +201,10 @@ export function Navbar() {
       id: "resources",
       label: language === "ta" ? "ஆதாரங்கள்" : "Resources",
       icon: BookOpen,
-      href: "/vastu",
+      href: "/remedies",
       isActive: false,
       hasDropdown: true,
       children: [
-        {
-          title: language === "ta" ? "வாஸ்து சாஸ்திரம் வழிகாட்டி" : "Vastu Classical Architecture",
-          href: "/vastu",
-          icon: Home,
-        },
         {
           title: language === "ta" ? "பரிகாரங்கள் & வழிமுறைகள்" : "Remedies & Vedic Mantras",
           href: "/remedies",
@@ -283,7 +272,7 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-40 w-full bg-white border-b border-[#D9DEE7] shadow-xs">
         {/* Top Header Bar (Level 1) */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10">
           <div className="h-14 flex items-center justify-between gap-3 sm:gap-6">
             {/* 1. Brand Logo & Name */}
             <div className="flex items-center gap-3 sm:gap-6">
@@ -470,7 +459,7 @@ export function Navbar() {
         {/* Main Navigation Row (Level 2) - VedicSage Reference Navigation */}
         {isAuthenticated && !isLoginPage && (
           <div className="hidden md:block border-t border-[#D9DEE7] bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10">
               <nav
                 className="h-10.5 flex items-center gap-1 sm:gap-2 overflow-visible"
                 aria-label="Secondary Navigation Bar"
@@ -530,7 +519,7 @@ export function Navbar() {
                         <div
                           className="absolute left-0 top-full mt-0 w-64 rounded-xl shadow-xl bg-white border border-[#D9DEE7] py-1.5 z-50 animate-in fade-in duration-100"
                         >
-                          {item.children.map((subItem, idx) => {
+                          {item.children.map((subItem: any, idx) => {
                             const SubIcon = subItem.icon;
                             if (subItem.action) {
                               return (
@@ -549,15 +538,32 @@ export function Navbar() {
                               );
                             }
 
+                            const isLocked =
+                              Boolean(subItem.permission) &&
+                              !hasPermission(subItem.permission);
+
                             return (
                               <Link
                                 key={idx}
-                                href={subItem.href}
+                                href={subItem.href || "#"}
                                 onClick={() => setActiveDropdown(null)}
-                                className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] hover:text-[#153F6B] transition-colors"
+                                className={`flex items-center justify-between gap-2.5 px-3.5 py-2 text-xs transition-colors ${
+                                  isLocked
+                                    ? "text-[#64748B] hover:bg-[#F2F3F5]"
+                                    : "text-[#183047] hover:bg-[#F2F3F5] hover:text-[#153F6B]"
+                                }`}
                               >
-                                <SubIcon className="w-3.5 h-3.5 text-[#153F6B] shrink-0" />
-                                <span className="truncate">{subItem.title}</span>
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <SubIcon
+                                    className={`w-3.5 h-3.5 shrink-0 ${
+                                      isLocked ? "text-[#94A3B8]" : "text-[#153F6B]"
+                                    }`}
+                                  />
+                                  <span className="truncate">{subItem.title}</span>
+                                </div>
+                                {isLocked && (
+                                  <Lock className="w-3 h-3 text-amber-600 shrink-0" />
+                                )}
                               </Link>
                             );
                           })}
@@ -602,7 +608,7 @@ export function Navbar() {
 
                     {item.children && (
                       <div className="pl-6 space-y-1">
-                        {item.children.map((sub, sIdx) => {
+                        {item.children.map((sub: any, sIdx) => {
                           const SubIcon = sub.icon;
                           if (sub.action) {
                             return (
@@ -620,15 +626,32 @@ export function Navbar() {
                               </button>
                             );
                           }
+                          const isSubLocked =
+                            Boolean((sub as any).permission) &&
+                            !hasPermission((sub as any).permission);
+
                           return (
                             <Link
                               key={sIdx}
-                              href={sub.href}
+                              href={sub.href || "#"}
                               onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-[#52667E] hover:text-[#153F6B]"
+                              className={`flex items-center justify-between gap-2 px-2.5 py-1.5 text-xs ${
+                                isSubLocked
+                                  ? "text-[#94A3B8]"
+                                  : "text-[#52667E] hover:text-[#153F6B]"
+                              }`}
                             >
-                              <SubIcon className="w-3 h-3 text-[#153F6B]" />
-                              <span className="truncate">{sub.title}</span>
+                              <div className="flex items-center gap-2 truncate">
+                                <SubIcon
+                                  className={`w-3 h-3 ${
+                                    isSubLocked ? "text-[#94A3B8]" : "text-[#153F6B]"
+                                  }`}
+                                />
+                                <span className="truncate">{sub.title}</span>
+                              </div>
+                              {isSubLocked && (
+                                <Lock className="w-3 h-3 text-amber-600 shrink-0" />
+                              )}
                             </Link>
                           );
                         })}

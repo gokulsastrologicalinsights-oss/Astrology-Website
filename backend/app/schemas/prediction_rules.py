@@ -38,15 +38,16 @@ class EvaluatedRuleItem(BaseModel):
     matched: bool
     unevaluable: bool = False
     unevaluable_reason: Optional[str] = None
-    interpretation: str
-    interpretation_en: str
+    interpretation: Optional[str] = ""
+    interpretation_en: Optional[str] = ""
     interpretation_ta: Optional[str] = None
-    astrological_principle: str
-    astrological_principle_en: str
+    astrological_principle: Optional[str] = ""
+    astrological_principle_en: Optional[str] = ""
     astrological_principle_ta: Optional[str] = None
     chart_evidence: List[str] = Field(default_factory=list)
     match_reasons: List[str] = Field(default_factory=list)
     source_reference: Optional[str] = None
+    applicable_gender: Optional[str] = "both"
     limitations: Optional[str] = None
     limitations_en: Optional[str] = None
     limitations_ta: Optional[str] = None
@@ -60,6 +61,7 @@ class EvaluateRulesRequest(BaseModel):
     chart_scope: Optional[str] = "both"  # "d1", "d9", "both"
     astrology_system: Optional[str] = "all"  # "vedic", "kp", "combined", "all"
     language: str = "en"  # "en" or "ta"
+    gender: Optional[str] = None  # "male", "female", "all"
     dasa: Optional[Dict[str, Any]] = None
     kp: Optional[Dict[str, Any]] = None
     custom_rules: Optional[List[Dict[str, Any]]] = None

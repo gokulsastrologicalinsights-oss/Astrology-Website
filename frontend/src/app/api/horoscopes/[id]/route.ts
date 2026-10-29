@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { compactDasaTree } from "@/lib/horoscope-storage-utils";
 import { validateAndNormalizePhone } from "@/lib/phone-utils";
 import {
   listCustomersForUser,
@@ -82,9 +83,11 @@ export async function GET(
 
     const hasPhone = !!customerInfo?.normalized_phone;
 
+    const resolvedGender = record.calculation_result?.clientInputs?.gender || (record as any).gender || "male";
     return NextResponse.json({
       success: true,
       horoscope: {
+        gender: resolvedGender,
         ...record,
         customer_id: customerInfo?.id || null,
         customer: hasPhone ? customerInfo : null,
@@ -105,13 +108,13 @@ export async function GET(
 
 /**
  * PUT /api/horoscopes/[id]
- * Updates the subject's birth details metadata and customer contact info.
+ * Updates the subject's birth details metadata and customer contact info,
+ * and replaces the calculation snapshot in-place without duplicating the record.
  * CRITICAL RULES:
- * 1. Preserves the permanent sequential display_number (NEVER mutated)
- * 2. Updates the existing record without creating a duplicate record
- * 3. Does NOT alter the original calculation snapshot
- * 4. Strict ownership enforcement: only record owner or authorized admin can update
- * 5. Synchronizes customer contact details to authoritative customer record
+ * 1. Preserves the permanent sequential display_number and ID (NEVER duplicated or mutated)
+ * 2. Replaces or updates the calculation snapshot in-place
+ * 3. Strict ownership enforcement: only record owner or authorized admin can update
+ * 4. Synchronizes customer contact details to authoritative customer record
  */
 export async function PUT(
   request: NextRequest,
@@ -224,17 +227,6 @@ export async function PUT(
 
     // Update or link customer contact info if customer_phone is provided
     let updatedCustomer = null;
-    let updatedCalculationResult = existing.calculation_result || {};
-    if (body.calculation_result && typeof body.calculation_result === "object") {
-      updatedCalculationResult = {
-        ...updatedCalculationResult,
-        ...body.calculation_result,
-        horoscope: {
-          ...(updatedCalculationResult.horoscope || {}),
-          ...(body.calculation_result.horoscope || {}),
-        },
-      };
-    }
 
     if (customer_phone && typeof customer_phone === "string" && customer_phone.trim()) {
       const effectiveCountryCode = (country_code || "+91").trim();
@@ -256,22 +248,95 @@ export async function PUT(
       });
 
       updatedCustomer = customer;
+    }
+
+    const effectiveGender = (body.gender || body.calculation_result?.clientInputs?.gender || existing.calculation_result?.clientInputs?.gender || "male").toLowerCase();
+    // Reconstruct calculation snapshot with fresh calculations or synchronized clientInputs
+    let updatedCalculationResult = existing.calculation_result || {};
+
+    if (body.calculation_result && typeof body.calculation_result === "object") {
+      let dasaPayload = body.calculation_result.dasa;
+      if (dasaPayload && Array.isArray(dasaPayload.dasa_tree)) {
+        dasaPayload = {
+          ...dasaPayload,
+          dasa_tree: compactDasaTree(dasaPayload.dasa_tree, 3),
+        };
+      }
+
+      const activeCust =
+        updatedCustomer ||
+        body.calculation_result.customer ||
+        existing.calculation_result?.customer;
+
       updatedCalculationResult = {
-        ...updatedCalculationResult,
-        customer: {
-          id: customer.id,
-          full_name: customer.full_name,
-          birth_date: customer.birth_date,
-          country_code: customer.country_code,
-          phone_number: customer.phone_number,
-          normalized_phone: customer.normalized_phone,
-          whatsapp_number: customer.whatsapp_number,
+        schema_version: "1.0.0",
+        idempotency_key:
+          body.calculation_result.idempotency_key ||
+          existing.calculation_result?.idempotency_key ||
+          `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        calculatedAt: body.calculation_result.calculatedAt || new Date().toISOString(),
+        clientInputs: body.calculation_result.clientInputs || {
+          fullName: person_name.trim(),
+          birthDate: birth_date,
+          birthTime: birth_time,
+          isTimeConfirmed: true,
+          locationName: (birthplace || "Unknown Location").trim(),
+          latitude,
+          longitude,
+          timezone: (timezone || "UTC").trim(),
+          ayanamsaId: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
+          houseSystemId: typeof house_system_id === "number" ? house_system_id : 2,
         },
+        horoscope: body.calculation_result.horoscope,
+        dasa: dasaPayload !== undefined ? dasaPayload : body.calculation_result.dasa,
+        kp: body.calculation_result.kp,
+        customer: activeCust
+          ? {
+              id: activeCust.id,
+              full_name: activeCust.full_name,
+              birth_date: activeCust.birth_date,
+              country_code: activeCust.country_code,
+              phone_number: activeCust.phone_number,
+              normalized_phone: activeCust.normalized_phone,
+              whatsapp_number: activeCust.whatsapp_number,
+            }
+          : undefined,
+      };
+    } else {
+      // If calculation_result was not passed, update clientInputs inside snapshot to match new metadata
+      const activeCust = updatedCustomer || existing.calculation_result?.customer;
+      updatedCalculationResult = {
+        ...existing.calculation_result,
+        clientInputs: {
+          gender: effectiveGender,
+          ...(existing.calculation_result?.clientInputs || {}),
+          fullName: person_name.trim(),
+          birthDate: birth_date,
+          birthTime: birth_time,
+          locationName: (birthplace || "Unknown Location").trim(),
+          latitude,
+          longitude,
+          timezone: (timezone || "UTC").trim(),
+          ayanamsaId: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
+          houseSystemId: typeof house_system_id === "number" ? house_system_id : 2,
+        },
+        customer: activeCust
+          ? {
+              id: activeCust.id,
+              full_name: activeCust.full_name,
+              birth_date: activeCust.birth_date,
+              country_code: activeCust.country_code,
+              phone_number: activeCust.phone_number,
+              normalized_phone: activeCust.normalized_phone,
+              whatsapp_number: activeCust.whatsapp_number,
+            }
+          : undefined,
       };
     }
 
     // Perform update
     const clientToUse = isAdmin ? createAdminClient() : supabase;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const updatePayload: Record<string, any> = {
       person_name: person_name.trim(),
       birth_date,
@@ -285,6 +350,11 @@ export async function PUT(
       calculation_result: updatedCalculationResult,
       updated_at: new Date().toISOString(),
     };
+
+    const effectiveCustId = updatedCustomer?.id || customer_id;
+    if (effectiveCustId && isUuid.test(effectiveCustId)) {
+      updatePayload.customer_id = effectiveCustId;
+    }
 
     const { data: updatedRecord, error: updateError } = await clientToUse
       .from("saved_horoscopes")

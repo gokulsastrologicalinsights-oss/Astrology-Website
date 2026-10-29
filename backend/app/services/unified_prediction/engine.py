@@ -248,8 +248,12 @@ class UnifiedMarriagePredictionService:
         timing_status = TimingStatus.NOT_EVALUATED
         timing_report: Optional[Any] = None
 
-        if kp_promise.verdict == PromiseVerdict.PROMISED and vedic_promise.verdict == PromiseVerdict.PROMISED:
-            # Concordant Support -> Evaluate Timing
+        concordant_support = (kp_promise.verdict == PromiseVerdict.PROMISED and vedic_promise.verdict == PromiseVerdict.PROMISED)
+        concordant_denial = (kp_promise.verdict == PromiseVerdict.DENIED and vedic_promise.verdict == PromiseVerdict.DENIED)
+        should_evaluate_timing = concordant_support or (request.force_timing_scan and not concordant_denial)
+
+        if should_evaluate_timing:
+            # Evaluate Timing (Concordant support or explicitly requested exploratory scan)
             search_start = request.start_year or (birth.birth_date.year + 18)
             search_end = request.end_year or (search_start + 10)
 
@@ -296,11 +300,15 @@ class UnifiedMarriagePredictionService:
                 utc_offset_hours=offset_hours,
             )
 
-            final_verdict = EventVerdict.EVENT_INDICATED
+            if concordant_support:
+                final_verdict = EventVerdict.EVENT_INDICATED
+            else:
+                final_verdict = EventVerdict.INDETERMINATE
+
             timing_status = status
             timing_report = report
 
-        elif kp_promise.verdict == PromiseVerdict.DENIED and vedic_promise.verdict == PromiseVerdict.DENIED:
+        elif concordant_denial:
             # Concordant Denial
             final_verdict = EventVerdict.EVENT_NOT_INDICATED
             timing_status = TimingStatus.NOT_EVALUATED

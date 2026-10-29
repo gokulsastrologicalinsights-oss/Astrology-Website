@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { FeatureGuard } from "@/components/auth/FeatureGuard";
 import {
   MarriagePartnerInput,
   MarriageCompatibilityRequest,
@@ -22,6 +23,7 @@ import { NorthIndianChart } from "@/components/charts/NorthIndianChart";
 import {
   analyzeMarriageCompatibility,
   saveMarriageCompatibilityReport,
+  downloadMarriageCompatibilityPdf,
   ApiError,
 } from "@/lib/api";
 import { SavedMarriageReportsList } from "@/components/marriage-compatibility/SavedMarriageReportsList";
@@ -49,6 +51,7 @@ import {
   BookOpen,
   BookmarkCheck,
   Save,
+  Download,
   X,
   History,
   Eye,
@@ -163,6 +166,12 @@ function MarriageCompatibilityContent() {
   const [savedReportRecord, setSavedReportRecord] = useState<{ id: string; display_number: number } | null>(null);
   const [refreshSavedTrigger, setRefreshSavedTrigger] = useState<number>(0);
 
+  // Download Report Modal & Generation State
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
+  const [downloadLanguage, setDownloadLanguage] = useState<"en" | "ta">("en");
+  const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
   // Sync with searchParams
   useEffect(() => {
     const viewParam = searchParams.get("view");
@@ -223,12 +232,53 @@ function MarriageCompatibilityContent() {
     }
   };
 
+  const handleOpenDownloadModal = () => {
+    if (!response) return;
+    setDownloadError(null);
+    setDownloadLanguage(language === "ta" ? "ta" : "en");
+    setIsDownloadModalOpen(true);
+  };
+
+  const handleConfirmDownload = async () => {
+    if (!response) return;
+    setDownloadingPdf(true);
+    setDownloadError(null);
+    try {
+      const gName = (response.groom_profile?.name || groomName || "Groom").replace(/\s+/g, "_");
+      const bName = (response.bride_profile?.name || brideName || "Bride").replace(/\s+/g, "_");
+
+      const blob = await downloadMarriageCompatibilityPdf(
+        {
+          report_data: response,
+          saved_report_id: savedReportRecord?.id || viewingHistoricalReport?.id,
+          language: downloadLanguage,
+        },
+        session?.access_token
+      );
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Marriage_Compatibility_Report_${gName}_${bName}_${downloadLanguage}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      setIsDownloadModalOpen(false);
+    } catch (err: any) {
+      console.error("Failed to download compatibility report PDF:", err);
+      setDownloadError(err?.message || "Failed to generate report PDF. Please try again.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   // Fetch saved horoscopes if authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
     let isMounted = true;
     setLoadingSavedList(true);
-    fetch("/api/horoscopes?page=1&limit=50", { cache: "no-store" })
+    fetch("/api/horoscopes?page=1&limit=1000", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (isMounted && data?.horoscopes) {
@@ -416,7 +466,7 @@ function MarriageCompatibilityContent() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-800">
       {/* Breadcrumbs & Header */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-4">
           <Breadcrumbs
             items={[
               { label: language === "ta" ? "முகப்பு" : "Home", href: "/" },
@@ -479,7 +529,7 @@ function MarriageCompatibilityContent() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 pt-6 sm:pt-8">
         {activeView === "saved_reports" ? (
           <SavedMarriageReportsList
             onOpenReport={handleOpenSavedReport}
@@ -511,14 +561,24 @@ function MarriageCompatibilityContent() {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCloseHistoricalReport}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  {language === "ta" ? "மூடுக" : "Close Historical View"}
-                </button>
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleOpenDownloadModal}
+                    className="px-3.5 py-1.5 rounded-lg border border-[#B4872B]/50 bg-[#FAF2DE] hover:bg-[#F3E5BE] text-xs font-semibold text-[#8C6D23] flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#B4872B]" />
+                    <span>{language === "ta" ? "PDF பதிவிறக்கம்" : "Download PDF"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCloseHistoricalReport}
+                    className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    {language === "ta" ? "மூடுக" : "Close Historical View"}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1020,6 +1080,17 @@ function MarriageCompatibilityContent() {
                           {comp.overall_outcome.replace(/_/g, " ")}
                         </span>
                       </div>
+
+                      {/* Download Report Action */}
+                      <button
+                        type="button"
+                        onClick={handleOpenDownloadModal}
+                        disabled={downloadingPdf}
+                        className="px-4 py-2.5 rounded-xl bg-[#153F6B] hover:bg-[#1E5692] text-white font-bold text-xs flex items-center gap-2 shadow-sm transition disabled:opacity-50"
+                      >
+                        <Download className="w-4 h-4 text-[#D8BD80]" />
+                        <span>{language === "ta" ? "அறிக்கையைப் பதிவிறக்குக" : "Download Report"}</span>
+                      </button>
 
                       {/* Save Report Action / Saved Status */}
                       {savedReportRecord ? (
@@ -2074,6 +2145,141 @@ function MarriageCompatibilityContent() {
           </div>
         </div>
       )}
+
+      {/* Download Report Language Selection Modal */}
+      {isDownloadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#FAF2DE] border border-[#B4872B]/30 flex items-center justify-center">
+                  <Download className="w-4 h-4 text-[#B4872B]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#153F6B]">
+                    {language === "ta" ? "பொருத்த அறிக்கையைப் பதிவிறக்குக" : "Download Compatibility Report"}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {language === "ta"
+                      ? "அறிக்கைக்கான மொழியைத் தேர்ந்தெடுக்கவும்"
+                      : "Select report language before download"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => !downloadingPdf && setIsDownloadModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                disabled={downloadingPdf}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                {language === "ta" ? "அறிக்கை மொழி / Report Language" : "Report Language"}
+              </label>
+
+              {/* English Option */}
+              <label
+                onClick={() => setDownloadLanguage("en")}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
+                  downloadLanguage === "en"
+                    ? "bg-[#FAF2DE]/50 border-[#B4872B] ring-1 ring-[#B4872B]"
+                    : "border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="download_language"
+                  value="en"
+                  checked={downloadLanguage === "en"}
+                  onChange={() => setDownloadLanguage("en")}
+                  className="mt-1 text-[#153F6B] focus:ring-[#B4872B]"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-800">English</span>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
+                      Full Report
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Comprehensive report with 10 Poruthams, 36 Ashtakoota, Kuja Dosha, Papasamya, Vedic &amp; KP analysis.
+                  </p>
+                </div>
+              </label>
+
+              {/* Tamil Option */}
+              <label
+                onClick={() => setDownloadLanguage("ta")}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
+                  downloadLanguage === "ta"
+                    ? "bg-[#FAF2DE]/50 border-[#B4872B] ring-1 ring-[#B4872B]"
+                    : "border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="download_language"
+                  value="ta"
+                  checked={downloadLanguage === "ta"}
+                  onChange={() => setDownloadLanguage("ta")}
+                  className="mt-1 text-[#153F6B] focus:ring-[#B4872B]"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-800">தமிழ் (Tamil)</span>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-50 text-[#8C6D23]">
+                      முழு அறிக்கை
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    10 பொருத்தங்கள், அஷ்டகூடம், செவ்வாய் தோஷம், பாபசாம்யம், கே.பி மற்றும் மங்கள வாழ்த்துச் செய்தி அடங்கிய முழு அறிக்கை.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {downloadError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{downloadError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDownloadModalOpen(false)}
+                disabled={downloadingPdf}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {language === "ta" ? "ரத்து செய்" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDownload}
+                disabled={downloadingPdf}
+                className="px-5 py-2 rounded-xl bg-[#153F6B] hover:bg-[#1E5692] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition disabled:opacity-50"
+              >
+                {downloadingPdf ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{language === "ta" ? "பதிவிறக்கம் தயாராகிறது..." : "Generating PDF..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-[#D8BD80]" />
+                    <span>{language === "ta" ? "PDF பதிவிறக்குக" : "Download PDF"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   </div>
 );
@@ -2081,14 +2287,16 @@ function MarriageCompatibilityContent() {
 
 export default function MarriageCompatibilityPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-          <div className="w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <MarriageCompatibilityContent />
-    </Suspense>
+    <FeatureGuard permission="marriage_matching">
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+            <div className="w-8 h-8 border-4 border-[#153F6B] border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <MarriageCompatibilityContent />
+      </Suspense>
+    </FeatureGuard>
   );
 }

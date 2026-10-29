@@ -145,7 +145,7 @@ function KpEventsPredictionContent() {
     setLoadingHoroscopes(true);
     setHoroscopesError(null);
     try {
-      const res = await fetch("/api/horoscopes?page=1&limit=50", {
+      const res = await fetch("/api/horoscopes?page=1&limit=1000", {
         cache: "no-store",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -281,7 +281,7 @@ function KpEventsPredictionContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
       {/* Breadcrumb Navigation */}
       <Breadcrumbs
         items={[
@@ -322,13 +322,6 @@ function KpEventsPredictionContent() {
             >
               <Compass className="w-4 h-4 text-[#E5B558]" />
               <span>Advanced KP</span>
-            </Link>
-            <Link
-              href="/tools/transit-watch"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors"
-            >
-              <Clock className="w-4 h-4 text-cyan-300" />
-              <span>Transit Watch</span>
             </Link>
           </div>
         </div>

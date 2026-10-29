@@ -473,28 +473,115 @@ class GemstoneAdvisoryEngine:
         # 4. Anukula vs Pratikula Doctrine Matrix
         anukula_doctrine_en = {
             "title": "Anukula (Benefic Strengthening) vs Pratikula (Malefic Pacification)",
-            "authority": "Brihat Samhita (Ch. 80), Garuda Purana, Mani Mala (Raja Radhakanta Deb)",
+            "authority": "Secrets of Astrological Gem Solutions (Ratna Samadhan), Brihat Samhita (Ch. 80), Garuda Purana, Mani Mala (Raja Radhakanta Deb)",
             "core_principle": (
                 "Gemstones act as cosmic crystalline prisms that capture and transmit planetary radiation into the wearer's bio-magnetic aura. "
-                "They ALWAYS magnify the planet's energy. Therefore, under classical 'Anukula Vada', gems are strictly prescribed ONLY for functional "
-                "benefics (Lagna, 5th, 9th lords, and Yogakarakas). Malefic, afflicted, or Dusthana planets must NEVER be given gemstones. "
+                "They ALWAYS magnify the planet's energy. Under the authentic 'Grahabalabal Method' & 'Ratna Samadhan' principles, gems are prescribed "
+                "strictly for functional benefics (Lagna, 5th, 9th lords, and Yogakarakas). Malefic, afflicted, or Dusthana planets must NEVER be given gemstones. "
                 "Instead, classical Shastras prescribe 'Pratikula Shanti': safe pacification through Rudraksha Beads, Moola Mantras, Daana (charity), and Sthala Yatra."
             ),
-            "gemstones_method": "Anukula Reinforcement (Magnifies benefic light; worn on fingers)",
+            "gemstones_method": "Anukula Reinforcement / Grahabalabal (Magnifies benefic light; worn on fingers)",
             "rudraksha_method": "Pratikula Pacification (Electromagnetic bio-calming; absorbs and neutralizes stress/doshas safely without radiation amplification)",
         }
 
         anukula_doctrine_ta = {
             "title": "அனுகூல ரத்தின முறை vs பிரதிகூல சாந்தி முறை",
-            "authority": "பிருஹத் சம்ஹிதை (அத். 80), கருட புராணம், மணி மாலா",
+            "authority": "ரத்ன சமாதானம் (Secrets of Astrological Gem Solutions), பிருஹத் சம்ஹிதை (அத். 80), கருட புராணம், மணி மாலா",
             "core_principle": (
                 "ரத்தினங்கள் என்பவை வானியல் கதிர்வீச்சை கிரகித்து உடலின் ஆரா மண்டலத்தில் பெருக்கும் காந்தக் கண்ணாடிகள் போன்றது. "
-                "அவை எப்போதும் கிரகத்தின் ஆற்றலை பெருக்கவே செய்யும்; சாந்தப்படுத்தாது! ஆகவே 'அனுகூல வாத' விதிப்படி, யோககாரகர்கள் மற்றும் லக்ன/திரிகோண சுப கிரகங்களுக்கு மட்டுமே "
+                "அவை எப்போதும் கிரகத்தின் ஆற்றலை பெருக்கவே செய்யும்; சாந்தப்படுத்தாது! ஆகவே 'கிரகபலபலம்' மற்றும் 'அனுகூல வாத' நெறிமுறைப்படி, யோககாரகர்கள் மற்றும் லக்ன/திரிகோண சுப கிரகங்களுக்கு மட்டுமே "
                 "ரத்தினங்களை அணிய வேண்டும். மறைவு ஸ்தானாதிபதிகள் (6, 8, 12) மற்றும் பாப கிரகங்களுக்கு ரத்தினம் அணிந்தால் விபரீத விளைவுகள் ஏற்படும். "
                 "அவற்றுக்கு 'பிரதிகூல சாந்தி' முறையில் ருத்ராட்சம், மூல மந்திர ஜெபம், தானங்கள் மற்றும் கோவில் வழிபாடுகள் மட்டுமே செய்ய வேண்டும்."
             ),
-            "gemstones_method": "அனுகூல வலுவூட்டல் (சுப ஒளிக்கதிர்களை பெருக்கும்; விரல்களில் அணிதல்)",
+            "gemstones_method": "அனுகூல வலுவூட்டல் / கிரகபலபலம் (சுப ஒளிக்கதிர்களை பெருக்கும்; விரல்களில் அணிதல்)",
             "rudraksha_method": "பிரதிகூல சாந்தி (மின்காந்த அதிர்வுகளை சமன் செய்து, பக்கவிளைவுகளின்றி தோஷங்களை அமைதிப்படுத்துதல்)",
+        }
+
+        # 4b. Karma & Destiny Framework (Dr. Andrew Dutta / Ratna Samadhan Heritage)
+        karma_doctrine_en = {
+            "title": "Astrology, Karma & Destiny: The 4 Layers of Karma & 3 Qualities",
+            "source": "Secrets of Astrological Gem Solutions (Ratna Samadhan) - Dr. Andrew Dutta (Sri Indrajit)",
+            "layers_of_karma": {
+                "sanchita": "Sanchita Karma: The vast accumulated cosmic storehouse of all deeds performed across countless past lives.",
+                "prarabdha": "Prarabdha Karma: The specific portion of Sanchita karma allocated to unfold in this present birth, visible directly through the natal horoscope.",
+                "kriyaman": "Kriyaman Karma: Current active, willful choices and remedial actions (Purushakara) executed in this life, including wearing authentic gem solutions.",
+                "agami": "Agami Karma: Future karma sown as a direct seed of present actions, thoughts, and spiritual remedies.",
+            },
+            "qualities_of_karma": {
+                "dridha": "Dridha Karma (Fixed & Inflexible): Non-negotiable karmic debts that cannot be bypassed; requires spiritual surrender, prayer, and patient endurance.",
+                "dridha_adridha": "Dridha-Adridha Karma (Partially Alterable): Karmic potentials that can be redirected or significantly alleviated through genuine astrological gem remedies and spiritual sadhana.",
+                "adridha": "Adridha Karma (Flexible): Easily neutralized or transmuted through timely Purushakar and corrective remedial action.",
+            },
+            "bhobitavya_vs_purushakar": (
+                "Bhobitavya is fated destiny, while Purushakar is willful proactive human effort. "
+                "Astrological Gem Solutions empower Purushakar to maximize the constructive potential of the horoscope."
+            ),
+        }
+
+        karma_doctrine_ta = {
+            "title": "ஜோதிடம், கர்மா & விதி: 4 அடுக்கு கர்மா மற்றும் 3 குணங்கள்",
+            "source": "ரத்ன சமாதானம் (Secrets of Astrological Gem Solutions) - டாக்டர் ஆண்ட்ரூ தத்தா (ஸ்ரீ இந்திரஜித்)",
+            "layers_of_karma": {
+                "sanchita": "சஞ்சித கர்மா: எண்ணற்ற முற்பிறவிகளில் திரட்டப்பட்ட ஒட்டுமொத்த கர்ம வினைகளின் கருவூலம்.",
+                "prarabdha": "பிராரப்த கர்மா: இந்த பிறவியில் அனுபவிப்பதற்காக பிரிக்கப்பட்ட கர்மாவின் பகுதி; இதுவே பிறப்பு ஜாதகமாக வெளிப்படுகிறது.",
+                "kriyaman": "கிரியமாண கர்மா: தற்போதைய பிறவியில் நாம் செய்யும் சுயமாக சிந்தித்து எடுக்கும் செயல்கள், பரிகாரங்கள் மற்றும் ரத்தின தீர்வுகள் (புருஷாகாரம்).",
+                "agami": "ஆகாமிய கர்மா: நடப்பு வினைகளால் எதிர்கால பிறவிகளுக்கு நாம் விதைக்கும் கர்ம வித்துக்கள்.",
+            },
+            "qualities_of_karma": {
+                "dridha": "திட கர்மா (மாற்ற முடியாத விதி): அனுபவித்தே தீர வேண்டிய வினைகள்; இறை சரணாகதி மற்றும் ஆன்மீக சகிப்புத்தன்மை மட்டுமே வழி.",
+                "dridha_adridha": "திட-அதிட கர்மா (பரிகாரங்களால் மாற்றக்கூடியது): முறையான ரத்தின தீர்வுகள் மற்றும் தீவிர வழிபாடுகளால் தணித்து மாற்றியமைக்கக்கூடிய கர்ம நிலைகள்.",
+                "adridha": "அதிட கர்மா (எளிதில் கரையக்கூடியது): உரிய காலத்தில் சரியான பரிகாரம் மற்றும் ரத்தினம் அணிவதன் மூலம் உடனடியாக நீக்கக்கூடிய தோஷங்கள்.",
+            },
+            "bhobitavya_vs_purushakar": (
+                "பவித்தவ்யம் என்பது முன் தீர்மானிக்கப்பட்ட விதி; புருஷாகாரம் என்பது மனிதனின் தீவிர முயற்சி மற்றும் பரிகார ஆற்றல். "
+                "ரத்தின சமாதானம் புருஷாகாரத்தை கூர்மையாக்கி ஜாதகத்தின் சுப யோகங்களை முழுமையாக ஈர்க்கிறது."
+            ),
+        }
+
+        # 4c. Grahabalabal Method & Special Rules
+        grahabalabal_principles_en = {
+            "title": "Principles of Gem Selection: The Grahabalabal Method",
+            "core_insight": (
+                "Planet is the primary source of the result (as expounded by KP master K.S. Krishnamurti). "
+                "The Grahabalabal method rejects simplistic Anukula/Pratikula dogmas by holistically evaluating Shadbala, "
+                "Bhavabala, functional beneficence, and planetary lordships."
+            ),
+            "badhaka_reconciliation": (
+                "For Chara (movable) Lagna, the 11th lord is Badhaka, yet simultaneously rules gains, success, and prosperity. "
+                "Grahabalabal harmonizes this paradox by prioritizing the 3 Pillars (Lagna, 5th, 9th) to ensure pure benefic radiation."
+            ),
+            "rahu_ketu_rules": (
+                "Special rules apply for Rahu (Hessonite/Gomed) and Ketu (Cat's Eye/Vaiduryam). Being shadow nodes, their gems must only be "
+                "prescribed after thoroughly analyzing their dispositor sign lords, conjunctions, and nakshatra lords."
+            ),
+        }
+
+        grahabalabal_principles_ta = {
+            "title": "ரத்தின தேர்வு நெறிமுறை: கிரகபலபலம் முறை",
+            "core_insight": (
+                "கிரகமே பலன்களின் முதன்மை ஊற்றுக்கண் (கே.பி குரு கே.எஸ். கிருஷ்ணமூர்த்தி அவர்களின் தத்துவம்). "
+                "கிரகபலபலம் என்பது மேலோட்டமான அனுகூல/பிரதிகூல வாதங்களை கடந்து, ஷட்பலம், பாவபலம் மற்றும் ஆதிபத்தியங்களை ஒருங்கிணைத்து கணிக்கும் ஆழமான முறையாகும்."
+            ),
+            "badhaka_reconciliation": (
+                "சர லக்னங்களுக்கு 11-ஆம் அதிபதி பாதகாதிபதியாக இருந்தாலும், அதே கிரகம் லாபம் மற்றும் வெற்றியைத் தரும் ஸ்தானாதிபதியாகவும் திகழ்கிறது. "
+                "கிரகபலபல முறை இந்த முரண்பாட்டைத் தீர்த்து, 3 தூண் (லக்னம், 5, 9) ரத்தினங்களை வழங்கி பாதுகாப்பான சுப கதிர்வீச்சை உறுதி செய்கிறது."
+            ),
+            "rahu_ketu_rules": (
+                "ராகு (கோமேதகம்) மற்றும் கேது (வைடூரியம்) நிழல் கிரகங்கள் என்பதால், அவற்றின் நின்ற வீட்டின் அதிபதி, பார்வை மற்றும் சார நாதனை தீர ஆராய்ந்த பின்னரே பரிந்துரைக்க வேண்டும்."
+            ),
+        }
+
+        # 4d. Sacred Consecration Protocols (Ratna Shodhan, Jagaran, Dharan)
+        consecration_protocol_en = {
+            "shodhan": "Ratna Shodhan (Sacred Purification): Immerse the gemstone in Gangajal, raw cow's milk, curd, honey, and ghee (Panchamrit) for 45-60 minutes to neutralize mining and handling impurities.",
+            "jagaran": "Ratna Jagaran (Sacred Activation): Awaken the gemstone's latent cosmic prism power by chanting 108 Beeja & Gayatri Mantras during the planet's ruling Hora at Shukla Paksha sunrise.",
+            "dharan": "Ratna Dharan (Sacred Wearing): Set in an open-back setting so the gem touches the skin. Wear on the designated finger of the active (right) hand during an auspicious weekday and nakshatra.",
+        }
+
+        consecration_protocol_ta = {
+            "shodhan": "ரத்ன சோதனம் (புனித சுத்திகரிப்பு): சுரங்க மற்றும் கையாளுதல் அசுத்தங்களை நீக்க, கங்கை நீர், பசும்பால், தயிர், தேன், நெய் (பஞ்சாமிர்தம்) கலவையில் 45-60 நிமிடங்கள் வைக்க வேண்டும்.",
+            "jagaran": "ரத்ன ஜாகரணம் (பிராண விழிப்புணர்வு): வளர்பிறை காலை வேளையில் உரிய கிரக ஓரையில் 108 முறை மூல மற்றும் காயத்ரி மந்திரங்களை ஜெபித்து ரத்தினத்தின் உள்ஆற்றலை உயிர்ப்பிக்க வேண்டும்.",
+            "dharan": "ரத்ன தாரணம் (புனித அணிதல்): ரத்தினத்தின் அடிப்பாகம் தோலில் படும்படி திறந்த அடி அமைப்பில் (open-back), வலது கையின் உரிய விரலில் சுப நன்னாளில் அணிய வேண்டும்.",
         }
 
         # 5. Rudraksha Evaluation
@@ -561,6 +648,12 @@ class GemstoneAdvisoryEngine:
             prohibited_gemstones=prohibited_items,
             anukula_vs_pratikula_doctrine_en=anukula_doctrine_en,
             anukula_vs_pratikula_doctrine_ta=anukula_doctrine_ta,
+            karma_doctrine_en=karma_doctrine_en,
+            karma_doctrine_ta=karma_doctrine_ta,
+            grahabalabal_principles_en=grahabalabal_principles_en,
+            grahabalabal_principles_ta=grahabalabal_principles_ta,
+            consecration_protocol_en=consecration_protocol_en,
+            consecration_protocol_ta=consecration_protocol_ta,
             recommended_rudraksha=rudraksha_summary,
             rudraksha_catalog=rudraksha_catalog,
             conflicting_combinations_warning_en=conflicts_en,
