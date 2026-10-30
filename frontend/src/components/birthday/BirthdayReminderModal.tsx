@@ -169,9 +169,30 @@ export function BirthdayReminderModal({
           phone_number: editPhone.trim(),
         }),
       });
-      const data = await res.json();
+      let data: any = null;
+      try {
+        const rawText = await res.text();
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        data = null;
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update customer contact.");
+        throw new Error(
+          data?.error ||
+          data?.message ||
+          (res.status === 504 || res.status === 408
+            ? (language === "ta" ? "சேவையக நேரம் முடிந்தது. மீண்டும் முயற்சிக்கவும்." : "Server request timed out. Please try again.")
+            : `Failed to update customer contact (HTTP ${res.status}).`)
+        );
+      }
+
+      if (!data || !data.customer) {
+        throw new Error(
+          language === "ta"
+            ? "வாடிக்கையாளர் தகவலை புதுப்பிக்க முடியவில்லை."
+            : "Failed to update customer contact."
+        );
       }
       const updatedCust = data.customer;
       const newWaLink = generateWhatsAppBirthdayLink(

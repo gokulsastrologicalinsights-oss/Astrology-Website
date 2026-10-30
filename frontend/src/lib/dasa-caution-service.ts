@@ -19,6 +19,7 @@ import {
   FullHoroscopeResult,
   ShadbalaResponse,
   AshtakavargaResponse,
+  PlanetInfo,
 } from "./types.ts";
 import {
   analyzeDasaBukthiPalangal,
@@ -27,9 +28,16 @@ import {
 import { generateChildSubPeriods, jdToCalendarDateTime } from "./dasa-helpers.ts";
 import { normalizePlanetName } from "./benefit-bhavas.ts";
 import { validateAndNormalizePhone } from "./phone-utils.ts";
+import { analyzeGkTransits, GkTransitAnalysisResult } from "./gk-transit-engine.ts";
 
 export type CautionSeverity = "critical" | "moderate";
-export type RiskDomain = "health" | "finance" | "career" | "relationships" | "general";
+export type RiskDomain =
+  | "health"
+  | "finance"
+  | "career"
+  | "relationships"
+  | "family_discord"
+  | "general";
 
 export interface DasaCautionItem {
   id: string; // unique item id e.g. `${horoscopeId}_${mahaLord}_${antarLord}_${andharLord}_${antharaStartIso}`
@@ -79,6 +87,14 @@ export interface DasaCautionItem {
   riskDomainLabelTa: string;
   reasonsEn: string[];
   reasonsTa: string[];
+
+  // Gochara (Planetary Transit) Confirmation & Verification
+  transitConfirmed: boolean;
+  transitInfluenceSummaryEn?: string;
+  transitInfluenceSummaryTa?: string;
+  transitKeyPointsEn?: string[];
+  transitKeyPointsTa?: string[];
+
   remedyDeityEn: string;
   remedyDeityTa: string;
   remedyMantraEn: string;
@@ -200,6 +216,9 @@ export function getDasaCautionMessageText(
     riskDomainLabelTa: string;
     reasonsEn: string[];
     reasonsTa: string[];
+    transitConfirmed?: boolean;
+    transitInfluenceSummaryEn?: string;
+    transitInfluenceSummaryTa?: string;
     remedyDeityEn: string;
     remedyDeityTa: string;
     remedyMantraEn: string;
@@ -224,6 +243,11 @@ export function getDasaCautionMessageText(
       ? `${item.mahadashaLordTa} தசா - ${item.antardashaLordTa} புக்தியில், ${andharTa} அந்தர காலம் (${item.startDateFormatted} முதல் ${item.endDateFormatted} வரை${durStr})`
       : `${item.startDateFormatted} முதல் ${item.endDateFormatted} வரை ${item.mahadashaLordTa} தசா - ${item.antardashaLordTa} புக்தி`;
 
+    let transitNoteTa = "";
+    if (item.transitConfirmed && item.transitInfluenceSummaryTa) {
+      transitNoteTa = `\n🪐 கோச்சார கிரகங்களின் உறுதிப்பாடு (Transit Confirmation):\n• ${item.transitInfluenceSummaryTa}\n`;
+    }
+
     return `வணக்கம் ${name},
 
 உங்கள் ஜாதகக் கணிப்பின்படி, ${andharHeading} அதிக கவனமும் விழிப்புணர்வும் தேவைப்படும் கண்ட காலமாகும்.
@@ -232,7 +256,7 @@ export function getDasaCautionMessageText(
 • கவனப் பகுதி: ${item.riskDomainLabelTa}
 ${reasonsStr}
 • தவிர்க்க வேண்டியவை: ${item.avoidNotesTa}
-
+${transitNoteTa}
 🙏 பரிந்துரைக்கப்படும் பரிகாரங்கள் & வழிபாடுகள்:
 • வழிபடும் தெய்வம்: ${item.remedyDeityTa}
 • பாராயணம்: ${item.remedyMantraTa}
@@ -252,6 +276,11 @@ ${reasonsStr}
     ? `under ${item.mahadashaLord} Mahadasha - ${item.antardashaLord} Antardasha, the ${andharEn} Anthara period (${item.startDateFormatted} to ${item.endDateFormatted}${durStr})`
     : `the period from ${item.startDateFormatted} to ${item.endDateFormatted} is governed by ${item.mahadashaLord} Mahadasha - ${item.antardashaLord} Antardasha`;
 
+  let transitNoteEn = "";
+  if (item.transitConfirmed && item.transitInfluenceSummaryEn) {
+    transitNoteEn = `\n🪐 Planetary Transit Confirmation (Gochara Check):\n• ${item.transitInfluenceSummaryEn}\n`;
+  }
+
   return `Dear ${name},
 
 According to your Vedic astrological chart calculation, ${andharHeadingEn} is a sensitive caution period requiring vigilance.
@@ -260,7 +289,7 @@ According to your Vedic astrological chart calculation, ${andharHeadingEn} is a 
 • Domain of Care: ${item.riskDomainLabelEn}
 ${reasonsStrEn}
 • What to Avoid: ${item.avoidNotesEn}
-
+${transitNoteEn}
 🙏 Recommended Propitiation & Remedies:
 • Presiding Deity: ${item.remedyDeityEn}
 • Sacred Chanting: ${item.remedyMantraEn}
@@ -399,7 +428,25 @@ export async function getTodayDasaCautionAlerts(
     queryError = err?.message || String(err);
   }
 
-  // 2. Load sent alerts to know if already notified
+  // 2. Fetch live real-time transits (Gochara) for astrological confirmation
+  let liveTransitPlanets: PlanetInfo[] = [];
+  try {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    const res = await fetch(`${backendUrl}/api/v1/horoscope/live-transits`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(3500),
+    });
+    if (res.ok) {
+      const tData = await res.json();
+      if (tData.planets && Array.isArray(tData.planets)) {
+        liveTransitPlanets = tData.planets;
+      }
+    }
+  } catch {
+    // If backend offline, liveTransitPlanets remains empty and graceful fallback handles it
+  }
+
+  // 3. Load sent alerts to know if already notified
   const localSentAlerts = loadLocalCautionAlerts();
   const sentMap = new Map<string, string>(); // key -> sent_at
   for (const s of localSentAlerts) {
@@ -531,7 +578,28 @@ export async function getTodayDasaCautionAlerts(
             relMahaAndhar?.relationshipNature === "mutual_enemies" ||
             relMahaAntar?.relationshipNature === "mutual_enemies";
 
-          // 7. Blended 3-level adverse score (0 to 100)
+          // 7. Family Conflict, Separation & Marital Discord Affliction (2nd & 7th houses, Kalathra/Kutumba)
+          const andharHouses = andharStr?.housesOwned || [];
+          const antarHouses = analysis.antarStrength?.housesOwned || [];
+          const mahaHouses = analysis.mahaStrength?.housesOwned || [];
+          const andharOcc = andharStr?.houseOccupied || 0;
+          const antarOcc = analysis.antarStrength?.houseOccupied || 0;
+
+          const isFamilyAfflicted =
+            // Lord of 2nd (Kutumba) or 7th (Kalathra) afflicted by Dusthana or Shadashtaka
+            (andharHouses.includes(2) || andharHouses.includes(7) || andharOcc === 2 || andharOcc === 7) &&
+            (hasShadashtaka || isBhuktiAntharaDvidvadasa || isCombustOrDebil || isMutualEnemies || isDusthana);
+
+          const isMaritalDiscordAfflicted =
+            // Bhukti lord owns 7th/2nd and Antharam forms 6/8 or 2/12, or vice versa
+            ((antarHouses.includes(7) || antarHouses.includes(2) || antarOcc === 7 || antarOcc === 2) &&
+              (isBhuktiAntharaShadashtaka || isBhuktiAntharaDvidvadasa || isMutualEnemies)) ||
+            (andharStr?.planet === "Venus" && (isCombustOrDebil || isDusthana || hasShadashtaka)) ||
+            (andharStr?.planet === "Mars" && (andharOcc === 7 || andharOcc === 2 || andharOcc === 8) && hasShadashtaka);
+
+          const hasFamilyRisk = isFamilyAfflicted || isMaritalDiscordAfflicted;
+
+          // 8. Blended 3-level adverse score (0 to 100)
           const threeLevelPositiveScore = analysis.andharaPositiveScore;
           const adverseScore = 100 - threeLevelPositiveScore;
 
@@ -539,11 +607,12 @@ export async function getTodayDasaCautionAlerts(
           const isCautionPeriod =
             isBhuktiAntharaShadashtaka ||
             isMahaAntharaShadashtaka ||
-            (isMahaBhuktiShadashtaka && (isDusthana || isMaraka || isMutualEnemies)) ||
+            (isMahaBhuktiShadashtaka && (isDusthana || isMaraka || isMutualEnemies || hasFamilyRisk)) ||
             isBhuktiAntharaDvidvadasa ||
             (isMaraka && (isDusthana || adverseScore >= 45)) ||
             (isCombustOrDebil && adverseScore >= 40) ||
             (isMutualEnemies && adverseScore >= 45) ||
+            hasFamilyRisk ||
             adverseScore >= 45;
 
           if (!isCautionPeriod) {
@@ -555,6 +624,7 @@ export async function getTodayDasaCautionAlerts(
             isBhuktiAntharaShadashtaka ||
             (isMahaBhuktiShadashtaka && (isMaraka || isDusthana)) ||
             (isMaraka && isDusthana) ||
+            (hasFamilyRisk && (hasShadashtaka || isCombustOrDebil || adverseScore >= 55)) ||
             adverseScore >= 60 ||
             analysis.verdictLabelEn === "Sensitive / Precautions Required";
           const severity: CautionSeverity = isCritical ? "critical" : "moderate";
@@ -564,7 +634,11 @@ export async function getTodayDasaCautionAlerts(
           let riskDomainLabelEn = "General Vigilance & Vital Energy";
           let riskDomainLabelTa = "பொதுவான விழிப்புணர்வும் மன அமைதியும்";
 
-          if (isMaraka || isDusthana || isBhuktiAntharaShadashtaka || adverseScore >= 65) {
+          if (hasFamilyRisk && (adverseScore >= 45 || hasShadashtaka || isCombustOrDebil)) {
+            primaryRiskDomain = "family_discord";
+            riskDomainLabelEn = "Family Harmony, Marital Peace & Avoiding Separation";
+            riskDomainLabelTa = "குடும்ப அமைதி, தம்பதியர் நல்லிணக்கம் & கருத்து வேறுபாடு தவிர்த்தல்";
+          } else if (isMaraka || isDusthana || isBhuktiAntharaShadashtaka || adverseScore >= 65) {
             primaryRiskDomain = "health";
             riskDomainLabelEn = "Health, Road Safety & Bodily Energy";
             riskDomainLabelTa = "ஆரோக்கியம், வாகனப் பயணம் & உடல் நலம்";
@@ -634,6 +708,14 @@ export async function getTodayDasaCautionAlerts(
               `Anthara Lord ${andharNode.lord} is ${andharStr?.isCombust ? "combust" : "debilitated"}, reducing natural protective vitality.`
             );
           }
+          if (hasFamilyRisk) {
+            reasonsTa.push(
+              `குடும்ப (2-ஆம் இடம்) மற்றும் களத்திர (7-ஆம் இடம்) ஸ்தான அதிபதிகள் மீது ஏற்படும் இந்த கிரக அச்சு, குடும்பத்தில் வாக்குவாதங்கள், தம்பதியர் இடையே மனஸ்தாபம் அல்லது தற்காலிக பிரிவு அபாயத்தைக் குறிக்கிறது.`
+            );
+            reasonsEn.push(
+              `Planetary stress on 2nd (family harmony) and 7th (marital alliance) houses signals severe family friction, arguments, or risk of temporary separation during this short window.`
+            );
+          }
           if (reasonsEn.length === 0 && analysis.keyCautionPointsEn.length > 0) {
             reasonsEn.push(analysis.keyCautionPointsEn[0]);
             reasonsTa.push(analysis.keyCautionPointsTa[0] || analysis.keyCautionPointsEn[0]);
@@ -643,7 +725,12 @@ export async function getTodayDasaCautionAlerts(
           let avoidNotesEn = "Avoid signing hasty commitments, rash driving, and speculative investments.";
           let avoidNotesTa = "அவசர ஒப்பந்தங்கள், அதிவேக வாகனப் பயணம் மற்றும் ஊக வணிகங்களைத் தவிர்க்கவும்.";
 
-          if (primaryRiskDomain === "finance") {
+          if (primaryRiskDomain === "family_discord") {
+            avoidNotesEn =
+              "Avoid harsh words, ego clashes with spouse or in-laws, bringing past disputes into discussions, and making hasty separation decisions.";
+            avoidNotesTa =
+              "குடும்பத்தினரிடம் கடுமையான வார்த்தைகள் பேசுவது, கணவன்-மனைவி இடையே வீண் பிடிவாதம், முந்தைய பிரச்சனைகளை மீண்டும் கிளறுவது மற்றும் அவசர பிரிவு முடிவுகளைத் தவிர்க்கவும்.";
+          } else if (primaryRiskDomain === "finance") {
             avoidNotesEn = "Avoid lending huge sums, surety guarantees, and risky financial ventures.";
             avoidNotesTa = "பெரிய கடன் கொடுப்பது, ஜாமீன் கையொப்பம் இடுவது மற்றும் பண முதலீடுகளைத் தவிர்க்கவும்.";
           } else if (primaryRiskDomain === "health") {
@@ -653,14 +740,25 @@ export async function getTodayDasaCautionAlerts(
 
           // Remedies
           const rem = analysis.remedies;
-          const remedyDeityEn = rem?.deityEn || "Lord Shiva & Lord Ganesha";
-          const remedyDeityTa = rem?.deityTa || "சிவபெருமான் & விநாயகர் வழிபாடு";
-          const remedyMantraEn = rem?.mantraEn || "Maha Mrityunjaya Mantra";
-          const remedyMantraTa = rem?.mantraTa || "மகா மிருத்யுஞ்சய மந்திரம் அல்லது கந்த சஷ்டி கவசம்";
-          const remedyCharityEn = rem?.charityEn || "Feeding cows (Go-Danam) or anna danam to the needy";
-          const remedyCharityTa = rem?.charityTa || "கோமாதாவுக்கு அகத்திக்கீரை அல்லது ஏழைகளுக்கு அன்னதானம்";
-          const generalRemedyEn = rem?.generalRemedyEn || "Light sesame oil deepam on Saturdays / Tuesdays";
-          const generalRemedyTa = rem?.generalRemedyTa || "செவ்வாய் அல்லது சனிக்கிழமைகளில் நல்லெண்ணெய் தீபம் ஏற்றுதல்";
+          let remedyDeityEn = rem?.deityEn || "Lord Shiva & Lord Ganesha";
+          let remedyDeityTa = rem?.deityTa || "சிவபெருமான் & விநாயகர் வழிபாடு";
+          let remedyMantraEn = rem?.mantraEn || "Maha Mrityunjaya Mantra";
+          let remedyMantraTa = rem?.mantraTa || "மகா மிருத்யுஞ்சய மந்திரம் அல்லது கந்த சஷ்டி கவசம்";
+          let remedyCharityEn = rem?.charityEn || "Feeding cows (Go-Danam) or anna danam to the needy";
+          let remedyCharityTa = rem?.charityTa || "கோமாதாவுக்கு அகத்திக்கீரை அல்லது ஏழைகளுக்கு அன்னதானம்";
+          let generalRemedyEn = rem?.generalRemedyEn || "Light sesame oil deepam on Saturdays / Tuesdays";
+          let generalRemedyTa = rem?.generalRemedyTa || "செவ்வாய் அல்லது சனிக்கிழமைகளில் நல்லெண்ணெய் தீபம் ஏற்றுதல்";
+
+          if (primaryRiskDomain === "family_discord") {
+            remedyDeityEn = "Goddess Meenakshi / Sri Uma Maheshwara (Shiva-Parvati) & Lord Venkateswara";
+            remedyDeityTa = "ஸ்ரீ உமா மகேஸ்வரர் (சிவன்-பார்வதி), மதுரை மீனாட்சி அம்மன் & திருப்பதி பெருமாள் வழிபாடு";
+            remedyMantraEn = "Sri Suktam, Lalitha Sahasranama & Om Namah Shivaya (108 times daily)";
+            remedyMantraTa = "லலிதா சகஸ்ரநாமம், ஸ்ரீ சூக்தம் அல்லது 'ஓம் நமசிவாய' 108 முறை தம்பதியராக ஜபித்தல்";
+            remedyCharityEn = "Donate sweets/fruits to married couples (Sumangalis) or support a poor marriage";
+            remedyCharityTa = "சுமங்கலிப் பெண்களுக்கு வெற்றிலை பாக்கு, பழங்கள் வழங்குதல் அல்லது ஏழைத் திருமணத்திற்கு உதவுதல்";
+            generalRemedyEn = "Light cow-ghee lamp in pooja room every Friday and avoid heated debates at home";
+            generalRemedyTa = "வெள்ளிக்கிழமைகளில் பூஜையறையில் பசு நெய் தீபம் ஏற்றுதல்; இல்லத்தில் விட்டுக்கொடுத்து அமைதி காத்தல்";
+          }
 
           // Exact Antharam Dates alone (short time period)
           const aStartDt = jdToCalendarDateTime(andharNode.start_jd, 5.5);
@@ -681,6 +779,157 @@ export async function getTodayDasaCautionAlerts(
             progressPercent = Math.min(100, Math.max(0, Math.round((elapsed / span) * 100)));
           } else if (nowJd >= andharNode.end_jd) {
             progressPercent = 100;
+          }
+
+          // Evaluate Gochara (Live planetary transits) matching against Dasa-Bhukti-Anthara
+          let transitConfirmed = false;
+          let transitInfluenceSummaryEn = "";
+          let transitInfluenceSummaryTa = "";
+          const transitKeyPointsEn: string[] = [];
+          const transitKeyPointsTa: string[] = [];
+
+          if (liveTransitPlanets.length > 0 && horoscope.planets) {
+            const gkTransit = analyzeGkTransits(
+              horoscope.planets,
+              liveTransitPlanets,
+              mahaNode.lord,
+              antarNode.lord,
+              andharNode.lord,
+              threeLevelPositiveScore
+            );
+
+            // Check transiting Saturn (Shani), Mars (Sevvai), Rahu/Ketu influencing Dasa, Bhukti, or Anthara lords
+            const tSaturn = liveTransitPlanets.find((p) => p.name === "Saturn");
+            const tMars = liveTransitPlanets.find((p) => p.name === "Mars");
+            const tRahu = liveTransitPlanets.find((p) => p.name === "Rahu");
+            const tKetu = liveTransitPlanets.find((p) => p.name === "Ketu");
+            const tJupiter = liveTransitPlanets.find((p) => p.name === "Jupiter");
+
+            const nMaha = horoscope.planets.find((p) => p.name === mahaNode.lord);
+            const nAntar = horoscope.planets.find((p) => p.name === antarNode.lord);
+            const nAndhar = horoscope.planets.find((p) => p.name === andharNode.lord);
+
+            // 1. Shani Gochara affliction on Dasa / Bhukti / Anthara lords
+            if (tSaturn && (nMaha || nAntar || nAndhar)) {
+              for (const [targetName, targetPlanet] of [
+                ["Dasa", nMaha],
+                ["Bhukti", nAntar],
+                ["Anthara", nAndhar],
+              ] as const) {
+                if (!targetPlanet) continue;
+                const distFromSat = ((targetPlanet.sign_index - tSaturn.sign_index + 12) % 12) + 1;
+                if (distFromSat === 1) {
+                  transitConfirmed = true;
+                  transitKeyPointsTa.push(
+                    `கோச்சார சனி (${tSaturn.sign_name_tamil || tSaturn.sign_name}) ஜனன ${targetName} நாதன் ${targetPlanet.name} மீது சஞ்சரித்து காரியத் தடைகளையும் அழுத்தத்தையும் தருகிறார்.`
+                  );
+                  transitKeyPointsEn.push(
+                    `Transit Saturn (${tSaturn.sign_name}) transits directly over natal ${targetName} Lord ${targetPlanet.name}, triggering delay and structural testing.`
+                  );
+                } else if ([3, 7, 10].includes(distFromSat)) {
+                  transitConfirmed = true;
+                  transitKeyPointsTa.push(
+                    `கோச்சார சனியின் ${distFromSat}-ம் பார்வை ஜனன ${targetName} நாதன் ${targetPlanet.name} மீது படுவதால் விழிப்புணர்வு அவசியம்.`
+                  );
+                  transitKeyPointsEn.push(
+                    `Transit Saturn casts its ${distFromSat}th aspect on natal ${targetName} Lord ${targetPlanet.name}.`
+                  );
+                }
+              }
+            }
+
+            // 2. Sevvai (Mars) Gochara affliction on Dasa / Bhukti / Anthara lords
+            if (tMars && (nMaha || nAntar || nAndhar)) {
+              for (const [targetName, targetPlanet] of [
+                ["Dasa", nMaha],
+                ["Bhukti", nAntar],
+                ["Anthara", nAndhar],
+              ] as const) {
+                if (!targetPlanet) continue;
+                const distFromMars = ((targetPlanet.sign_index - tMars.sign_index + 12) % 12) + 1;
+                if (distFromMars === 1) {
+                  transitConfirmed = true;
+                  transitKeyPointsTa.push(
+                    `கோச்சார செவ்வாய் (${tMars.sign_name_tamil || tMars.sign_name}) ${targetName} நாதன் ${targetPlanet.name} மீது சஞ்சரிப்பதால் முன்கோபம், விபத்து மற்றும் வாக்குவாத எச்சரிக்கை.`
+                  );
+                  transitKeyPointsEn.push(
+                    `Transit Mars (${tMars.sign_name}) conjoins natal ${targetName} Lord ${targetPlanet.name}, raising anger, rash driving risk, and impulsive conflicts.`
+                  );
+                } else if ([4, 7, 8].includes(distFromMars)) {
+                  transitConfirmed = true;
+                  transitKeyPointsTa.push(
+                    `கோச்சார செவ்வாயின் ${distFromMars}-ம் பார்வை ஜனன ${targetName} நாதன் ${targetPlanet.name} மீது வீழ்ந்து திடீர் சவால்களை உருவாக்குகிறது.`
+                  );
+                  transitKeyPointsEn.push(
+                    `Transit Mars casts its ${distFromMars}th special aspect on natal ${targetName} Lord ${targetPlanet.name}.`
+                  );
+                }
+              }
+            }
+
+            // 3. Rahu / Ketu Gochara Conjunction
+            if (tRahu && (nAntar?.sign_index === tRahu.sign_index || nAndhar?.sign_index === tRahu.sign_index)) {
+              transitConfirmed = true;
+              transitKeyPointsTa.push(
+                `கோச்சார ராகு புக்தி/அந்தர நாதருடன் இணந்து பிரமைகளையும் மனக் குழப்பத்தையும் தருகிறார்.`
+              );
+              transitKeyPointsEn.push(
+                `Transit Rahu conjoins running sub-period lords, inducing illusion, confusion, or sudden emotional upheavals.`
+              );
+            }
+            if (tKetu && (nAntar?.sign_index === tKetu.sign_index || nAndhar?.sign_index === tKetu.sign_index)) {
+              transitConfirmed = true;
+              transitKeyPointsTa.push(
+                `கோச்சார கேதுவின் சேர்க்கை மன சலிப்பையும் குடும்பத்தில் தற்காலிக விலகலையும் ஏற்படுத்துகிறது.`
+              );
+              transitKeyPointsEn.push(
+                `Transit Ketu conjunction induces detachment, weariness, and family separation pressure.`
+              );
+            }
+
+            // 4. Moon Sign (Janma Rasi) Transit Affliction (Ashtama Sani, Kandaka Sani, Sade Sati)
+            const nMoon = horoscope.planets.find((p) => p.name === "Moon");
+            if (nMoon && tSaturn) {
+              const moonDistFromSat = ((tSaturn.sign_index - nMoon.sign_index + 12) % 12) + 1;
+              if (moonDistFromSat === 8) {
+                transitConfirmed = true;
+                transitKeyPointsTa.push(
+                  `ஜனன ராசிக்கு 8-ல் கோச்சார சனி (அஷ்டமச் சனி) சஞ்சரிப்பதால் கூடுதல் மன தைரியமும் ஆரோக்கியப் பாதுகாப்பும் தேவை.`
+                );
+                transitKeyPointsEn.push(
+                  `Transit Saturn moves in 8th house from Moon (Ashtama Sani), demanding utmost caution and emotional balance.`
+                );
+              } else if (moonDistFromSat === 4) {
+                transitConfirmed = true;
+                transitKeyPointsTa.push(
+                  `ஜனன ராசிக்கு 4-ல் கோச்சார சனி (அர்த்தாஷ்டமச் சனி) சஞ்சரிப்பதால் குடும்பத்திலும் தாயார் நலனிலும் கவனம் தேவை.`
+                );
+                transitKeyPointsEn.push(
+                  `Transit Saturn moves in 4th house from Moon (Ardhashtama Sani), indicating domestic unrest.`
+                );
+              } else if (moonDistFromSat === 7) {
+                transitConfirmed = true;
+                transitKeyPointsTa.push(
+                  `ஜனன ராசிக்கு 7-ல் கோச்சார சனி (கண்டகச் சனி) சஞ்சரிப்பதால் வாழ்க்கைத்துணையுடன் கருத்து வேறுபாடுகளைத் தவிர்க்கவும்.`
+                );
+                transitKeyPointsEn.push(
+                  `Transit Saturn transits in 7th house from Moon (Kandaka Sani), signaling marital and partnership friction.`
+                );
+              }
+            }
+
+            // Synthesize transit influence summary
+            if (transitKeyPointsTa.length > 0) {
+              transitInfluenceSummaryTa = transitKeyPointsTa[0];
+              transitInfluenceSummaryEn = transitKeyPointsEn[0];
+            } else if (gkTransit.transitModifierPercent < -3) {
+              transitConfirmed = true;
+              transitInfluenceSummaryTa = `தற்போதைய கோச்சார கிரகங்கள் ${mahaTa} தசா - ${antarTa} புக்திக்கு அழுத்தத்தை ஏற்படுத்துகின்றன.`;
+              transitInfluenceSummaryEn = `Live planetary transits exert pressure on the running ${mahaNode.lord}-${antarNode.lord} period.`;
+            } else {
+              transitInfluenceSummaryTa = `கோச்சார கிரக நிலைகள் மிதமான சூழலைத் தருகின்றன.`;
+              transitInfluenceSummaryEn = `Planetary transits operate in a moderate background environment.`;
+            }
           }
 
           const sentKey = `${record.id}_${mahaNode.lord}_${antarNode.lord}_${andharNode.lord}_${startDateIso}`;
@@ -718,6 +967,9 @@ export async function getTodayDasaCautionAlerts(
             generalRemedyTa,
             avoidNotesEn,
             avoidNotesTa,
+            transitConfirmed,
+            transitInfluenceSummaryEn,
+            transitInfluenceSummaryTa,
           };
 
           const messageTextTa = getDasaCautionMessageText(cautionPayload, "ta");
@@ -764,6 +1016,11 @@ export async function getTodayDasaCautionAlerts(
             riskDomainLabelTa,
             reasonsEn,
             reasonsTa,
+            transitConfirmed,
+            transitInfluenceSummaryEn,
+            transitInfluenceSummaryTa,
+            transitKeyPointsEn,
+            transitKeyPointsTa,
             remedyDeityEn,
             remedyDeityTa,
             remedyMantraEn,

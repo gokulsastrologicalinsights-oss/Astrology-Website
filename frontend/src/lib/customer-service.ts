@@ -540,46 +540,51 @@ export async function updateCustomerContactDetails(
       ? customerId.replace(/^legacy_/, "")
       : null;
 
-    const { data: horoscopes } = await adminClient
-      .from("saved_horoscopes")
-      .select("id, person_name, calculation_result");
+    // Fast targeted query: only fetch horoscopes matching this customer or person name
+    let matchedHoroscopes: Array<{ id: string; calculation_result: any }> = [];
 
-    if (horoscopes) {
-      for (const h of horoscopes) {
+    if (rawHoroId) {
+      const { data } = await adminClient
+        .from("saved_horoscopes")
+        .select("id, calculation_result")
+        .eq("id", rawHoroId);
+      if (data) matchedHoroscopes = data;
+    } else if (params.fullName && params.fullName.trim()) {
+      const { data } = await adminClient
+        .from("saved_horoscopes")
+        .select("id, calculation_result")
+        .ilike("person_name", params.fullName.trim());
+      if (data) matchedHoroscopes = data;
+    }
+
+    if (matchedHoroscopes.length > 0) {
+      for (const h of matchedHoroscopes) {
         const calc = h.calculation_result || {};
         const custMeta = calc.customer;
-        // Match by customer ID, or legacy horoscope ID, or exact person_name match
-        const isMatched =
-          custMeta?.id === customerId ||
-          (rawHoroId && h.id === rawHoroId) ||
-          (params.fullName && h.person_name === params.fullName.trim());
+        const updatedCalc = {
+          ...calc,
+          customer: {
+            ...(custMeta || {}),
+            id: updatedCustomer!.id,
+            full_name: updatedCustomer!.full_name,
+            birth_date: updatedCustomer!.birth_date,
+            country_code: updatedCustomer!.country_code,
+            phone_number: updatedCustomer!.phone_number,
+            normalized_phone: updatedCustomer!.normalized_phone,
+            whatsapp_number: updatedCustomer!.whatsapp_number,
+          },
+        };
 
-        if (isMatched) {
-          const updatedCalc = {
-            ...calc,
-            customer: {
-              ...(custMeta || {}),
-              id: updatedCustomer!.id,
-              full_name: updatedCustomer!.full_name,
-              birth_date: updatedCustomer!.birth_date,
-              country_code: updatedCustomer!.country_code,
-              phone_number: updatedCustomer!.phone_number,
-              normalized_phone: updatedCustomer!.normalized_phone,
-              whatsapp_number: updatedCustomer!.whatsapp_number,
-            },
-          };
-
-          await adminClient
-            .from("saved_horoscopes")
-            .update({
-              customer_id: updatedCustomer!.id,
-              calculation_result: updatedCalc,
-              updated_at: nowIso,
-            })
-            .eq("id", h.id);
-        }
+        await adminClient
+          .from("saved_horoscopes")
+          .update({
+            calculation_result: updatedCalc,
+            updated_at: nowIso,
+          } as any)
+          .eq("id", h.id);
       }
     }
+  
   } catch (propagateErr) {
     console.warn("Could not propagate customer contact details to horoscopes:", propagateErr);
   }

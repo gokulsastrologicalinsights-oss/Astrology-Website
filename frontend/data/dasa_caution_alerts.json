@@ -21,5 +21,17 @@
     "severity": "critical",
     "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
     "sent_at": "2026-10-30T04:33:34.352Z"
+  },
+  {
+    "horoscope_id": "71c1a018-6158-4d8d-b155-10338d93dafa",
+    "customer_id": "79c29d5d-4c43-4f56-bc5d-e8d689d072af",
+    "dasa_lord": "Venus",
+    "bhukti_lord": "Venus",
+    "andhar_lord": "Mercury",
+    "period_start": "2026-06-02",
+    "period_end": "2026-11-22",
+    "severity": "critical",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-10-30T07:19:38.242Z"
   }
 ]

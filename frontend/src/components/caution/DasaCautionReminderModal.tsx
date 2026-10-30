@@ -205,8 +205,8 @@ export function DasaCautionReminderModal({
         setEditingId(null);
         await fetchAlerts(false);
       } else {
-        const data = await res.json();
-        setContactSaveError(data.error || "Failed to update phone number.");
+        const data = await res.json().catch(() => ({}));
+        setContactSaveError(data?.error || `Failed to update phone number (HTTP ${res.status}).`);
       }
     } catch (err: any) {
       setContactSaveError(err?.message || "Failed to save phone number.");
@@ -558,6 +558,13 @@ export function DasaCautionReminderModal({
                               ? "🟡 எச்சரிக்கை தேவை"
                               : "🟡 Moderate Caution"}
                           </span>
+
+                          {/* Domain Pill (Family / Health / Finance / Career) */}
+                          {item.primaryRiskDomain === "family_discord" && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300">
+                              {isTa ? "👨‍👩‍👧 குடும்ப விழிப்புணர்வு / பிரிவு தவிர்த்தல்" : "👨‍👩‍👧 Family Harmony & Conflict Alert"}
+                            </span>
+                          )}
                         </div>
 
                         {/* Contact details & helpline */}
@@ -689,6 +696,23 @@ export function DasaCautionReminderModal({
                         </span>
                       </li>
                     </ul>
+
+                    {/* Gochara Transit Confirmation Badge & Reason */}
+                    {item.transitConfirmed && (
+                      <div className="pt-2 border-t border-rose-200/60 text-[11px] text-indigo-950 bg-indigo-50/70 p-2 rounded-lg space-y-1">
+                        <div className="font-extrabold text-indigo-900 flex items-center gap-1.5">
+                          <span>🪐</span>
+                          <span>
+                            {isTa
+                              ? "கோச்சார கிரக நிலைகள் உறுதிப்படுத்துகின்றன (Transit Confirmed):"
+                              : "Live Planetary Transits Confirm This Risk (Gochara Check):"}
+                          </span>
+                        </div>
+                        <p className="text-slate-800 text-[11px] leading-relaxed">
+                          {isTa ? item.transitInfluenceSummaryTa : item.transitInfluenceSummaryEn}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Recommended Remedies Grid */}

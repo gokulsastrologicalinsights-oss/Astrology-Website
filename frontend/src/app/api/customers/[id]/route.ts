@@ -2,17 +2,26 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { updateCustomerContactDetails } from "@/lib/customer-service";
 
-/**
- * PUT /api/customers/[id]
- * Updates customer contact information (phone number, name, DOB)
- * Authoritative record updates across all linked horoscopes.
- */
-export async function PUT(
+async function handleUpdateCustomer(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  paramsPromise: Promise<{ id: string }>
 ) {
   try {
-    const { id } = await params;
+    const { id } = await paramsPromise;
+    let resolvedId = id;
+    try {
+      resolvedId = decodeURIComponent(id);
+    } catch {
+      resolvedId = id;
+    }
+
+    if (!resolvedId) {
+      return NextResponse.json(
+        { error: "Customer ID is required." },
+        { status: 400 }
+      );
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -26,8 +35,20 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
-    const { full_name, birth_date, country_code, phone_number } = body;
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON request payload." },
+        { status: 400 }
+      );
+    }
+
+    const phone_number = body.phone_number ?? body.phoneNumber;
+    const country_code = body.country_code ?? body.countryCode ?? "+91";
+    const full_name = body.full_name ?? body.fullName;
+    const birth_date = body.birth_date ?? body.birthDate;
 
     if (!phone_number || typeof phone_number !== "string" || !phone_number.trim()) {
       return NextResponse.json(
@@ -36,11 +57,11 @@ export async function PUT(
       );
     }
 
-    const updated = await updateCustomerContactDetails(id, {
+    const updated = await updateCustomerContactDetails(resolvedId, {
       fullName: full_name,
       birthDate: birth_date,
       countryCode: country_code || "+91",
-      phoneNumber: phone_number,
+      phoneNumber: phone_number.trim(),
     });
 
     return NextResponse.json({
@@ -48,10 +69,33 @@ export async function PUT(
       customer: updated,
     });
   } catch (err: any) {
-    console.error("PUT /api/customers/[id] error:", err);
+    console.error("Update /api/customers/[id] error:", err);
     return NextResponse.json(
       { error: err?.message || "Failed to update customer contact details." },
       { status: 400 }
     );
   }
+}
+
+/**
+ * PUT /api/customers/[id]
+ * Updates customer contact information (phone number, name, DOB)
+ * Authoritative record updates across linked horoscopes.
+ */
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return handleUpdateCustomer(request, params);
+}
+
+/**
+ * PATCH /api/customers/[id]
+ * Partially updates customer contact information (phone number, country code)
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return handleUpdateCustomer(request, params);
 }
