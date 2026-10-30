@@ -6713,12 +6713,12 @@
     "full_name": "Nithya Aunty",
     "birth_date": "1990-10-30",
     "country_code": "+91",
-    "phone_number": null,
-    "normalized_phone": null,
-    "whatsapp_number": null,
+    "phone_number": "9840999888",
+    "normalized_phone": "+919840999888",
+    "whatsapp_number": "919840999888",
     "created_at": "2026-10-01T00:08:43Z",
-    "updated_at": "2026-10-01T00:08:43Z",
-    "is_legacy_without_phone": true
+    "updated_at": "2026-10-30T07:35:32.064Z",
+    "is_legacy_without_phone": false
   },
   {
     "id": "12794f0f-f223-44ce-807e-c2ff7b0b55b0",

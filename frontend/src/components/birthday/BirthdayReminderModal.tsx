@@ -76,6 +76,7 @@ export function BirthdayReminderModal({
   const [editPhone, setEditPhone] = useState<string>("");
   const [isSavingContact, setIsSavingContact] = useState<boolean>(false);
   const [contactSaveError, setContactSaveError] = useState<string | null>(null);
+  const [savedSuccessId, setSavedSuccessId] = useState<string | null>(null);
 
   const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
   const handleClose = () => {
@@ -216,8 +217,11 @@ export function BirthdayReminderModal({
             : c
         )
       );
+      setSavedSuccessId(celebrant.id);
+      setTimeout(() => setSavedSuccessId(null), 3500);
       setEditingId(null);
       setEditPhone("");
+      await fetchBirthdays(false);
     } catch (err: any) {
       setContactSaveError(err.message || "Failed to save phone number.");
     } finally {
@@ -444,30 +448,34 @@ export function BirthdayReminderModal({
                               </span>
                               <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                             </a>
-                          ) : (
-                            /* Optional "Add Number" or "Update Contact" Action */
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (editingId === celebrant.id) {
-                                  setEditingId(null);
-                                } else {
-                                  setEditingId(celebrant.id);
-                                  setEditPhone(celebrant.phoneNumber || "");
-                                  setEditCountryCode(celebrant.countryCode || "+91");
-                                  setContactSaveError(null);
-                                }
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors"
-                            >
-                              <Edit2 className="w-3.5 h-3.5 text-amber-800" />
-                              <span>
-                                {language === "ta"
-                                  ? "எண்ணைச் சேர்க்கவும்"
-                                  : "Add Number / Update Contact"}
-                              </span>
-                            </button>
-                          )}
+                          ) : null}
+
+                          {/* 2. Add Number or Edit Existing Contact Action */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editingId === celebrant.id) {
+                                setEditingId(null);
+                              } else {
+                                setEditingId(celebrant.id);
+                                setEditPhone(celebrant.phoneNumber || "");
+                                setEditCountryCode(celebrant.countryCode || "+91");
+                                setContactSaveError(null);
+                              }
+                            }}
+                            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                              celebrant.hasValidPhone
+                                ? "text-[#102A4C] bg-white hover:bg-[#F1ECE4] border border-[#CBD5E1]"
+                                : "text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300"
+                            }`}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>
+                              {celebrant.hasValidPhone
+                                ? (language === "ta" ? "எண்ணைத் திருத்து" : "Edit Number")
+                                : (language === "ta" ? "எண்ணைச் சேர்க்கவும்" : "Add Number / Update Contact")}
+                            </span>
+                          </button>
 
                           {/* Preview Message Toggle */}
                           <button
@@ -558,6 +566,18 @@ export function BirthdayReminderModal({
                           </div>
                         </div>
                       )}
+
+                    {/* Success Notification Banner */}
+                    {savedSuccessId === celebrant.id && (
+                      <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300 text-xs font-semibold text-emerald-800 flex items-center gap-2 animate-in fade-in duration-200">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>
+                          {language === "ta"
+                            ? "வாட்ஸ்அப் எண் வெற்றிகரமாக சேமிக்கப்பட்டது!"
+                            : "WhatsApp number saved successfully!"}
+                        </span>
+                      </div>
+                    )}
 
                     {/* 3. Inline Contact Update Form when expanded */}
                     {editingId === celebrant.id && (

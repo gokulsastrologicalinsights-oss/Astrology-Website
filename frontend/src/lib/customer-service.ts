@@ -471,36 +471,112 @@ export async function updateCustomerContactDetails(
   const adminClient = createAdminClient();
 
   let updatedCustomer: CustomerRecord | null = null;
+  const rawHoroId = customerId.startsWith("legacy_")
+    ? customerId.replace(/^legacy_/, "")
+    : null;
 
-  // 1. Update in Supabase public.customers if present
-  try {
-    const updateData: Record<string, any> = {
-      country_code: params.countryCode,
-      phone_number: val.nationalNumber,
-      normalized_phone: val.normalizedPhone,
-      whatsapp_number: val.whatsappNumber,
-      updated_at: nowIso,
-    };
-    if (params.fullName) updateData.full_name = params.fullName.trim();
-    if (params.birthDate) updateData.birth_date = params.birthDate.trim();
+  // 1. Update in Supabase public.customers by primary key (if not legacy_)
+  if (!customerId.startsWith("legacy_")) {
+    try {
+      const updateData: Record<string, any> = {
+        country_code: params.countryCode,
+        phone_number: val.nationalNumber,
+        normalized_phone: val.normalizedPhone,
+        whatsapp_number: val.whatsappNumber,
+        updated_at: nowIso,
+      };
+      if (params.fullName) updateData.full_name = params.fullName.trim();
+      if (params.birthDate) updateData.birth_date = params.birthDate.trim();
 
-    const { data: updated } = await adminClient
-      .from("customers")
-      .update(updateData as any)
-      .eq("id", customerId)
-      .select()
-      .single();
+      const { data: updated } = await adminClient
+        .from("customers")
+        .update(updateData as any)
+        .eq("id", customerId)
+        .select()
+        .maybeSingle();
 
-    if (updated) {
-      updatedCustomer = updated;
+      if (updated) {
+        updatedCustomer = updated;
+      }
+    } catch (err) {
+      console.warn("Could not update customer by ID in Supabase:", err);
     }
-  } catch {
-    // Ignore
   }
 
-  // 2. Update in local store
+  // 2. If not matched by ID, try matching existing customer by name + birth_date in Supabase
+  if (!updatedCustomer && params.fullName && params.birthDate) {
+    try {
+      const { data: matched } = await adminClient
+        .from("customers")
+        .select("*")
+        .ilike("full_name", params.fullName.trim())
+        .eq("birth_date", params.birthDate.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (matched) {
+        const { data: updated } = await adminClient
+          .from("customers")
+          .update({
+            country_code: params.countryCode,
+            phone_number: val.nationalNumber,
+            normalized_phone: val.normalizedPhone,
+            whatsapp_number: val.whatsappNumber,
+            updated_at: nowIso,
+          } as any)
+          .eq("id", matched.id)
+          .select()
+          .maybeSingle();
+
+        if (updated) {
+          updatedCustomer = updated;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not match customer by name/DOB in Supabase:", err);
+    }
+  }
+
+  // 3. If STILL not present in Supabase customers, insert authoritative record
+  if (!updatedCustomer) {
+    try {
+      let targetUserId = "4719b6a8-0452-4bfa-ab87-6733190c3de3";
+      if (rawHoroId) {
+        const { data: h } = await adminClient
+          .from("saved_horoscopes")
+          .select("user_id")
+          .eq("id", rawHoroId)
+          .maybeSingle();
+        if (h?.user_id) targetUserId = h.user_id;
+      }
+
+      const { data: inserted } = await adminClient
+        .from("customers")
+        .insert({
+          user_id: targetUserId,
+          full_name: params.fullName?.trim() || "Customer",
+          birth_date: params.birthDate?.trim() || "2000-01-01",
+          country_code: params.countryCode,
+          phone_number: val.nationalNumber,
+          normalized_phone: val.normalizedPhone,
+          whatsapp_number: val.whatsappNumber,
+          created_at: nowIso,
+          updated_at: nowIso,
+        } as any)
+        .select()
+        .maybeSingle();
+
+      if (inserted) {
+        updatedCustomer = inserted;
+      }
+    } catch (err) {
+      console.warn("Could not insert new customer in Supabase:", err);
+    }
+  }
+
+  // 4. Update in local stores (frontend/data and ../data if available)
   const localList = loadLocalCustomers();
-  const foundIdx = localList.findIndex((c) => c.id === customerId);
+  const foundIdx = localList.findIndex((c) => c.id === customerId || (updatedCustomer && c.id === updatedCustomer.id));
   if (foundIdx >= 0) {
     if (params.fullName) localList[foundIdx].full_name = params.fullName.trim();
     if (params.birthDate) localList[foundIdx].birth_date = params.birthDate.trim();
@@ -511,9 +587,8 @@ export async function updateCustomerContactDetails(
     localList[foundIdx].is_legacy_without_phone = false;
     localList[foundIdx].updated_at = nowIso;
     saveLocalCustomers(localList);
-    updatedCustomer = localList[foundIdx];
+    if (!updatedCustomer) updatedCustomer = localList[foundIdx];
   } else if (!updatedCustomer) {
-    // If it was a legacy ID or newly created from update
     const newRecord: CustomerRecord = {
       id: customerId.startsWith("legacy_")
         ? `cust_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
@@ -534,13 +609,31 @@ export async function updateCustomerContactDetails(
     updatedCustomer = newRecord;
   }
 
-  // 3. Propagate updated authoritative contact details to all linked saved_horoscopes
+  // Also sync to root ../data/customers.json if running from frontend dir
   try {
-    const rawHoroId = customerId.startsWith("legacy_")
-      ? customerId.replace(/^legacy_/, "")
-      : null;
+    const rootDataPath = path.resolve(process.cwd(), "..", "data", "customers.json");
+    if (fs.existsSync(rootDataPath)) {
+      const rootContent = fs.readFileSync(rootDataPath, "utf-8");
+      const rootList: CustomerRecord[] = JSON.parse(rootContent);
+      const rIdx = rootList.findIndex((c) => c.id === customerId || (updatedCustomer && c.id === updatedCustomer.id));
+      if (rIdx >= 0) {
+        if (params.fullName) rootList[rIdx].full_name = params.fullName.trim();
+        if (params.birthDate) rootList[rIdx].birth_date = params.birthDate.trim();
+        rootList[rIdx].country_code = params.countryCode;
+        rootList[rIdx].phone_number = val.nationalNumber;
+        rootList[rIdx].normalized_phone = val.normalizedPhone;
+        rootList[rIdx].whatsapp_number = val.whatsappNumber;
+        rootList[rIdx].is_legacy_without_phone = false;
+        rootList[rIdx].updated_at = nowIso;
+        fs.writeFileSync(rootDataPath, JSON.stringify(rootList, null, 2), "utf-8");
+      }
+    }
+  } catch {
+    // Ignore root file sync error
+  }
 
-    // Fast targeted query: only fetch horoscopes matching this customer or person name
+  // 5. Propagate updated authoritative contact details to linked saved_horoscopes
+  try {
     let matchedHoroscopes: Array<{ id: string; calculation_result: any }> = [];
 
     if (rawHoroId) {
@@ -584,7 +677,6 @@ export async function updateCustomerContactDetails(
           .eq("id", h.id);
       }
     }
-  
   } catch (propagateErr) {
     console.warn("Could not propagate customer contact details to horoscopes:", propagateErr);
   }
@@ -677,13 +769,28 @@ export async function getTodayBirthdayCelebrants(
   // 2. Inspect saved_horoscopes to ensure EVERY saved horoscope with today's birthday is included
   try {
     const adminClient = createAdminClient();
+    // Select lightweight columns first to avoid huge payload timeouts
     let horoQuery = adminClient
       .from("saved_horoscopes")
-      .select("id, user_id, person_name, birth_date, calculation_result");
+      .select("id, user_id, person_name, birth_date");
     if (!isAdmin) {
       horoQuery = horoQuery.eq("user_id", userId);
     }
-    const { data: savedHoroscopes } = await horoQuery;
+    const { data: lightHoroscopes } = await horoQuery;
+
+    let savedHoroscopes: any[] = [];
+    if (lightHoroscopes) {
+      // Filter to only horoscopes whose birthday is today in Kolkata
+      const todayMatches = lightHoroscopes.filter((h) => h.birth_date && isBirthdayTodayInKolkata(h.birth_date));
+      for (const tm of todayMatches) {
+        const { data: detail } = await adminClient
+          .from("saved_horoscopes")
+          .select("id, user_id, person_name, birth_date, calculation_result")
+          .eq("id", tm.id)
+          .maybeSingle();
+        if (detail) savedHoroscopes.push(detail);
+      }
+    }
 
     if (savedHoroscopes) {
       for (const h of savedHoroscopes) {
