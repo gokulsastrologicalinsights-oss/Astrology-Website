@@ -1637,16 +1637,20 @@ export function analyzeDasaBukthiPalangal(
         antarStrength.housesOwned.includes(7) || antarStrength.housesOwned.includes(2) || antarStrength.planet === "Venus" || antarStrength.planet === "Jupiter"
           ? "Classical marriage-timing window active: strong indicators for wedlock or celebrating anniversaries."
           : "Domestic peace prospers through affectionate companionship and shared responsibilities.",
-        relationship.isShadashtakaWarning
-          ? "6/8 Shadashtaka axis warning: resolve misunderstandings swiftly with empathetic dialogue."
+        relationship.isShadashtakaWarning || relationshipFromBhukti.isShadashtakaWarning
+          ? relationshipFromBhukti.isShadashtakaWarning
+            ? "Anthara-Bhukti 6/8 Shadashtaka axis: exercise high patience with spouse during this short window; resolve misunderstandings swiftly."
+            : "6/8 Shadashtaka axis warning: resolve misunderstandings swiftly with empathetic dialogue."
           : "Constructive relationship with in-laws and extended family.",
       ],
       pointsTa: [
         antarStrength.housesOwned.includes(7) || antarStrength.housesOwned.includes(2) || antarStrength.planet === "Venus" || antarStrength.planet === "Jupiter"
           ? "சாஸ்திர விதிகளின்படி திருமண யோகம் கைகூடும் காலம்; வரன் அமைதல் மற்றும் மங்கலப் பேச்சுகள் வெற்றியாகும்."
           : "தம்பதியர் இடையே அன்பும், குடும்பத்தில் மகிழ்ச்சியான நல்லிணக்கமும் நிலவும்.",
-        relationship.isShadashtakaWarning
-          ? "6/8 ஷடாஷ்டக எச்சரிக்கை: தம்பதியர் இடையே வீண் விவாதங்களைத் தவிர்த்து ஒருவருக்கொருவர் விட்டுக்கொடுத்துச் செல்லவும்."
+        relationship.isShadashtakaWarning || relationshipFromBhukti.isShadashtakaWarning
+          ? relationshipFromBhukti.isShadashtakaWarning
+            ? "புக்தி-அந்தர 6/8 ஷடாஷ்டக எச்சரிக்கை: இந்த குறுகிய அந்தர காலத்தில் வாழ்க்கைத் துணையிடம் பொறுமை காக்கவும்; வீண் விவாதங்களைத் தவிர்க்கவும்."
+            : "6/8 ஷடாஷ்டக எச்சரிக்கை: தம்பதியர் இடையே வீண் விவாதங்களைத் தவிர்த்து ஒருவருக்கொருவர் விட்டுக்கொடுத்துச் செல்லவும்."
           : "உறவினர்கள் மற்றும் மாமியார் வழி உறவுகளுடன் சுமுகமான நட்பு தொடரும்.",
       ],
     },

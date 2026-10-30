@@ -8871,12 +8871,12 @@
     "full_name": "Akila",
     "birth_date": "1995-09-21",
     "country_code": "+91",
-    "phone_number": null,
-    "normalized_phone": null,
-    "whatsapp_number": null,
+    "phone_number": "9941346536",
+    "normalized_phone": "+919941346536",
+    "whatsapp_number": "919941346536",
     "created_at": "2026-10-01T00:11:30Z",
-    "updated_at": "2026-10-01T00:11:30Z",
-    "is_legacy_without_phone": true
+    "updated_at": "2026-10-30T10:58:51.383Z",
+    "is_legacy_without_phone": false
   },
   {
     "id": "79c29d5d-4c43-4f56-bc5d-e8d689d072af",
@@ -8949,12 +8949,12 @@
     "full_name": "Arivazhagan",
     "birth_date": "1993-01-21",
     "country_code": "+91",
-    "phone_number": null,
-    "normalized_phone": null,
-    "whatsapp_number": null,
+    "phone_number": "7867067631",
+    "normalized_phone": "+917867067631",
+    "whatsapp_number": "917867067631",
     "created_at": "2026-10-01T00:11:37Z",
-    "updated_at": "2026-10-01T00:11:37Z",
-    "is_legacy_without_phone": true
+    "updated_at": "2026-10-30T11:41:38.091Z",
+    "is_legacy_without_phone": false
   },
   {
     "id": "96c67c27-20a0-41c1-af09-fba6df514f78",
@@ -9014,12 +9014,12 @@
     "full_name": "Veeramani",
     "birth_date": "1979-09-17",
     "country_code": "+91",
-    "phone_number": null,
-    "normalized_phone": null,
-    "whatsapp_number": null,
+    "phone_number": "8072269787",
+    "normalized_phone": "+918072269787",
+    "whatsapp_number": "918072269787",
     "created_at": "2026-10-01T00:11:43Z",
-    "updated_at": "2026-10-01T00:11:43Z",
-    "is_legacy_without_phone": true
+    "updated_at": "2026-10-30T11:43:04.886Z",
+    "is_legacy_without_phone": false
   },
   {
     "id": "7ca17761-41b5-4caf-8570-fe5bef9a55ae",

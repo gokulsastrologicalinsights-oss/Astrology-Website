@@ -33,5 +33,29 @@
     "severity": "critical",
     "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
     "sent_at": "2026-10-30T07:19:38.242Z"
+  },
+  {
+    "horoscope_id": "1ef0180a-19c0-477e-a29e-307e65a8a4ee",
+    "customer_id": "de846204-8faa-4a3d-8ad7-413785214bc9",
+    "dasa_lord": "Venus",
+    "bhukti_lord": "Jupiter",
+    "andhar_lord": "Ketu",
+    "period_start": "2026-10-11",
+    "period_end": "2026-12-07",
+    "severity": "critical",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-10-30T11:40:17.570Z"
+  },
+  {
+    "horoscope_id": "b8fe04b2-f30a-412a-8373-80fafc029f2e",
+    "customer_id": "b6b67086-461d-4e17-957c-e083c16fd113",
+    "dasa_lord": "Mars",
+    "bhukti_lord": "Moon",
+    "andhar_lord": "Mercury",
+    "period_start": "2026-10-19",
+    "period_end": "2026-11-18",
+    "severity": "critical",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-10-30T11:51:37.771Z"
   }
 ]

@@ -49,6 +49,7 @@ async function handleUpdateCustomer(
     const country_code = body.country_code ?? body.countryCode ?? "+91";
     const full_name = body.full_name ?? body.fullName;
     const birth_date = body.birth_date ?? body.birthDate;
+    const horoscope_id = body.horoscope_id ?? body.horoscopeId;
 
     if (!phone_number || typeof phone_number !== "string" || !phone_number.trim()) {
       return NextResponse.json(
@@ -62,6 +63,7 @@ async function handleUpdateCustomer(
       birthDate: birth_date,
       countryCode: country_code || "+91",
       phoneNumber: phone_number.trim(),
+      horoscopeId: horoscope_id,
     });
 
     return NextResponse.json({

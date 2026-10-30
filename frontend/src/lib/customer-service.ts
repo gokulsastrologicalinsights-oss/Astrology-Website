@@ -460,6 +460,7 @@ export async function updateCustomerContactDetails(
     birthDate?: string;
     countryCode: string;
     phoneNumber: string;
+    horoscopeId?: string;
   }
 ): Promise<CustomerRecord> {
   const val = validateAndNormalizePhone(params.phoneNumber, params.countryCode);
@@ -474,6 +475,30 @@ export async function updateCustomerContactDetails(
   const rawHoroId = customerId.startsWith("legacy_")
     ? customerId.replace(/^legacy_/, "")
     : null;
+
+  // 0. Detect if customerId is actually a saved_horoscopes UUID or if horoscopeId is provided
+  const candidateHoroId = params.horoscopeId || rawHoroId || customerId;
+  let linkedHoro: any = null;
+  if (candidateHoroId) {
+    try {
+      const { data: h } = await adminClient
+        .from("saved_horoscopes")
+        .select("id, user_id, person_name, birth_date, calculation_result")
+        .eq("id", candidateHoroId)
+        .maybeSingle();
+      if (h) {
+        linkedHoro = h;
+        if (!params.fullName && h.person_name) {
+          params.fullName = h.person_name;
+        }
+        if (!params.birthDate && h.birth_date) {
+          params.birthDate = h.birth_date;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  }
 
   // 1. Update in Supabase public.customers by primary key (if not legacy_)
   if (!customerId.startsWith("legacy_")) {
@@ -540,8 +565,8 @@ export async function updateCustomerContactDetails(
   // 3. If STILL not present in Supabase customers, insert authoritative record
   if (!updatedCustomer) {
     try {
-      let targetUserId = "4719b6a8-0452-4bfa-ab87-6733190c3de3";
-      if (rawHoroId) {
+      let targetUserId = linkedHoro?.user_id || "4719b6a8-0452-4bfa-ab87-6733190c3de3";
+      if (!linkedHoro && rawHoroId) {
         const { data: h } = await adminClient
           .from("saved_horoscopes")
           .select("user_id")
@@ -593,7 +618,7 @@ export async function updateCustomerContactDetails(
       id: customerId.startsWith("legacy_")
         ? `cust_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
         : customerId,
-      user_id: "system",
+      user_id: linkedHoro?.user_id || "system",
       full_name: params.fullName?.trim() || "Customer",
       birth_date: params.birthDate?.trim() || "2000-01-01",
       country_code: params.countryCode,
@@ -636,18 +661,43 @@ export async function updateCustomerContactDetails(
   try {
     let matchedHoroscopes: Array<{ id: string; calculation_result: any }> = [];
 
+    if (linkedHoro) {
+      matchedHoroscopes.push(linkedHoro);
+    }
+
     if (rawHoroId) {
       const { data } = await adminClient
         .from("saved_horoscopes")
         .select("id, calculation_result")
         .eq("id", rawHoroId);
-      if (data) matchedHoroscopes = data;
+      if (data) {
+        for (const dh of data) {
+          if (!matchedHoroscopes.some((mh) => mh.id === dh.id)) matchedHoroscopes.push(dh);
+        }
+      }
     } else if (params.fullName && params.fullName.trim()) {
       const { data } = await adminClient
         .from("saved_horoscopes")
         .select("id, calculation_result")
         .ilike("person_name", params.fullName.trim());
-      if (data) matchedHoroscopes = data;
+      if (data) {
+        for (const dh of data) {
+          if (!matchedHoroscopes.some((mh) => mh.id === dh.id)) matchedHoroscopes.push(dh);
+        }
+      }
+    }
+
+    const explicitHoroId = params.horoscopeId || (!customerId.startsWith("legacy_") && !customerId.startsWith("cust_") ? customerId : null);
+    if (explicitHoroId) {
+      const { data } = await adminClient
+        .from("saved_horoscopes")
+        .select("id, calculation_result")
+        .eq("id", explicitHoroId);
+      if (data) {
+        for (const dh of data) {
+          if (!matchedHoroscopes.some((mh) => mh.id === dh.id)) matchedHoroscopes.push(dh);
+        }
+      }
     }
 
     if (matchedHoroscopes.length > 0) {
@@ -679,6 +729,14 @@ export async function updateCustomerContactDetails(
     }
   } catch (propagateErr) {
     console.warn("Could not propagate customer contact details to horoscopes:", propagateErr);
+  }
+
+  // 6. Invalidate Dasa Caution memory cache immediately
+  try {
+    const { clearCautionCache } = await import("./dasa-caution-service");
+    clearCautionCache();
+  } catch {
+    // Ignore cache clear error
   }
 
   return updatedCustomer!;

@@ -28,7 +28,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { DasaCautionItem, CautionSeverity } from "@/lib/dasa-caution-service";
-import { SUPPORTED_COUNTRY_CODES } from "@/lib/phone-utils";
+import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
 
 interface DasaCautionReminderModalProps {
   isOpen?: boolean;
@@ -199,11 +199,51 @@ export function DasaCautionReminderModal({
         body: JSON.stringify({
           phoneNumber: editPhone.trim(),
           countryCode: editCountryCode,
+          fullName: item.fullName,
+          birthDate: item.birthDate,
+          horoscopeId: item.horoscopeId,
         }),
       });
       if (res.ok) {
+        const resJson = await res.json().catch(() => ({}));
+        const updatedCust = resJson.customer;
+        const norm = validateAndNormalizePhone(editPhone.trim(), editCountryCode);
+
+        // Optimistically update the alerts in local React state immediately so WhatsApp button transforms instantly
+        setAlerts((prev) =>
+          prev.map((a) => {
+            if (a.id === item.id || a.horoscopeId === item.horoscopeId || (a.customerId && a.customerId === updatedCust?.id)) {
+              const updatedWhatsapp = norm.whatsappNumber || (updatedCust?.whatsapp_number ?? null);
+              const updatedNormPhone = norm.normalizedPhone || (updatedCust?.normalized_phone ?? null);
+              const updatedNational = norm.nationalNumber || editPhone.trim();
+              const hasPhone = norm.isValid;
+
+              const clean = updatedWhatsapp ? updatedWhatsapp.replace(/\D/g, "") : "";
+              const wLinkTa = clean && clean.length >= 7
+                ? `https://api.whatsapp.com/send/?phone=${clean}&text=${encodeURIComponent(a.messageTextTa)}`
+                : "";
+              const wLinkEn = clean && clean.length >= 7
+                ? `https://api.whatsapp.com/send/?phone=${clean}&text=${encodeURIComponent(a.messageTextEn)}`
+                : "";
+
+              return {
+                ...a,
+                customerId: updatedCust?.id || a.customerId,
+                countryCode: editCountryCode,
+                phoneNumber: updatedNational,
+                normalizedPhone: updatedNormPhone || undefined,
+                whatsappNumber: updatedWhatsapp || undefined,
+                hasValidPhone: hasPhone,
+                whatsappLinkTa: wLinkTa,
+                whatsappLinkEn: wLinkEn,
+              };
+            }
+            return a;
+          })
+        );
+
         setEditingId(null);
-        await fetchAlerts(false);
+        await fetchAlerts(false, true);
       } else {
         const data = await res.json().catch(() => ({}));
         setContactSaveError(data?.error || `Failed to update phone number (HTTP ${res.status}).`);
@@ -559,7 +599,12 @@ export function DasaCautionReminderModal({
                               : "🟡 Moderate Caution"}
                           </span>
 
-                          {/* Domain Pill (Family / Health / Finance / Career) */}
+                          {/* Domain Pill (Relationships / Family / Health / Finance / Career) */}
+                          {item.primaryRiskDomain === "relationships" && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-900 border border-rose-300">
+                              {isTa ? "💍 திருமண & களத்திர உறவு விழிப்புணர்வு" : "💍 Marriage & Relationship Harmony Alert"}
+                            </span>
+                          )}
                           {item.primaryRiskDomain === "family_discord" && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300">
                               {isTa ? "👨‍👩‍👧 குடும்ப விழிப்புணர்வு / பிரிவு தவிர்த்தல்" : "👨‍👩‍👧 Family Harmony & Conflict Alert"}

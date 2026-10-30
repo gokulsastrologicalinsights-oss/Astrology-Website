@@ -525,19 +525,29 @@ def evaluate_kp_timing(
     cur_bk = parsed_periods[1] if len(parsed_periods) > 1 else None
     cur_pr = parsed_periods[2] if len(parsed_periods) > 2 else None
 
-    # Evaluate overall active timing verdict
-    # Prioritizes Bhukti (Antardasha) and Mahadasha per KP Reader III
+    # Evaluate overall active timing verdict across all 3 tiers (Dasa, Bhukti, Antharam) per KP Reader III
     if cur_bk and cur_md:
         if cur_bk.timing_favorability == "FAVORABLE" and cur_md.timing_favorability in ("FAVORABLE", "MIXED", "NEUTRAL"):
-            timing_verdict = KpPromiseVerdict.FAVORABLE
+            base_verdict = KpPromiseVerdict.FAVORABLE
         elif cur_bk.timing_favorability == "UNFAVORABLE" and cur_md.timing_favorability == "UNFAVORABLE":
-            timing_verdict = KpPromiseVerdict.UNFAVORABLE
+            base_verdict = KpPromiseVerdict.UNFAVORABLE
         elif cur_bk.timing_favorability == "FAVORABLE" or cur_md.timing_favorability == "FAVORABLE":
-            timing_verdict = KpPromiseVerdict.FAVORABLE
+            base_verdict = KpPromiseVerdict.FAVORABLE
         elif cur_bk.timing_favorability == "UNFAVORABLE" or cur_md.timing_favorability == "UNFAVORABLE":
-            timing_verdict = KpPromiseVerdict.MIXED
+            base_verdict = KpPromiseVerdict.MIXED
         else:
-            timing_verdict = KpPromiseVerdict.MIXED
+            base_verdict = KpPromiseVerdict.MIXED
+
+        # Refine with Antharam (Pratyantardasha) sub-window
+        if cur_pr:
+            if cur_pr.timing_favorability == "UNFAVORABLE" and base_verdict == KpPromiseVerdict.FAVORABLE:
+                timing_verdict = KpPromiseVerdict.MIXED
+            elif cur_pr.timing_favorability == "FAVORABLE" and base_verdict == KpPromiseVerdict.MIXED:
+                timing_verdict = KpPromiseVerdict.FAVORABLE
+            else:
+                timing_verdict = base_verdict
+        else:
+            timing_verdict = base_verdict
     elif cur_md:
         if cur_md.timing_favorability == "FAVORABLE":
             timing_verdict = KpPromiseVerdict.FAVORABLE
@@ -548,14 +558,17 @@ def evaluate_kp_timing(
     else:
         timing_verdict = KpPromiseVerdict.INDETERMINATE
 
+    pr_str_en = f", Anthara: {cur_pr.lord} ({cur_pr.timing_favorability})" if cur_pr else ""
+    pr_str_ta = f", அந்தரம்: {cur_pr.lord} ({cur_pr.timing_favorability})" if cur_pr else ""
+
     en_desc = (
         f"Active Dasa: {cur_md.lord if cur_md else 'N/A'} ({cur_md.timing_favorability if cur_md else 'N/A'}), "
-        f"Bhukti: {cur_bk.lord if cur_bk else 'N/A'} ({cur_bk.timing_favorability if cur_bk else 'N/A'}). "
+        f"Bhukti: {cur_bk.lord if cur_bk else 'N/A'} ({cur_bk.timing_favorability if cur_bk else 'N/A'}){pr_str_en}. "
         f"Timing alignment: {timing_verdict.value} for marriage manifestation."
     )
     ta_desc = (
         f"நடப்பு தசா: {cur_md.lord if cur_md else 'இல்லை'} ({cur_md.timing_favorability if cur_md else 'இல்லை'}), "
-        f"புக்தி: {cur_bk.lord if cur_bk else 'இல்லை'} ({cur_bk.timing_favorability if cur_bk else 'இல்லை'}). "
+        f"புக்தி: {cur_bk.lord if cur_bk else 'இல்லை'} ({cur_bk.timing_favorability if cur_bk else 'இல்லை'}){pr_str_ta}. "
         f"காலப் பொருத்தம்: {timing_verdict.value}."
     )
 

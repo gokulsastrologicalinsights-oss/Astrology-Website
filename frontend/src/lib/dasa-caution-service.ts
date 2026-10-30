@@ -348,6 +348,10 @@ export function invalidateCautionCache() {
   CAUTION_CACHE.clear();
 }
 
+export function clearCautionCache() {
+  CAUTION_CACHE.clear();
+}
+
 /**
  * Core Scanner: Inspects saved charts for the authenticated user and flags
  * active or upcoming critical Dasa-Bhuktis.
@@ -472,12 +476,31 @@ export async function getTodayDasaCautionAlerts(
     // Ignore if table not created yet; local JSON fallback protects
   }
 
+  // Load authoritative customer profiles to cross-enrich missing or updated phone numbers
+  const custById = new Map<string, any>();
+  const custByNameDob = new Map<string, any>();
+  const custByHoroId = new Map<string, any>();
+  try {
+    const { listCustomersForUser } = await import("./customer-service");
+    const allCustomers = await listCustomersForUser(userId, isAdmin);
+    for (const c of allCustomers) {
+      if (c.id) custById.set(c.id, c);
+      const nameKey = `${(c.full_name || "").trim().toLowerCase()}_${c.birth_date || ""}`;
+      if (nameKey !== "_") custByNameDob.set(nameKey, c);
+      if (c.id && !c.id.startsWith("cust_") && !c.id.startsWith("legacy_")) {
+        custByHoroId.set(c.id, c);
+      }
+    }
+  } catch (custErr) {
+    console.warn("Could not load authoritative customers for caution scan:", custErr);
+  }
+
   const alerts: DasaCautionItem[] = [];
 
   for (const record of savedList) {
     const horoscope: HoroscopeResponse = record.horoscope || record.calculation_result?.horoscope;
     const dasa: DasaResponse = record.dasa || record.calculation_result?.dasa;
-    const customerMeta = record.customer || record.calculation_result?.customer || {};
+    let customerMeta = record.customer || record.calculation_result?.customer || {};
 
     if (!horoscope || !dasa || !dasa.dasa_tree) {
       console.log(`[CAUTION SCAN SKIP] Record ${record.id} (${record.person_name}) missing horoscope or dasa`);
@@ -486,9 +509,36 @@ export async function getTodayDasaCautionAlerts(
 
     const birthDate: string = record.birth_date || "";
     const fullName = customerMeta.full_name || record.person_name || "Client";
+
+    // Enrich phone number if missing from calculation_result
+    let effectivePhone = customerMeta.phone_number || "";
+    let effectiveCountryCode = customerMeta.country_code || "+91";
+
+    if (!effectivePhone || !effectivePhone.trim()) {
+      const matchedCust =
+        (customerMeta.id ? custById.get(customerMeta.id) : null) ||
+        custByNameDob.get(`${(record.person_name || fullName).trim().toLowerCase()}_${birthDate}`) ||
+        custByHoroId.get(record.id);
+
+      if (matchedCust && matchedCust.phone_number) {
+        effectivePhone = matchedCust.phone_number;
+        effectiveCountryCode = matchedCust.country_code || "+91";
+        customerMeta = {
+          ...customerMeta,
+          id: matchedCust.id || customerMeta.id,
+          full_name: matchedCust.full_name || fullName,
+          birth_date: matchedCust.birth_date || birthDate,
+          country_code: effectiveCountryCode,
+          phone_number: effectivePhone,
+          normalized_phone: matchedCust.normalized_phone,
+          whatsapp_number: matchedCust.whatsapp_number,
+        };
+      }
+    }
+
     const phoneVal = validateAndNormalizePhone(
-      customerMeta.phone_number || "",
-      customerMeta.country_code || "+91"
+      effectivePhone,
+      effectiveCountryCode
     );
 
     const tree: DasaPeriodNode[] = dasa.dasa_tree;
@@ -550,6 +600,10 @@ export async function getTodayDasaCautionAlerts(
           const relMahaAndhar = analysis.andhara?.relationshipFromMaha;
           const andharStr = analysis.andhara?.strength;
 
+          // Blended 3-level adverse score (0 to 100)
+          const threeLevelPositiveScore = analysis.andharaPositiveScore;
+          const adverseScore = 100 - threeLevelPositiveScore;
+
           // 1. Shadashtaka (6/8 Axis)
           const isBhuktiAntharaShadashtaka = !!relAntarAndhar?.isShadashtakaWarning;
           const isMahaAntharaShadashtaka = !!relMahaAndhar?.isShadashtakaWarning;
@@ -578,40 +632,71 @@ export async function getTodayDasaCautionAlerts(
             relMahaAndhar?.relationshipNature === "mutual_enemies" ||
             relMahaAntar?.relationshipNature === "mutual_enemies";
 
-          // 7. Family Conflict, Separation & Marital Discord Affliction (2nd & 7th houses, Kalathra/Kutumba)
+          // 7. Rigorous 3-Tier Analysis of Current Dasa, Bukthi, and Antharam for Marriage & Relationship Issues
           const andharHouses = andharStr?.housesOwned || [];
           const antarHouses = analysis.antarStrength?.housesOwned || [];
           const mahaHouses = analysis.mahaStrength?.housesOwned || [];
           const andharOcc = andharStr?.houseOccupied || 0;
           const antarOcc = analysis.antarStrength?.houseOccupied || 0;
+          const mahaOcc = analysis.mahaStrength?.houseOccupied || 0;
 
+          // Check connectivity to 7th (Kalathra / Marriage), 2nd (Kutumba / Family), 8th (Mangalya / Crises),
+          // 12th (Sayana Sukha / Separation), 6th (Shatru / Disputes / Litigation) across all 3 tiers:
+          const mahaConnects7 = mahaHouses.includes(7) || mahaOcc === 7 || analysis.mahaStrength?.planet === "Venus";
+          const antarConnects7 = antarHouses.includes(7) || antarOcc === 7 || analysis.antarStrength?.planet === "Venus";
+          const andharConnects7 = andharHouses.includes(7) || andharOcc === 7 || andharStr?.planet === "Venus";
+
+          const mahaConnects2 = mahaHouses.includes(2) || mahaOcc === 2;
+          const antarConnects2 = antarHouses.includes(2) || antarOcc === 2;
+          const andharConnects2 = andharHouses.includes(2) || andharOcc === 2;
+
+          const anyTierConnects8 = mahaHouses.includes(8) || mahaOcc === 8 || antarHouses.includes(8) || antarOcc === 8 || andharHouses.includes(8) || andharOcc === 8;
+          const anyTierConnects12 = mahaHouses.includes(12) || mahaOcc === 12 || antarHouses.includes(12) || antarOcc === 12 || andharHouses.includes(12) || andharOcc === 12;
+          const anyTierConnects6 = mahaHouses.includes(6) || mahaOcc === 6 || antarHouses.includes(6) || antarOcc === 6 || andharHouses.includes(6) || andharOcc === 6;
+
+          // Planetary Karaka Afflictions:
+          // Venus (Kalathra Karaka)
+          const isVenusActive = analysis.mahaStrength?.planet === "Venus" || analysis.antarStrength?.planet === "Venus" || andharStr?.planet === "Venus";
+          const isVenusAfflicted = isVenusActive && (isCombustOrDebil || isDusthana || hasShadashtaka || isBhuktiAntharaDvidvadasa);
+
+          // Mars (Kuja Dosha)
+          const isMarsActive = analysis.mahaStrength?.planet === "Mars" || analysis.antarStrength?.planet === "Mars" || andharStr?.planet === "Mars";
+          const isKujaDoshaActive = isMarsActive && [2, 7, 8, 12].some((h) => mahaOcc === h || antarOcc === h || andharOcc === h);
+
+          // Rahu / Ketu Nodal Marital Axis
+          const isNodeActive = ["Rahu", "Ketu"].includes(analysis.antarStrength?.planet || "") || ["Rahu", "Ketu"].includes(andharStr?.planet || "");
+          const isNodeInMaritalAxis = isNodeActive && [2, 7, 8, 12].some((h) => antarOcc === h || andharOcc === h);
+
+          // Canonical condition for Marriage / Relationship Problem:
+          // ONLY confirmed if the active Dasa, Bukthi, and Antharam specifically activate 7th house, Kalathra Karaka Venus,
+          // or 8th/12th/6th marital axes under afflictive planetary geometry (6/8 Shadashtaka, 2/12 Dvidvadasa, Dusthana, Combustion, or Debilitation).
+          const isMaritalAfflicted =
+            ((mahaConnects7 || antarConnects7 || andharConnects7) &&
+              (hasShadashtaka || isBhuktiAntharaDvidvadasa || isCombustOrDebil || isMutualEnemies || isDusthana || anyTierConnects8 || anyTierConnects12 || anyTierConnects6)) ||
+            isVenusAfflicted ||
+            (isKujaDoshaActive && (hasShadashtaka || isMutualEnemies || isDusthana)) ||
+            (isNodeInMaritalAxis && (hasShadashtaka || adverseScore >= 45));
+
+          // Family / Domestic Discord (2nd house Kutumba / speech)
           const isFamilyAfflicted =
-            // Lord of 2nd (Kutumba) or 7th (Kalathra) afflicted by Dusthana or Shadashtaka
-            (andharHouses.includes(2) || andharHouses.includes(7) || andharOcc === 2 || andharOcc === 7) &&
+            (mahaConnects2 || antarConnects2 || andharConnects2) &&
             (hasShadashtaka || isBhuktiAntharaDvidvadasa || isCombustOrDebil || isMutualEnemies || isDusthana);
 
-          const isMaritalDiscordAfflicted =
-            // Bhukti lord owns 7th/2nd and Antharam forms 6/8 or 2/12, or vice versa
-            ((antarHouses.includes(7) || antarHouses.includes(2) || antarOcc === 7 || antarOcc === 2) &&
-              (isBhuktiAntharaShadashtaka || isBhuktiAntharaDvidvadasa || isMutualEnemies)) ||
-            (andharStr?.planet === "Venus" && (isCombustOrDebil || isDusthana || hasShadashtaka)) ||
-            (andharStr?.planet === "Mars" && (andharOcc === 7 || andharOcc === 2 || andharOcc === 8) && hasShadashtaka);
+          const hasMarriageRisk = isMaritalAfflicted;
+          const hasFamilyRisk = isFamilyAfflicted || isMaritalAfflicted;
 
-          const hasFamilyRisk = isFamilyAfflicted || isMaritalDiscordAfflicted;
 
-          // 8. Blended 3-level adverse score (0 to 100)
-          const threeLevelPositiveScore = analysis.andharaPositiveScore;
-          const adverseScore = 100 - threeLevelPositiveScore;
 
           // Qualify as caution Antharam:
           const isCautionPeriod =
             isBhuktiAntharaShadashtaka ||
             isMahaAntharaShadashtaka ||
-            (isMahaBhuktiShadashtaka && (isDusthana || isMaraka || isMutualEnemies || hasFamilyRisk)) ||
+            (isMahaBhuktiShadashtaka && (isDusthana || isMaraka || isMutualEnemies || hasFamilyRisk || hasMarriageRisk)) ||
             isBhuktiAntharaDvidvadasa ||
             (isMaraka && (isDusthana || adverseScore >= 45)) ||
             (isCombustOrDebil && adverseScore >= 40) ||
             (isMutualEnemies && adverseScore >= 45) ||
+            hasMarriageRisk ||
             hasFamilyRisk ||
             adverseScore >= 45;
 
@@ -624,6 +709,7 @@ export async function getTodayDasaCautionAlerts(
             isBhuktiAntharaShadashtaka ||
             (isMahaBhuktiShadashtaka && (isMaraka || isDusthana)) ||
             (isMaraka && isDusthana) ||
+            (hasMarriageRisk && (hasShadashtaka || isCombustOrDebil || adverseScore >= 55)) ||
             (hasFamilyRisk && (hasShadashtaka || isCombustOrDebil || adverseScore >= 55)) ||
             adverseScore >= 60 ||
             analysis.verdictLabelEn === "Sensitive / Precautions Required";
@@ -634,9 +720,13 @@ export async function getTodayDasaCautionAlerts(
           let riskDomainLabelEn = "General Vigilance & Vital Energy";
           let riskDomainLabelTa = "பொதுவான விழிப்புணர்வும் மன அமைதியும்";
 
-          if (hasFamilyRisk && (adverseScore >= 45 || hasShadashtaka || isCombustOrDebil)) {
+          if (hasMarriageRisk && (adverseScore >= 40 || hasShadashtaka || isCombustOrDebil || isVenusAfflicted || isKujaDoshaActive)) {
+            primaryRiskDomain = "relationships";
+            riskDomainLabelEn = "Marriage, Conjugal Harmony & Relationship Protection";
+            riskDomainLabelTa = "திருமணம், களத்திர நல்லிணக்கம் & தாம்பத்திய விழிப்புணர்வு";
+          } else if (hasFamilyRisk && (adverseScore >= 45 || hasShadashtaka || isCombustOrDebil)) {
             primaryRiskDomain = "family_discord";
-            riskDomainLabelEn = "Family Harmony, Marital Peace & Avoiding Separation";
+            riskDomainLabelEn = "Family Harmony, Domestic Peace & Avoiding Discord";
             riskDomainLabelTa = "குடும்ப அமைதி, தம்பதியர் நல்லிணக்கம் & கருத்து வேறுபாடு தவிர்த்தல்";
           } else if (isMaraka || isDusthana || isBhuktiAntharaShadashtaka || adverseScore >= 65) {
             primaryRiskDomain = "health";
@@ -660,7 +750,48 @@ export async function getTodayDasaCautionAlerts(
           const antarTa = getPlanetNameTa(antarNode.lord);
           const andharTa = getPlanetNameTa(andharNode.lord);
 
-          if (isBhuktiAntharaShadashtaka) {
+          if (hasMarriageRisk) {
+            reasonsTa.push(
+              `நடப்பு தசா-புக்தி-அந்தர ஆய்வு: தசா நாதன் ${mahaTa}, புக்தி நாதன் ${antarTa}, மற்றும் அந்தர நாதன் ${andharTa} ஆகிய மூவரின் கிரக சேர்க்கை களத்திர (7-ஆம் இடம்) மற்றும் தாம்பத்திய உறவில் எச்சரிக்கையைக் கோருகிறது.`
+            );
+            reasonsEn.push(
+              `Current Dasa-Bhukti-Anthara analysis: The confluence of Mahadasha (${mahaNode.lord}), Bhukti (${antarNode.lord}), and Anthara (${andharNode.lord}) lords activates strain on the 7th house (Kalathra Bhava) and conjugal harmony.`
+            );
+
+            if (isBhuktiAntharaShadashtaka) {
+              reasonsTa.push(
+                `புக்தி மற்றும் அந்தர நாதர்கள் (${antarTa} - ${andharTa}) 6/8 ஷடாஷ்டக அமைப்பில் உள்ளதால், இந்த குறுகிய காலத்தில் தம்பதியரிடையே திடீர் கருத்து வேறுபாடுகள் மற்றும் மனஸ்தாபம் வரலாம்.`
+              );
+              reasonsEn.push(
+                `6/8 Shadashtaka axis between Bhukti (${antarNode.lord}) and Anthara (${andharNode.lord}) precipitates acute friction and misunderstandings between spouses during this window.`
+              );
+            }
+            if (isVenusAfflicted) {
+              reasonsTa.push(
+                `களத்திர காரகன் சுக்கிரன் பலவீனமடைந்துள்ளதால் தாம்பத்தியத்தில் இணக்கமின்மை மற்றும் உணர்வுப்பூர்வமான இடைவெளி ஏற்பட வாய்ப்புள்ளது.`
+              );
+              reasonsEn.push(
+                `Kalathra Karaka Venus is afflicted in this period, indicating temperamental strain and potential emotional distance.`
+              );
+            }
+            if (isKujaDoshaActive) {
+              reasonsTa.push(
+                `செவ்வாயின் அச்சு குடும்ப/களத்திர ஸ்தானத்தில் செயல்படுவதால் வீண் வாக்குவாதங்கள், கோபதாபங்கள் மற்றும் பிடிவாதங்களைத் தவிர்ப்பது அவசியம்.`
+              );
+              reasonsEn.push(
+                `Kuja (Mars) activation on marital houses demands restraint against aggressive arguments, impatient reactions, and ego clashes.`
+              );
+            }
+          } else if (hasFamilyRisk) {
+            reasonsTa.push(
+              `குடும்ப (2-ஆம் இடம்) ஸ்தான அதிபதிகள் மீது ஏற்படும் இந்த கிரக அச்சு, குடும்பத்தில் வாக்குவாதங்கள் அல்லது உறவினர்களுடன் மனஸ்தாபத்தைக் குறிக்கிறது.`
+            );
+            reasonsEn.push(
+              `Planetary stress on 2nd house (family harmony & speech) signals domestic friction, arguments, or misunderstandings during this short window.`
+            );
+          }
+
+          if (isBhuktiAntharaShadashtaka && !hasMarriageRisk) {
             reasonsTa.push(
               `புக்தி நாதன் ${antarTa} மற்றும் அந்தர நாதன் ${andharTa} 6/8 ஷடாஷ்டக அமைப்பில் உள்ளதால், இந்த குறுகிய அந்தர காலத்தில் திடீர் தடைகள், விபத்து மற்றும் உடல் உபாதைகளில் அதிக கவனம் தேவை.`
             );
@@ -668,7 +799,7 @@ export async function getTodayDasaCautionAlerts(
               `Shadashtaka (6/8 axis) between ${antarNode.lord} (Bhukti) and ${andharNode.lord} (Antharam) triggers sudden setbacks and bodily strain during this window.`
             );
           }
-          if (isMahaAntharaShadashtaka) {
+          if (isMahaAntharaShadashtaka && !hasMarriageRisk) {
             reasonsTa.push(
               `திசா நாதன் ${mahaTa} மற்றும் அந்தர நாதன் ${andharTa} 6/8 அமைப்பில் உள்ளதால் மன உளைச்சலும் அலைச்சலும் நேரலாம்.`
             );
@@ -676,7 +807,7 @@ export async function getTodayDasaCautionAlerts(
               `6/8 axis between Mahadasha Lord ${mahaNode.lord} and Anthara Lord ${andharNode.lord} causes mental resistance and delays.`
             );
           }
-          if (isMahaBhuktiShadashtaka && !isBhuktiAntharaShadashtaka) {
+          if (isMahaBhuktiShadashtaka && !isBhuktiAntharaShadashtaka && !hasMarriageRisk) {
             reasonsTa.push(
               `திசா நாதன் ${mahaTa} மற்றும் புக்தி நாதன் ${antarTa} 6/8 ஷடாஷ்டக அமைப்பில் உள்ள நிலையில், ${andharTa} அந்தரம் கூடுதல் விழிப்புணர்வை கோருகிறது.`
             );
@@ -684,7 +815,7 @@ export async function getTodayDasaCautionAlerts(
               `Dasa-Bhukti 6/8 axis is activated by ${andharNode.lord} Anthara, requiring heightened patience.`
             );
           }
-          if (isBhuktiAntharaDvidvadasa) {
+          if (isBhuktiAntharaDvidvadasa && !hasMarriageRisk) {
             reasonsTa.push(
               `புக்தி-அந்தர நாதர்கள் 2/12 துவித்வாதச அமைப்பில் இருப்பதால் தேவையற்ற விரயங்களும் மருத்துவச் செலவுகளும் ஏற்பட வாய்ப்புள்ளது.`
             );
@@ -692,7 +823,7 @@ export async function getTodayDasaCautionAlerts(
               `Dvidvadasa (2/12 axis) between ${antarNode.lord} and ${andharNode.lord} causes unexpected expenditures and physical exhaustion.`
             );
           }
-          if (isMaraka) {
+          if (isMaraka && !hasMarriageRisk) {
             reasonsTa.push(
               `அந்தர நாதன் ${andharTa} மாரக (2/7) ஸ்தான ஆதிபத்தியம் பெறுவதால் உடல் நலனில் விசேஷ கவனம் தேவை.`
             );
@@ -700,20 +831,12 @@ export async function getTodayDasaCautionAlerts(
               `Maraka (2nd/7th house) activation under ${andharNode.lord} Anthara warrants careful health care.`
             );
           }
-          if (isCombustOrDebil) {
+          if (isCombustOrDebil && !hasMarriageRisk) {
             reasonsTa.push(
               `அந்தர நாதன் ${andharTa} ${andharStr?.isCombust ? "அஸ்தமனம்" : "நீசம்"} பெற்று பலவீனமாக இருப்பதால் சுப முயற்சிகளில் நிதானம் அவசியம்.`
             );
             reasonsEn.push(
               `Anthara Lord ${andharNode.lord} is ${andharStr?.isCombust ? "combust" : "debilitated"}, reducing natural protective vitality.`
-            );
-          }
-          if (hasFamilyRisk) {
-            reasonsTa.push(
-              `குடும்ப (2-ஆம் இடம்) மற்றும் களத்திர (7-ஆம் இடம்) ஸ்தான அதிபதிகள் மீது ஏற்படும் இந்த கிரக அச்சு, குடும்பத்தில் வாக்குவாதங்கள், தம்பதியர் இடையே மனஸ்தாபம் அல்லது தற்காலிக பிரிவு அபாயத்தைக் குறிக்கிறது.`
-            );
-            reasonsEn.push(
-              `Planetary stress on 2nd (family harmony) and 7th (marital alliance) houses signals severe family friction, arguments, or risk of temporary separation during this short window.`
             );
           }
           if (reasonsEn.length === 0 && analysis.keyCautionPointsEn.length > 0) {
@@ -725,11 +848,16 @@ export async function getTodayDasaCautionAlerts(
           let avoidNotesEn = "Avoid signing hasty commitments, rash driving, and speculative investments.";
           let avoidNotesTa = "அவசர ஒப்பந்தங்கள், அதிவேக வாகனப் பயணம் மற்றும் ஊக வணிகங்களைத் தவிர்க்கவும்.";
 
-          if (primaryRiskDomain === "family_discord") {
+          if (primaryRiskDomain === "relationships") {
             avoidNotesEn =
-              "Avoid harsh words, ego clashes with spouse or in-laws, bringing past disputes into discussions, and making hasty separation decisions.";
+              "Avoid harsh speech with spouse, ego clashes, bringing up past disputes, third-party interference in marital affairs, and making impulsive separation decisions.";
             avoidNotesTa =
-              "குடும்பத்தினரிடம் கடுமையான வார்த்தைகள் பேசுவது, கணவன்-மனைவி இடையே வீண் பிடிவாதம், முந்தைய பிரச்சனைகளை மீண்டும் கிளறுவது மற்றும் அவசர பிரிவு முடிவுகளைத் தவிர்க்கவும்.";
+              "வாழ்க்கைத் துணையிடம் கடுமையான வார்த்தைகள் பேசுவது, ஈகோ பிடிவாதம், குடும்ப விவகாரங்களில் மூன்றாம் நபர்களை அனுமதிப்பது, பழைய குறைகளை கிளறுவது மற்றும் அவசர பிரிவு முடிவுகளைத் தவிர்க்கவும்.";
+          } else if (primaryRiskDomain === "family_discord") {
+            avoidNotesEn =
+              "Avoid harsh words, ego clashes with family members or in-laws, bringing past disputes into discussions, and making hasty decisions.";
+            avoidNotesTa =
+              "குடும்பத்தினரிடம் கடுமையான வார்த்தைகள் பேசுவது, வீண் பிடிவாதம், முந்தைய பிரச்சனைகளை மீண்டும் கிளறுவது மற்றும் அவசர முடிவுகளைத் தவிர்க்கவும்.";
           } else if (primaryRiskDomain === "finance") {
             avoidNotesEn = "Avoid lending huge sums, surety guarantees, and risky financial ventures.";
             avoidNotesTa = "பெரிய கடன் கொடுப்பது, ஜாமீன் கையொப்பம் இடுவது மற்றும் பண முதலீடுகளைத் தவிர்க்கவும்.";
@@ -749,7 +877,16 @@ export async function getTodayDasaCautionAlerts(
           let generalRemedyEn = rem?.generalRemedyEn || "Light sesame oil deepam on Saturdays / Tuesdays";
           let generalRemedyTa = rem?.generalRemedyTa || "செவ்வாய் அல்லது சனிக்கிழமைகளில் நல்லெண்ணெய் தீபம் ஏற்றுதல்";
 
-          if (primaryRiskDomain === "family_discord") {
+          if (primaryRiskDomain === "relationships") {
+            remedyDeityEn = "Lord Shiva & Goddess Parvati (Sri Meenakshi Sundareswarar) / Goddess Durga";
+            remedyDeityTa = "ஸ்ரீ உமா மகேஸ்வரர் (சிவன்-பார்வதி), மதுரை மீனாட்சி அம்மன் & துர்க்கை வழிபாடு";
+            remedyMantraEn = "Swayamvara Parvathi Mantra, Shukra Gayatri or Lalitha Sahasranama";
+            remedyMantraTa = "சுயம்வர பார்வதி ஸ்லோகம், சுக்ர காயத்ரி அல்லது லலிதா சகஸ்ரநாமம் பாராயணம்";
+            remedyCharityEn = "Donate sweets, fruits or mangalya items to married couples (Sumangalis) or assist a poor wedding";
+            remedyCharityTa = "சுமங்கலிப் பெண்களுக்கு வெற்றிலை பாக்கு, பழங்கள் வழங்குதல் அல்லது ஏழைப் பெண்ணின் திருமணத்திற்கு உதவுதல்";
+            generalRemedyEn = "Light pure cow ghee lamp in pooja room on Friday mornings and offer white flowers to Goddess";
+            generalRemedyTa = "வெள்ளிக்கிழமைகளில் பூஜையறையில் பசு நெய் தீபம் ஏற்றி அம்பாளுக்கு வெண் மலர்கள் சார்த்தி வழிபடுதல்";
+          } else           if (primaryRiskDomain === "family_discord") {
             remedyDeityEn = "Goddess Meenakshi / Sri Uma Maheshwara (Shiva-Parvati) & Lord Venkateswara";
             remedyDeityTa = "ஸ்ரீ உமா மகேஸ்வரர் (சிவன்-பார்வதி), மதுரை மீனாட்சி அம்மன் & திருப்பதி பெருமாள் வழிபாடு";
             remedyMantraEn = "Sri Suktam, Lalitha Sahasranama & Om Namah Shivaya (108 times daily)";
