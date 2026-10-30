@@ -90,8 +90,23 @@ async function runE2ETest() {
     assert.ok(item.fullName, "Item should have fullName");
     assert.ok(item.mahadashaLord, "Item should have mahadashaLord");
     assert.ok(item.antardashaLord, "Item should have antardashaLord");
+    assert.ok(item.andharLord, "Item should have andharLord");
+    assert.ok(item.andharLordTa, "Item should have andharLordTa");
     assert.ok(item.startDateFormatted, "Item should have startDateFormatted");
     assert.ok(item.endDateFormatted, "Item should have endDateFormatted");
+    assert.ok(item.durationFormatted, "Item should have durationFormatted");
+    assert.ok(
+      item.durationDays > 0 && item.durationDays <= 250,
+      `Anthara duration should be in days (1-250 days), got ${item.durationDays}`
+    );
+    assert.ok(
+      item.messageTextTa.includes("9444 55 9071"),
+      "Tamil WhatsApp message must include consultation number 9444 55 9071"
+    );
+    assert.ok(
+      item.messageTextEn.includes("9444 55 9071"),
+      "English WhatsApp message must include consultation number 9444 55 9071"
+    );
     assert.ok(
       item.severity === "critical" || item.severity === "moderate",
       "Severity must be critical or moderate"
@@ -99,11 +114,15 @@ async function runE2ETest() {
     assert.ok(item.remedyDeityTa, "Item should have Tamil remedy deity");
     if (item.whatsappNumber) {
       assert.ok(item.whatsappLinkTa, "Item should have WhatsApp URL when phone is present");
+      assert.ok(
+        item.whatsappLinkTa.includes("9444%2055%209071") || item.whatsappLinkTa.includes("9444+55+9071") || item.whatsappLinkTa.includes("9444"),
+        "WhatsApp URL should encode consultation phone number"
+      );
     }
     console.log(
-      `[ALERT DATA VALIDATED] Client: ${item.fullName} | ${item.mahadashaLordTa} - ${item.antardashaLordTa} | Severity: ${item.severity} | Dates: ${item.startDateFormatted} to ${item.endDateFormatted}`
+      `[ALERT DATA VALIDATED] Client: ${item.fullName} | ${item.mahadashaLordTa} › ${item.antardashaLordTa} › ${item.andharLordTa} அந்தரம் | Severity: ${item.severity} | Anthara Window: ${item.startDateFormatted} to ${item.endDateFormatted} (${item.durationFormatted})`
     );
-    pass("Alert item schema and astrological risk parameters strictly validated");
+    pass("3-tier Anthara worst-case schema, short period alone, and consultation number strictly validated");
 
     // 3. Test POST /api/customers/dasa-cautions (Marking as sent)
     console.log("\n[TEST] Marking caution alert as sent via POST /api/customers/dasa-cautions...");
@@ -118,6 +137,7 @@ async function runE2ETest() {
         customer_id: item.customerId,
         dasa_lord: item.mahadashaLord,
         bhukti_lord: item.antardashaLord,
+        andhar_lord: item.andharLord,
         period_start: item.startDateIso,
         period_end: item.endDateIso,
         severity: item.severity,

@@ -9,5 +9,17 @@
     "severity": "critical",
     "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
     "sent_at": "2026-10-29T17:54:10.379Z"
+  },
+  {
+    "horoscope_id": "8e30f71c-5948-4a5b-bc9b-933453f84fcd",
+    "customer_id": "7ca17761-41b5-4caf-8570-fe5bef9a55ae",
+    "dasa_lord": "Rahu",
+    "bhukti_lord": "Jupiter",
+    "andhar_lord": "Jupiter",
+    "period_start": "2026-07-28",
+    "period_end": "2026-11-22",
+    "severity": "critical",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-10-30T04:33:34.352Z"
   }
 ]

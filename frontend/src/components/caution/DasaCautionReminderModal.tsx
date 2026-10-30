@@ -154,6 +154,7 @@ export function DasaCautionReminderModal({
           customer_id: item.customerId,
           dasa_lord: item.mahadashaLord,
           bhukti_lord: item.antardashaLord,
+          andhar_lord: item.andharLord,
           period_start: item.startDateIso,
           period_end: item.endDateIso,
           severity: item.severity,
@@ -231,8 +232,10 @@ export function DasaCautionReminderModal({
           a.fullName.toLowerCase().includes(term) ||
           a.mahadashaLord.toLowerCase().includes(term) ||
           a.antardashaLord.toLowerCase().includes(term) ||
+          a.andharLord.toLowerCase().includes(term) ||
           a.mahadashaLordTa.includes(term) ||
           a.antardashaLordTa.includes(term) ||
+          a.andharLordTa.includes(term) ||
           (a.phoneNumber && a.phoneNumber.includes(term))
       );
     }
@@ -557,8 +560,8 @@ export function DasaCautionReminderModal({
                           </span>
                         </div>
 
-                        {/* Contact details */}
-                        <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                        {/* Contact details & helpline */}
+                        <div className="mt-1 flex items-center gap-2.5 text-xs text-slate-500 flex-wrap">
                           {item.hasValidPhone ? (
                             <span className="flex items-center gap-1 font-mono font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                               <Phone className="w-3 h-3 text-emerald-600" />
@@ -591,34 +594,59 @@ export function DasaCautionReminderModal({
                                 : "+ Add Phone"}
                             </span>
                           </button>
+
+                          <a
+                            href="tel:+919444559071"
+                            title="Astrologer Consultation Helpline"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-800 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-md border border-rose-200 transition-colors"
+                          >
+                            <Phone className="w-2.5 h-2.5 text-rose-600" />
+                            <span>9444 55 9071</span>
+                          </a>
                         </div>
                       </div>
                     </div>
 
-                    {/* Period Lord Badge */}
-                    <div className="shrink-0 text-left sm:text-right bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none">
-                      <div className="text-xs font-bold text-slate-900 flex items-center sm:justify-end gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    {/* 3-Tier Period Lord Badge & Exact Anthara Window */}
+                    <div className="shrink-0 text-left sm:text-right bg-rose-50/50 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-rose-100">
+                      <div className="text-xs font-bold text-slate-900 flex items-center sm:justify-end gap-1.5 flex-wrap">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                         <span>
                           {isTa
-                            ? `${item.mahadashaLordTa} தசா — ${item.antardashaLordTa} புக்தி`
-                            : `${item.mahadashaLord} Dasa — ${item.antardashaLord} Bhukti`}
+                            ? `${item.mahadashaLordTa} தசா › ${item.antardashaLordTa} புக்தி › `
+                            : `${item.mahadashaLord} Dasa › ${item.antardashaLord} Bhukti › `}
+                        </span>
+                        <span className="text-rose-700 bg-rose-100/90 px-1.5 py-0.5 rounded font-extrabold text-[11px]">
+                          {isTa ? `${item.andharLordTa} அந்தரம்` : `${item.andharLord} Anthara`}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                      <div className="text-[11px] text-rose-950 font-bold font-mono mt-1">
                         {item.startDateFormatted} — {item.endDateFormatted}
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {item.durationFormatted}
+                      <div className="text-[10px] text-rose-700 font-semibold mt-0.5">
+                        {isTa
+                          ? `அந்தர காலம் மட்டும்: ${item.durationFormatted}`
+                          : `Anthara Period Alone: ${item.durationFormatted}`}
                       </div>
+                      {item.bhuktiStartDateFormatted && (
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {isTa
+                            ? `(புக்தி: ${item.bhuktiStartDateFormatted} – ${item.bhuktiEndDateFormatted})`
+                            : `(Bhukti: ${item.bhuktiStartDateFormatted} – ${item.bhuktiEndDateFormatted})`}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Progress Bar (if active) */}
+                  {/* Progress Bar (Antharam progress if active) */}
                   {item.isActiveNow && (
                     <div className="mt-3 space-y-1">
                       <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                        <span>{isTa ? "கால அளவு முன்னேற்றம்" : "Period Progress"}</span>
+                        <span>
+                          {isTa
+                            ? `${item.andharLordTa} அந்தர கால முன்னேற்றம் (${item.startDateFormatted} – ${item.endDateFormatted})`
+                            : `${item.andharLord} Anthara Progress (${item.startDateFormatted} – ${item.endDateFormatted})`}
+                        </span>
                         <span>{item.progressPercent}%</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -898,7 +926,7 @@ export function DasaCautionReminderModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-5 sm:px-6 py-3.5 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="px-5 sm:px-6 py-3.5 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             <span>
@@ -908,13 +936,23 @@ export function DasaCautionReminderModal({
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors cursor-pointer"
-          >
-            {isTa ? "மூடுக" : "Dismiss for Today"}
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="tel:+919444559071"
+              className="inline-flex items-center gap-1 font-semibold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors"
+            >
+              <Phone className="w-3 h-3 text-rose-600" />
+              <span>{isTa ? "ஆலோசனைகளுக்கு: 9444 55 9071" : "Consultation: 9444 55 9071"}</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors cursor-pointer"
+            >
+              {isTa ? "மூடுக" : "Dismiss for Today"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
