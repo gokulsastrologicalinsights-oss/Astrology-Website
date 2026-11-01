@@ -584,18 +584,17 @@ def calculate_dasa(
     birth_balance_years = dasa_tree[0].duration_years if dasa_tree else 0.0
     birth_balance_formatted = format_balance(birth_balance_years)
 
-    # Resolve active period if target_date provided
-    active_period = None
-    if target_date:
-        target_jd = xalen.julian_day(target_date.year, target_date.month, target_date.day, 12.0)
-        mark_active_periods(dasa_tree, target_jd)
-        active_period = find_active_period(
-            dasa_tree,
-            target_jd,
-            target_date.isoformat(),
-            birth_date=birth.birth_date,
-            utc_offset_hours=offset_hours,
-        )
+    # Resolve active period (defaults to current date for real-time tracking if target_date is None)
+    effective_target_date = target_date or date.today()
+    target_jd = xalen.julian_day(effective_target_date.year, effective_target_date.month, effective_target_date.day, 12.0)
+    mark_active_periods(dasa_tree, target_jd)
+    active_period = find_active_period(
+        dasa_tree,
+        target_jd,
+        effective_target_date.isoformat(),
+        birth_date=birth.birth_date,
+        utc_offset_hours=offset_hours,
+    )
 
     aya_name, aya_desc = AYANAMSA_NAMES.get(ayanamsa_id, (f"Custom ({ayanamsa_id})", "Sidereal mode"))
     hsys_name, _ = HOUSE_SYSTEM_NAMES.get(house_system_id, (f"Custom ({house_system_id})", ""))
@@ -658,17 +657,16 @@ def calculate_direct_dasa(
     birth_balance_years = dasa_tree[0].duration_years if dasa_tree else 0.0
     birth_balance_formatted = format_balance(birth_balance_years)
 
-    active_period = None
-    if target_date:
-        target_jd = xalen.julian_day(target_date.year, target_date.month, target_date.day, 12.0)
-        mark_active_periods(dasa_tree, target_jd)
-        active_period = find_active_period(
-            dasa_tree,
-            target_jd,
-            target_date.isoformat(),
-            birth_date=direct_birth_date,
-            utc_offset_hours=0.0,
-        )
+    effective_target_date = target_date or date.today()
+    target_jd = xalen.julian_day(effective_target_date.year, effective_target_date.month, effective_target_date.day, 12.0)
+    mark_active_periods(dasa_tree, target_jd)
+    active_period = find_active_period(
+        dasa_tree,
+        target_jd,
+        effective_target_date.isoformat(),
+        birth_date=direct_birth_date,
+        utc_offset_hours=0.0,
+    )
 
     metadata = CalculationMetadata(
         birth_utc_iso="",

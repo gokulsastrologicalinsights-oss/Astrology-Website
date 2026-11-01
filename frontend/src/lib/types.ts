@@ -4331,6 +4331,8 @@ export interface MedicalRule {
   planets_involved: string[];
   relevant_houses: number[];
   conditions: MedicalConditionItem[];
+  remedy_en?: string | null;
+  remedy_ta?: string | null;
 }
 
 export interface HouseHealthAnalysis {
@@ -4486,6 +4488,475 @@ export interface KpMedicalAnalysis {
   susceptibility_indicators: string[];
 }
 
+export interface NakshatraMedicalDetail {
+  number: number;
+  name: string;
+  name_ta: string;
+  body_part_en: string;
+  body_part_ta: string;
+  devata: string;
+  disease_tendency_en: string;
+  disease_tendency_ta: string;
+  propitiation_en: string;
+  propitiation_ta: string;
+}
+
+export interface GestationalMonthDetail {
+  month: number;
+  ruling_planet: string;
+  sanskrit_term: string;
+  stage_en: string;
+  stage_ta: string;
+  description_en: string;
+  description_ta: string;
+}
+
+export interface ProgenyShapaDetail {
+  id: string;
+  shapa_name: string;
+  shapa_name_ta: string;
+  afflicted_karaka: string;
+  cause_en: string;
+  cause_ta: string;
+  combinations: string[];
+  remedy_en: string;
+  remedy_ta: string;
+  is_indicated?: boolean;
+  chart_observation?: string | null;
+}
+
+export interface ClinicalCaseStudy {
+  id: string;
+  title_en: string;
+  title_ta: string;
+  patient_profile: string;
+  disease_diagnosed: string;
+  astrological_indicators: string[];
+  dasha_timing: string;
+  key_takeaway: string;
+}
+
+export interface TatwaNavadwaraDetail {
+  tatwa_en: string;
+  tatwa_ta: string;
+  planet: string;
+  sense_en: string;
+  sense_ta: string;
+  body_parts_en: string;
+  body_parts_ta: string;
+  abhimani_devata: string;
+}
+
+export interface DrKrishnaKumarCompendium {
+  book_title: string;
+  book_title_ta: string;
+  author: string;
+  publisher: string;
+  salient_features: string[];
+  native_moon_star?: NakshatraMedicalDetail | null;
+  native_lagna_star?: NakshatraMedicalDetail | null;
+  all_27_nakshatras: NakshatraMedicalDetail[];
+  gestational_months: GestationalMonthDetail[];
+  progeny_shapas: ProgenyShapaDetail[];
+  case_studies: ClinicalCaseStudy[];
+  tatwas_and_senses: TatwaNavadwaraDetail[];
+  manasika_buddhi_yogas: MedicalRule[];
+  organ_specific_yogas: MedicalRule[];
+  caesarean_vs_normal_delivery_observation?: string | null;
+  sperm_potency_observation?: string | null;
+}
+
+export interface SaptaDhatuDetail {
+  dhatu_number: number;
+  dhatu_name_en: string;
+  dhatu_name_ta: string;
+  sanskrit_term: string;
+  governing_planet: string;
+  physiological_function_en: string;
+  physiological_function_ta: string;
+  status: string;
+  observations_en: string;
+  observations_ta: string;
+}
+
+export interface EndocrineGlandDetail {
+  gland_name_en: string;
+  gland_name_ta: string;
+  governing_planets: string[];
+  hormones_secreted: string;
+  physiological_role_en: string;
+  physiological_role_ta: string;
+  status: string;
+  observations_en: string;
+  observations_ta: string;
+}
+
+export interface TridoshaSiteDetail {
+  site_en: string;
+  site_ta: string;
+  governing_signs: string[];
+  vata_manifestation: string;
+  pitta_manifestation: string;
+  kapha_manifestation: string;
+}
+
+export interface DeathPointCalculation {
+  formula: string;
+  longitude_deg: number;
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  degree_in_sign: number;
+  nakshatra_name: string;
+  nakshatra_pada: number;
+  transit_saturn_aspect_active: boolean;
+  aspect_details_en: string;
+  aspect_details_ta: string;
+}
+
+export interface DiabetesMellitusAssessment {
+  venus_status: string;
+  jupiter_status: string;
+  virgo_status: string;
+  sixth_house_status: string;
+  affliction_score: number;
+  risk_level: string;
+  symptoms_noted: string[];
+  remedial_measures_en: string[];
+  remedial_measures_ta: string[];
+}
+
+export interface ModernComplexDiseaseDetail {
+  name_en: string;
+  name_ta: string;
+  key_symptoms: string;
+  astrological_indicators: string;
+}
+
+export interface VegaDharanaUrgeItem {
+  urge_en: string;
+  urge_ta: string;
+  suppression_hazard_en: string;
+  suppression_hazard_ta: string;
+}
+
+export interface NaturalRemediesGuide {
+  planetary_colour_therapy: Record<string, string>;
+  metal_charged_waters: Record<string, string>;
+  fasting_and_diet: string[];
+  vega_dharana_urges: VegaDharanaUrgeItem[];
+}
+
+export interface DrChatterjeeCompendium {
+  book_title: string;
+  book_title_ta: string;
+  author: string;
+  publisher: string;
+  salient_features: string[];
+  death_point?: DeathPointCalculation | null;
+  parijata_longevity_eval?: string | null;
+  sapta_dhatus: SaptaDhatuDetail[];
+  endocrine_glands: EndocrineGlandDetail[];
+  tridosha_sites: TridoshaSiteDetail[];
+  diabetes_assessment?: DiabetesMellitusAssessment | null;
+  modern_diseases: ModernComplexDiseaseDetail[];
+  natural_remedies?: NaturalRemediesGuide | null;
+  golden_rules: MedicalRule[];
+  case_studies: ClinicalCaseStudy[];
+}
+
+export interface HeindelSignAnatomy {
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  manilius_rulership: string;
+  heindel_anatomical_systems: string[];
+  pathological_qualities: string;
+  physiological_afflictions: string[];
+  temperament_and_healing_reaction: string;
+  is_native_ascendant: boolean;
+  is_native_sun_sign: boolean;
+  is_native_moon_sign: boolean;
+}
+
+export interface HeindelPlanetPhysiology {
+  planet: string;
+  planet_ta: string;
+  salient_keyword: string;
+  anatomical_rulership: string;
+  pathological_quality: string;
+  positive_expression: string;
+  afflicted_expression: string;
+  chart_status: string;
+}
+
+export interface HeindelViciousCircle {
+  cross_name: string;
+  cross_name_ta: string;
+  signs_involved: string[];
+  organ_sympathies: string;
+  clinical_mechanism: string;
+  clinical_examples: string[];
+  is_native_cross_active: boolean;
+  chart_notes?: string | null;
+}
+
+export interface HeindelNailDiagnosis {
+  nail_type_en: string;
+  nail_type_ta: string;
+  physical_indicators: string;
+  pathological_significance: string;
+  constitutional_correlation: string;
+  remedial_and_hygiene_guidance: string;
+}
+
+export interface HeindelPlanetaryAntidote {
+  afflicting_planet: string;
+  afflicting_metal: string;
+  antidote_planet: string;
+  antidote_metal: string;
+  antidote_gem: string;
+  antidote_color: string;
+  polarity_law: string;
+  practical_application: string;
+}
+
+export interface HeindelAphorism {
+  number: number;
+  category: string;
+  aphorism_en: string;
+  aphorism_ta: string;
+  practical_implication: string;
+}
+
+export interface HeindelNebularSpot {
+  name: string;
+  zodiac_degree: string;
+  pathological_focus: string;
+  esoteric_mitigation: string;
+  native_chart_proximity: boolean;
+  chart_details?: string | null;
+}
+
+export interface MaxHeindelCompendium {
+  book_title: string;
+  book_title_ta: string;
+  authors: string;
+  historical_foundation: string;
+  core_philosophy_en: string;
+  core_philosophy_ta: string;
+  healer_injunctions: Array<{ id: string; rule_en: string; rule_ta: string }>;
+  signs_anatomy: HeindelSignAnatomy[];
+  planets_physiology: HeindelPlanetPhysiology[];
+  sense_organs_affinities: Array<{
+    organ_en: string;
+    organ_ta: string;
+    astrological_rulers: string;
+    pathological_notes_en: string;
+    pathological_notes_ta: string;
+  }>;
+  vicious_circles: HeindelViciousCircle[];
+  nail_and_hand_diagnosis: HeindelNailDiagnosis[];
+  planetary_antidotes: HeindelPlanetaryAntidote[];
+  nebular_spots: HeindelNebularSpot[];
+  aphorisms: HeindelAphorism[];
+  chart_evaluation: Record<string, any>;
+  matched_rules: MedicalRule[];
+}
+
+export interface JaneDecumbitureEvaluation {
+  ascendant_degree: number;
+  is_asc_early_or_late: boolean;
+  asc_stricture_note: string;
+  moon_in_via_combusta: boolean;
+  moon_void_of_course: boolean;
+  saturn_in_seventh: boolean;
+  seventh_house_afflicted: boolean;
+  asc_lord_combust_or_saturn_in_first: boolean;
+  critical_days_cycle_en: string;
+  critical_days_cycle_ta: string;
+  sidedness_indicator: string;
+}
+
+export interface JaneArabianParts {
+  part_of_sickness_deg: number;
+  part_of_sickness_sign: string;
+  part_of_sickness_coord: string;
+  part_of_surgery_deg: number;
+  part_of_surgery_sign: string;
+  part_of_surgery_coord: string;
+  part_of_death_deg: number;
+  part_of_death_sign: string;
+  part_of_death_coord: string;
+  clinical_notes_en: string;
+  clinical_notes_ta: string;
+}
+
+export interface JaneElementalAnalysis {
+  air_count: number;
+  fire_count: number;
+  water_count: number;
+  earth_count: number;
+  moon_element: string;
+  dominant_element: string;
+  deficient_element: string;
+  dietary_balancing_en: string;
+  dietary_balancing_ta: string;
+  herbal_classes_indicated: string[];
+}
+
+export interface JaneCellSaltCorrespondence {
+  sign: string;
+  sign_ta: string;
+  cell_salt: string;
+  abbreviation: string;
+  physiological_action_en: string;
+  physiological_action_ta: string;
+  is_native_sign: boolean;
+}
+
+export interface JaneBachFlowerCorrespondence {
+  sign: string;
+  sign_ta: string;
+  flower_remedy: string;
+  emotional_archetype_en: string;
+  emotional_archetype_ta: string;
+  is_native_sign: boolean;
+}
+
+export interface JaneAcupunctureMeridian {
+  sign: string;
+  sign_ta: string;
+  meridian: string;
+  meridian_ta: string;
+  is_native_sign: boolean;
+}
+
+export interface JaneRidderPatrickCompendium {
+  book_title: string;
+  book_title_ta: string;
+  author: string;
+  publisher: string;
+  alphabet_framework: Record<string, string>;
+  three_crosses: Array<{
+    cross: string;
+    cross_ta: string;
+    theme: string;
+    systems: string;
+    reflex_dynamics: string;
+    therapeutic_focus: string;
+  }>;
+  decumbiture: JaneDecumbitureEvaluation;
+  arabian_parts: JaneArabianParts;
+  elemental_analysis: JaneElementalAnalysis;
+  culpeper_therapeutic_rules: Array<{
+    rule_number: string;
+    rule_en: string;
+    rule_ta: string;
+    application: string;
+  }>;
+  stages_of_therapy: Array<{
+    stage: number;
+    title_en: string;
+    title_ta: string;
+    description_en: string;
+    description_ta: string;
+  }>;
+  cell_salts: JaneCellSaltCorrespondence[];
+  bach_flowers: JaneBachFlowerCorrespondence[];
+  acupuncture_meridians: JaneAcupunctureMeridian[];
+  matched_rules: MedicalRule[];
+}
+
+export interface DaathSignAnatomy {
+  sign_index: number;
+  sign_name_en: string;
+  sign_name_ta: string;
+  symbolic_quality: string;
+  principal_bones: string[];
+  muscles: string[];
+  arteries: string[];
+  veins: string[];
+  morbid_actions: string[];
+  kidney_pelvis_distinction?: string | null;
+  is_native_ascendant: boolean;
+  is_native_sun_sign: boolean;
+  is_native_moon_sign: boolean;
+  is_native_sixth_house: boolean;
+}
+
+export interface DaathPlanetAction {
+  planet: string;
+  planet_ta: string;
+  esoteric_title: string;
+  biodynamic_motion: string;
+  polarity: string;
+  functional_group: string;
+  tissue_building: string;
+  elemental_degrees: string;
+  salient_pathognomy: string;
+  typical_drugs: string[];
+  typical_plants: string[];
+  therapeutic_properties: string[];
+  metals_minerals: string[];
+  native_chart_condition: string;
+}
+
+export interface DaathAntipathicTherapy {
+  category: string;
+  category_ta: string;
+  opposing_polarity_rule: string;
+  afflicting_planetary_force: string;
+  curative_planetary_remedy: string;
+  substances_and_application: string;
+}
+
+export interface DaathPlanetaryPeriod {
+  planet: string;
+  planet_ta: string;
+  start_age: number;
+  end_age: number;
+  age_label: string;
+  age_label_ta: string;
+  biological_development: string;
+  astrological_vulnerability: string;
+  is_native_current_age: boolean;
+}
+
+export interface DaathDecumbitureCriticalDays {
+  lunar_critical_cycles: Array<Record<string, string>>;
+  lunar_phases_metabolism: Array<Record<string, string>>;
+  climacteric_seven_year_law: string;
+  climacteric_seven_year_law_ta: string;
+}
+
+export interface DaathStrengthEvaluation {
+  drikbalam_aspect_summary: string;
+  sthanabalam_summary: string;
+  nisargikabalam_mutual_receptions: string[];
+  mundane_strength_summary: string;
+  motional_strength_summary: string;
+  directional_hexis_vs_diathesis: string;
+}
+
+export interface HeinrichDaathCompendium {
+  book_title: string;
+  book_title_ta: string;
+  author: string;
+  publisher: string;
+  historical_foundation: string;
+  core_philosophy_en: string;
+  core_philosophy_ta: string;
+  signs_anatomy: DaathSignAnatomy[];
+  planets_biodynamics: DaathPlanetAction[];
+  temperaments_and_crosses: Record<string, any>;
+  antipathic_therapeutics: DaathAntipathicTherapy[];
+  seven_ages_of_man: DaathPlanetaryPeriod[];
+  decumbiture_and_cycles: DaathDecumbitureCriticalDays;
+  strength_evaluation: DaathStrengthEvaluation;
+  matched_rules: MedicalRule[];
+}
+
 export interface MedicalAstrologyResponse {
   metadata?: CalculationMetadata;
   rule_set_version: string;
@@ -4493,6 +4964,11 @@ export interface MedicalAstrologyResponse {
   disclaimer_ta: string;
   vedic_analysis: VedicMedicalAnalysis;
   kp_analysis?: KpMedicalAnalysis | null;
+  dr_krishna_kumar_compendium?: DrKrishnaKumarCompendium | null;
+  dr_chatterjee_compendium?: DrChatterjeeCompendium | null;
+  max_heindel_compendium?: MaxHeindelCompendium | null;
+  jane_ridder_patrick_compendium?: JaneRidderPatrickCompendium | null;
+  heinrich_daath_compendium?: HeinrichDaathCompendium | null;
 }
 
 // ---------------------------------------------------------------------------

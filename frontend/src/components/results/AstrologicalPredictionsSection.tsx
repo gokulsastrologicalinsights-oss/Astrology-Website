@@ -76,6 +76,103 @@ const QUICK_FILTER_PILLS = [
   { id: "legal_disputes", label_en: "Litigation & Legal", label_ta: "வழக்கு & வெற்றி", icon: Scale },
 ];
 
+export interface PredictionSubPill {
+  id: string;
+  label_en: string;
+  label_ta: string;
+  slug?: string;
+  icon?: any;
+}
+
+export interface PredictionDomainConfig {
+  id: "all" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine";
+  label_en: string;
+  label_ta: string;
+  icon: any;
+  colorClass: string;
+  activeColorClass: string;
+  subPills?: PredictionSubPill[];
+}
+
+export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
+  {
+    id: "all",
+    label_en: "All Matched Rules",
+    label_ta: "முழு பலன்கள்",
+    icon: Sparkles,
+    colorClass: "text-[#153F6B] bg-blue-50/70 border-blue-200 hover:bg-blue-100",
+    activeColorClass: "bg-gradient-to-r from-[#153F6B] to-[#1E4D82] text-white shadow-sm ring-2 ring-blue-400/50",
+  },
+  {
+    id: "marriage_domain",
+    label_en: "Marriage & Relationships",
+    label_ta: "திருமணம் & தாம்பத்தியம்",
+    icon: Heart,
+    colorClass: "text-rose-800 bg-rose-50 border-rose-200 hover:bg-rose-100",
+    activeColorClass: "bg-gradient-to-r from-rose-700 to-rose-900 text-white shadow-sm ring-2 ring-rose-400/50",
+    subPills: [
+      { id: "all", label_en: "All Marriage Topics", label_ta: "அனைத்தும்", icon: Heart },
+      { id: "marriage", label_en: "General Marriage", label_ta: "பொதுத் திருமணம்", slug: "marriage", icon: Heart },
+      { id: "marriage_timing", label_en: "Marriage Timing", label_ta: "திருமணக் காலம்", slug: "marriage_timing", icon: Clock },
+      { id: "first_marriage", label_en: "1st Marriage", label_ta: "முதல் திருமணம்", slug: "first_marriage", icon: Heart },
+      { id: "second_marriage", label_en: "2nd Marriage", label_ta: "இரண்டாம் திருமணம்", slug: "second_marriage", icon: RefreshCw },
+      { id: "sexuality_intimacy", label_en: "Intimacy & Compatibility", label_ta: "தாம்பத்தியம் & காமம்", slug: "sexuality_intimacy", icon: Flame },
+    ],
+  },
+  {
+    id: "career_wealth_domain",
+    label_en: "Career & Wealth",
+    label_ta: "தொழில் & தன யோகங்கள்",
+    icon: Briefcase,
+    colorClass: "text-amber-900 bg-amber-50 border-amber-200 hover:bg-amber-100",
+    activeColorClass: "bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-sm ring-2 ring-amber-400/50",
+    subPills: [
+      { id: "all", label_en: "All Career & Wealth", label_ta: "அனைத்தும்", icon: Briefcase },
+      { id: "job", label_en: "Job & Profession", label_ta: "வேலை & உத்தியோகம்", slug: "job", icon: Briefcase },
+      { id: "wealth_yogas", label_en: "Money & Wealth Yogas", label_ta: "தன யோகங்கள் & சொத்து", slug: "wealth_yogas", icon: Coins },
+    ],
+  },
+  {
+    id: "personality_stars_domain",
+    label_en: "Personality & Stars",
+    label_ta: "லக்னம் & நட்சத்திரம்",
+    icon: Crown,
+    colorClass: "text-indigo-900 bg-indigo-50 border-indigo-200 hover:bg-indigo-100",
+    activeColorClass: "bg-gradient-to-r from-indigo-700 to-indigo-900 text-white shadow-sm ring-2 ring-indigo-400/50",
+    subPills: [
+      { id: "all", label_en: "All Personality & Stars", label_ta: "அனைத்தும்", icon: Crown },
+      { id: "lagna", label_en: "Lagna & Nature", label_ta: "லக்னம் & சுபாவம்", slug: "lagna", icon: Crown },
+      { id: "star", label_en: "28 Nakshatra Secrets", label_ta: "28 நட்சத்திர ரகசியங்கள்", slug: "star", icon: Star },
+    ],
+  },
+  {
+    id: "life_events_domain",
+    label_en: "Life Events & Family",
+    label_ta: "குடும்பம் & நிகழ்வுகள்",
+    icon: Baby,
+    colorClass: "text-emerald-900 bg-emerald-50 border-emerald-200 hover:bg-emerald-100",
+    activeColorClass: "bg-gradient-to-r from-emerald-700 to-teal-800 text-white shadow-sm ring-2 ring-emerald-400/50",
+    subPills: [
+      { id: "all", label_en: "All Life Events", label_ta: "அனைத்தும்", icon: Baby },
+      { id: "children_prospects", label_en: "Children & Progeny", label_ta: "புத்திர பாக்கியம்", slug: "children_prospects", icon: Baby },
+      { id: "foreign_travel", label_en: "Foreign Travel", label_ta: "வெளிநாட்டுப் பயணம்", slug: "foreign_travel", icon: Plane },
+      { id: "event_timing", label_en: "Event Timing (KP)", label_ta: "நிகழ்வு காலக் கணிப்பு", slug: "event_timing", icon: Clock },
+      { id: "health_vitality", label_en: "Health & Vitality", label_ta: "உடல் நலம் & குணம்", slug: "health_vitality", icon: ShieldCheck },
+      { id: "legal_disputes", label_en: "Litigation & Legal", label_ta: "வழக்கு & வெற்றி", slug: "legal_disputes", icon: Scale },
+      { id: "longevity_death", label_en: "Longevity & Ayurdaya", label_ta: "ஆயுள் அமைப்பு", slug: "longevity_death", icon: ShieldAlert },
+      { id: "planetary_debilitation_aspects", label_en: "Debilitation & Aspect Loss", label_ta: "கிரக நீசம் & பார்வை", slug: "planetary_debilitation_aspects", icon: Compass },
+    ],
+  },
+  {
+    id: "advanced_engine",
+    label_en: "Advanced Rule Engine",
+    label_ta: "விதிகள் ஆய்வு",
+    icon: SlidersHorizontal,
+    colorClass: "text-slate-700 bg-slate-100 border-slate-300 hover:bg-slate-200",
+    activeColorClass: "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-sm ring-2 ring-slate-400/50",
+  },
+];
+
 const LOCAL_STORAGE_CUSTOM_RULES_KEY = "antigravity_custom_astrology_rules";
 
 // Helper to sanitize Dasa data to avoid payload explosion (>1MB) while preserving full 3-level evaluation precision
@@ -139,7 +236,15 @@ export function AstrologicalPredictionsSection({
   }, [selectedGenderFilter, nativeGender]);
 
   // Filter & Selection state
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("sexuality_intimacy");
+  // Primary Life Domain state
+  const [activeDomain, setActiveDomain] = useState<
+    "all" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine"
+  >("all");
+
+  // Domain sub-pill filter
+  const [activeSubFilter, setActiveSubFilter] = useState<string>("all");
+
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [chartScope, setChartScope] = useState<"d1" | "d9" | "both">("both");
   const [astrologySystem, setAstrologySystem] = useState<"all" | "vedic" | "kp">("all");
@@ -326,6 +431,32 @@ export function AstrologicalPredictionsSection({
   };
 
   // Filtered displayed rules with search
+    // Compute matched counts per life domain
+  const domainCounts = useMemo(() => {
+    if (!evaluationResults) return { all: 0, marriage: 0, career: 0, personality: 0, events: 0 };
+    const matched = evaluationResults.filter((r) => r.matched);
+    const marriageSlugs = new Set(["marriage", "marriage_timing", "first_marriage", "second_marriage", "sexuality_intimacy"]);
+    const careerSlugs = new Set(["job", "wealth_yogas"]);
+    const personalitySlugs = new Set(["lagna", "star"]);
+    const eventsSlugs = new Set([
+      "children_prospects",
+      "foreign_travel",
+      "event_timing",
+      "health_vitality",
+      "legal_disputes",
+      "longevity_death",
+      "planetary_debilitation_aspects",
+    ]);
+
+    return {
+      all: matched.length,
+      marriage: matched.filter((r) => marriageSlugs.has(r.category_slug) || marriageSlugs.has(r.subcategory || "")).length,
+      career: matched.filter((r) => careerSlugs.has(r.category_slug) || careerSlugs.has(r.subcategory || "")).length,
+      personality: matched.filter((r) => personalitySlugs.has(r.category_slug) || personalitySlugs.has(r.subcategory || "")).length,
+      events: matched.filter((r) => eventsSlugs.has(r.category_slug) || eventsSlugs.has(r.subcategory || "")).length,
+    };
+  }, [evaluationResults]);
+
   const displayedRules = useMemo(() => {
     if (!evaluationResults) return [];
     let list = evaluationResults;
@@ -339,6 +470,49 @@ export function AstrologicalPredictionsSection({
       list = list.filter((r) => r.applicable_gender !== "female");
     } else if (activeGender === "female") {
       list = list.filter((r) => r.applicable_gender !== "male");
+    }
+
+    // Life Domain & Sub-Filter Logic
+    if (activeDomain === "marriage_domain") {
+      const marriageSlugs = ["marriage", "marriage_timing", "first_marriage", "second_marriage", "sexuality_intimacy"];
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
+      } else {
+        list = list.filter((r) => marriageSlugs.includes(r.category_slug) || marriageSlugs.includes(r.subcategory || ""));
+      }
+    } else if (activeDomain === "career_wealth_domain") {
+      const careerSlugs = ["job", "wealth_yogas"];
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
+      } else {
+        list = list.filter((r) => careerSlugs.includes(r.category_slug) || careerSlugs.includes(r.subcategory || ""));
+      }
+    } else if (activeDomain === "personality_stars_domain") {
+      const personalitySlugs = ["lagna", "star"];
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
+      } else {
+        list = list.filter((r) => personalitySlugs.includes(r.category_slug) || personalitySlugs.includes(r.subcategory || ""));
+      }
+    } else if (activeDomain === "life_events_domain") {
+      const eventsSlugs = [
+        "children_prospects",
+        "foreign_travel",
+        "event_timing",
+        "health_vitality",
+        "legal_disputes",
+        "longevity_death",
+        "planetary_debilitation_aspects",
+      ];
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
+      } else {
+        list = list.filter((r) => eventsSlugs.includes(r.category_slug) || eventsSlugs.includes(r.subcategory || ""));
+      }
+    } else if (activeDomain === "advanced_engine") {
+      if (activeCategoryFilter !== "all") {
+        list = list.filter((r) => r.category_slug === activeCategoryFilter || r.subcategory === activeCategoryFilter);
+      }
     }
 
     if (searchQuery.trim()) {
@@ -357,7 +531,7 @@ export function AstrologicalPredictionsSection({
     }
 
     return list;
-  }, [evaluationResults, showOnlyMatched, searchQuery, activeGender]);
+  }, [evaluationResults, showOnlyMatched, searchQuery, activeGender, activeDomain, activeSubFilter, activeCategoryFilter]);
 
   const matchedCount = useMemo(() => {
     return evaluationResults ? evaluationResults.filter((r) => r.matched).length : 0;
@@ -747,147 +921,226 @@ export function AstrologicalPredictionsSection({
         </div>
       </div>
 
-      {/* 2. Top-Level Filter Pills (Direct One-Click Category Filter) */}
-      <div className="space-y-3 bg-[#F8FAFC] rounded-xl p-3.5 sm:p-4 border border-[#E2E8F0]">
+      {/* 2. Streamlined Primary Life Domains Bar */}
+      <div className="space-y-3 bg-[#F8FAFC] rounded-2xl p-3 sm:p-4 border border-[#E2E8F0] shadow-2xs">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-[#183047]">
-            <Filter className="w-3.5 h-3.5 text-[#B4872B]" />
-            <span>{language === "ta" ? "வடிகட்டும் தலைப்புகள் (தேர்வு செய்க):" : "Filter Categories (Click to Evaluate):"}</span>
-          </div>
-          {customRules.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-[#8C6D23] bg-[#FAF2DE] px-2 py-0.5 rounded-full border border-[#D8BD80]">
-                {customRules.filter((r) => r.is_enabled !== false).length} / {customRules.length}{" "}
-                {language === "ta" ? "தனிப்பயன் விதிகள் பயன்பாட்டில் உள்ளன" : "custom conditions active"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsManageCustomModalOpen(true)}
-                className="text-[11px] font-bold text-[#153F6B] hover:text-[#0E2845] underline cursor-pointer"
-              >
-                {language === "ta" ? "விதிகள் மேலாண்மை" : "Manage Rules"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Filter Pill Buttons */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-          {QUICK_FILTER_PILLS.map((pill) => {
-            const isSelected = activeCategoryFilter === pill.id;
-            const Icon = pill.icon;
-            return (
-              <button
-                key={pill.id}
-                type="button"
-                onClick={() => setActiveCategoryFilter(pill.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
-                  isSelected
-                    ? pill.isHighlight
-                      ? "bg-rose-700 text-white border-rose-800 shadow-sm"
-                      : "bg-[#153F6B] text-white border-[#153F6B] shadow-sm"
-                    : pill.isHighlight
-                    ? "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100"
-                    : "bg-white text-[#52667E] border-[#D9DEE7] hover:bg-[#F2F3F5] hover:text-[#183047]"
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-white" : pill.isHighlight ? "text-rose-600" : "text-[#B4872B]"}`} />
-                <span>{language === "ta" ? pill.label_ta : pill.label_en}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Secondary Row: More Specific Categories Dropdown, Search, and Options */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-[#E2E8F0] items-center">
-          {/* Detailed Subcategory Selector Dropdown */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider block">
-              {language === "ta" ? "கூடுதல் தலைப்புகள் (67+ பிரிவுகள்):" : "More Classical Topics (67+):"}
-            </label>
-            <select
-              value={activeCategoryFilter}
-              onChange={(e) => setActiveCategoryFilter(e.target.value)}
-              className="w-full text-xs rounded-lg border border-[#D9DEE7] bg-white p-2 text-[#183047] font-semibold focus:ring-1 focus:ring-[#B4872B] focus:border-[#B4872B]"
-            >
-              <option value="all">
-                {language === "ta" ? "🌟 அனைத்து பிரிவுகள் (All 70+ Rules)" : "🌟 All Categories (All 70+ Rules)"}
-              </option>
-              {categoryGroups.map((group) => (
-                <optgroup
-                  key={group.group_code}
-                  label={language === "ta" ? group.group_name_ta : group.group_name_en}
-                >
-                  {group.subcategories.map((sub) => (
-                    <option key={sub.slug} value={sub.slug}>
-                      {language === "ta" ? sub.name_ta : sub.name_en}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#B4872B]" />
+            <span className="font-serif font-bold text-xs sm:text-sm text-[#183047]">
+              {language === "ta" ? "வாழ்வியல் பலன் பிரிவுகள் (Domain Categories):" : "Life Domains & Predictions:"}
+            </span>
           </div>
 
-          {/* Keyword Search */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider block">
-              {language === "ta" ? "விதிகள் அல்லது கிரகங்களை தேடு:" : "Search Conditions / Planets:"}
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={
-                  language === "ta"
-                    ? "சுக்கிரன், ராகு, செவ்வாய், திருமணம்..."
-                    : "Search Venus, Rahu, Mars, 7th lord..."
-                }
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[#D9DEE7] bg-white text-[#183047] placeholder-[#8190A6] focus:ring-1 focus:ring-[#B4872B] focus:border-[#B4872B]"
-              />
-              <Search className="w-3.5 h-3.5 text-[#8190A6] absolute left-2.5 top-2.5" />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-2 text-[10px] text-[#8190A6] hover:text-[#183047]"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Scope & Matched Only Checkbox */}
-          <div className="flex items-center justify-between gap-2 pt-2 md:pt-4">
-            <div className="inline-flex rounded-lg bg-white border border-[#D9DEE7] p-0.5">
-              {(["both", "d1", "d9"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setChartScope(s)}
-                  className={`px-2 py-1 rounded text-[11px] font-bold uppercase transition-colors ${
-                    chartScope === s
-                      ? "bg-[#FAF2DE] text-[#8C6D23]"
-                      : "text-[#52667E] hover:text-[#183047]"
-                  }`}
-                >
-                  {s === "both" ? "D1+D9" : s}
-                </button>
-              ))}
-            </div>
-
-            <label className="inline-flex items-center gap-1.5 text-xs text-[#183047] cursor-pointer">
+          <div className="flex items-center gap-3">
+            <label className="inline-flex items-center gap-1.5 text-xs text-[#183047] cursor-pointer font-semibold select-none">
               <input
                 type="checkbox"
                 checked={showOnlyMatched}
                 onChange={(e) => setShowOnlyMatched(e.target.checked)}
                 className="rounded border-[#D9DEE7] text-[#B4872B] focus:ring-[#B4872B]"
               />
-              <span className="font-bold text-[11px]">
-                {language === "ta" ? "பொருந்தியவை மட்டும்" : "Matched only"}
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                {language === "ta" ? "✓ பொருந்தியவை மட்டும்" : "✓ Matched only"}
               </span>
             </label>
+
+            {customRules.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsManageCustomModalOpen(true)}
+                className="text-[11px] font-bold text-[#153F6B] hover:text-[#0E2845] underline cursor-pointer"
+              >
+                {customRules.filter((r) => r.is_enabled !== false).length} {language === "ta" ? "விதிகள்" : "Custom"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Primary Domain Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          {PREDICTION_DOMAINS.map((domain) => {
+            const isSelected = activeDomain === domain.id;
+            const Icon = domain.icon;
+            const badgeCount =
+              domain.id === "all"
+                ? domainCounts.all
+                : domain.id === "marriage_domain"
+                ? domainCounts.marriage
+                : domain.id === "career_wealth_domain"
+                ? domainCounts.career
+                : domain.id === "personality_stars_domain"
+                ? domainCounts.personality
+                : domain.id === "life_events_domain"
+                ? domainCounts.events
+                : null;
+
+            return (
+              <button
+                key={domain.id}
+                type="button"
+                onClick={() => {
+                  setActiveDomain(domain.id);
+                  setActiveSubFilter("all");
+                }}
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                  isSelected
+                    ? domain.activeColorClass
+                    : `${domain.colorClass} border`
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-white" : ""}`} />
+                <span>{language === "ta" ? domain.label_ta : domain.label_en}</span>
+                {badgeCount !== null && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      isSelected
+                        ? "bg-white/25 text-white"
+                        : "bg-white/80 text-gray-800 border border-gray-200"
+                    }`}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Contextual Sub-Pills for Active Domain */}
+        {(() => {
+          const currentDomainConfig = PREDICTION_DOMAINS.find((d) => d.id === activeDomain);
+          if (currentDomainConfig?.subPills && currentDomainConfig.subPills.length > 0) {
+            return (
+              <div className="pt-2 border-t border-[#E2E8F0] flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                <span className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider mr-1 shrink-0">
+                  {language === "ta" ? "உள்-பிரிவுகள்:" : "Topics:"}
+                </span>
+                {currentDomainConfig.subPills.map((sub) => {
+                  const isSubActive = activeSubFilter === (sub.slug || sub.id);
+                  const SubIcon = sub.icon || Sparkles;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setActiveSubFilter(sub.slug || sub.id)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                        isSubActive
+                          ? "bg-[#153F6B] text-white border-[#153F6B] shadow-2xs"
+                          : "bg-white text-[#52667E] border-[#D9DEE7] hover:bg-[#F2F3F5] hover:text-[#183047]"
+                      }`}
+                    >
+                      <SubIcon className={`w-3 h-3 ${isSubActive ? "text-white" : "text-[#B4872B]"}`} />
+                      <span>{language === "ta" ? sub.label_ta : sub.label_en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {/* Advanced Rule Engine Controls (Visible only when Advanced Engine domain is selected) */}
+        {activeDomain === "advanced_engine" && (
+          <div className="pt-3 border-t border-[#E2E8F0] space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+              {/* Detailed Subcategory Selector Dropdown */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider block">
+                  {language === "ta" ? "சாஸ்திர தலைப்புகள் (67+ பிரிவுகள்):" : "Classical Categories (67+):"}
+                </label>
+                <select
+                  value={activeCategoryFilter}
+                  onChange={(e) => setActiveCategoryFilter(e.target.value)}
+                  className="w-full text-xs rounded-lg border border-[#D9DEE7] bg-white p-2 text-[#183047] font-semibold focus:ring-1 focus:ring-[#B4872B] focus:border-[#B4872B]"
+                >
+                  <option value="all">
+                    {language === "ta" ? "🌟 அனைத்து பிரிவுகள் (All 70+ Rules)" : "🌟 All Categories (All 70+ Rules)"}
+                  </option>
+                  {categoryGroups.map((group) => (
+                    <optgroup
+                      key={group.group_code}
+                      label={language === "ta" ? group.group_name_ta : group.group_name_en}
+                    >
+                      {group.subcategories.map((sub) => (
+                        <option key={sub.slug} value={sub.slug}>
+                          {language === "ta" ? sub.name_ta : sub.name_en}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              {/* Chart Scope Selector */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-[#8190A6] uppercase tracking-wider block">
+                  {language === "ta" ? "சக்கர எல்லை (Chart Scope):" : "Chart Scope:"}
+                </label>
+                <div className="inline-flex rounded-lg bg-white border border-[#D9DEE7] p-0.5 w-full justify-between">
+                  {(["both", "d1", "d9"] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setChartScope(s)}
+                      className={`flex-1 py-1.5 rounded text-[11px] font-bold uppercase transition-colors cursor-pointer text-center ${
+                        chartScope === s
+                          ? "bg-[#FAF2DE] text-[#8C6D23]"
+                          : "text-[#52667E] hover:text-[#183047]"
+                      }`}
+                    >
+                      {s === "both" ? "D1 + D9" : s.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions & Custom Rule Manager */}
+              <div className="flex items-center gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsAddRuleModalOpen(true)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#B4872B] hover:bg-[#8C6D23] text-white font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "புதிய விதி சேர்" : "+ Add Condition"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsManageCustomModalOpen(true)}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-white border border-[#D9DEE7] text-xs font-semibold text-[#153F6B] hover:bg-[#F2F3F5] transition-colors cursor-pointer"
+                >
+                  {language === "ta" ? "விதிகள் நிர்வாகம்" : "Manage"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Global Keyword Quick-Search Row */}
+        <div className="pt-2 border-t border-[#E2E8F0] flex items-center gap-3">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder={
+                language === "ta"
+                  ? "விதிகள், கிரகங்கள், பலன்களைத் தேடு (எ.கா. சுக்கிரன், ராகு, 7-ம் அதிபதி, உத்தியோகம்)..."
+                  : "Search conditions, planets, interpretations (e.g. Venus, Rahu, Mars, 7th lord)..."
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-[#D9DEE7] bg-white text-[#183047] placeholder-[#8190A6] focus:ring-1 focus:ring-[#B4872B] focus:border-[#B4872B]"
+            />
+            <Search className="w-3.5 h-3.5 text-[#8190A6] absolute left-2.5 top-2.5" />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-2 text-[10px] text-[#8190A6] hover:text-[#183047] cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -923,7 +1176,7 @@ export function AstrologicalPredictionsSection({
       )}
 
       {/* Sexuality & Intimacy Dedicated Gender Filter Banner */}
-      {activeCategoryFilter === "sexuality_intimacy" && (
+      {(activeCategoryFilter === "sexuality_intimacy" || (activeDomain === "marriage_domain" && (activeSubFilter === "sexuality_intimacy" || activeSubFilter === "all"))) && (
         <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border border-rose-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
           <div className="flex items-start sm:items-center gap-2.5">
             <span className="p-2 rounded-lg bg-[#881337] text-white shrink-0 shadow-xs">
@@ -1006,7 +1259,7 @@ export function AstrologicalPredictionsSection({
       )}
 
       {/* Star Prediction Dedicated Banner */}
-      {activeCategoryFilter === "star" && (
+      {(activeCategoryFilter === "star" || (activeDomain === "personality_stars_domain" && (activeSubFilter === "star" || activeSubFilter === "all"))) && (
         <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-start gap-2.5">
             <span className="p-2 rounded-lg bg-[#153F6B] text-[#F3E5AB] shrink-0">

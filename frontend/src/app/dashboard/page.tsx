@@ -398,6 +398,7 @@ export default function DashboardPage() {
         isOpen={isCautionModalOpen}
         onClose={() => setIsCautionModalOpen(false)}
         autoCheckOnLogin={true}
+        autoOpenOnLogin={false}
         onAlertsCountChange={setCautionAlertsCount}
       />
     </div>

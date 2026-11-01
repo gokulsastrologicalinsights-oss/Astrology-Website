@@ -128,6 +128,7 @@ class YogaChartContext:
         is_day_birth: Optional[bool] = None,
     ):
         self.lagna_sign_idx = ascendant_sign_idx
+        self.ascendant_sign_idx = ascendant_sign_idx
         self.gender = gender.lower()
 
         # Map house (1-12) to sign (1-12) under whole-sign / rashi-bhava baseline

@@ -172,6 +172,16 @@ interface AstrologyToolCard {
       color: "text-teal-600 border-teal-300 bg-teal-50",
     },
     {
+      id: "daily-sastra",
+      titleTa: "தினசரி சாஸ்திர வழிகாட்டி",
+      titleEn: "Daily Dharma & Sastra Guide",
+      descriptionTa: "நாள்விழிப்பு, கௌரி பஞ்சாங்கம், வாரசூலம் பரிகாரம், 22 நோய் தீர்க்கும் தெய்வங்கள், வாஸ்து புருஷன் விழிப்பு மற்றும் சுபமுகூர்த்த நியதிகள்.",
+      descriptionEn: "Classical daily do's and don'ts, Gowri Panchangam, Soolam remedies, medical deity healing, and Vastu Purusha awakening.",
+      href: "/tools/daily-sastra",
+      icon: ShieldCheck,
+      color: "text-indigo-700 border-indigo-300 bg-indigo-50",
+    },
+    {
       id: "remedies",
       titleTa: "பரிகாரங்கள் & ஆலயங்கள்",
       titleEn: "Remedies & Pariharam",

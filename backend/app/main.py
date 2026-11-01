@@ -37,6 +37,7 @@ from app.routers import (
     pancha_pakshi,
     nakshatras,
     jamakkol,
+    tamil_sastra,
 )
 
 
@@ -170,5 +171,7 @@ app.include_router(horoscope_writing.router)
 app.include_router(pancha_pakshi.router)
 app.include_router(nakshatras.router)
 app.include_router(jamakkol.router)
+app.include_router(tamil_sastra.router)
+app.include_router(tamil_sastra.router, prefix="/api/tamil-sastra")
 
 

@@ -50,3 +50,40 @@ def test_medical_astrology_endpoint_invalid_date():
     bad_payload["birth_date"] = "invalid-date"
     response = client.post("/api/v1/vedic/medical-astrology", json=bad_payload)
     assert response.status_code in (422, 400)
+
+
+def test_medical_astrology_endpoint_dr_chatterjee():
+    """Verify Dr. S. S. Chatterjee compendium is present in API response."""
+    response = client.post("/api/v1/vedic/medical-astrology", json=TEST_PAYLOAD)
+    assert response.status_code == 200
+    data = response.json()
+    assert "dr_chatterjee_compendium" in data
+    assert data["dr_chatterjee_compendium"] is not None
+    chat = data["dr_chatterjee_compendium"]
+    assert "Dr. S. S. Chatterjee" in chat["author"]
+    assert "Advance Medical Astrology" in chat["book_title"]
+    assert chat["death_point"]["longitude_deg"] >= 0.0
+    assert len(chat["sapta_dhatus"]) == 7
+    assert len(chat["endocrine_glands"]) == 8
+    assert len(chat["golden_rules"]) == 28
+    assert len(chat["case_studies"]) == 6
+
+
+def test_medical_astrology_endpoint_jane_ridder_patrick():
+    response = client.post("/api/v1/vedic/medical-astrology", json=TEST_PAYLOAD)
+    assert response.status_code == 200
+    data = response.json()
+    assert "jane_ridder_patrick_compendium" in data
+    assert data["jane_ridder_patrick_compendium"] is not None
+    jrp = data["jane_ridder_patrick_compendium"]
+    assert "Jane Ridder-Patrick" in jrp["author"]
+    assert "A Handbook of Medical Astrology" in jrp["book_title"]
+    assert jrp["arabian_parts"]["part_of_sickness_coord"]
+    assert jrp["arabian_parts"]["part_of_surgery_coord"]
+    assert jrp["arabian_parts"]["part_of_death_coord"]
+    assert len(jrp["three_crosses"]) == 3
+    assert len(jrp["cell_salts"]) == 12
+    assert len(jrp["bach_flowers"]) == 12
+    assert len(jrp["acupuncture_meridians"]) == 12
+    assert len(jrp["culpeper_therapeutic_rules"]) == 7
+    assert len(jrp["matched_rules"]) == 24

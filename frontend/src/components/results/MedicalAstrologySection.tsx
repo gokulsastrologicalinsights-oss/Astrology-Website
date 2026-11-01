@@ -35,7 +35,15 @@ import {
   ExternalLink,
   ShieldCheck,
   Check,
+  Stethoscope,
 } from "lucide-react";
+import { DrKrishnaKumarSection } from "./DrKrishnaKumarSection";
+import { DrChatterjeeSection } from "./DrChatterjeeSection";
+import { ChartMatchedRulesSection } from "./ChartMatchedRulesSection";
+import { MaxHeindelSection } from "./MaxHeindelSection";
+import { JaneRidderPatrickSection } from "./JaneRidderPatrickSection";
+import { HeinrichDaathSection } from "./HeinrichDaathSection";
+import { MedicalBlueprintSection } from "./MedicalBlueprintSection";
 
 interface MedicalAstrologySectionProps {
   horoscope?: HoroscopeResponse | null;
@@ -61,10 +69,26 @@ export function MedicalAstrologySection({
 }: MedicalAstrologySectionProps) {
   const { language } = useLanguage();
 
-  // Internal tab: "birth" | "current" | "historical" | "vedic" | "kp"
-  const [activePerspective, setActivePerspective] = useState<
-    "birth" | "current" | "historical" | "vedic" | "kp"
-  >("birth");
+  // Primary 3-Tab Architecture: "blueprint" (மருத்துவ வரைபடம்) | "matched" (ஜாதகத்தில் பொருந்துகிறது) | "research" (ஆராய்ச்சி & மூல நூல்கள்)
+  const [activeTab, setActiveTab] = useState<"blueprint" | "matched" | "research">("blueprint");
+
+  // Research Sub-Perspectives:
+  const [researchPerspective, setResearchPerspective] = useState<
+    "vedic" | "current" | "historical" | "kp" | "krishna_kumar" | "chatterjee" | "heindel" | "ridder_patrick" | "daath"
+  >("vedic");
+
+  // Computed active perspective for render logic compatibility
+  const activePerspective = activeTab === "blueprint" ? "blueprint" : activeTab === "matched" ? "matched" : researchPerspective;
+
+  // Backward-compatible navigation helper
+  const setActivePerspective = (perspective: any) => {
+    if (perspective === "blueprint" || perspective === "matched") {
+      setActiveTab(perspective);
+    } else {
+      setActiveTab("research");
+      setResearchPerspective(perspective === "birth" ? "vedic" : perspective);
+    }
+  };
 
   // Filter and search state for classical rules
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -124,6 +148,34 @@ export function MedicalAstrologySection({
     });
   }, [birthChart.triggered_rules, categoryFilter, searchQuery]);
 
+  // Count total chart-matched medical rules across all treatises
+  const matchedRulesCount = useMemo(() => {
+    let count = 0;
+    count += (birthChart.triggered_rules || []).filter((r) => r.is_active).length;
+    count += (kpData?.kp_rules || []).filter((r: MedicalRule) => r.is_active).length;
+    if (medicalData.dr_krishna_kumar_compendium) {
+      count += (medicalData.dr_krishna_kumar_compendium.progeny_shapas || []).filter((s) => s.is_indicated).length;
+      count += (medicalData.dr_krishna_kumar_compendium.manasika_buddhi_yogas || []).filter((y) => y.is_active).length;
+      count += (medicalData.dr_krishna_kumar_compendium.organ_specific_yogas || []).filter((y) => y.is_active).length;
+    }
+    if (medicalData.dr_chatterjee_compendium) {
+      count += (medicalData.dr_chatterjee_compendium.golden_rules || []).filter((g) => g.is_active).length;
+      if (medicalData.dr_chatterjee_compendium.death_point?.transit_saturn_aspect_active) count++;
+      if (medicalData.dr_chatterjee_compendium.diabetes_assessment && medicalData.dr_chatterjee_compendium.diabetes_assessment.risk_level !== "Low") count++;
+    }
+    if (medicalData.max_heindel_compendium) {
+      count += (medicalData.max_heindel_compendium.matched_rules || []).filter((r) => r.is_active).length;
+    }
+    if (medicalData.jane_ridder_patrick_compendium) {
+      count += (medicalData.jane_ridder_patrick_compendium.matched_rules || []).filter((r) => r.is_active).length;
+    }
+    if (medicalData.heinrich_daath_compendium) {
+      count += (medicalData.heinrich_daath_compendium.matched_rules || []).filter((r) => r.is_active).length;
+    }
+    return count;
+  }, [birthChart.triggered_rules, kpData, medicalData]);
+
+
   return (
     <div className="space-y-6">
       {/* 1. Mandatory Safety & Ethical Notice Banner (English & Tamil) */}
@@ -151,87 +203,277 @@ export function MedicalAstrologySection({
         </div>
       </div>
 
-      {/* 2. Primary Navigation Bar */}
-      <div className="bg-white rounded-xl border border-[#D9DEE7] p-2 sm:p-3 shadow-2xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto text-xs font-semibold pb-1 sm:pb-0">
-          {/* Perspective A: Birth Chart */}
+      {/* 2. Primary Navigation Bar - Streamlined 3-Tab Architecture */}
+      <div className="bg-white rounded-xl border border-[#D9DEE7] p-2 sm:p-2.5 shadow-2xs">
+        <div className="flex items-center gap-2 overflow-x-auto text-xs font-semibold pb-1 sm:pb-0">
+          {/* Tab 1: Blueprint (மருத்துவ வரைபடம்) */}
           <button
             type="button"
-            onClick={() => setActivePerspective("birth")}
-            className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activePerspective === "birth"
-                ? "bg-[#153F6B] text-white shadow-2xs font-bold"
-                : "text-[#52667E] hover:text-[#183047] hover:bg-[#F8FAFC]"
+            onClick={() => setActiveTab("blueprint")}
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+              activeTab === "blueprint"
+                ? "bg-gradient-to-r from-[#153F6B] to-[#1E4D82] text-white shadow-sm font-bold ring-2 ring-blue-400/50"
+                : "text-[#153F6B] bg-blue-50 hover:bg-blue-100 font-semibold border border-blue-200"
             }`}
           >
-            <Compass className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "பிறப்பு ஜாதக ஆய்வு" : "Birth-Chart Research"}</span>
+            <Activity className="w-4 h-4 text-amber-300" />
+            <span className="text-xs sm:text-sm">{language === "ta" ? "மருத்துவ வரைபடம் (Blueprint)" : "Medical Blueprint"}</span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === "blueprint" ? "bg-amber-400 text-gray-900" : "bg-blue-200 text-blue-900"
+              }`}
+            >
+              {language === "ta" ? "3 அட்டை" : "3 Cards"}
+            </span>
           </button>
 
-          {/* Perspective B: Current Period */}
+          <span className="text-[#D9DEE7]">|</span>
+
+          {/* Tab 2: Matched Rules & Remedies (ஜாதகத்தில் பொருந்துகிறது) */}
           <button
             type="button"
-            onClick={() => setActivePerspective("current")}
-            className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activePerspective === "current"
-                ? "bg-[#153F6B] text-white shadow-2xs font-bold"
-                : "text-[#52667E] hover:text-[#183047] hover:bg-[#F8FAFC]"
+            onClick={() => setActiveTab("matched")}
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+              activeTab === "matched"
+                ? "bg-gradient-to-r from-emerald-700 to-teal-800 text-white shadow-sm font-bold ring-2 ring-emerald-400/50"
+                : "text-emerald-900 bg-emerald-50 hover:bg-emerald-100 font-semibold border border-emerald-200"
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "நடப்பு தசா ஆய்வு" : "Current Period"}</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs sm:text-sm">{language === "ta" ? "ஜாதகத்தில் பொருந்துகிறது (விதிகள் & பரிகாரங்கள்)" : "Chart-Matched Rules & Remedies"}</span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === "matched" ? "bg-white/20 text-white" : "bg-emerald-200 text-emerald-900"
+              }`}
+            >
+              {matchedRulesCount} {language === "ta" ? "விதிகள்" : "Rules"}
+            </span>
           </button>
 
-          {/* Perspective C: Historical Periods */}
+          <span className="text-[#D9DEE7]">|</span>
+
+          {/* Tab 3: Research Compendium & Classical Treatises (ஆராய்ச்சி & மூல நூல்கள்) */}
           <button
             type="button"
-            onClick={() => setActivePerspective("historical")}
-            className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activePerspective === "historical"
-                ? "bg-[#153F6B] text-white shadow-2xs font-bold"
-                : "text-[#52667E] hover:text-[#183047] hover:bg-[#F8FAFC]"
+            onClick={() => setActiveTab("research")}
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+              activeTab === "research"
+                ? "bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-sm font-bold ring-2 ring-amber-400/50"
+                : "text-amber-900 bg-amber-50 hover:bg-amber-100 font-semibold border border-amber-200"
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "வரலாற்று காலக்கோடு" : "Historical Periods"}</span>
-          </button>
-
-          <span className="text-[#D9DEE7] hidden sm:inline">|</span>
-
-          {/* Dedicated Vedic Perspective View */}
-          <button
-            type="button"
-            onClick={() => setActivePerspective("vedic")}
-            className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activePerspective === "vedic"
-                ? "bg-[#B4872B] text-white shadow-2xs font-bold"
-                : "text-[#8C6D23] hover:text-[#5F4917] hover:bg-[#FAF2DE]/50"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "வேத ஜோதிட முறை" : "Vedic Analysis"}</span>
-          </button>
-
-          {/* Dedicated KP Perspective View */}
-          <button
-            type="button"
-            onClick={() => setActivePerspective("kp")}
-            className={`px-3.5 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activePerspective === "kp"
-                ? "bg-[#153F6B] text-white shadow-2xs font-bold"
-                : "text-[#52667E] hover:text-[#183047] hover:bg-[#F8FAFC]"
-            }`}
-          >
-            <Award className="w-3.5 h-3.5" />
-            <span>{language === "ta" ? "கே.பி. முறை (CSL)" : "KP Analysis (CSL)"}</span>
+            <BookOpen className="w-4 h-4 text-amber-300" />
+            <span className="text-xs sm:text-sm">{language === "ta" ? "ஆராய்ச்சி & மூல நூல்கள்" : "Research & Treatises"}</span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === "research" ? "bg-amber-300 text-amber-950" : "bg-amber-200 text-amber-900"
+              }`}
+            >
+              {language === "ta" ? "9 தொகுதிகள்" : "9 Treatises"}
+            </span>
           </button>
         </div>
       </div>
 
+      {/* PERSPECTIVE BLUEPRINT: 3-CARD PRACTICAL MEDICAL DASHBOARD           */}
+      {/* ------------------------------------------------------------------- */}
+      {activePerspective === "blueprint" && (
+        <MedicalBlueprintSection
+          medicalData={medicalData}
+          horoscope={horoscope}
+          dasa={dasa}
+          language={language}
+        />
+      )}
+
+      {/* Research Library Sub-Navigation Toolbar */}
+      {activeTab === "research" && (
+        <div className="bg-gradient-to-b from-white to-[#FBFBFC] rounded-2xl border border-[#D9DEE7] p-3.5 sm:p-5 shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F0F2F5] pb-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#B4872B]" />
+                <h3 className="font-serif font-bold text-sm sm:text-base text-[#183047]">
+                  {language === "ta"
+                    ? "மருத்துவ ஜோதிட ஆராய்ச்சி நூலகம் & மூல சாஸ்திரத் தொகுப்புகள்"
+                    : "Medical Astrology Research Library & Classical Compendiums"}
+                </h3>
+              </div>
+              <p className="text-[11px] text-[#52667E]">
+                {language === "ta"
+                  ? "ஜோதிட வல்லுநர்கள், ஆராய்ச்சியாளர்கள் மற்றும் மாணவர்களுக்கான விரிவான சாஸ்திர நூல்கள் மற்றும் கணக்கீட்டு முறைகள்."
+                  : "In-depth classical treatises, anatomical planetary rules, and timing methods for researchers and astrologers."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("blueprint")}
+              className="text-xs font-bold text-[#153F6B] hover:text-blue-900 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition-all shrink-0"
+            >
+              ← {language === "ta" ? "மருத்துவ வரைபடத்திற்குத் திரும்பு" : "Return to Blueprint"}
+            </button>
+          </div>
+
+          {/* Sub-Tabs Grid */}
+          <div className="space-y-3">
+            {/* Group A: ஜோதிட ஆய்வு முறைகள் (Analysis Frameworks) */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8190A6] block">
+                {language === "ta" ? "1. ஜோதிட ஆய்வு முறைகள் (Astrological Systems & Timing):" : "1. Astrological Systems & Timing:"}
+              </span>
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                {/* Vedic Bhavas */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("vedic")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "vedic"
+                      ? "bg-[#B4872B] text-white shadow-2xs font-bold ring-1 ring-amber-400"
+                      : "bg-[#FAF2DE]/70 text-[#8C6D23] hover:bg-[#FAF2DE] border border-amber-200/60"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "வேத ஜோதிட முறை (1,6,8,12 பாவங்கள்)" : "Vedic Analysis (1, 6, 8, 12 Houses)"}</span>
+                </button>
+
+                {/* Current Dasa */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("current")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "current"
+                      ? "bg-[#153F6B] text-white shadow-2xs font-bold ring-1 ring-blue-400"
+                      : "bg-[#F8FAFC] text-[#52667E] hover:text-[#183047] border border-[#E2E8F0]"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "நடப்பு தசா ஆய்வு" : "Current Period (Dasa)"}</span>
+                </button>
+
+                {/* Historical Periods */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("historical")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "historical"
+                      ? "bg-[#153F6B] text-white shadow-2xs font-bold ring-1 ring-blue-400"
+                      : "bg-[#F8FAFC] text-[#52667E] hover:text-[#183047] border border-[#E2E8F0]"
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "வரலாற்று காலக்கோடு" : "Historical Periods Timeline"}</span>
+                </button>
+
+                {/* KP CSL */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("kp")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "kp"
+                      ? "bg-[#153F6B] text-white shadow-2xs font-bold ring-1 ring-blue-400"
+                      : "bg-[#F8FAFC] text-[#52667E] hover:text-[#183047] border border-[#E2E8F0]"
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "கே.பி. முறை (CSL)" : "KP Analysis (CSL)"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Group B: சாஸ்திர மூல நூல்கள் (Classical Treatises) */}
+            <div className="space-y-1.5 border-t border-[#F0F2F5] pt-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8190A6] block">
+                {language === "ta" ? "2. சாஸ்திர மூல நூல்கள் (Classical Treatises & Compendiums):" : "2. Classical Treatises & Compendiums:"}
+              </span>
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                {/* Dr. Krishna Kumar */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("krishna_kumar")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "krishna_kumar"
+                      ? "bg-[#69235B] text-white shadow-2xs font-bold ring-1 ring-purple-400"
+                      : "bg-[#FDF2F8] text-[#69235B] hover:bg-pink-100/70 border border-pink-200"
+                  }`}
+                >
+                  <Stethoscope className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "டாக்டர் எஸ். கிருஷ்ண குமார் நூல் தொகுதி" : "Dr. S. Krishna Kumar Compendium"}</span>
+                </button>
+
+                {/* Dr. Chatterjee */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("chatterjee")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "chatterjee"
+                      ? "bg-[#69235B] text-white shadow-2xs font-bold ring-1 ring-purple-400"
+                      : "bg-[#FDF2F8] text-[#69235B] hover:bg-pink-100/70 border border-pink-200"
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "டாக்டர் எஸ்.எஸ். சாட்டர்ஜி தொகுதி" : "Dr. S. S. Chatterjee Compendium"}</span>
+                </button>
+
+                {/* Max Heindel */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("heindel")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "heindel"
+                      ? "bg-[#1A365D] text-white shadow-2xs font-bold ring-1 ring-blue-400"
+                      : "bg-blue-50 text-[#1A365D] hover:bg-blue-100 border border-blue-200"
+                  }`}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "மேக்ஸ் ஹெயிண்டல் நோய்நிர்ணயம்" : "Max Heindel Astro-Diagnosis"}</span>
+                </button>
+
+                {/* Jane Ridder-Patrick */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("ridder_patrick")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "ridder_patrick"
+                      ? "bg-teal-800 text-white shadow-2xs font-bold ring-1 ring-teal-400"
+                      : "bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200"
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "ஜேன் ரிடர்-பேட்ரிக் தொகுதி" : "Jane Ridder-Patrick Compendium"}</span>
+                </button>
+
+                {/* Heinrich Daath */}
+                <button
+                  type="button"
+                  onClick={() => setResearchPerspective("daath")}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    researchPerspective === "daath"
+                      ? "bg-indigo-800 text-white shadow-2xs font-bold ring-1 ring-indigo-400"
+                      : "bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200"
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "ஹென்ரிச் டாத் மருத்துவ ஜோதிடம்" : "Heinrich Däath Compendium"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activePerspective === "matched" && (
+        <ChartMatchedRulesSection
+          medicalData={medicalData}
+          horoscope={horoscope}
+          language={language}
+          onSelectRule={(rule) => setSelectedRule(rule)}
+        />
+      )}
+
       {/* ------------------------------------------------------------------- */}
       {/* PERSPECTIVE A: BIRTH-CHART RESEARCH */}
       {/* ------------------------------------------------------------------- */}
-      {(activePerspective === "birth" || activePerspective === "vedic") && (
+      {activePerspective === "vedic" && (
         <div className="space-y-6">
           {/* 4 Key Houses Health Grid */}
           <div className="space-y-3">
@@ -1007,6 +1249,124 @@ export function MedicalAstrologySection({
             )}
           </div>
         </div>
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* PERSPECTIVE: DR. S. KRISHNA KUMAR COMPENDIUM */}
+      {/* ------------------------------------------------------------------- */}
+      {activePerspective === "krishna_kumar" && (
+        medicalData.dr_krishna_kumar_compendium ? (
+          <DrKrishnaKumarSection
+            compendium={medicalData.dr_krishna_kumar_compendium}
+            language={language}
+            onSelectRule={setSelectedRule}
+          />
+        ) : (
+          <div className="p-8 rounded-xl border border-[#D9DEE7] bg-white text-center space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-full bg-purple-100 text-[#69235B] flex items-center justify-center">
+              <Stethoscope className="w-5 h-5" />
+            </div>
+            <p className="text-xs text-[#52667E]">
+              {language === "ta"
+                ? "டாக்டர் எஸ். கிருஷ்ண குமார் நூல் தொகுதி தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Dr. S. Krishna Kumar Compendium data is not available for this horoscope record."}
+            </p>
+          </div>
+        )
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* PERSPECTIVE: DR. S. S. CHATTERJEE COMPENDIUM */}
+      {/* ------------------------------------------------------------------- */}
+      {activePerspective === "chatterjee" && (
+        medicalData.dr_chatterjee_compendium ? (
+          <DrChatterjeeSection
+            compendium={medicalData.dr_chatterjee_compendium}
+            language={language}
+            onSelectRule={setSelectedRule}
+          />
+        ) : (
+          <div className="p-8 rounded-xl border border-[#D9DEE7] bg-white text-center space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-full bg-purple-100 text-[#69235B] flex items-center justify-center">
+              <Award className="w-5 h-5" />
+            </div>
+            <p className="text-xs text-[#52667E]">
+              {language === "ta"
+                ? "டாக்டர் எஸ்.எஸ். சாட்டர்ஜி நூல் தொகுதி தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Dr. S. S. Chatterjee Compendium data is not available for this horoscope record."}
+            </p>
+          </div>
+        )
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* PERSPECTIVE: MAX HEINDEL & ROSICRUCIAN ASTRO-DIAGNOSIS */}
+      {/* ------------------------------------------------------------------- */}
+      {activePerspective === "heindel" && (
+        medicalData.max_heindel_compendium ? (
+          <MaxHeindelSection
+            compendium={medicalData.max_heindel_compendium}
+            language={language}
+            onSelectRule={setSelectedRule}
+          />
+        ) : (
+          <div className="p-8 rounded-xl border border-[#D9DEE7] bg-white text-center space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 text-[#1A365D] flex items-center justify-center">
+              <Compass className="w-5 h-5" />
+            </div>
+            <p className="text-xs text-[#52667E]">
+              {language === "ta"
+                ? "மேக்ஸ் ஹெயிண்டல் நோய்நிர்ணயத் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Max Heindel Astro-Diagnosis data is not available for this horoscope record."}
+            </p>
+          </div>
+        )
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* PERSPECTIVE: JANE RIDDER-PATRICK MEDICAL ASTROLOGY */}
+      {/* ------------------------------------------------------------------- */}
+      {activePerspective === "ridder_patrick" && (
+        medicalData.jane_ridder_patrick_compendium ? (
+          <JaneRidderPatrickSection
+            compendium={medicalData.jane_ridder_patrick_compendium}
+            language={language}
+            onSelectRule={setSelectedRule}
+          />
+        ) : (
+          <div className="p-8 rounded-xl border border-[#D9DEE7] bg-white text-center space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-full bg-teal-100 text-teal-800 flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <p className="text-xs text-[#52667E]">
+              {language === "ta"
+                ? "ஜேன் ரிடர்-பேட்ரிக் மருத்துவ ஜோதிடத் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Jane Ridder-Patrick Medical Astrology data is not available for this horoscope record."}
+            </p>
+          </div>
+        )
+      )}
+
+      {/* 12. HEINRICH DÄATH CLASSICAL JATROMATHEMATICS COMPENDIUM VIEW */}
+      {activePerspective === "daath" && (
+        medicalData.heinrich_daath_compendium ? (
+          <HeinrichDaathSection
+            compendium={medicalData.heinrich_daath_compendium}
+            language={language}
+            onSelectRule={setSelectedRule}
+          />
+        ) : (
+          <div className="p-8 rounded-xl border border-[#D9DEE7] bg-white text-center space-y-3">
+            <div className="w-10 h-10 mx-auto rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <p className="text-xs text-[#52667E]">
+              {language === "ta"
+                ? "ஹென்ரிச் டாத் மருத்துவ ஜோதிடத் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Heinrich Däath Medical Astrology data is not available for this horoscope record."}
+            </p>
+          </div>
+        )
       )}
 
       {/* Rule Detail Inspection Modal */}

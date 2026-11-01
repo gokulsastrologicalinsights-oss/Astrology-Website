@@ -34,6 +34,7 @@ interface DasaCautionReminderModalProps {
   isOpen?: boolean;
   onClose?: () => void;
   autoCheckOnLogin?: boolean;
+  autoOpenOnLogin?: boolean;
   onAlertsCountChange?: (count: number) => void;
 }
 
@@ -41,6 +42,7 @@ export function DasaCautionReminderModal({
   isOpen: controlledIsOpen,
   onClose: controlledOnClose,
   autoCheckOnLogin = false,
+  autoOpenOnLogin = false,
   onAlertsCountChange,
 }: DasaCautionReminderModalProps) {
   const { language } = useLanguage();
@@ -105,7 +107,7 @@ export function DasaCautionReminderModal({
             onAlertsCountChange(data.activeCount !== undefined ? data.activeCount : items.length);
           }
 
-          if (isAuto && items.length > 0) {
+          if (isAuto && autoOpenOnLogin && items.length > 0) {
             // Check if already dismissed today in this session
             const sessionKey = `dasa_caution_dismissed_${data.todayKolkata}`;
             const alreadyDismissed = sessionStorage.getItem(sessionKey);

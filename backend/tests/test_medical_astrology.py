@@ -583,3 +583,388 @@ def test_kp_screenshot_case_gokul_and_no_unresolved_placeholders():
     assert "Rahu -> Mercury" in star_h12.planet_channel
 
 
+def test_dr_krishna_kumar_compendium():
+    """Verify Dr. S. Krishna Kumar Medical Astrology compendium evaluation."""
+    horoscope = calculate_full_horoscope(
+        birth_date=TEST_BIRTH_DATA["birth_date"],
+        birth_time=TEST_BIRTH_DATA["birth_time"],
+        timezone_str=TEST_BIRTH_DATA["timezone"],
+        latitude=TEST_BIRTH_DATA["latitude"],
+        longitude=TEST_BIRTH_DATA["longitude"],
+        ayanamsa_id=TEST_BIRTH_DATA["ayanamsa"],
+        house_system_id=TEST_BIRTH_DATA["house_system"],
+        include_panchang=False,
+    )
+    res = calculate_medical_astrology(horoscope=horoscope)
+
+    assert res.dr_krishna_kumar_compendium is not None
+    comp = res.dr_krishna_kumar_compendium
+
+    # Metadata & authorship
+    assert "Dr. S. Krishna Kumar" in comp.author
+    assert "Horoscope or Stethoscope" in comp.book_title
+    assert len(comp.salient_features) >= 10
+
+    # 27 Nakshatras complete matrix
+    assert len(comp.all_27_nakshatras) == 27
+    ashwini = comp.all_27_nakshatras[0]
+    assert ashwini.number == 1
+    assert ashwini.name == "Ashwini"
+    assert "fever" in ashwini.disease_tendency_en.lower()
+
+    # Native Moon Star resolution
+    assert comp.native_moon_star is not None
+    assert comp.native_moon_star.name in ["Uttarashada", "Uttara Ashadha", "Uttara Phalguni", "Shravana"]
+    assert comp.native_moon_star.number == 21
+
+    # 10 Gestational Months
+    assert len(comp.gestational_months) == 10
+    m1 = comp.gestational_months[0]
+    assert m1.month == 1
+    assert m1.ruling_planet == "Venus"
+    assert "Kalala" in m1.sanskrit_term
+
+    # 9 Progeny Curses
+    assert len(comp.progeny_shapas) >= 9
+    shapa_ids = {s.id for s in comp.progeny_shapas}
+    assert "sarpa_shapa" in shapa_ids
+    assert "pitru_shapa" in shapa_ids
+    assert "matru_shapa" in shapa_ids
+
+    # 12 Case studies
+    assert len(comp.case_studies) == 12
+    c1 = comp.case_studies[0]
+    assert "Mental Aberration" in c1.title_en
+
+    # 5 Tatwas & Navadwaras
+    assert len(comp.tatwas_and_senses) == 5
+
+    # Observations
+    assert comp.caesarean_vs_normal_delivery_observation is not None
+    assert comp.sperm_potency_observation is not None
+
+
+def test_dr_chatterjee_compendium_full():
+    """Verify Dr. S. S. Chatterjee's Advance Medical Astrology compendium evaluation."""
+    horoscope = calculate_full_horoscope(
+        birth_date=TEST_BIRTH_DATA["birth_date"],
+        birth_time=TEST_BIRTH_DATA["birth_time"],
+        timezone_str=TEST_BIRTH_DATA["timezone"],
+        latitude=TEST_BIRTH_DATA["latitude"],
+        longitude=TEST_BIRTH_DATA["longitude"],
+        ayanamsa_id=TEST_BIRTH_DATA["ayanamsa"],
+        house_system_id=TEST_BIRTH_DATA["house_system"],
+        include_panchang=False,
+    )
+    res = calculate_medical_astrology(
+        horoscope=horoscope,
+        dasa=None,
+        kp=None,
+        gender="male",
+    )
+
+    assert res.dr_chatterjee_compendium is not None
+    chat = res.dr_chatterjee_compendium
+
+    # 1. Author and Title
+    assert "Dr. S. S. Chatterjee" in chat.author
+    assert "Advance Medical Astrology" in chat.book_title
+    assert any("Electro-chemical" in f or "Death Point" in f for f in chat.salient_features)
+
+    # 2. Death Point Calculation
+    dp = chat.death_point
+    assert dp is not None
+    assert 0.0 <= dp.longitude_deg < 360.0
+    assert 1 <= dp.sign_index <= 12
+    assert dp.sign_name_en != ""
+    assert dp.nakshatra_name != ""
+    assert 1 <= dp.nakshatra_pada <= 4
+    assert isinstance(dp.transit_saturn_aspect_active, bool)
+    assert len(dp.aspect_details_en) > 10
+    assert len(dp.aspect_details_ta) > 10
+
+    # 3. Sapta Dhatus (7 tissues)
+    assert len(chat.sapta_dhatus) == 7
+    dhatu_names = {d.dhatu_name_en for d in chat.sapta_dhatus}
+    assert any("Asthi" in name for name in dhatu_names)
+    assert any("Rasa" in name for name in dhatu_names)
+    assert any("Rakta" in name for name in dhatu_names)
+    assert any("Mamsa" in name for name in dhatu_names)
+    assert any("Medas" in name for name in dhatu_names)
+    assert any("Majja" in name for name in dhatu_names)
+    assert any("Shukra" in name for name in dhatu_names)
+
+    # 4. Endocrine Glands (8 glands)
+    assert len(chat.endocrine_glands) == 8
+    gland_names = {g.gland_name_en for g in chat.endocrine_glands}
+    assert any("Pituitary" in name for name in gland_names)
+    assert any("Thyroid" in name for name in gland_names)
+    assert any("Pancreas" in name for name in gland_names)
+    assert any("Adrenal" in name for name in gland_names)
+
+    # 5. Tridosha Anatomical Sites
+    assert len(chat.tridosha_sites) == 5
+
+    # 6. Diabetes Mellitus Special Diagnostic Module
+    dm = chat.diabetes_assessment
+    assert dm is not None
+    assert dm.affliction_score >= 0
+    assert dm.risk_level in ("Low", "Moderate", "High")
+    assert len(dm.symptoms_noted) >= 5
+    assert len(dm.remedial_measures_en) >= 6
+    assert len(dm.remedial_measures_ta) >= 6
+
+    # 7. 10 Modern Complex Diseases
+    assert len(chat.modern_diseases) == 10
+    disease_names = {d.name_en for d in chat.modern_diseases}
+    assert any("Hepatitis" in name for name in disease_names)
+    assert any("Lupus" in name for name in disease_names)
+    assert any("Celiac" in name for name in disease_names)
+    assert any("Vertigo" in name for name in disease_names)
+
+    # 8. Natural Remedies Guide
+    rem = chat.natural_remedies
+    assert rem is not None
+    assert len(rem.planetary_colour_therapy) == 7
+    assert len(rem.metal_charged_waters) == 4
+    assert len(rem.vega_dharana_urges) == 13
+
+    # 9. 28 Evaluated Golden Rules
+    assert len(chat.golden_rules) == 28
+    for r in chat.golden_rules:
+        assert r.id.startswith("chatterjee_")
+        assert len(r.name) > 3
+        assert len(r.traditional_interpretation) > 10
+        assert r.system == "vedic"
+
+    # 10. Practical Case Studies
+    assert len(chat.case_studies) == 6
+    case_ids = {c["case_id"] if isinstance(c, dict) else c.case_id for c in chat.case_studies}
+    assert "chatterjee_case_1_diabetes" in case_ids
+    assert "chatterjee_case_2_robust_health" in case_ids
+    assert "chatterjee_case_6_khorana_nobel" in case_ids
+
+
+
+
+
+def test_max_heindel_compendium_full():
+    horoscope = calculate_full_horoscope(
+        birth_date=TEST_BIRTH_DATA['birth_date'],
+        birth_time=TEST_BIRTH_DATA['birth_time'],
+        timezone_str=TEST_BIRTH_DATA['timezone'],
+        latitude=TEST_BIRTH_DATA['latitude'],
+        longitude=TEST_BIRTH_DATA['longitude'],
+        ayanamsa_id=TEST_BIRTH_DATA['ayanamsa'],
+        house_system_id=TEST_BIRTH_DATA['house_system'],
+        include_panchang=False,
+    )
+    resp = calculate_medical_astrology(horoscope=horoscope)
+    assert resp.max_heindel_compendium is not None
+    heindel = resp.max_heindel_compendium
+
+    # 1. Treatise metadata & 19 Injunctions
+    assert 'Astro-Diagnosis' in heindel.book_title
+    assert 'Max Heindel' in heindel.authors
+    assert len(heindel.healer_injunctions) == 19
+    assert heindel.healer_injunctions[0]['id'] == '1'
+    assert 'death' in heindel.healer_injunctions[0]['rule_en'].lower()
+
+    # 2. 12 Sign Anatomies with Manilius & Heindel
+    assert len(heindel.signs_anatomy) == 12
+    aries = heindel.signs_anatomy[0]
+    assert aries.sign_name_en == 'Aries'
+    assert 'Head' in aries.manilius_rulership
+
+    # 3. 10 Planetary Physiologies & Sense Organs
+    assert len(heindel.planets_physiology) == 10
+    assert len(heindel.sense_organs_affinities) == 4
+
+    # 4. 3 Vicious Circles
+    assert len(heindel.vicious_circles) == 3
+    cross_names = {c.cross_name for c in heindel.vicious_circles}
+    assert any('Cardinal' in name for name in cross_names)
+    assert any('Fixed' in name for name in cross_names)
+    assert any('Mutable' in name for name in cross_names)
+
+    # 5. Hand & Nail Diagnosis
+    assert len(heindel.nail_and_hand_diagnosis) >= 7
+
+    # 6. Planetary Antidotes & Nebular Spots
+    assert len(heindel.planetary_antidotes) == 2
+    assert len(heindel.nebular_spots) == 3
+
+    # 7. 43 Golden Aphorisms
+    assert len(heindel.aphorisms) == 43
+    assert 'iron' in heindel.aphorisms[0].aphorism_en.lower() or 'moon' in heindel.aphorisms[0].aphorism_en.lower()
+
+    # 8. Matched Rules
+    assert len(heindel.matched_rules) == 12
+    for r in heindel.matched_rules:
+        assert r.id.startswith('heindel_')
+
+
+def test_jane_ridder_patrick_compendium_full():
+    horoscope = calculate_full_horoscope(
+        birth_date=TEST_BIRTH_DATA['birth_date'],
+        birth_time=TEST_BIRTH_DATA['birth_time'],
+        timezone_str=TEST_BIRTH_DATA['timezone'],
+        latitude=TEST_BIRTH_DATA['latitude'],
+        longitude=TEST_BIRTH_DATA['longitude'],
+        ayanamsa_id=TEST_BIRTH_DATA['ayanamsa'],
+        house_system_id=TEST_BIRTH_DATA['house_system'],
+        include_panchang=False,
+    )
+    resp = calculate_medical_astrology(horoscope=horoscope)
+    assert resp.jane_ridder_patrick_compendium is not None
+    jrp = resp.jane_ridder_patrick_compendium
+
+    # 1. Treatise metadata & Framework
+    assert 'Jane Ridder-Patrick' in jrp.author
+    assert 'A Handbook of Medical Astrology' in jrp.book_title
+    assert len(jrp.alphabet_framework) >= 5
+
+    # 2. Arabian Parts
+    assert jrp.arabian_parts.part_of_sickness_coord is not None
+    assert jrp.arabian_parts.part_of_surgery_coord is not None
+    assert jrp.arabian_parts.part_of_death_coord is not None
+    assert 'Taurus' in jrp.arabian_parts.part_of_sickness_coord or len(jrp.arabian_parts.part_of_sickness_coord) > 3
+
+    # 3. Decumbiture & Strictures
+    dec = jrp.decumbiture
+    assert dec.asc_stricture_note is not None
+    assert isinstance(dec.moon_in_via_combusta, bool)
+    assert dec.critical_days_cycle_en is not None
+
+    # 4. Three Crosses Reflex Dynamics
+    assert len(jrp.three_crosses) == 3
+    cross_names = [c['cross'] for c in jrp.three_crosses]
+    assert any('Cardinal' in n for n in cross_names)
+    assert any('Fixed' in n for n in cross_names)
+    assert any('Mutable' in n for n in cross_names)
+
+    # 5. Elemental Analysis
+    elem = jrp.elemental_analysis
+    assert elem.dominant_element in ['Fire', 'Earth', 'Air', 'Water']
+    assert elem.fire_count >= 0
+    assert elem.earth_count >= 0
+    assert elem.air_count >= 0
+    assert elem.water_count >= 0
+
+    # 6. Biochemic Cell Salts (12)
+    assert len(jrp.cell_salts) == 12
+    assert jrp.cell_salts[0].sign == 'Aries'
+    assert 'Kali' in jrp.cell_salts[0].abbreviation or 'phosphate' in jrp.cell_salts[0].cell_salt.lower()
+
+    # 7. Bach Flower Remedies (12)
+    assert len(jrp.bach_flowers) == 12
+    assert jrp.bach_flowers[0].sign == 'Aries'
+    assert 'Impatiens' in jrp.bach_flowers[0].flower_remedy
+
+    # 8. Acupuncture Meridians (12)
+    assert len(jrp.acupuncture_meridians) == 12
+    assert jrp.acupuncture_meridians[0].sign == 'Aries'
+    assert len(jrp.acupuncture_meridians[0].meridian) > 0
+
+    # 9. Culpeper's 7 Rules & Stages of Therapy
+    assert len(jrp.culpeper_therapeutic_rules) == 7
+    assert len(jrp.stages_of_therapy) == 3
+
+    # 10. Matched Classical Rules (24 rules registry)
+    assert len(jrp.matched_rules) == 24
+    for r in jrp.matched_rules:
+        assert r.id.startswith('jrp_')
+        assert r.remedy_en is not None
+        assert r.remedy_ta is not None
+
+
+def test_heinrich_daath_compendium_full():
+    """Verify Heinrich Däath Medical Astrology Compendium comprehensive functionality."""
+    horoscope = calculate_full_horoscope(
+        birth_date=TEST_BIRTH_DATA["birth_date"],
+        birth_time=TEST_BIRTH_DATA["birth_time"],
+        timezone_str=TEST_BIRTH_DATA["timezone"],
+        latitude=TEST_BIRTH_DATA["latitude"],
+        longitude=TEST_BIRTH_DATA["longitude"],
+        ayanamsa_id=TEST_BIRTH_DATA["ayanamsa"],
+        house_system_id=TEST_BIRTH_DATA["house_system"],
+        include_panchang=False,
+    )
+    resp = calculate_medical_astrology(horoscope=horoscope)
+    assert resp.heinrich_daath_compendium is not None
+    daath = resp.heinrich_daath_compendium
+
+    # 1. Treatise Metadata
+    assert "Heinrich Däath" in daath.author
+    assert "Medical Astrology" in daath.book_title
+    assert "Jatromathematics" in daath.historical_foundation
+    assert len(daath.core_philosophy_en) > 50
+    assert len(daath.core_philosophy_ta) > 50
+
+    # 2. 12 Sign Anatomical Rulerships
+    assert len(daath.signs_anatomy) == 12
+    assert daath.signs_anatomy[0].sign_name_en == "Aries"
+    assert "Cranium" in daath.signs_anatomy[0].principal_bones
+    # Check kidney distinction on Libra and Scorpio
+    libra_sign = next(s for s in daath.signs_anatomy if s.sign_name_en == "Libra")
+    scorpio_sign = next(s for s in daath.signs_anatomy if s.sign_name_en == "Scorpio")
+    assert libra_sign.kidney_pelvis_distinction is not None
+    assert "secreting" in libra_sign.kidney_pelvis_distinction.lower() or "filtering" in libra_sign.kidney_pelvis_distinction.lower()
+    assert scorpio_sign.kidney_pelvis_distinction is not None
+    assert "pelvis" in scorpio_sign.kidney_pelvis_distinction.lower()
+
+    # 3. 9 Planets Biodynamics & Materia Medica
+    assert len(daath.planets_biodynamics) == 9
+    sun_bio = next(p for p in daath.planets_biodynamics if p.planet == "Sun")
+    assert "Dwadasatma" in sun_bio.esoteric_title
+    assert "expansion" in sun_bio.biodynamic_motion.lower()
+    assert len(sun_bio.typical_plants) > 0
+    assert len(sun_bio.typical_drugs) > 0
+    assert "Gold" in sun_bio.metals_minerals
+
+    mars_bio = next(p for p in daath.planets_biodynamics if p.planet == "Mars")
+    assert "centrifugal" in mars_bio.biodynamic_motion.lower()
+    assert "Iron" in mars_bio.metals_minerals
+
+    saturn_bio = next(p for p in daath.planets_biodynamics if p.planet == "Saturn")
+    assert "centripetal" in saturn_bio.biodynamic_motion.lower()
+    assert "Lead" in saturn_bio.metals_minerals
+
+    # 4. Temperaments & Quadruplicities
+    temp = daath.temperaments_and_crosses
+    assert temp["dominant_temperament"] is not None
+    assert len(temp["temperament_definitions"]) == 4
+    assert len(temp["cross_definitions"]) == 3
+
+    # 5. Antipathic Therapeutics (Contraria Contrariis Curantur)
+    assert len(daath.antipathic_therapeutics) == 4
+    sat_therapy = next(t for t in daath.antipathic_therapeutics if "Saturnine" in t.category)
+    assert "Mars" in sat_therapy.curative_planetary_remedy
+
+    # 6. Seven Ages of Man (Planetary Life-Periods)
+    assert len(daath.seven_ages_of_man) == 7
+    assert daath.seven_ages_of_man[0].planet == "Moon"
+    assert daath.seven_ages_of_man[0].start_age == 0
+    assert daath.seven_ages_of_man[0].end_age == 4
+    assert any(p.is_native_current_age for p in daath.seven_ages_of_man)
+
+    # 7. Decumbiture & Cycles
+    dec = daath.decumbiture_and_cycles
+    assert len(dec.lunar_critical_cycles) == 3
+    assert len(dec.lunar_phases_metabolism) == 4
+    assert "Uranus" in dec.climacteric_seven_year_law
+
+    # 8. Strength Evaluation (5 dimensions)
+    strength = daath.strength_evaluation
+    assert "Anabolic" in strength.drikbalam_aspect_summary
+    assert len(strength.nisargikabalam_mutual_receptions) > 0
+    assert "Angles" in strength.mundane_strength_summary
+    assert "Retrograde" in strength.motional_strength_summary
+    assert "Hexis" in strength.directional_hexis_vs_diathesis
+
+    # 9. 16 Matched Classical Rules
+    assert len(daath.matched_rules) == 16
+    for r in daath.matched_rules:
+        assert r.id.startswith("daath_")
+        assert r.remedy_en is not None
+        assert r.remedy_ta is not None

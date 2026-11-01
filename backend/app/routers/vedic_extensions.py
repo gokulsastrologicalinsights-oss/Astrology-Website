@@ -14,7 +14,7 @@ from app.schemas.yoga import VedicYogaResponse
 from app.schemas.shadbala import ShadbalaResponse
 from app.schemas.dosha import DoshaEvaluationRequest, UnifiedDoshaResponse
 from app.schemas.varga import ShodashvargaResponse
-from app.schemas.medical_astrology import MedicalAstrologyResponse
+from app.schemas.medical_astrology import MedicalAstrologyResponse, MedicalAstrologyRequest
 from app.services.ephemeris import calculate_full_horoscope
 from app.services.nabhasha_engine import detect_nabhasha_yogas
 from app.services.ashtakavarga_engine import (
@@ -337,17 +337,79 @@ def calculate_shodashvarga_endpoint(request: HoroscopeRequest) -> ShodashvargaRe
 
 
 @router.post("/medical-astrology", response_model=MedicalAstrologyResponse, summary="Calculate Classical Vedic & KP Medical Astrology")
-def calculate_medical_astrology_endpoint(request: HoroscopeRequest) -> MedicalAstrologyResponse:
-    """Evaluate Classical Vedic & KP Medical Astrology adhering to strict research safety policies."""
+def calculate_medical_astrology_endpoint(request: MedicalAstrologyRequest) -> MedicalAstrologyResponse:
+    """Evaluate Classical Vedic & KP Medical Astrology adhering to strict research safety policies.
+    
+    Supports direct input birth parameters or synchronizing directly from a saved_horoscope_id.
+    """
     try:
+        b_date = request.birth_date
+        b_time = request.birth_time
+        tz = request.timezone or "Asia/Kolkata"
+        lat = request.latitude
+        lon = request.longitude
+        ayanamsa = request.ayanamsa if request.ayanamsa is not None else 0
+        house_system = request.house_system if request.house_system is not None else 0
+        gender = request.gender or "male"
+
+        # If saved_horoscope_id is supplied, look up chart details
+        if request.saved_horoscope_id:
+            clean_id = request.saved_horoscope_id.strip()
+            row = None
+            try:
+                from app.services.auth_service import get_supabase_client
+                supabase = get_supabase_client()
+                if supabase:
+                    res = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+                    if res.data and len(res.data) > 0:
+                        row = res.data[0]
+            except Exception:
+                pass
+
+            if not row:
+                import json
+                from pathlib import Path
+                local_path = Path("backend/data/saved_horoscope_writings.json")
+                if local_path.exists():
+                    try:
+                        with open(local_path, "r", encoding="utf-8") as f:
+                            saved_list = json.load(f)
+                            for item in saved_list:
+                                if str(item.get("id")) == clean_id:
+                                    row = item
+                                    break
+                    except Exception:
+                        pass
+
+            if row:
+                b_date = row.get("birth_date") or b_date
+                b_time = row.get("birth_time") or b_time
+                tz = row.get("timezone") or tz
+                if row.get("latitude") is not None:
+                    lat = float(row.get("latitude"))
+                if row.get("longitude") is not None:
+                    lon = float(row.get("longitude"))
+                if row.get("ayanamsa") is not None:
+                    ayanamsa = int(row.get("ayanamsa"))
+                if row.get("house_system") is not None:
+                    house_system = int(row.get("house_system"))
+                if row.get("gender"):
+                    gender = str(row.get("gender"))
+
+        if not b_date or not b_time or lat is None or lon is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Incomplete birth parameters. Please provide birth_date, birth_time, latitude, and longitude, or a valid saved_horoscope_id.",
+            )
+
         horoscope = calculate_full_horoscope(
-            birth_date=request.birth_date,
-            birth_time=request.birth_time,
-            timezone_str=request.timezone,
-            latitude=request.latitude,
-            longitude=request.longitude,
-            ayanamsa_id=request.ayanamsa,
-            house_system_id=request.house_system,
+            birth_date=b_date,
+            birth_time=b_time,
+            timezone_str=tz,
+            latitude=lat,
+            longitude=lon,
+            ayanamsa_id=ayanamsa,
+            house_system_id=house_system,
             include_panchang=False,
             include_outer_planets=False,
             include_nabhasha=False,
@@ -355,7 +417,7 @@ def calculate_medical_astrology_endpoint(request: HoroscopeRequest) -> MedicalAs
             include_vedic_yogas=False,
             include_varga=False,
             include_doshas=False,
-            gender=request.gender or "male",
+            gender=gender,
         )
 
         # Calculate KP if possible
@@ -363,18 +425,18 @@ def calculate_medical_astrology_endpoint(request: HoroscopeRequest) -> MedicalAs
         try:
             from app.schemas.kp import KpRequest
             kp_req = KpRequest(
-                birth_date=request.birth_date,
-                birth_time=request.birth_time,
-                timezone=request.timezone,
-                latitude=request.latitude,
-                longitude=request.longitude,
-                ayanamsa=request.ayanamsa,
-                house_system=request.house_system,
+                birth_date=b_date,
+                birth_time=b_time,
+                timezone=tz,
+                latitude=lat,
+                longitude=lon,
+                ayanamsa=ayanamsa,
+                house_system=house_system,
             )
             kp_res = calculate_kp_chart(
                 birth=kp_req,
-                ayanamsa_id=request.ayanamsa,
-                house_system_id=request.house_system,
+                ayanamsa_id=ayanamsa,
+                house_system_id=house_system,
             )
         except Exception:
             pass
@@ -384,20 +446,20 @@ def calculate_medical_astrology_endpoint(request: HoroscopeRequest) -> MedicalAs
         try:
             from app.schemas.dasa import DasaRequest
             dasa_req = DasaRequest(
-                birth_date=request.birth_date,
-                birth_time=request.birth_time,
-                timezone=request.timezone,
-                latitude=request.latitude,
-                longitude=request.longitude,
+                birth_date=b_date,
+                birth_time=b_time,
+                timezone=tz,
+                latitude=lat,
+                longitude=lon,
                 depth=3,
-                ayanamsa=request.ayanamsa,
-                house_system=request.house_system,
+                ayanamsa=ayanamsa,
+                house_system=house_system,
             )
             dasa_res = calculate_dasa(
                 birth=dasa_req,
                 depth=3,
-                ayanamsa_id=request.ayanamsa,
-                house_system_id=request.house_system,
+                ayanamsa_id=ayanamsa,
+                house_system_id=house_system,
             )
         except Exception:
             pass
@@ -406,9 +468,11 @@ def calculate_medical_astrology_endpoint(request: HoroscopeRequest) -> MedicalAs
             horoscope=horoscope,
             dasa=dasa_res,
             kp=kp_res,
-            gender=request.gender or "male",
+            gender=gender,
         )
         return result
+    except HTTPException:
+        raise
     except ValueError as val_err:
         raise HTTPException(status_code=422, detail=str(val_err))
     except Exception as exc:
