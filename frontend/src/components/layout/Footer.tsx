@@ -2,9 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
-import { Compass, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export function Footer() {
   const pathname = usePathname();
@@ -18,8 +19,14 @@ export function Footer() {
           {/* Brand & Mission */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#102A4C] flex items-center justify-center text-white">
-                <Compass className="w-4 h-4 text-[#B8862B]" />
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-[#B8862B]/30 shadow-xs bg-[#090d2e] shrink-0">
+                <Image
+                  src="/logo.png"
+                  alt="Gokul's Astrological Insights Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="font-serif text-lg font-bold text-[#102A4C]">
                 {t.brandName}

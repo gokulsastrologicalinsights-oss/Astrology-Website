@@ -41,18 +41,36 @@ export const metadata: Metadata = {
     "Jathagam",
     "XALEN ephemeris",
   ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   openGraph: {
     title: "Gokul's Astrological Insights — Precision Vedic & KP Astronomical System",
     description:
       "Deterministic sidereal Vedic and KP Krishnamurti Paddhati astrological calculations powered by the XALEN astronomical engine.",
     siteName: "Gokul's Astrological Insights",
     type: "website",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1024,
+        height: 1024,
+        alt: "Gokul's Astrological Insights Logo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Gokul's Astrological Insights — Precision Vedic & KP Astronomical System",
     description:
       "Deterministic sidereal Vedic and KP Krishnamurti Paddhati astrological calculations powered by the XALEN astronomical engine.",
+    images: ["/logo.png"],
   },
 };
 

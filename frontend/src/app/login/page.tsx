@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
@@ -110,9 +111,15 @@ function LoginForm() {
     <div className="w-full max-w-md mx-auto">
       {/* Brand Header */}
       <div className="text-center mb-8">
-        <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#B8860B] via-[#996515] to-[#593E10] text-white shadow-lg border border-[#D8BD80] mb-4">
-          <Compass className="w-8 h-8" />
-          <Sparkles className="w-4 h-4 text-amber-200 absolute -top-1 -right-1" />
+        <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-xl overflow-hidden border border-[#D8BD80] mb-4 bg-[#090d2e]">
+          <Image
+            src="/logo.png"
+            alt="Gokul's Astrological Insights Logo"
+            width={80}
+            height={80}
+            priority
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF2DE] border border-[#D8BD80] text-[11px] font-semibold text-[#8C6D23] mb-3 shadow-2xs">
           <span>

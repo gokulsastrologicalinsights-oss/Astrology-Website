@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
@@ -250,8 +251,15 @@ export function Navbar() {
                 className="flex items-center gap-2.5 shrink-0 group focus:outline-hidden"
                 aria-label="Gokul’s Astrological Insights Home"
               >
-                <div className="w-8 h-8 rounded-lg bg-[#153F6B] flex items-center justify-center text-white shadow-xs border border-[#B4872B]/30 group-hover:scale-105 transition-transform">
-                  <Sparkles className="w-4 h-4 text-[#B4872B] transition-transform group-hover:rotate-12" />
+                <div className="relative w-8 h-8 rounded-lg overflow-hidden shadow-xs border border-[#B4872B]/40 group-hover:scale-105 transition-transform bg-[#090d2e] shrink-0">
+                  <Image
+                    src="/logo.png"
+                    alt="Gokul's Astrological Insights Logo"
+                    width={32}
+                    height={32}
+                    priority
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="min-w-0">
                   <div className="font-serif text-base sm:text-lg font-bold text-[#153F6B] tracking-tight leading-tight truncate">

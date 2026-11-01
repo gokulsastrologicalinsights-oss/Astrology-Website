@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/lib/i18n";
 import {
   Compass,
@@ -57,8 +58,15 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md mx-auto">
         {/* Brand Card Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#B8860B] to-[#784E0E] text-white shadow-md border border-[#D8BD80] mb-4">
-            <Compass className="w-7 h-7" />
+          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-xl overflow-hidden border border-[#D8BD80] mb-4 bg-[#090d2e]">
+            <Image
+              src="/logo.png"
+              alt="Gokul's Astrological Insights Logo"
+              width={64}
+              height={64}
+              priority
+              className="w-full h-full object-cover"
+            />
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight">
             {t.forgotPasswordTitle}

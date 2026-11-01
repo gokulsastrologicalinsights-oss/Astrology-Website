@@ -2,8 +2,9 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/lib/i18n";
-import { Compass, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   const { language, t } = useLanguage();
@@ -15,8 +16,15 @@ export default function NotFound() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
       <div className="max-w-md w-full text-center space-y-6 bg-white p-8 rounded-xl border border-[#E2DCD5] shadow-xs">
-        <div className="w-16 h-16 rounded-full bg-[#FAF2DE] border border-[#D8BD80] flex items-center justify-center mx-auto text-[#B8860B]">
-          <Compass className="w-8 h-8" />
+        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#D8BD80] shadow-md mx-auto bg-[#090d2e]">
+          <Image
+            src="/logo.png"
+            alt="Gokul's Astrological Insights Logo"
+            width={64}
+            height={64}
+            priority
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="space-y-2">
           <span className="text-[11px] font-mono uppercase tracking-wider text-[#8C6D23] font-semibold">
