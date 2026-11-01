@@ -35,6 +35,8 @@ import { GkTransitMatchingCard } from "@/components/results/GkTransitMatchingCar
 import { Recent15DayPastEventsCard } from "@/components/results/Recent15DayPastEventsCard";
 import { MarcBoneyMilestonesCard } from "@/components/results/MarcBoneyMilestonesCard";
 import { GemstoneDownload } from "@/components/results/GemstoneDownload";
+import { BrighuNaadiSection } from "@/components/results/BrighuNaadiSection";
+import { AstrologerCockpit } from "@/components/results/AstrologerCockpit";
 import {
   calculateNabhasha,
   calculateAshtakavarga,
@@ -105,11 +107,11 @@ function HoroscopeResultsContent() {
   // Main Tabs: "horoscope" (ஜாதகம்) | "consultation" (ஆலோசனை) | "reports" (அறிக்கைகள் மற்றும் பதிவிறக்கங்கள்)
   const [mainTab, setMainTab] = useState<"horoscope" | "consultation" | "reports">("horoscope");
 
-  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download"
+  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi"
   const [secondaryTab, setSecondaryTab] = useState<
-    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download"
+    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi"
   >(() => {
-    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download"];
+    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download", "brighu-naadi"];
     if (tabParam && (validSecondary.includes(tabParam) || ["dasa_palangal", "palangal", "dasa-bukthi-palangal"].includes(tabParam))) {
       return (tabParam === "dasa_palangal" || tabParam === "palangal" || tabParam === "dasa-bukthi-palangal") ? "dasa-palangal" : (tabParam as any);
     }
@@ -121,6 +123,9 @@ function HoroscopeResultsContent() {
     }
     if (tabParam && ["gemstone", "gemstones", "gemstone-download", "gemstonedownload", "ratna"].includes(tabParam.toLowerCase())) {
       return "gemstone-download";
+    }
+    if (tabParam && ["brighu", "brighu-naadi", "naadi", "brighu_naadi"].includes(tabParam.toLowerCase())) {
+      return "brighu-naadi";
     }
     if (tabParam && ["d1-d9", "varga", "vargas", "shodashvarga"].includes(tabParam)) {
       return "divisional";
@@ -761,8 +766,24 @@ function HoroscopeResultsContent() {
             </button>
           </div>
 
-          {/* Right: Actions [Remedies, Edit, Notes, Print, Back] */}
+          {/* Right: Actions [Cockpit, Remedies, Edit, Notes, Print, Back] */}
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSystemMode("vedic");
+                setMainTab("consultation");
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                mainTab === "consultation" && systemMode === "vedic"
+                  ? "bg-[#153F6B] text-white shadow-xs"
+                  : "border border-[#153F6B]/30 bg-[#153F6B]/10 text-[#153F6B] hover:bg-[#153F6B]/20"
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
+              <span>{language === "ta" ? "காக்பிட் (Cockpit)" : "Cockpit View"}</span>
+            </button>
+
             <Link
               href={`/remedies${result.savedId || idParam ? `?horoscope_id=${encodeURIComponent(result.savedId || idParam || "")}` : ""}`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-300 bg-purple-50 text-xs font-bold text-purple-900 hover:bg-purple-100 shadow-2xs transition-colors"
@@ -964,13 +985,14 @@ function HoroscopeResultsContent() {
             <button
               type="button"
               onClick={() => setMainTab("consultation")}
-              className={`px-5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer ${
+              className={`px-5 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                 mainTab === "consultation"
                   ? "bg-[#153F6B] text-white shadow-2xs"
                   : "text-[#52667E] hover:text-[#153F6B] hover:bg-white"
               }`}
             >
-              {language === "ta" ? "ஆலோசனை" : "Consultation"}
+              <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
+              <span>{language === "ta" ? "ஆலோசனை அரங்கம் (Cockpit)" : "Astrologer’s Cockpit"}</span>
             </button>
 
             <button
@@ -1134,6 +1156,24 @@ function HoroscopeResultsContent() {
                   }`}
                 >
                   {language === "ta" ? "தோஷங்கள்" : "Doshas"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSecondaryTab("brighu-naadi")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "brighu-naadi"
+                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold bg-[#FAF2DE]/50"
+                      : "text-amber-800 hover:text-amber-950 font-semibold"
+                  }`}
+                  title={
+                    language === "ta"
+                      ? "பிருகு நாடி சங்கிரகம்: ஜீவ காரகர் (குரு) & கர்ம காரகர் (சனி) ரகசியங்கள்"
+                      : "Brighu Naadi Sangraha: Jeeva Karaka (Jupiter) & Karma Karaka (Saturn) Doctrine"
+                  }
+                >
+                  <Compass className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{language === "ta" ? "பிருகு நாடி" : "Brighu Naadi"}</span>
                 </button>
 
                 <button
@@ -1649,113 +1689,46 @@ function HoroscopeResultsContent() {
                   />
                 </div>
               )}
+
+              {/* Sub-Tab 9: BRIGHU NAADI SANGRAHA */}
+              {secondaryTab === "brighu-naadi" && (
+                <div className="space-y-5">
+                  <BrighuNaadiSection
+                    horoscope={horoscope}
+                    gender={clientInputs?.gender || "male"}
+                    language={language as "en" | "ta"}
+                  />
+                </div>
+              )}
             </div>
           )}
 
-          {/* MAIN TAB 2: CONSULTATION */}
+          {/* MAIN TAB 2: ASTROLOGER'S COCKPIT (UNIFIED CONSULTATION VIEW) */}
           {mainTab === "consultation" && (
-            <div className="space-y-5">
-              <div className="bg-white rounded-xl border border-[#D9DEE7] p-5 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#F2F3F5] pb-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-[#153F6B]/10 flex items-center justify-center text-[#153F6B]">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[#183047]">
-                        {language === "ta" ? "ஜோதிட ஆலோசனை மற்றும் குறிப்புகள்" : "Consultation Notes & Remarks"}
-                      </h3>
-                      <p className="text-xs text-[#8190A6]">
-                        {language === "ta"
-                          ? "வாடிக்கையாளருக்கான ஜாதக கணிப்பு முடிவுகள் மற்றும் ஆலோசனைக் குறிப்புகள்."
-                          : "Record client consultation remarks, focus questions, and remedies."}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleSaveNotes}
-                    disabled={isSavingNotes}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {isSavingNotes ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Save className="w-3.5 h-3.5" />
-                    )}
-                    <span>{language === "ta" ? "சேமிக்க" : "Save Notes"}</span>
-                  </button>
-                </div>
-
-                {notesSaveStatus && (
-                  <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-600" />
-                    <span>{notesSaveStatus}</span>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-bold text-[#183047] mb-1.5">
-                    {language === "ta" ? "ஆலோசனை குறிப்புகள்:" : "Astrologer Consultation Notes:"}
-                  </label>
-                  <textarea
-                    rows={6}
-                    value={consultationNotes}
-                    onChange={(e) => setConsultationNotes(e.target.value)}
-                    placeholder={
-                      language === "ta"
-                        ? "வாடிக்கையாளரின் கேள்விகள், திருமணப் பொருத்தம், தொழில் வழிகாட்டல் அல்லது பரிகாரங்கள் குறித்த குறிப்புகளை இங்கே தட்டச்சு செய்யவும்..."
-                        : "Type consultation notes, client queries, career or marriage guidance, and custom remedies here..."
-                    }
-                    className="w-full text-xs sm:text-sm p-3 rounded-lg border border-[#D9DEE7] bg-[#F2F3F5]/40 text-[#183047] focus:outline-none focus:ring-1 focus:ring-[#153F6B] focus:border-[#153F6B] transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Consultation Quick Links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-white border border-[#D9DEE7] shadow-2xs space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#153F6B]">
-                    <ShieldCheck className="w-4 h-4 text-[#153F6B]" />
-                    <span>{language === "ta" ? "பரிகாரங்கள் மற்றும் பரிகாரத் தலங்கள்" : "Remedies & Temples"}</span>
-                  </div>
-                  <p className="text-xs text-[#8190A6]">
-                    {language === "ta"
-                      ? "நடப்பு தசா-புத்தி மற்றும் பாதக கிரகங்களுக்கான தனிப்பயனாக்கப்பட்ட பரிகாரங்கள்."
-                      : "Direct prescription of astrological remedies based on running Dasa-Bhukti."}
-                  </p>
-                  <Link
-                    href={`/remedies${result.savedId || idParam ? `?horoscope_id=${encodeURIComponent(result.savedId || idParam || "")}` : ""}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4872B] hover:underline pt-1"
-                  >
-                    <span>{language === "ta" ? "பரிகாரங்களை ஆராய்க →" : "Explore Remedies →"}</span>
-                  </Link>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-[#D9DEE7] shadow-2xs space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#153F6B]">
-                    <Gem className="w-4 h-4 text-[#B4872B]" />
-                    <span>{language === "ta" ? "ரத்தின வழிகாட்டி (GemstoneDownload)" : "GemstoneDownload Advisory"}</span>
-                  </div>
-                  <p className="text-xs text-[#8190A6]">
-                    {language === "ta"
-                      ? "ரத்ன சமாதானம்: 3 தூண் ரத்தினங்கள், உடல் எடைக்கேற்ற ரட்டி அளவுகள் மற்றும் கையேடு பதிவிறக்கம்."
-                      : "Personalized 3-Pillar Gems, proportional weight formulas, and downloadable PDF playbook."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMainTab("horoscope");
-                      setSecondaryTab("gemstone-download");
-                    }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4872B] hover:underline pt-1 cursor-pointer"
-                  >
-                    <span>{language === "ta" ? "ரத்தின வழிகாட்டிக்குச் செல்க →" : "Open GemstoneDownload →"}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <AstrologerCockpit
+              horoscope={horoscope}
+              clientInputs={clientInputs}
+              dasa={dasa}
+              kp={kp}
+              liveTransitsData={liveTransitsData}
+              isLoadingTransits={isLoadingTransits}
+              fetchLiveTransits={fetchLiveTransits}
+              consultationNotes={consultationNotes}
+              setConsultationNotes={setConsultationNotes}
+              handleSaveNotes={handleSaveNotes}
+              isSavingNotes={isSavingNotes}
+              notesSaveStatus={notesSaveStatus}
+              idParam={idParam || result?.savedId}
+              systemMode={systemMode}
+              setSystemMode={setSystemMode}
+              chartMode={chartMode}
+              setChartMode={setChartMode}
+              d9Horoscope={d9Horoscope}
+              onNavigateTab={(tab) => {
+                setMainTab("horoscope");
+                setSecondaryTab(tab as any);
+              }}
+            />
           )}
 
           {/* MAIN TAB 3: REPORTS & DOWNLOADS */}

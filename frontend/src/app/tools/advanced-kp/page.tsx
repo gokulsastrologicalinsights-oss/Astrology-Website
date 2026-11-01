@@ -396,6 +396,14 @@ function AdvancedKpContent() {
           <BookmarkCheck className="w-4 h-4" />
           <span>{language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்கள்" : "Saved Records"}</span>
         </button>
+        <Link
+          href="/tools/birth-time-rectification"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-t-xl transition-all whitespace-nowrap border-b-2 border-transparent text-[#8C6D23] hover:text-[#102A4C] hover:bg-amber-50/60 font-semibold"
+        >
+          <Sparkles className="w-4 h-4 text-amber-600" />
+          <span>{language === "ta" ? "பிறந்த நேர திருத்தம்" : "BTR Assistant"}</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 font-bold">New</span>
+        </Link>
       </div>
 
       {/* Notifications */}

@@ -38,6 +38,7 @@ from app.routers import (
     nakshatras,
     jamakkol,
     tamil_sastra,
+    brighu_naadi,
 )
 
 
@@ -173,5 +174,7 @@ app.include_router(nakshatras.router)
 app.include_router(jamakkol.router)
 app.include_router(tamil_sastra.router)
 app.include_router(tamil_sastra.router, prefix="/api/tamil-sastra")
+app.include_router(brighu_naadi.router)
+app.include_router(brighu_naadi.router, prefix="/api/brighu-naadi")
 
 

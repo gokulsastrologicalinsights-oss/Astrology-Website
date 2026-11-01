@@ -15,6 +15,8 @@ from app.schemas.shadbala import ShadbalaResponse
 from app.schemas.dosha import DoshaEvaluationRequest, UnifiedDoshaResponse
 from app.schemas.varga import ShodashvargaResponse
 from app.schemas.medical_astrology import MedicalAstrologyResponse, MedicalAstrologyRequest
+from app.schemas.double_transit import DoubleTransitRequest, DoubleTransitResponse
+from app.schemas.kaksha_alerts import KakshaAlertRequest, KakshaAlertsResponse
 from app.services.ephemeris import calculate_full_horoscope
 from app.services.nabhasha_engine import detect_nabhasha_yogas
 from app.services.ashtakavarga_engine import (
@@ -23,6 +25,8 @@ from app.services.ashtakavarga_engine import (
     build_all_kaksha_grids,
     evaluate_kaksha_transit,
 )
+from app.services.ashtakavarga_engine.kaksha_alert_engine import generate_kaksha_transit_alerts
+from app.services.double_transit_engine import calculate_double_transit_radar, DOMAINS
 from app.services.yoga_engine import calculate_vedic_yogas
 from app.services.shadbala_engine import calculate_shadbala
 from app.services.dosha_engine import calculate_unified_doshas
@@ -477,6 +481,49 @@ def calculate_medical_astrology_endpoint(request: MedicalAstrologyRequest) -> Me
         raise HTTPException(status_code=422, detail=str(val_err))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Medical astrology calculation failed: {str(exc)}")
+
+
+# ---------------------------------------------------------------------------
+# Double Transit ("Guru-Shani") Event Timing Radar
+# ---------------------------------------------------------------------------
+
+@router.post("/double-transit", response_model=DoubleTransitResponse, summary="Double Transit ('Guru-Shani') Event Timing Radar")
+def calculate_double_transit_endpoint(request: DoubleTransitRequest) -> DoubleTransitResponse:
+    """Calculates Double Transit (Guru-Shani Samyama) alignment windows across a 1-5 year horizon."""
+    try:
+        return calculate_double_transit_radar(request)
+    except ValueError as val_err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_err))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Double Transit calculation failed: {str(exc)}",
+        )
+
+
+@router.get("/double-transit/domains", summary="List available life domains for Double Transit Radar")
+def get_double_transit_domains():
+    """Returns domain metadata (Marriage, Career, Childbirth, Wealth, Property, Foreign, Health)."""
+    return {"domains": list(DOMAINS.values())}
+
+
+# ---------------------------------------------------------------------------
+# Ashtakavarga Kaksha Transit Trigger Alert System
+# ---------------------------------------------------------------------------
+
+@router.post("/ashtakavarga/kaksha-alerts", response_model=KakshaAlertsResponse, summary="Ashtakavarga Kaksha Transit Trigger Alerts")
+def calculate_kaksha_alerts_endpoint(request: KakshaAlertRequest) -> KakshaAlertsResponse:
+    """Computes real-time Ashtakavarga Kaksha Trigger Alerts (1-Bindu Auspicious vs 0-Bindu Obstacle)."""
+    try:
+        return generate_kaksha_transit_alerts(request)
+    except ValueError as val_err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_err))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Kaksha transit alerts calculation failed: {str(exc)}",
+        )
+
 
 
 

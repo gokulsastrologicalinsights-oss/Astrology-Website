@@ -130,6 +130,7 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
       { id: "all", label_en: "All Career & Wealth", label_ta: "அனைத்தும்", icon: Briefcase },
       { id: "job", label_en: "Job & Profession", label_ta: "வேலை & உத்தியோகம்", slug: "job", icon: Briefcase },
       { id: "wealth_yogas", label_en: "Money & Wealth Yogas", label_ta: "தன யோகங்கள் & சொத்து", slug: "wealth_yogas", icon: Coins },
+      { id: "brighu_naadi", label_en: "Brighu Naadi Livelihood", label_ta: "பிருகு நாடி கர்மம்", slug: "brighu_naadi", icon: Compass },
     ],
   },
   {
@@ -161,6 +162,7 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
       { id: "legal_disputes", label_en: "Litigation & Legal", label_ta: "வழக்கு & வெற்றி", slug: "legal_disputes", icon: Scale },
       { id: "longevity_death", label_en: "Longevity & Ayurdaya", label_ta: "ஆயுள் அமைப்பு", slug: "longevity_death", icon: ShieldAlert },
       { id: "planetary_debilitation_aspects", label_en: "Debilitation & Aspect Loss", label_ta: "கிரக நீசம் & பார்வை", slug: "planetary_debilitation_aspects", icon: Compass },
+      { id: "brighu_naadi", label_en: "Brighu Naadi Sangraha", label_ta: "பிருகு நாடி பலன்கள்", slug: "brighu_naadi", icon: Compass },
     ],
   },
   {
@@ -481,11 +483,13 @@ export function AstrologicalPredictionsSection({
         list = list.filter((r) => marriageSlugs.includes(r.category_slug) || marriageSlugs.includes(r.subcategory || ""));
       }
     } else if (activeDomain === "career_wealth_domain") {
-      const careerSlugs = ["job", "wealth_yogas"];
-      if (activeSubFilter !== "all") {
+      const careerSlugs = ["job", "wealth_yogas", "career_profession", "wealth_finances"];
+      if (activeSubFilter === "brighu_naadi") {
+        list = list.filter((r) => r.rule_id?.startsWith("RULE-BNS") || r.source_reference?.toLowerCase().includes("brighu naadi"));
+      } else if (activeSubFilter !== "all") {
         list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
       } else {
-        list = list.filter((r) => careerSlugs.includes(r.category_slug) || careerSlugs.includes(r.subcategory || ""));
+        list = list.filter((r) => careerSlugs.includes(r.category_slug) || careerSlugs.includes(r.subcategory || "") || r.rule_id?.startsWith("RULE-BNS-KARMA") || r.rule_id?.startsWith("RULE-BNS-JEEVA"));
       }
     } else if (activeDomain === "personality_stars_domain") {
       const personalitySlugs = ["lagna", "star"];
@@ -504,13 +508,17 @@ export function AstrologicalPredictionsSection({
         "longevity_death",
         "planetary_debilitation_aspects",
       ];
-      if (activeSubFilter !== "all") {
+      if (activeSubFilter === "brighu_naadi") {
+        list = list.filter((r) => r.rule_id?.startsWith("RULE-BNS") || r.source_reference?.toLowerCase().includes("brighu naadi"));
+      } else if (activeSubFilter !== "all") {
         list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
       } else {
-        list = list.filter((r) => eventsSlugs.includes(r.category_slug) || eventsSlugs.includes(r.subcategory || ""));
+        list = list.filter((r) => eventsSlugs.includes(r.category_slug) || eventsSlugs.includes(r.subcategory || "") || r.rule_id?.startsWith("RULE-BNS"));
       }
     } else if (activeDomain === "advanced_engine") {
-      if (activeCategoryFilter !== "all") {
+      if (activeCategoryFilter === "brighu_naadi") {
+        list = list.filter((r) => r.rule_id?.startsWith("RULE-BNS") || r.source_reference?.toLowerCase().includes("brighu naadi"));
+      } else if (activeCategoryFilter !== "all") {
         list = list.filter((r) => r.category_slug === activeCategoryFilter || r.subcategory === activeCategoryFilter);
       }
     }

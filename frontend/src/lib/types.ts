@@ -6103,3 +6103,401 @@ export interface SannuKarmaDiagnosticResponse {
     active_dasha_hora_tip: string;
   };
 }
+
+
+// ===========================================================================
+// Accuracy Boosters: BTR, Double Transit Radar, Kaksha Trigger Alerts
+// ===========================================================================
+
+export interface BtrLifeEventInput {
+  label: string;
+  event_date: string;
+  primary_house: number;
+  secondary_houses: number[];
+  event_time?: string;
+}
+
+export interface BtrRequest extends BirthInput {
+  events: BtrLifeEventInput[];
+  window_minutes?: number;
+  step_minutes?: number;
+  refine_seconds?: boolean;
+  use_ruling_planets?: boolean;
+  siblings_count?: number | null;
+  ayanamsa?: number;
+}
+
+export interface BtrEventBreakdown {
+  label: string;
+  event_date: string;
+  primary_house: number;
+  secondary_houses: number[];
+  lsl_hit: boolean;
+  lsl_score: number;
+  mahadasha_lord: string;
+  antardasha_lord: string;
+  pratyantardasha_lord: string;
+  dasha_hit: boolean;
+  dasha_score: number;
+  jupiter_transit_hit?: boolean | null;
+  saturn_transit_hit?: boolean | null;
+}
+
+export interface VargaLagnaDetail {
+  sign_index: number;
+  sign_name: string;
+  degree_in_sign: number;
+  division_specific?: string | null;
+}
+
+export interface BtrShiftComparison {
+  approx_time: string;
+  rectified_time: string;
+  time_offset_seconds: number;
+  time_offset_formatted: string;
+  approx_lsl: string;
+  rectified_lsl: string;
+  lsl_changed: boolean;
+  approx_d9: VargaLagnaDetail;
+  rectified_d9: VargaLagnaDetail;
+  d9_changed: boolean;
+  approx_d60: VargaLagnaDetail;
+  rectified_d60: VargaLagnaDetail;
+  d60_changed: boolean;
+  explanation: string;
+}
+
+export interface BtrCandidateDetail {
+  time_str: string;
+  offset_minutes: number;
+  offset_seconds: number;
+  offset_formatted: string;
+  lsl: string;
+  specificity: number;
+  lsl_score: number;
+  dasha_score: number;
+  rp_score: number;
+  identity_score: number;
+  total_score: number;
+  confidence_percentage: number;
+  strikes: number;
+  d9_sign: string;
+  d60_sign: string;
+  events: BtrEventBreakdown[];
+}
+
+export interface BtrCredibleInterval {
+  start_time: string;
+  end_time: string;
+  peak_time: string;
+  spread_minutes: number;
+  posterior_mass_percentage: number;
+}
+
+export interface BtrTransitSummary {
+  confirmed_tests: number;
+  total_tests: number;
+  match_percentage: number;
+}
+
+export interface BtrResponse {
+  metadata?: CalculationMetadata;
+  approx_birth_datetime: string;
+  rectified_birth_datetime: string;
+  rectified_time: string;
+  offset_seconds: number;
+  offset_formatted: string;
+  rectified_lsl: string;
+  best_candidate: BtrCandidateDetail;
+  shift_comparison: BtrShiftComparison;
+  credible_interval: BtrCredibleInterval;
+  transit_confirmation?: BtrTransitSummary | null;
+  top_candidates: BtrCandidateDetail[];
+  candidate_distribution: Array<{ time: string; offset_min: number; score: number; lsl: string }>;
+  total_candidates_evaluated: number;
+  astrological_verdict: string;
+}
+
+// Double Transit Radar
+export interface DoubleTransitDomainConfig {
+  id: string;
+  name_en: string;
+  name_ta: string;
+  target_house: number;
+  facilitating_houses: number[];
+  karakas: string[];
+  description: string;
+}
+
+export interface DoubleTransitRequest extends BirthInput {
+  domain?: string;
+  forecast_years?: number;
+  include_rahu?: boolean;
+  ayanamsa?: number;
+}
+
+export interface DoubleTransitWindow {
+  start_date: string;
+  end_date: string;
+  duration_months: number;
+  saturn_transit_sign: string;
+  saturn_transit_sign_index: number;
+  saturn_aspects_target: boolean;
+  saturn_occupies_target: boolean;
+  saturn_aspect_type: string;
+  jupiter_transit_sign: string;
+  jupiter_transit_sign_index: number;
+  jupiter_aspects_target: boolean;
+  jupiter_occupies_target: boolean;
+  jupiter_aspect_type: string;
+  double_transit_active: boolean;
+  rahu_transit_sign?: string | null;
+  rahu_transit_sign_index?: number | null;
+  rahu_activates_target?: boolean | null;
+  running_mahadasha: string;
+  running_antardasha: string;
+  dasa_confirms_event: boolean;
+  dasa_connection_details: string;
+  alignment_level: string;
+  probability_percentage: number;
+  astrological_rationale: string;
+  astrological_rationale_ta: string;
+}
+
+export interface PlanetaryTransitSummary {
+  saturn_sign: string;
+  saturn_degree: number;
+  jupiter_sign: string;
+  jupiter_degree: number;
+  rahu_sign: string;
+  rahu_degree: number;
+}
+
+export interface DoubleTransitResponse {
+  metadata?: CalculationMetadata;
+  domain: DoubleTransitDomainConfig;
+  target_house: number;
+  target_house_lord: string;
+  natal_lagna_sign: string;
+  natal_lagna_sign_index: number;
+  analysis_start_date: string;
+  analysis_end_date: string;
+  current_transits: PlanetaryTransitSummary;
+  windows: DoubleTransitWindow[];
+  peak_windows: DoubleTransitWindow[];
+  summary_verdict: string;
+  summary_verdict_ta: string;
+}
+
+// Ashtakavarga Kaksha Trigger Alerts
+export interface ActiveKakshaStatus {
+  planet: string;
+  current_sign: string;
+  current_sign_index: number;
+  current_degree: number;
+  kaksha_number: number;
+  kaksha_lord: string;
+  kaksha_range: string;
+  has_bindu: boolean;
+  status: string;
+  house_from_lagna: number;
+  days_remaining_in_kaksha: number;
+}
+
+export interface KakshaAlertItem {
+  id: string;
+  planet: string;
+  sign_name: string;
+  sign_index: number;
+  kaksha_number: number;
+  kaksha_lord: string;
+  kaksha_range: string;
+  start_date: string;
+  end_date: string;
+  duration_days: number;
+  has_bindu: boolean;
+  is_favorable: boolean;
+  house_from_lagna: number;
+  life_domains: string[];
+  alert_badge: string;
+  severity_level: string;
+  guidance: string;
+  guidance_ta: string;
+}
+
+export interface DomainAlertSummary {
+  favorable_windows_count: number;
+  challenging_windows_count: number;
+  key_advice: string;
+}
+
+export interface KakshaAlertRequest extends BirthInput {
+  horizon_days?: number;
+  planets?: string[];
+  filter_domain?: string | null;
+  ayanamsa?: number;
+}
+
+export interface KakshaAlertsResponse {
+  metadata?: CalculationMetadata;
+  natal_lagna_sign: string;
+  natal_lagna_sign_index: number;
+  horizon_days: number;
+  start_date: string;
+  end_date: string;
+  active_now: ActiveKakshaStatus[];
+  timeline_alerts: KakshaAlertItem[];
+  domain_summaries: Record<string, DomainAlertSummary>;
+  total_auspicious_triggers: number;
+  total_inauspicious_triggers: number;
+  upcoming_peak_window?: KakshaAlertItem | null;
+  upcoming_critical_caution?: KakshaAlertItem | null;
+}
+
+// ---------------------------------------------------------------------------
+// Brighu Naadi Sangraha Types (Dr. N. Srinivasan Shastry)
+// ---------------------------------------------------------------------------
+
+export interface BrighuNaadiRequest {
+  birth_date: string; // YYYY-MM-DD
+  birth_time: string; // HH:MM:SS
+  timezone?: string;
+  latitude: number;
+  longitude: number;
+  gender?: string; // "male" | "female"
+  ayanamsa?: number;
+}
+
+export interface BrighuBirthEnvironment {
+  road_direction_en: string;
+  road_direction_ta: string;
+  door_facing_en: string;
+  door_facing_ta: string;
+  city_sector_en: string;
+  city_sector_ta: string;
+  temple_near_birth_en: string;
+  temple_near_birth_ta: string;
+  spouse_direction_en: string;
+  spouse_direction_ta: string;
+  rahu_sign: string;
+  ketu_sign: string;
+  sun_sign: string;
+}
+
+export interface BrighuJeevaKaraka {
+  sign: string;
+  sign_ta: string;
+  house_from_lagna: number;
+  lifestyle_profile_en: string;
+  lifestyle_profile_ta: string;
+  prosperity_after_41: boolean;
+  planets_in_bhavas_from_jupiter: Record<number, string[]>;
+  empty_adjacent_misery_check: boolean;
+  primary_karaka_planet?: string; // Jupiter for male, Venus for female
+  gender_applied?: string;
+}
+
+export interface BrighuKarmaKaraka {
+  sign: string;
+  sign_ta: string;
+  house_from_lagna: number;
+  career_fields_en: string[];
+  career_fields_ta: string[];
+  career_start_age_approx?: number | null;
+  career_status_en: string;
+  career_status_ta: string;
+  saturn_sign_career_en?: string | null;
+  saturn_sign_career_ta?: string | null;
+  direction?: string | null; // "East (Fire)", "South (Earth)", "West (Air)", "North (Water)"
+  planets_in_same_direction?: string[];
+  planets_in_opposite_direction?: string[];
+  planets_in_2nd?: string[];
+  planets_in_12th?: string[];
+  is_retrograde?: boolean;
+  retrograde_backward_house_influence_en?: string | null;
+  retrograde_backward_house_influence_ta?: string | null;
+}
+
+export interface BrighuTimingMilestone {
+  category: string; // "marriage" | "career" | "property" | "fame" | "finance" | "caution" | "travel" | "family"
+  age_years: number[];
+  event_en: string;
+  event_ta: string;
+  basis_en: string;
+  basis_ta: string;
+}
+
+export interface BrighuPhysicalMarker {
+  source_planet: string;
+  sign: string;
+  organ_en: string;
+  organ_ta: string;
+  indication_en: string;
+  indication_ta: string;
+  is_caution: boolean;
+}
+
+export interface BrighuNaadiRuleMatch {
+  rule_id: string;
+  category: string;
+  title_en: string;
+  title_ta: string;
+  interpretation_en: string;
+  interpretation_ta: string;
+  planets_involved: string[];
+  source_page: string;
+}
+
+export interface BnnRuleEvaluation {
+  rule_number: number;
+  title_en: string;
+  title_ta: string;
+  is_active: boolean;
+  principle_en: string;
+  principle_ta: string;
+  chart_evidence_en: string;
+  chart_evidence_ta: string;
+  source_ref: string;
+}
+
+export interface BrighuNaadiResponse {
+  treatise_metadata: {
+    title: string;
+    author: string;
+    publisher: string;
+    pages: number;
+    philosophy_en: string;
+    philosophy_ta: string;
+    jeeva_karaka_role: string;
+    karma_karaka_role: string;
+  };
+  bnn_research_metadata?: {
+    paper_title: string;
+    paper_title_ta: string;
+    authors: string[];
+    institution: string;
+    journal: string;
+    volume_issue_pages: string;
+    issn: string;
+    impact_factor: string;
+    system_founder: string;
+    summary_en: string;
+    summary_ta: string;
+  };
+  birth_environment: BrighuBirthEnvironment;
+  jeeva_karaka: BrighuJeevaKaraka;
+  karma_karaka: BrighuKarmaKaraka;
+  timing_milestones: BrighuTimingMilestone[];
+  physical_health_markers: BrighuPhysicalMarker[];
+  matched_rules: BrighuNaadiRuleMatch[];
+  bnn_directional_groups?: Record<string, string[]>;
+  bnn_20_rules_evaluations?: BnnRuleEvaluation[];
+  rahu_ketu_axis_career_outside?: {
+    is_triggered: boolean;
+    rule_number: number;
+    rule_title_en: string;
+    rule_title_ta: string;
+    explanation_en: string;
+    explanation_ta: string;
+  };
+}

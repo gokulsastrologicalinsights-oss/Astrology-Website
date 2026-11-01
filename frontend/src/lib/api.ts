@@ -39,6 +39,15 @@ import {
   KakshaTransitQuery,
 
   KakshaTransitResult,
+  BtrRequest,
+  BtrResponse,
+  DoubleTransitRequest,
+  DoubleTransitResponse,
+  DoubleTransitDomainConfig,
+  KakshaAlertRequest,
+  KakshaAlertsResponse,
+  BrighuNaadiRequest,
+  BrighuNaadiResponse,
 
   BirthInput,
 
@@ -5081,5 +5090,52 @@ export async function getTamilSastraDailyGuidance(payload: {
   return request<any>("/api/v1/tamil-sastra/daily-guidance", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+
+// ===========================================================================
+// Accuracy Boosters: BTR, Double Transit Radar, Kaksha Trigger Alerts API
+// ===========================================================================
+
+export async function rectifyBirthTime(req: BtrRequest): Promise<BtrResponse> {
+  return request<BtrResponse>("/api/v1/horoscope/kp/rectify", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getBtrEventTemplates(): Promise<{ templates: any[] }> {
+  return request<{ templates: any[] }>("/api/v1/horoscope/kp/rectify/templates");
+}
+
+export async function calculateDoubleTransit(req: DoubleTransitRequest): Promise<DoubleTransitResponse> {
+  return request<DoubleTransitResponse>("/api/v1/vedic/double-transit", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getDoubleTransitDomains(): Promise<{ domains: DoubleTransitDomainConfig[] }> {
+  return request<{ domains: DoubleTransitDomainConfig[] }>("/api/v1/vedic/double-transit/domains");
+}
+
+export async function calculateKakshaAlerts(req: KakshaAlertRequest): Promise<KakshaAlertsResponse> {
+  return request<KakshaAlertsResponse>("/api/v1/vedic/ashtakavarga/kaksha-alerts", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// ===========================================================================
+// Brighu Naadi Sangraha API (Dr. N. Srinivasan Shastry)
+// ===========================================================================
+
+export async function getBrighuNaadiAnalysis(
+  req: BrighuNaadiRequest
+): Promise<BrighuNaadiResponse> {
+  return request<BrighuNaadiResponse>("/api/v1/vedic/brighu-naadi", {
+    method: "POST",
+    body: JSON.stringify(req),
   });
 }

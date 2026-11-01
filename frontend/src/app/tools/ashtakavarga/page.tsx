@@ -607,6 +607,15 @@ function AshtakavargaContent() {
                 96 Kakshas
               </span>
             </button>
+
+            <Link
+              href="/tools/kaksha-transit"
+              className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl bg-amber-50/80 hover:bg-amber-100/90 text-amber-900 border border-amber-300 transition-all ml-auto self-center"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>Real-Time Trigger Radar</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-200 text-amber-900 font-bold">New</span>
+            </Link>
           </div>
 
           {/* TAB 1: SARVASHTAKAVARGA (SAV) */}

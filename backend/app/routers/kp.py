@@ -14,8 +14,10 @@ from app.schemas.kp import (
     TransitTimelineResponse,
 )
 from app.schemas.pdf_report import KpPdfReportRequest
+from app.schemas.btr import BtrRequest, BtrResponse
 from app.services.kp_service import calculate_kp_chart, calculate_horary_chart
 from app.services.kp_transit_timeline import compute_transit_timeline
+from app.services.kp_engine.btr_engine import run_birth_time_rectification, EVENT_TEMPLATES
 from app.services.auth_service import get_current_user
 from app.routers.pdf_reports import get_optional_current_user
 from app.services.kp_engine.kp_chart_repository import (
@@ -193,5 +195,30 @@ async def download_kp_chart_pdf_direct(
 ):
     from app.routers.pdf_reports import download_kp_pdf_by_id_endpoint
     return await download_kp_pdf_by_id_endpoint(chart_id, language=language, current_user=current_user)
+
+
+# 9. KP Birth Time Rectification (BTR) Endpoints
+@router.post("/kp/rectify", response_model=BtrResponse, summary="Perform KP Birth Time Rectification")
+def rectify_birth_time(request: BtrRequest) -> BtrResponse:
+    """Rectify birth time using past life events, KP Lagna Sub-Lord, and Vimshottari Dasa."""
+    try:
+        return run_birth_time_rectification(request)
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Birth time rectification failed: {str(exc)}",
+        )
+
+
+@router.get("/kp/rectify/templates", summary="Get standard life event templates for BTR")
+def get_btr_event_templates():
+    """Returns canonical life event presets (Marriage, Career, Childbirth, Accident, etc.)."""
+    return {"templates": EVENT_TEMPLATES}
+
 
 

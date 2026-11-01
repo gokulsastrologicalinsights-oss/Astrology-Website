@@ -4869,6 +4869,10 @@ from app.services.prediction_rules.debilitation_and_aspect_rules import (
 )
 INITIAL_RULES_CATALOGUE.extend(PLANETARY_DEBILITATION_AND_ASPECT_RULES)
 
+# Append Classical Brighu Naadi Sangraha Rules (Dr. N. Srinivasan Shastry)
+from app.services.prediction_rules.brighu_naadi_rules import BRIGHU_NAADI_PREDICTION_RULES
+INITIAL_RULES_CATALOGUE.extend(BRIGHU_NAADI_PREDICTION_RULES)
+
 
 class RulesRegistry:
     """In-memory and database-backed rule repository."""
