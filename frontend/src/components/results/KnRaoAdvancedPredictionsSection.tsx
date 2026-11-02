@@ -38,7 +38,16 @@ export function KnRaoAdvancedPredictionsSection({
   >("service_business");
 
   if (!data) {
-    return null;
+    return (
+      <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 my-8">
+        <Award className="w-8 h-8 text-orange-500 mx-auto mb-2 opacity-60" />
+        <p className="text-sm font-medium">
+          {language === "ta"
+            ? "கே.என். ராவ் ஆய்வு முடிவுகள் கிடைக்கவில்லை."
+            : "No K.N. Rao research data available."}
+        </p>
+      </div>
+    );
   }
 
   const {

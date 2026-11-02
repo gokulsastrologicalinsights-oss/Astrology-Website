@@ -386,6 +386,7 @@ export interface HoroscopeResponse {
   doshas?: UnifiedDoshaResponse;
   medical_astrology?: MedicalAstrologyResponse;
   natchathira_analysis?: NatchathiraDeepAnalysisResult;
+  kn_rao_research?: KnRaoAdvancedResearchResponse;
 }
 
 export interface LiveTransitsResponse {
@@ -788,6 +789,7 @@ export interface FullHoroscopeResult {
   shadbala?: ShadbalaResponse;
   medical_astrology?: MedicalAstrologyResponse;
   natchathira_analysis?: NatchathiraDeepAnalysisResult;
+  kn_rao_research?: KnRaoAdvancedResearchResponse;
   calculatedAt: string;
   savedId?: string;
   displayNumber?: number;

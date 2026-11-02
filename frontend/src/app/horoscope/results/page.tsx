@@ -39,7 +39,7 @@ import { BrighuNaadiSection } from "@/components/results/BrighuNaadiSection";
 import { NatchathiraAnalysisSection } from "@/components/results/NatchathiraAnalysisSection";
 import { KnRaoAdvancedPredictionsSection } from "@/components/results/KnRaoAdvancedPredictionsSection";
 import { calculateKnRaoResearch } from "@/lib/api";
-import { KnRaoAdvancedResearchResponse } from "@/lib/types";
+import { KnRaoAdvancedResearchResponse, HoroscopeRequest } from "@/lib/types";
 import { AstrologerCockpit } from "@/components/results/AstrologerCockpit";
 import {
   calculateNabhasha,
@@ -154,6 +154,7 @@ function HoroscopeResultsContent() {
   const [isLoadingNakshatra, setIsLoadingNakshatra] = useState<boolean>(false);
   const [knRaoData, setKnRaoData] = useState<KnRaoAdvancedResearchResponse | null>(null);
   const [isLoadingKnRao, setIsLoadingKnRao] = useState<boolean>(false);
+  const [knRaoError, setKnRaoError] = useState<string | null>(null);
 
   // Live Transits state
   const [showTransits, setShowTransits] = useState<boolean>(false);
@@ -204,6 +205,85 @@ function HoroscopeResultsContent() {
       fetchLiveTransits();
     }
   };
+
+  // K.N. Rao Research fetcher
+  const fetchKnRaoResearch = useCallback(async () => {
+    const birthDate = result?.clientInputs?.birthDate || (result?.horoscope as any)?.birth_date;
+    const birthTime = result?.clientInputs?.birthTime || (result?.horoscope as any)?.birth_time;
+    if (!birthDate || !birthTime) return;
+
+    setIsLoadingKnRao(true);
+    setKnRaoError(null);
+    try {
+      const payload: HoroscopeRequest = {
+        birth_date: birthDate,
+        birth_time: birthTime,
+        timezone: result?.clientInputs?.timezone || result?.horoscope?.metadata?.local_timezone || "Asia/Kolkata",
+        latitude: result?.clientInputs?.latitude ?? result?.horoscope?.metadata?.coordinates?.latitude ?? 13.0827,
+        longitude: result?.clientInputs?.longitude ?? result?.horoscope?.metadata?.coordinates?.longitude ?? 80.2707,
+        ayanamsa: result?.clientInputs?.ayanamsaId ?? result?.horoscope?.metadata?.ayanamsa_id ?? 0,
+        house_system: result?.clientInputs?.houseSystemId ?? 0,
+        include_panchang: false,
+        include_outer_planets: false,
+      };
+      const res = await calculateKnRaoResearch(payload);
+      if (res) {
+        setKnRaoData(res);
+        setResult((prev) => {
+          if (!prev) return prev;
+          const updated: FullHoroscopeResult = {
+            ...prev,
+            kn_rao_research: res,
+            horoscope: {
+              ...prev.horoscope,
+              kn_rao_research: res,
+            },
+          };
+          saveActiveCalculation(updated);
+
+          const targetSavedId = prev.savedId || idParam;
+          if (targetSavedId) {
+            const idempotencyKey =
+              prev.idempotencyKey ||
+              (prev as any).calculation_result?.idempotency_key ||
+              `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            const snapshot = prepareCalculationSnapshot(updated, idempotencyKey);
+            fetch(`/api/horoscopes/${targetSavedId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ calculation_result: snapshot }),
+            }).catch((err) => {
+              console.warn("Failed to persist KN Rao research to saved horoscope:", err);
+            });
+          }
+          return updated;
+        });
+      }
+    } catch (err: unknown) {
+      console.error("Failed to calculate K.N. Rao Advanced Research:", err);
+      setKnRaoError(
+        language === "ta"
+          ? "கே.என். ராவ் ஆய்வுக் கணிப்பில் பிழை ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+          : "Failed to evaluate K.N. Rao empirical research models. Please retry."
+      );
+    } finally {
+      setIsLoadingKnRao(false);
+    }
+  }, [result, idParam, language]);
+
+  // Auto-load or calculate K.N. Rao Advanced Research when navigating to kn-rao tab
+  useEffect(() => {
+    if (secondaryTab === "kn-rao" && !knRaoData && !isLoadingKnRao) {
+      const existingKnRao = (result as any)?.kn_rao_research || (result?.horoscope as any)?.kn_rao_research;
+      if (existingKnRao) {
+        setKnRaoData(existingKnRao);
+      } else if ((result?.clientInputs?.birthDate || (result?.horoscope as any)?.birth_date) && !knRaoError) {
+        fetchKnRaoResearch();
+      }
+    } else if (!knRaoData && ((result as any)?.kn_rao_research || (result?.horoscope as any)?.kn_rao_research)) {
+      setKnRaoData((result as any)?.kn_rao_research || (result?.horoscope as any)?.kn_rao_research);
+    }
+  }, [secondaryTab, knRaoData, isLoadingKnRao, knRaoError, result, fetchKnRaoResearch]);
 
   // Auto-load or analyze Nakshatras when navigating to Nakshatra tab
   useEffect(() => {
@@ -317,7 +397,7 @@ function HoroscopeResultsContent() {
         ayanamsa: result.clientInputs.ayanamsaId,
       };
 
-      const [nabhashaRes, ashtakavargaRes, vedicYogaRes, vargaRes, shodashvargaRes, doshasRes, shadbalaRes, medicalRes] = await Promise.all([
+      const [nabhashaRes, ashtakavargaRes, vedicYogaRes, vargaRes, shodashvargaRes, doshasRes, shadbalaRes, medicalRes, knRaoRes] = await Promise.all([
         calculateNabhasha(birthInput).catch((e) => {
           console.warn("Nabhasha calculation failed:", e);
           return null;
@@ -350,7 +430,21 @@ function HoroscopeResultsContent() {
           console.warn("Medical astrology calculation failed:", e);
           return null;
         }),
+        calculateKnRaoResearch({
+          ...birthInput,
+          ayanamsa: birthInput.ayanamsa ?? 0,
+          house_system: result.clientInputs.houseSystemId ?? 0,
+          include_panchang: false,
+          include_outer_planets: false,
+        }).catch((e) => {
+          console.warn("K.N. Rao research calculation failed:", e);
+          return null;
+        }),
       ]);
+
+      if (knRaoRes) {
+        setKnRaoData(knRaoRes);
+      }
 
       const updatedHoroscope = {
         ...result.horoscope,
@@ -362,6 +456,7 @@ function HoroscopeResultsContent() {
         doshas: doshasRes || result.horoscope.doshas,
         shadbala: shadbalaRes || (result.horoscope as any).shadbala,
         medical_astrology: medicalRes || result.horoscope.medical_astrology,
+        kn_rao_research: knRaoRes || (result.horoscope as any)?.kn_rao_research,
       };
 
       const updatedResult: FullHoroscopeResult = {
@@ -373,6 +468,7 @@ function HoroscopeResultsContent() {
         doshas: doshasRes || (result as any).doshas,
         shadbala: shadbalaRes || result.shadbala,
         medical_astrology: medicalRes || result.medical_astrology,
+        kn_rao_research: knRaoRes || (result as any)?.kn_rao_research,
         ...(shodashvargaRes ? { shodashvarga: shodashvargaRes } : {}),
       };
 
@@ -445,17 +541,23 @@ function HoroscopeResultsContent() {
           }
 
           const existingDoshas = calc.horoscope?.doshas || calc.doshas;
+          const existingKnRao = calc.horoscope?.kn_rao_research || calc.kn_rao_research;
+          if (existingKnRao) {
+            setKnRaoData(existingKnRao);
+          }
           const unpackedResult: FullHoroscopeResult = {
             horoscope: {
               ...calc.horoscope,
               doshas: existingDoshas,
+              kn_rao_research: existingKnRao,
             },
             dasa: calc.dasa,
             kp: calc.kp,
             nabhasha: calc.horoscope?.nabhasha_yogas || calc.nabhasha,
             ashtakavarga: calc.horoscope?.ashtakavarga || calc.ashtakavarga,
             vedic_yogas: calc.horoscope?.vedic_yogas || calc.vedic_yogas,
-            natchathira_analysis: calc.horoscope?.natchathira_analysis || calc.natchathira_analysis, 
+            natchathira_analysis: calc.horoscope?.natchathira_analysis || calc.natchathira_analysis,
+            kn_rao_research: existingKnRao,
             doshas: existingDoshas,
             calculatedAt: calc.calculatedAt || item.created_at,
             savedId: item.id,
@@ -1812,12 +1914,34 @@ function HoroscopeResultsContent() {
                           : "Evaluating K.N. Rao empirical research models..."}
                       </p>
                     </div>
-                  ) : (
+                  ) : knRaoData ? (
                     <KnRaoAdvancedPredictionsSection
                       data={knRaoData}
                       horoscope={horoscope}
                       language={language as "en" | "ta"}
                     />
+                  ) : (
+                    <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                      <Award className="w-10 h-10 text-orange-500 mx-auto" />
+                      <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                        {language === "ta"
+                          ? "கே.என். ராவ் மேம்பட்ட ஆய்வு கணிப்புகள்"
+                          : "K.N. Rao Advanced Research Models"}
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
+                        {knRaoError ||
+                          (language === "ta"
+                            ? "சுயதொழில் vs உத்தியோகம், தொழில்நுட்ப மதிப்பீடு, உபபத தாம்பத்தியம் மற்றும் மிருத்யு பாகை ஆய்வுகளைக் கணக்கிட கீழே உள்ள பொத்தானை அழுத்தவும்."
+                            : "Click below to evaluate Service vs Business, Technical scoring, Upapada discord, and Mrityu Bhaga models.")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={fetchKnRaoResearch}
+                        className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm transition-all shadow-sm"
+                      >
+                        {language === "ta" ? "கணக்கீட்டைத் தொடங்கு" : "Calculate Research Models"}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
