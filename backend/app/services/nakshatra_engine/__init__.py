@@ -18,6 +18,10 @@ from app.services.nakshatra_engine.transit_evaluator import (
     get_ebook_treatise,
     get_nakshatra_prediction,
 )
+from app.services.nakshatra_engine.natchathira_deep_analyzer import (
+    analyze_saved_chart_nakshatras,
+    extract_chart_contexts,
+)
 
 __all__ = [
     "NAKSHATRAS_CATALOG",
@@ -34,4 +38,6 @@ __all__ = [
     "get_28_nakshatra_table",
     "get_ebook_treatise",
     "get_nakshatra_prediction",
+    "analyze_saved_chart_nakshatras",
+    "extract_chart_contexts",
 ]

@@ -118,14 +118,14 @@ ASHTAKAVARGA_CONTRIBUTIONS: Dict[str, Dict[str, Tuple[int, ...]]] = {
 }
 
 # Rashi Gunaka (Sign Multipliers for Shodhya Pinda per BPHS Ch. 69)
-# Aries=7, Taurus=10, Gemini=8, Cancer=4, Leo=10, Virgo=5, Libra=7, Scorpio=8, Sagittarius=9, Capricorn=5, Aquarius=11, Pisces=12
+# Aries=7, Taurus=10, Gemini=8, Cancer=4, Leo=10, Virgo=6, Libra=7, Scorpio=8, Sagittarius=9, Capricorn=5, Aquarius=11, Pisces=12
 RASHI_GUNAKA: Dict[int, int] = {
     1: 7,
     2: 10,
     3: 8,
     4: 4,
     5: 10,
-    6: 5,
+    6: 6,
     7: 7,
     8: 8,
     9: 9,

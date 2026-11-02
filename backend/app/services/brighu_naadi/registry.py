@@ -867,6 +867,504 @@ BRIGHU_NAADI_RULES_DATABASE: List[Dict[str, Any]] = [
         "interpretation_ta": "ஜாதகர் அரசுத் துறைகளில் மிக உயர்ந்த அதிகாரமிக்க உயர் பதவியை வகிப்பார்.",
         "source_page": "Page 125",
     },
+    # -----------------------------------------------------------------------
+    # VOCATIONAL & KARMA KARAKA COMBINATIONS (R. G. RAO'S 500 CHARTS)
+    # -----------------------------------------------------------------------
+    {
+        "rule_id": "BN-SAT-013",
+        "category": "profession",
+        "title_en": "Saturn & Moon in Exaltation or Water Signs (Chandra Mouli Yoga)",
+        "title_ta": "சனி - சந்திரன் சேர்க்கை (சந்திர மௌலி யோகம் / துறவு-அரசு கௌரவம்)",
+        "pattern": {"conjunction": ["Saturn", "Moon"]},
+        "interpretation_en": (
+            "Chandra Mouli Yoga: Saturn and Moon conjoined in exaltation or water signs (Libra, Cancer, Pisces). "
+            "Bestows high ascetic renown, profound spiritual intellect, patronage of sacred institutions, or distinguished municipal and public honors."
+        ),
+        "interpretation_ta": (
+            "சந்திர மௌலி யோகம்: சனியும் சந்திரனும் இணைந்திருப்பது சிவபக்தி, தர்ம அறக்கட்டளை தலைமை, ஆன்மீக நாட்டம், "
+            "துறவு மனப்பாங்கு அல்லது மக்கள் மற்றும் அரசு வழியில் உயரிய கௌரவங்களை வழங்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Chart 31 & Chart 70, pp. 31, 54",
+    },
+    {
+        "rule_id": "BN-SAT-014",
+        "category": "profession",
+        "title_en": "Saturn, Venus & Rahu: Cinema, Visual Arts & Motion Picture Industry",
+        "title_ta": "சனி, சுக்கிரன் மற்றும் ராகு: திரைப்படம், காட்சி ஊடகம் மற்றும் நிழற்கலை",
+        "pattern": {"conjunction": ["Saturn", "Venus", "Rahu"]},
+        "interpretation_en": (
+            "Saturn conjoined with Venus (fine arts/aesthetics) and Rahu (shadows/dark halls/optics) "
+            "governs prestigious success in cinema, photography, television production, projection engineering, and glamorous entertainment."
+        ),
+        "interpretation_ta": (
+            "சனி, சுக்கிரன் (கலை) மற்றும் ராகு (இருள்/நிழல்) சேர்க்கை சினிமா தயாரிப்பு, திரைப்பட இயக்கம், "
+            "ஒளிப்பதிவு, தொலைக்காட்சி மற்றும் கவர்ச்சி ஊடகத் துறைகளில் அபார சாதனையைத் தரும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 70, 362, 381, pp. 54, 243, 253",
+    },
+    {
+        "rule_id": "BN-SAT-015",
+        "category": "profession",
+        "title_en": "Saturn, Venus, Mars & Rahu: Petroleum, Chemical Fuels & Motor Commerce",
+        "title_ta": "சனி, சுக்கிரன், செவ்வாய் மற்றும் ராகு: பெட்ரோலியம், எரிபொருள் மற்றும் மோட்டார் வாகன வர்த்தகம்",
+        "pattern": {"conjunction": ["Saturn", "Venus", "Mars"]},
+        "interpretation_en": (
+            "Saturn contacting Venus (subterranean oils), Mars (machinery/fire), and Rahu (chemical fumes) "
+            "signifies petroleum refineries, gasoline dealerships, synthetic fuel logistics, automobile garages, and freight transportation."
+        ),
+        "interpretation_ta": (
+            "சனி, சுக்கிரன் (கச்சா எண்ணெய்), செவ்வாய் (இயந்திரம்/தீ) மற்றும் ராகு (வாயு/புகை) சேர்க்கை "
+            "பெட்ரோல் பங்க், இரசாயனம், கச்சா எண்ணெய் சுத்திகரிப்பு மற்றும் ஆட்டோமொபைல் வாகன வர்த்தகத்தில் பெருவெற்றி தரும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 357, 362, pp. 240, 243",
+    },
+    {
+        "rule_id": "BN-SAT-016",
+        "category": "profession",
+        "title_en": "Saturn & Rahu in Airy Signs: Aeronautics, Aviation & Space Electronics",
+        "title_ta": "காற்று ராசிகளில் சனி - ராகு: விமானவியல், விண்வெளி மற்றும் வான்வழிப் போக்குவரத்து",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Saturn", "Rahu"]},
+                {"planet_in_any_sign": {"planet": "Saturn", "signs": [3, 7, 11, 12]}},
+            ]
+        },
+        "interpretation_en": (
+            "Saturn conjunct Rahu in airy signs (Gemini, Libra, Aquarius) or Pisces points to aeronautical engineering, "
+            "aircraft piloting, international flight operations, satellite electronics, and foreign air transport networks."
+        ),
+        "interpretation_ta": (
+            "மிதுனம், துலாம், கும்பம் அல்லது மீனத்தில் சனியும் ராகுவும் இணைவது விமானவியல் பொறியியல், ஏர்லைன்ஸ் துறை, "
+            "விமானி, செயற்கைக்கோள் எலக்ட்ரானிக்ஸ் மற்றும் வான்வழி சரக்கு போக்குவரத்து பணிகளை அளிக்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 112, 114, pp. 114, 118",
+    },
+    {
+        "rule_id": "BN-SAT-017",
+        "category": "profession",
+        "title_en": "Saturn, Moon & Ketu: Water Resources, Civil Irrigation & Liquid Pharmacy",
+        "title_ta": "சனி, சந்திரன் மற்றும் கேது: நீர்ப்பாசன பொறியியல், குடிநீர் வழங்கல் மற்றும் திரவ மருந்தகம்",
+        "pattern": {"conjunction": ["Saturn", "Moon", "Ketu"]},
+        "interpretation_en": (
+            "Saturn conjoined with Moon (water/fluids) and Ketu (canals/microbes/root herbs) indicates civil irrigation projects, "
+            "dam and canal engineering, municipal water distribution, or herbal liquid pharmacology and sacred temple management."
+        ),
+        "interpretation_ta": (
+            "சனி, சந்திரன் மற்றும் கேது சேர்க்கை அணைக்கட்டு, நீர்ப்பாசன கால்வாய் பொறியியல், குடிநீர் வழங்கல், "
+            "மூலிகை திரவ மருந்து தயாரிப்பு அல்லது திருத்தல வழிபாட்டு மேலாண்மையைக் குறிக்கிறது."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 41, 107, pp. 31, 109",
+    },
+    {
+        "rule_id": "BN-SAT-018",
+        "category": "profession",
+        "title_en": "Saturn, Mars & Ketu: Precision Surgery, Medical Hardware & Defense Weapons",
+        "title_ta": "சனி, செவ்வாய் மற்றும் கேது: அறுவை சிகிச்சை நிபுணர், மருத்துவ கருவிகள் மற்றும் பாதுகாப்பு உபகரணங்கள்",
+        "pattern": {"conjunction": ["Saturn", "Mars", "Ketu"]},
+        "interpretation_en": (
+            "Saturn with Mars (blood/iron/sharp blades) and Ketu (incisions/sutures) creates highly skilled surgeons, "
+            "manufacturers of hospital surgical cutlery, orthopedic specialists, or defense ordnance and weaponry engineers."
+        ),
+        "interpretation_ta": (
+            "சனி, செவ்வாய் (ரத்தம், இரும்பு) மற்றும் கேது (அறுவை, தையல்) சேர்க்கை அறுவை சிகிச்சை நிபுணர் (Surgeon), "
+            "மருத்துவக் கூர்முனை உபகரணம் தயாரிப்பு அல்லது ராணுவ பாதுகாப்பு தளவாட உற்பத்தியை அளிக்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 102, 107, pp. 107, 109",
+    },
+    {
+        "rule_id": "BN-SAT-019",
+        "category": "profession",
+        "title_en": "Saturn with Mercury in Virgo: Chartered Accountant, Auditor & Tax Advisor",
+        "title_ta": "கன்னியில் சனியுடன் புதன்: தலைமை கணக்காயர் (CA), தணிக்கையாளர் மற்றும் வரி ஆலோசகர்",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Saturn", "Mercury"]},
+                {"planet": "Mercury", "sign": 6},
+            ]
+        },
+        "interpretation_en": (
+            "Saturn conjoined with exalted Mercury in analytical Virgo bestows extraordinary mathematical acumen, "
+            "qualifying the native as a Chartered Accountant, corporate tax auditor, financial commissioner, or banking director."
+        ),
+        "interpretation_ta": (
+            "கன்னியில் உச்சம் பெற்ற புதனுடன் சனி இணைந்திருப்பது கணக்கியல் நிபுணர் (CA), தலைமை தணிக்கை அதிகாரி, "
+            "கார்ப்பரேட் வரி ஆலோசகர் மற்றும் வங்கி உயர் நிதி நிர்வாகப் பதவிகளை வழங்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 19, 70, pp. 20, 54",
+    },
+    {
+        "rule_id": "BN-SAT-020",
+        "category": "profession",
+        "title_en": "Saturn, Mercury & Moon: Printing Press, Journalism & Publishing Enterprise",
+        "title_ta": "சனி, புதன் மற்றும் சந்திரன்: அச்சுக்கூடம், பத்திரிகைத்துறை மற்றும் பதிப்பகத் தொழில்",
+        "pattern": {"conjunction": ["Saturn", "Mercury", "Moon"]},
+        "interpretation_en": (
+            "Saturn contacting Mercury (intellect/writings) and Moon (paper/printing ink/distribution) "
+            "denotes printing press proprietors, newspaper columnists, publishers of literature, and large-scale paper merchants."
+        ),
+        "interpretation_ta": (
+            "சனி, புதன் (எழுத்து/அறிவு) மற்றும் சந்திரன் (காகிதம்/மை/ஊடகம்) சேர்க்கை அச்சுக்கூடம், தினசரி பத்திரிகை ஆசிரியர், "
+            "புத்தக பதிப்பகம் மற்றும் மொத்த காகித வர்த்தகத்தில் பெரும் நற்பெயர் ஈட்டச் செய்யும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 39, 200, pp. 39, 205",
+    },
+    {
+        "rule_id": "BN-SAT-021",
+        "category": "profession",
+        "title_en": "Saturn, Jupiter & Sun: High Court Magistrate, Judiciary Head & Chief State Advisor",
+        "title_ta": "சனி, குரு மற்றும் சூரியன்: உயர்நீதிமன்ற நீதிபதி, தலைமை நீதித்துறை மற்றும் அரசு ஆலோசகர்",
+        "pattern": {"conjunction": ["Saturn", "Jupiter", "Sun"]},
+        "interpretation_en": (
+            "Saturn uniting with Devaguru Jupiter and royal Sun forms an unexcelled Raja-Dharma Yoga in livelihood. "
+            "The native becomes a High Court judge, district magistrate, constitutional legal counsel, or senior civil secretary (IAS)."
+        ),
+        "interpretation_ta": (
+            "சனி, குரு மற்றும் சூரியன் ஆகிய மூவர் சேர்க்கை உயர்நீதிமன்ற நீதிபதி, மாவட்ட ஆட்சியர், மாஜிஸ்திரேட் அல்லது "
+            "அரசாங்கத்தின் தலைமை சட்ட ஆலோசகர் போன்ற உன்னத தர்ம-அதிகாரப் பதவிகளை அளிக்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 80, 137, pp. 90, 140",
+    },
+    {
+        "rule_id": "BN-SAT-022",
+        "category": "profession",
+        "title_en": "Saturn, Venus & Ketu: Textile Mills, Silk Weaving & Garment Export",
+        "title_ta": "சனி, சுக்கிரன் மற்றும் கேது: ஜவுளி மில், பட்டு நெசவு மற்றும் ஆடை ஏற்றுமதி வர்த்தகம்",
+        "pattern": {"conjunction": ["Saturn", "Venus", "Ketu"]},
+        "interpretation_en": (
+            "Saturn conjoined with Venus (apparel/luxury cloth) and Ketu (threads/weaving/spinning) "
+            "governs textile manufacturing, mechanized spinning mills, silk saree weaving, fashion design, and global garment export."
+        ),
+        "interpretation_ta": (
+            "சனி, சுக்கிரன் (ஆடம்பர ஆடை) மற்றும் கேது (நூல்/நெசவு) சேர்க்கை டெக்ஸ்டைல் மில், பட்டு நெசவுத் தொழில், "
+            "ஆடை வடிவமைப்பு மற்றும் சர்வதேச ஆடை ஏற்றுமதி மூலம் நிறைவான செல்வத்தை அருளும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 35, 41, pp. 36, 41",
+    },
+    # -----------------------------------------------------------------------
+    # JEEVA KARAKA, LIFE FORCE & DHARMA (R. G. RAO'S 500 CHARTS)
+    # -----------------------------------------------------------------------
+    {
+        "rule_id": "BN-JUP-017",
+        "category": "spiritual",
+        "title_en": "Jupiter Conjoined with Ketu: Maha Gnana Yoga & Supreme Vedanta Awakening",
+        "title_ta": "குரு - கேது சேர்க்கை: மகா ஞான யோகம் மற்றும் வேதாந்த ஆன்மீக விழிப்புணர்வு",
+        "pattern": {"conjunction": ["Jupiter", "Ketu"]},
+        "interpretation_en": (
+            "Jeeva Karaka Jupiter conjoined with Moksha Karaka Ketu generates Maha Gnana Yoga. "
+            "Bestows deep intuition, mastery over Vedic philosophy, dispassion towards worldly vanity, and guidance of spiritual seekers."
+        ),
+        "interpretation_ta": (
+            "ஜீவகாரகன் குருவும் ஞானகாரகன் கேதுவும் இணைவது மகா ஞான யோகமாகும். ஆழ்ந்த உள்ளுணர்வு, "
+            "வேதாந்த சாஸ்திர ஞானம், ஆன்மீக பற்று மற்றும் உலக மாயைகளில் பற்றற்ற மேலான நிலையைத் தரும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 19, 41, pp. 20, 41",
+    },
+    {
+        "rule_id": "BN-JUP-018",
+        "category": "life_force",
+        "title_en": "Jupiter Conjoined with Rahu: Guru Chandal Yoga & Unconventional Breakthroughs",
+        "title_ta": "குரு - ராகு சேர்க்கை: குரு சண்டாள யோகம் மற்றும் புதுமை சிந்தனைகள்",
+        "pattern": {"conjunction": ["Jupiter", "Rahu"]},
+        "interpretation_en": (
+            "Jupiter conjunct Rahu forms Guru Chandal Yoga. The native challenges dogmatic orthodoxy, "
+            "masters foreign knowledge or cutting-edge sciences, and achieves dramatic breakthroughs through unconventional ventures."
+        ),
+        "interpretation_ta": (
+            "குருவும் ராகுவும் இணைவது பாரம்பரிய மரபுகளைத் தாண்டி சிந்திக்கும் திறனைத் தரும். வெளிநாட்டுத் தொடர்பு, "
+            "நவீன அறிவியல், ஆராய்ச்சி மற்றும் வழக்கத்திற்கு மாறான வழிகளில் பெரும் முன்னேற்றம் காண்பார்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 107, 109, pp. 109, 114",
+    },
+    {
+        "rule_id": "BN-JUP-019",
+        "category": "property",
+        "title_en": "Jupiter with Mars: Guru-Mangala Yoga, Supreme Landed Estate & Fearless Courage",
+        "title_ta": "குரு - செவ்வாய் சேர்க்கை: குரு-மங்கள யோகம், பூமி யோகம் மற்றும் அஞ்சா நெஞ்சம்",
+        "pattern": {"conjunction": ["Jupiter", "Mars"]},
+        "interpretation_en": (
+            "Guru-Mangala Yoga: Jupiter conjoined with Mars gives high courage, administrative dynamism, "
+            "vast acquisition of residential and agricultural lands, and fraternal prosperity."
+        ),
+        "interpretation_ta": (
+            "குரு-மங்கள யோகம்: குருவும் செவ்வாயும் இணைந்திருப்பது அஞ்சா நெஞ்சம், நிலபுலன்கள் வாங்கும் யோகம், "
+            "சொந்த வீடு, விவசாயப் பண்ணைகள் மற்றும் சகோதர வழியில் மேன்மையை அளிக்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 102, 107, pp. 107, 109",
+    },
+    {
+        "rule_id": "BN-JUP-020",
+        "category": "wealth",
+        "title_en": "Jupiter with Sun in Dharma Signs: Surya-Guru Raja Sambandha & Civic Renown",
+        "title_ta": "தர்ம ராசிகளில் குருவுடன் சூரியன்: சூரிய-குரு ராஜ யோகம் மற்றும் நற்புகழ்",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Jupiter", "Sun"]},
+                {"planet_in_any_sign": {"planet": "Jupiter", "signs": [1, 5, 9]}},
+            ]
+        },
+        "interpretation_en": (
+            "When Jupiter and Sun unite in fiery dharma signs (Aries, Leo, Sagittarius), the native inherits "
+            "distinguished paternal heritage, receives state patronages, and enjoys immaculate civic honor."
+        ),
+        "interpretation_ta": (
+            "மேஷம், சிம்மம், தனுசில் குருவும் சூரியனும் இணைந்திருப்பது உயரிய தந்தை வழி செல்வாக்கு, அரசு விருதுகள், "
+            "உயர்ந்த தலைமைப் பதவி மற்றும் சமுதாய மதிப்பைப் பெற்றுத் தரும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 1, 19, pp. 4, 20",
+    },
+    # -----------------------------------------------------------------------
+    # MARITAL DYNAMICS & GENDER-SPECIFIC KARAKAS (R. G. RAO'S 500 CHARTS)
+    # -----------------------------------------------------------------------
+    {
+        "rule_id": "BN-VEN-006",
+        "category": "health",
+        "title_en": "Venus in Leo with Ketu in Virgo: Uterine & Abdominal Care for Spouse",
+        "title_ta": "சிம்மத்தில் சுக்கிரன், கன்னியில் கேது: மனைவியின் கர்ப்பப்பை மற்றும் உடல்நலப் பாதுகாப்பு",
+        "pattern": {
+            "all_of": [
+                {"planet": "Venus", "sign": 5},
+                {"planet": "Ketu", "sign": 6},
+            ]
+        },
+        "interpretation_en": (
+            "Venus in fiery Leo having ascetic Ketu in the 2nd house (Virgo) indicates abdominal, digestive, "
+            "or uterine sensitivities for the native's wife, benefiting from early gynecological vigilance and sattvic diet."
+        ),
+        "interpretation_ta": (
+            "சிம்மத்தில் சுக்கிரன் நின்று அடுத்த வீடான கன்னியில் கேது இருப்பது மனைவியின் அடிவயிறு, செரிமானம் மற்றும் "
+            "கர்ப்பப்பை சார்ந்த உடல் உபாதைகளைக் குறிக்கும். முன் எச்சரிக்கையும் மருத்துவப் பராமரிப்பும் அவசியம்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 19, 87, pp. 20, 92",
+    },
+    {
+        "rule_id": "BN-VEN-007",
+        "category": "marriage",
+        "title_en": "Venus Hemmed Between Mars & Saturn: Pap Kartari on Kalatra Karaka",
+        "title_ta": "செவ்வாய் மற்றும் சனிக்கு இடையே சுக்கிரன் (பாப கர்த்தாரி யோகம்): திருமண தாமதம் & புரிதல்",
+        "pattern": {"hemmed_between": {"target_planet": "Venus", "malefic_1": "Saturn", "malefic_2": "Mars"}},
+        "interpretation_en": (
+            "When Kalatra Karaka Venus is hemmed between Mars and Saturn in adjacent signs, matrimonial settlement "
+            "faces procedural delays and requires mutual emotional empathy to maintain lasting harmony."
+        ),
+        "interpretation_ta": (
+            "களத்திர காரகன் சுக்கிரன் செவ்வாய் மற்றும் சனி ஆகிய இரு பாப கிரகங்களுக்கு நடுவே சிக்குவது திருமணத்தில் காலதாமதத்தையும், "
+            "தம்பதியரிடையே பொறுமையும் பரஸ்பர விட்டுக் கொடுத்தலையும் கோருகிறது."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 22, 102, pp. 22, 107",
+    },
+    {
+        "rule_id": "BN-VEN-008",
+        "category": "marriage",
+        "title_en": "Moon & Venus in Mutual 7th Opposition: Romantic Magnetism & Sensitivities",
+        "title_ta": "சந்திரன் - சுக்கிரன் சமசப்தகம்: தீவிர கலை உணர்வு, வசீகரம் மற்றும் திருமண சலனங்கள்",
+        "pattern": {"relative_house": {"from": "Moon", "to": "Venus", "house": 7}},
+        "interpretation_en": (
+            "Mutual 7th aspect between Moon and Venus induces immense magnetic charm, artistic flair, "
+            "and emotional romantic sensitivity, calling for stability and conscious understanding in marital life."
+        ),
+        "interpretation_ta": (
+            "சந்திரனும் சுக்கிரனும் சமசப்தகமாக (7-ஆம் பார்வையில்) நின்றிருப்பது பேரழகு, கலை நயம், தீவிர காதலுணர்வை ஏற்படுத்தும். "
+            "குடும்ப வாழ்வில் உணர்ச்சிவசப்படாமல் நிதானம் காப்பது நலம் பயக்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Chart 362, p. 243",
+    },
+    {
+        "rule_id": "BN-MAR-004",
+        "category": "marriage",
+        "title_en": "Female Chart: Mars with Rahu (Husband in Technical, High-Risk or Foreign Field)",
+        "title_ta": "பெண் ஜாதகம்: செவ்வாயுடன் ராகு - கணவர் தொழில்நுட்பம், வெளிநாடு அல்லது சாகசத் துறையில் இருத்தல்",
+        "pattern": {
+            "all_of": [
+                {"gender": "female"},
+                {"conjunction": ["Mars", "Rahu"]},
+            ]
+        },
+        "interpretation_en": (
+            "In a female horoscope, Husband Karaka Mars conjoined with Rahu signifies a husband engaged in high technology, "
+            "aviation, chemicals, international trade, or hazardous machinery, possessing an adventurous disposition."
+        ),
+        "interpretation_ta": (
+            "பெண் ஜாதகத்தில் கணவர் காரகரான செவ்வாய் ராகுவுடன் இணைந்திருப்பது கணவர் தகவல் தொழில்நுட்பம், விமானம், "
+            "கெமிக்கல், வெளிநாட்டு தொழில் அல்லது சாகசப் பணிகளில் தீவிரமாக ஈடுபடுவார் என்பதைக் காட்டுகிறது."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 31, 362, pp. 26, 243",
+    },
+    {
+        "rule_id": "BN-MAR-005",
+        "category": "marriage",
+        "title_en": "Female Chart: Mars with Jupiter (Devaguru Kalatra Yoga - Highly Noble Husband)",
+        "title_ta": "பெண் ஜாதகம்: செவ்வாயுடன் குரு (தேவகுரு களத்திர யோகம்) - உத்தம குணமும் அந்தஸ்தும் கொண்ட கணவர்",
+        "pattern": {
+            "all_of": [
+                {"gender": "female"},
+                {"conjunction": ["Mars", "Jupiter"]},
+            ]
+        },
+        "interpretation_en": (
+            "In a female chart, Mars uniting with Devaguru Jupiter produces an exceptional spouse blessed with "
+            "scholarly learning, righteous conduct, generous nature, high societal status, and enduring marital bliss."
+        ),
+        "interpretation_ta": (
+            "பெண் ஜாதகத்தில் செவ்வாயும் குருவும் இணைந்திருப்பது தர்ம சிந்தனையும், கல்வியறிவும், சமுதாய மரியாதையும் மற்றும் "
+            "நிறைந்த பாசமும் கொண்ட உத்தம கணவரை அளிக்கும் தேவகுரு யோகமாகும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 31, 109, pp. 26, 114",
+    },
+    {
+        "rule_id": "BN-MAR-006",
+        "category": "marriage",
+        "title_en": "Female Chart: Mars with Ketu (Husband of Spiritual, Legal or Disciplined Nature)",
+        "title_ta": "பெண் ஜாதகம்: செவ்வாயுடன் கேது - ஆன்மீக, சட்ட அல்லது கண்டிப்பான சுபாவம் கொண்ட கணவர்",
+        "pattern": {
+            "all_of": [
+                {"gender": "female"},
+                {"conjunction": ["Mars", "Ketu"]},
+            ]
+        },
+        "interpretation_en": (
+            "In a female chart, Mars with Ketu denotes a husband who is deeply spiritual, philosophical, "
+            "disciplined, or engaged in legal, medical, or research fields, with a modest, detached temperament."
+        ),
+        "interpretation_ta": (
+            "பெண் ஜாதகத்தில் செவ்வாய் கேதுவுடன் சேர்ந்திருப்பது கணவர் ஆன்மீக நாட்டம், சட்டம், மருத்துவம் அல்லது "
+            "ஆராய்ச்சியில் ஈடுபடுபவராகவும், பற்றற்ற எளிய சுபாவம் கொண்டவராகவும் இருப்பார் என்பதைக் குறிக்கும்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 31, 41, pp. 26, 41",
+    },
+    # -----------------------------------------------------------------------
+    # PREVIOUS BIRTH KARMA, CURSES & SHASTRAIC REMEDIES (R. G. RAO'S CHARTS)
+    # -----------------------------------------------------------------------
+    {
+        "rule_id": "BN-KRM-001",
+        "category": "spiritual",
+        "title_en": "Daivadroha / Sadhu Curse: Jupiter Afflicted by Saturn & Rahu (Remedy: 48 Somavara Vratam)",
+        "title_ta": "தெய்வத் துரோகம் / சாது சாபம்: சனி-ராகுவால் குரு பாதிப்பு (பரிகாரம்: 48 சோமவார விரதம் & கோகர்ண யாத்திரை)",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Jupiter", "Rahu"]},
+                {"has_planet_in_house": {"from": "Jupiter", "planet": "Saturn", "house": 7}},
+            ]
+        },
+        "interpretation_en": (
+            "Past Life Karmic Indication: Breaches of sacred oaths or disrespect toward spiritual preceptors in past birth "
+            "creates career roadblocks. Classical Remedy: Observing 48 consecutive Monday fasts (Somavara Vrata), "
+            "undertaking pilgrimage to Gokarna Mahabaleshwar, and performing Annadanam to sadhus."
+        ),
+        "interpretation_ta": (
+            "முற்பிறவி கர்ம வினை: ஆன்மீக பெரியோர்களை அவமதித்ததால் ஏற்படும் தடைகள். "
+            "சாஸ்திர பரிகாரம்: 48 வாரங்கள் திங்கட்கிழமை சோமவார விரதம் இருத்தல், கோகர்ணம் மகாபலேஸ்வரர் தரிசனம் செய்தல் "
+            "மற்றும் சாதுக்களுக்கு அன்னதானம் செய்தல்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 1, 31, pp. 4, 26",
+    },
+    {
+        "rule_id": "BN-KRM-002",
+        "category": "spiritual",
+        "title_en": "Stri Dosha: Venus Afflicted by Ketu & Mars (Remedy: Vedaranyam Pilgrimage & Widow Support)",
+        "title_ta": "ஸ்திரீ தோஷம்: கேது மற்றும் செவ்வாயால் சுக்கிரன் பாதிப்பு (பரிகாரம்: வேதாரண்யம் யாத்திரை & ஆதரவற்ற பெண்களுக்கு உதவுதல்)",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Venus", "Ketu"]},
+                {"has_planet_in_house": {"from": "Venus", "planet": "Mars", "house": 7}},
+            ]
+        },
+        "interpretation_en": (
+            "Past Life Karmic Indication: Injustice or hardship caused to a chaste woman in a previous incarnation delays marital happiness. "
+            "Classical Remedy: Pilgrimage to Vedaranyam (Tamil Nadu), taking holy dip in the sacred sea/Veda Theertham, "
+            "and donating clothes and food to destitute widows and children."
+        ),
+        "interpretation_ta": (
+            "முற்பிறவி கர்ம வினை: முற்பிறவியில் உத்தம பெண்ணிற்கு இழைத்த அநீதியால் திருமணத்தில் தடை. "
+            "சாஸ்திர பரிகாரம்: தமிழ்நாட்டின் வேதாரண்யம் சென்று வேத தீர்த்தத்தில் நீராடி, ஆதரவற்ற விதவை பெண்கள் மற்றும் "
+            "குழந்தைகளுக்கு ஆடை, உணவு தானம் வழங்குதல்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 12, 87, pp. 12, 92",
+    },
+    {
+        "rule_id": "BN-KRM-003",
+        "category": "spiritual",
+        "title_en": "Matru Dosha: Moon Afflicted by Rahu & Saturn (Remedy: Madurai Meenakshi Puja & 5 Kanya Puja)",
+        "title_ta": "மாத்ரு தோஷம்: ராகு மற்றும் சனியால் சந்திரன் பாதிப்பு (பரிகாரம்: மதுரை மீனாட்சி வழிபாடு & 5 கன்னியா பூஜை)",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Moon", "Rahu"]},
+                {"has_planet_in_house": {"from": "Moon", "planet": "Saturn", "house": 7}},
+            ]
+        },
+        "interpretation_en": (
+            "Past Life Karmic Indication: Grievances caused to mother or motherly figures in ancestral lineage causing mental distress. "
+            "Classical Remedy: Worshiping Divine Mother Meenakshi at Madurai, offering silk saree, "
+            "and performing Kanya Puja for 5 young girls with gifts of sweet rice and garments."
+        ),
+        "interpretation_ta": (
+            "முற்பிறவி கர்ம வினை: தாயாரை மனவேதனைக்கு உள்ளாக்கியதால் மன அமைதியின்மை உண்டாதல். "
+            "சாஸ்திர பரிகாரம்: மதுரை மீனாட்சி அம்மனை தரிசித்து பட்டு வஸ்திரம் சாற்றுதல் மற்றும் 5 சிறுமிகளுக்கு (கன்னியர்) "
+            "புத்தாடை, சர்க்கரைப் பொங்கல் தந்து கன்னியா பூஜை செய்தல்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 14, 21, pp. 14, 21",
+    },
+    {
+        "rule_id": "BN-KRM-004",
+        "category": "spiritual",
+        "title_en": "Pitru Dosha: Sun Afflicted by Rahu or Saturn (Remedy: Shiva Rudrabhishekam & Pradosha Vrata)",
+        "title_ta": "பித்ரு தோஷம்: ராகு அல்லது சனியால் சூரியன் பாதிப்பு (பரிகாரம்: பிரதோஷ ருத்ராபிஷேகம் & பித்ரு தர்ப்பணம்)",
+        "pattern": {"conjunction": ["Sun", "Rahu"]},
+        "interpretation_en": (
+            "Past Life Karmic Indication: Neglect of ancestral duties or fatherly obligations in past birth causing career stalls. "
+            "Classical Remedy: Performing Rudrabhishekam to Lord Shiva on Pradosham days, revering elders, "
+            "and conducting Pitru Tarpanam on Amavasya."
+        ),
+        "interpretation_ta": (
+            "முற்பிறவி கர்ம வினை: முன்னோர்களின் கடமைகளை மறந்ததால் ஏற்படும் பித்ரு தோஷம். "
+            "சாஸ்திர பரிகாரம்: பிரதோஷ நாட்களில் சிவபெருமானுக்கு ருத்ராபிஷேகம் செய்தல், அமாவாசை தோறும் பித்ரு தர்ப்பணம் செய்தல் "
+            "மற்றும் பெரியோர்களை மதித்தல்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 6, 19, pp. 12, 20",
+    },
+    {
+        "rule_id": "BN-KRM-005",
+        "category": "spiritual",
+        "title_en": "Go-Dosha: Mars and Rahu in Affliction to Venus (Remedy: Cow Shelter Service & Go-Dana)",
+        "title_ta": "கோ-தோஷம்: சுக்கிரனுடன் செவ்வாய்-ராகு தொடர்பு (பரிகாரம்: கோ-சம்ரக்ஷணை, கோ-தானம் & பசு சேவை)",
+        "pattern": {
+            "all_of": [
+                {"conjunction": ["Venus", "Mars"]},
+                {"has_planet_in_house": {"from": "Venus", "planet": "Rahu", "house": 1}},
+            ]
+        },
+        "interpretation_en": (
+            "Past Life Karmic Indication: Unintentional harm or distress caused to bovine cattle in past birth causing domestic frictions. "
+            "Classical Remedy: Regular donation of green grass to cows in Gaushala, feeding agathi keerai on Fridays, and worshipping Kamadhenu."
+        ),
+        "interpretation_ta": (
+            "முற்பிறவி கர்ம வினை: முற்பிறவியில் பசுவிற்கு செய்த துன்பத்தால் குடும்ப வாழ்வில் மனக்கசப்புகள். "
+            "சாஸ்திர பரிகாரம்: கோசாலைகளில் பசுக்களுக்கு அகத்திக்கீரை, தீவனம் அளித்தல், வெள்ளிக்கிழமைகளில் காமதேனு வழிபாடு மற்றும் கோ-தானம் செய்தல்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 41, 107, pp. 31, 109",
+    },
+    {
+        "rule_id": "BN-KRM-006",
+        "category": "spiritual",
+        "title_en": "Garbha Dosha: Progeny Delay Karma (Remedy: Mahabalipuram Pilgrimage, Krittika Vratam & Shiva Japa)",
+        "title_ta": "கர்ப்ப தோஷம்: சந்ததி தாமத கர்ம வினை (பரிகாரம்: மகாபலிபுரம் யாத்திரை, கார்த்திகை விரதம் & 10 பேருக்கு அன்னதானம்)",
+        "pattern": {
+            "all_of": [
+                {"has_planet_in_house": {"from": "Jupiter", "planet": "Rahu", "house": 5}},
+                {"has_planet_in_house": {"from": "Jupiter", "planet": "Mars", "house": 5}},
+            ]
+        },
+        "interpretation_en": (
+            "Past Life Karmic Indication: Obstacles in childbirth due to past life karmic knot in the lineage. "
+            "Classical Remedy: Pilgrimage to Mahabalipuram (Mamallapuram seashore temples), observing Krittika Vrata, "
+            "14 days of Brahmacharya with Shiva Panchakshari japa, and feeding 10 people."
+        ),
+        "interpretation_ta": (
+            "முற்பிறவி கர்ம வினை: சந்ததி பாக்கியத்தில் தாமதம் ஏற்படுத்தும் பூர்வ ஜென்ம கர்ம பிணைப்பு. "
+            "சாஸ்திர பரிகாரம்: மகாபலிபுரம் (கடற்கரை சிவாலயம்) சென்று தரிசித்தல், கார்த்திகை விரதம் இருத்தல், "
+            "14 நாட்கள் பிரம்மச்சரியத்துடன் சிவ பஞ்சாட்சர ஜெபம் செய்து 10 நபர்களுக்கு அன்னதானம் வழங்குதல்."
+        ),
+        "source_page": "Bhrigu Nandi Nadi, Charts 31, 362, pp. 26, 243",
+    },
 ]
 
 # ===========================================================================

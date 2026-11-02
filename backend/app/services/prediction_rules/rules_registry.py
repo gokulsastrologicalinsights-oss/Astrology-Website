@@ -4873,6 +4873,18 @@ INITIAL_RULES_CATALOGUE.extend(PLANETARY_DEBILITATION_AND_ASPECT_RULES)
 from app.services.prediction_rules.brighu_naadi_rules import BRIGHU_NAADI_PREDICTION_RULES
 INITIAL_RULES_CATALOGUE.extend(BRIGHU_NAADI_PREDICTION_RULES)
 
+# Append K.N. Rao Advanced Astrological Research Rules
+from app.services.prediction_rules.kn_rao_advanced_predictions_rules import KN_RAO_ADVANCED_RULES
+INITIAL_RULES_CATALOGUE.extend(KN_RAO_ADVANCED_RULES)
+
+# Append Kalyana Varma's Saravali Classical Rules (Ch. 1-55)
+from app.services.prediction_rules.saravali_rules import SARAVALI_RULES
+INITIAL_RULES_CATALOGUE.extend(SARAVALI_RULES)
+
+# Append Brihat Parashara Hora Shastra (BPHS) Classical Rules (97 Chapters)
+from app.services.prediction_rules.bphs_classical_rules import BPHS_CLASSICAL_RULES
+INITIAL_RULES_CATALOGUE.extend(BPHS_CLASSICAL_RULES)
+
 
 class RulesRegistry:
     """In-memory and database-backed rule repository."""

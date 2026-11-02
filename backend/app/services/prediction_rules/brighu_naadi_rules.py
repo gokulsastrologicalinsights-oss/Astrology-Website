@@ -836,4 +836,229 @@ BRIGHU_NAADI_PREDICTION_RULES: List[AstrologicalRuleDefinition] = [
         limitations_ta="ஆரம்ப காலங்களில் பணியிடங்களில் சிறு காயங்கள் ஏற்படாமல் கவனமாக இருத்தல் நன்று.",
         severity=SeverityLevel.MIXED,
     ),
+    # =======================================================================
+    # 5. R. G. RAO'S BHRIGU NANDI NADI CLASSICAL YOGAS & KARMIC REMEDIES
+    # =======================================================================
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-CHANDRA-MOULI",
+        version=1,
+        name_en="BNN Chandra Mouli Yoga: Saturn-Moon Conjunction in Exaltation or Water Signs",
+        name_ta="BNN சந்திர மௌலி யோகம்: சனி - சந்திரன் சேர்க்கை (துறவு, தர்ம அறக்கட்டளை & அரசு கௌரவம்)",
+        category_slug="career_profession",
+        subcategory="job_prospects",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Saturn", "Moon"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Chandra Mouli Yoga in Bhrigu Nandi Nadi: Conjunction of Karma Karaka Saturn and Mind/Soul Moon. "
+            "The native attains high ascetic wisdom, profound devotion to Lord Shiva, leadership of religious or "
+            "charitable trusts, or distinguished municipal and public honors."
+        ),
+        interpretation_ta=(
+            "பிருகு நந்தி நாடி சந்திர மௌலி யோகம்: கர்ம காரகன் சனியும் மனோகாரகன் சந்திரனும் இணைந்திருப்பது சிவபக்தி, "
+            "ஆன்மீக அறக்கட்டளை தலைமை, துறவு நாட்டம் அல்லது அரசு மற்றும் பொதுத்துறை கௌரவங்களை நல்கும்."
+        ),
+        astrological_principle_en="Saturn contacting Moon combines discipline and karmic duty with intuitive, emotional, and spiritual devotion.",
+        astrological_principle_ta="சனியும் சந்திரனும் இணைவது மனோ வலிமையையும் தர்ம சிந்தனையையும் இறை பக்தியையும் உருவாக்குகிறது.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Chart 31 & Chart 70, pp. 31, 54",
+        limitations_en="Mind may experience transient periods of philosophical solitude and melancholy.",
+        limitations_ta="மனதில் அவ்வப்போது தத்துவார்த்த தனிமை அல்லது பற்றற்ற சோர்வு தோன்றலாம்.",
+        severity=SeverityLevel.FAVORABLE,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-CINEMA-MEDIA",
+        version=1,
+        name_en="BNN Cinema & Visual Arts: Saturn-Venus Conjunction (Artistic & Screen Career)",
+        name_ta="BNN திரைத்துறை & காட்சி ஊடகம்: சனி - சுக்கிரன் சேர்க்கை (கலை, திரைப்படம் & விளம்பரத்துறை)",
+        category_slug="career_profession",
+        subcategory="job_prospects",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Saturn", "Venus"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Saturn with Venus brings artistic craftsmanship and material aesthetic production. In Bhrigu Nandi Nadi, "
+            "this combination flourishes in film, theater, television direction, cinematography, visual arts, and luxury enterprises."
+        ),
+        interpretation_ta=(
+            "சனியும் சுக்கிரனும் இணைவது கலை நேர்த்தியையும் திரைத்துறை வெற்றியையும் அளிக்கும். திரைப்படம், நாடகம், "
+            "தொலைக்காட்சி இயக்கம், ஒளிப்பதிவு, விளம்பரம் மற்றும் ஆடம்பர ஆடை வர்த்தகத்தில் பெரும் புகழ் கிட்டும்."
+        ),
+        astrological_principle_en="Venus (fine arts, glamour) united with Saturn (labor, industry) turns creative arts into high-revenue professions.",
+        astrological_principle_ta="சுக்கிரனின் கலை ஆற்றலும் சனியின் உழைப்பும் இணைந்து சினிமா மற்றும் கலைத்துறையில் நிலையான வருமானத்தை தருகிறது.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Charts 70, 362, 381, pp. 54, 243, 253",
+        limitations_en="Needs continuous focus to avoid extravagant spending in entertainment lifestyle.",
+        limitations_ta="ஆடம்பர வாழ்க்கை மற்றும் கலைத்துறை செலவுகளில் நிதி நிர்வாகத்தில் கவனம் தேவை.",
+        severity=SeverityLevel.FAVORABLE,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-SURGEON-PRECISION",
+        version=1,
+        name_en="BNN Precision Surgery & Defense Engineering: Saturn-Mars Conjunction",
+        name_ta="BNN அறுவை சிகிச்சை & பாதுகாப்பு பொறியியல்: சனி - செவ்வாய் சேர்க்கை",
+        category_slug="career_profession",
+        subcategory="job_prospects",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Saturn", "Mars"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Saturn with Mars unites mechanical power with technical grit. In Bhrigu Nandi Nadi, this indicates "
+            "surgeons, manufacturers of surgical instruments, defense ordnance, precision metallic fabrication, and heavy civil construction."
+        ),
+        interpretation_ta=(
+            "சனியும் செவ்வாயும் இணைவது அறுவை சிகிச்சை மருத்துவர் (Surgeon), அறுவை மருத்துவக் கருவிகள் உற்பத்தி, "
+            "ராணுவ பாதுகாப்பு உபகரணங்கள், துல்லிய உலோக எந்திரவியல் மற்றும் கட்டுமானப் பொறியியல் பணிகளை அளிக்கும்."
+        ),
+        astrological_principle_en="Mars (blood, iron, sharp instruments) combined with Saturn (karma) directs labor into surgery, mechanics, and security.",
+        astrological_principle_ta="செவ்வாயின் ரத்தம் மற்றும் கூர்முனை எந்திர காரகத்துவம் சனியுடன் இணைந்து அறுவை சிகிச்சையிலும் பொறியியலிலும் சிறக்கச் செய்கிறது.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Charts 102, 107, pp. 107, 109",
+        limitations_en="High occupational stress and workplace hazard vigilance required.",
+        limitations_ta="பணியிடத்தில் விபத்து மற்றும் மன அழுத்தம் ஏற்படாமல் முன்னெச்சரிக்கை தேவை.",
+        severity=SeverityLevel.MIXED,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-MAHA-GNANA",
+        version=1,
+        name_en="BNN Maha Gnana Yoga: Jupiter-Ketu Conjunction (Vedanta Wisdom & Intuition)",
+        name_ta="BNN மகா ஞான யோகம்: குரு - கேது சேர்க்கை (வேதாந்த ஞானம், உள்ளுணர்வு & ஆன்மீக விழிப்புணர்வு)",
+        category_slug="spiritual_life",
+        subcategory="spiritual_growth",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Jupiter", "Ketu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Jupiter conjunct Ketu creates Maha Gnana Yoga. In Bhrigu Nandi Nadi, Jeeva Karaka Jupiter merging with "
+            "Moksha Karaka Ketu endows the native with profound metaphysical intuition, mastery of Upanishadic philosophy, "
+            "unwavering ethics, and natural counseling gifts."
+        ),
+        interpretation_ta=(
+            "ஜீவகாரகன் குருவும் மோட்சகாரகன் கேதுவும் இணைவது மகா ஞான யோகமாகும். ஆழ்ந்த உள்ளுணர்வு, வேதாந்த சாஸ்திர தேர்ச்சி, "
+            "தர்ம நெறி மற்றும் ஆன்மீக வழிகாட்டுதல் ஆற்றலை ஜாதகருக்கு இயல்பாகவே அருளும்."
+        ),
+        astrological_principle_en="Ketu dissolves egoic attachments, enabling Jupiter's expansive wisdom to perceive metaphysical truth.",
+        astrological_principle_ta="கேதுவின் பற்றற்ற தன்மை குருவின் ஞானத்துடன் இணைந்து ஆத்ம விழிப்புணர்வை ஏற்படுத்துகிறது.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Charts 19, 41, pp. 20, 41",
+        limitations_en="Indifference to frivolous social gatherings and mundane gossip.",
+        limitations_ta="வீண் உலகியல் விவாதங்கள் மற்றும் ஆடம்பர கூட்டங்களில் பற்றின்மை ஏற்படும்.",
+        severity=SeverityLevel.FAVORABLE,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-KRM-DAIVADROHA",
+        version=1,
+        name_en="BNN Past Life Karma: Daivadroha / Sadhu Curse (Remedy: 48 Somavara Vratam & Gokarna)",
+        name_ta="BNN முற்பிறவி கர்ம வினை: தெய்வத் துரோகம் / சாது சாபம் (பரிகாரம்: 48 சோமவார விரதம் & கோகர்ணம்)",
+        category_slug="spiritual_life",
+        subcategory="karmic_remedies",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Jupiter", "Rahu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Bhrigu Nandi Nadi Karmic Delineation: Affliction of Jupiter by Rahu indicates past-life neglect of sacred vows "
+            "or disrespect to spiritual elders, creating initial career hurdles. Classical Shastraic Remedy: Observing 48 consecutive "
+            "Monday fasts (Somavara Vratam), undertaking pilgrimage to Gokarna Mahabaleshwar temple, and feeding ascetics (Annadanam)."
+        ),
+        interpretation_ta=(
+            "பிருகு நந்தி நாடி கர்ம பலன்: குரு ராகுவால் பாதிக்கப்படுவது முற்பிறவியில் ஆன்றோர்களை அவமதித்ததால் ஏற்படும் கர்மத் தடையைக் குறிக்கும். "
+            "சாஸ்திர பரிகாரம்: 48 திங்கட்கிழமைகள் சோமவார விரதம் இருத்தல், கோகர்ணம் மகாபலேஸ்வரர் சிவாலயம் சென்று தரிசித்தல் மற்றும் சாதுக்களுக்கு அன்னதானம் செய்தல்."
+        ),
+        astrological_principle_en="Rahu's eclipse of Jeeva Karaka Jupiter points to karmic debts toward spiritual teachers remediated through tapas and charity.",
+        astrological_principle_ta="குரு-ராகு சேர்க்கை முற்பிறவி குரு சாபத்தைக் குறிக்கிறது; விரதமும் தானமும் இக்கர்மாவை நீக்குகின்றன.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Charts 1, 31, pp. 4, 26",
+        limitations_en="Requires disciplined completion of the 48-week fasting regimen with pure sattvic conduct.",
+        limitations_ta="48 வாரங்கள் விரதத்தை சாத்வீக உணவோடும் தூய சிந்தனையோடும் தொடர்ச்சியாக கடைப்பிடிக்க வேண்டும்.",
+        severity=SeverityLevel.MIXED,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-KRM-MATRUDOSHA",
+        version=1,
+        name_en="BNN Past Life Karma: Matru Dosha (Remedy: Madurai Meenakshi Puja & 5 Kanya Puja)",
+        name_ta="BNN முற்பிறவி கர்ம வினை: மாத்ரு தோஷம் (பரிகாரம்: மதுரை மீனாட்சி வழிபாடு & 5 கன்னியா பூஜை)",
+        category_slug="spiritual_life",
+        subcategory="karmic_remedies",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Moon", "Rahu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Bhrigu Nandi Nadi Karmic Delineation: Moon conjunct Rahu points to past-life grief inflicted on maternal figures, "
+            "manifesting as fluctuating emotional peace. Classical Shastraic Remedy: Worshipping Divine Mother Meenakshi at Madurai, "
+            "offering silk clothing, and conducting Kanya Puja for 5 young girls with gifts of sweet payasam and garments."
+        ),
+        interpretation_ta=(
+            "பிருகு நந்தி நாடி கர்ம பலன்: சந்திரன் ராகுவுடன் இணைவது முற்பிறவியில் தாயாரை வேதனைப்படுத்திய மாத்ரு தோஷத்தைக் குறிக்கும். "
+            "சாஸ்திர பரிகாரம்: மதுரை மீனாட்சி அம்மனை தரிசித்து பட்டு வஸ்திரம் சாற்றுதல் மற்றும் 5 சிறுமிகளுக்கு (கன்னியர்) புத்தாடை, இனிப்பு வழங்கி கன்னியா பூஜை செய்தல்."
+        ),
+        astrological_principle_en="Matru Karaka Moon shadowed by Rahu requires propitiation of the primordial mother goddess to restore mental calm.",
+        astrological_principle_ta="சந்திரன் ராகு சேர்க்கை மன அமைதியை குலைக்கும்; அம்பிகை வழிபாடும் கன்னியா பூஜையும் தோஷத்தை நிவர்த்தி செய்கின்றன.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Charts 14, 21, pp. 14, 21",
+        limitations_en="Emotional balance must be cultivated alongside the prescribed rituals.",
+        limitations_ta="வழிபாட்டுடன் சேர்த்து தாயாரிடமும் தாய்வழி உறவினர்களிடமும் மரியாதையோடு பழகுதல் நலம்.",
+        severity=SeverityLevel.MIXED,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-KRM-PITRUDOSHA",
+        version=1,
+        name_en="BNN Past Life Karma: Pitru Dosha (Remedy: Shiva Rudrabhishekam on Pradosham & Tarpanam)",
+        name_ta="BNN முற்பிறவி கர்ம வினை: பித்ரு தோஷம் (பரிகாரம்: பிரதோஷ ருத்ராபிஷேகம் & அமாவாசை தர்ப்பணம்)",
+        category_slug="spiritual_life",
+        subcategory="karmic_remedies",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Sun", "Rahu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Bhrigu Nandi Nadi Karmic Delineation: Sun conjoined with Rahu signifies ancestral Pitru debts or paternal friction. "
+            "Classical Shastraic Remedy: Performing Rudrabhishekam to Lord Shiva on Pradosham days, dutifully performing Pitru Tarpanam "
+            "on Amavasya, and revering elders with daily prostration."
+        ),
+        interpretation_ta=(
+            "பிருகு நந்தி நாடி கர்ம பலன்: சூரியனுடன் ராகு இணைவது முன்னோர்களின் ஆசியின்மை அல்லது பித்ரு தோஷத்தைக் குறிக்கும். "
+            "சாஸ்திர பரிகாரம்: பிரதோஷ நாட்களில் சிவபெருமானுக்கு ருத்ராபிஷேகம் செய்தல், அமாவாசை தோறும் முன்னோர்களுக்கு எள்-தண்ணீர் தர்ப்பணம் செய்தல் மற்றும் தந்தையை மதித்தல்."
+        ),
+        astrological_principle_en="Pitru Karaka Sun eclipse by Rahu is neutralized by solar devotion to Shiva and offering tarpanam to ancestors.",
+        astrological_principle_ta="சூரியன் ராகுவால் மறைக்கப்படும் போது சிவ வழிபாடும் முன்னோர் தர்ப்பணமும் பித்ரு சாபத்தை போக்குகின்றன.",
+        source_reference="Bhrigu Nandi Nadi, R. G. Rao, Charts 6, 19, pp. 12, 20",
+        limitations_en="Requires regular observance of ancestral Shraddha/Tarpanam dates without omission.",
+        limitations_ta="முன்னோர் வழிபாட்டு நாட்களான அமாவாசை மற்றும் திதி நாட்களில் தவறாமல் தர்ப்பணம் செய்ய வேண்டும்.",
+        severity=SeverityLevel.MIXED,
+    ),
 ]

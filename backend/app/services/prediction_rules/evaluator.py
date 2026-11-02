@@ -82,6 +82,60 @@ PUSHKARA_NAVAMSAS: Dict[int, Set[int]] = {
     4: {1, 3}, 8: {1, 3}, 12: {1, 3},
 }
 
+# Classical Moolatrikona zones per Kalyana Varma's Saravali Ch. 3, v. 34 & Ch. 5, v. 21-24
+# Format: planet -> (sign_index, min_deg, max_deg)
+MOOLATRIKONA_DEFINITIONS: Dict[str, Tuple[int, float, float]] = {
+    "Sun": (5, 0.0, 20.0),       # Leo 0°-20°
+    "Moon": (2, 3.0, 30.0),      # Taurus 3°-30°
+    "Mars": (1, 0.0, 12.0),      # Aries 0°-12°
+    "Mercury": (6, 15.0, 20.0),  # Virgo 15°-20°
+    "Jupiter": (9, 0.0, 10.0),   # Sagittarius 0°-10°
+    "Venus": (7, 0.0, 5.0),      # Libra 0°-5°
+    "Saturn": (11, 0.0, 20.0),   # Aquarius 0°-20°
+}
+
+# Natural Friendship & Enmity per Saravali Ch. 4, v. 28-29
+NATURAL_FRIENDS: Dict[str, Set[str]] = {
+    "Sun": {"Jupiter", "Mars", "Moon"},
+    "Moon": {"Sun", "Mercury"},
+    "Mars": {"Sun", "Moon", "Jupiter"},
+    "Mercury": {"Sun", "Venus"},
+    "Jupiter": {"Sun", "Moon", "Mars"},
+    "Venus": {"Mercury", "Saturn"},
+    "Saturn": {"Mercury", "Venus"},
+    "Rahu": {"Venus", "Saturn", "Mercury"},
+    "Ketu": {"Mars", "Jupiter"},
+}
+
+NATURAL_ENEMIES: Dict[str, Set[str]] = {
+    "Sun": {"Venus", "Saturn"},
+    "Moon": set(),
+    "Mars": {"Mercury"},
+    "Mercury": {"Moon"},
+    "Jupiter": {"Mercury", "Venus"},
+    "Venus": {"Sun", "Moon"},
+    "Saturn": {"Sun", "Moon", "Mars"},
+    "Rahu": {"Sun", "Moon", "Mars"},
+    "Ketu": {"Sun", "Moon"},
+}
+
+# Fateful Degrees of the Moon per Saravali Ch. 10, v. 111-114
+# Format: sign_index -> fateful_degree (within 1.0 deg orb)
+SARAVALI_FATEFUL_DEGREES_MOON: Dict[int, float] = {
+    11: 21.0,  # Aquarius 21°
+    5: 5.0,    # Leo 5°
+    2: 9.0,    # Taurus 9°
+    8: 23.0,   # Scorpio 23°
+    1: 8.0,    # Aries 8°
+    4: 12.0,   # Cancer 12°
+    7: 4.0,    # Libra 4°
+    10: 20.0,  # Capricorn 20°
+    6: 1.0,    # Virgo 1°
+    9: 18.0,   # Sagittarius 18°
+    12: 10.0,  # Pisces 10°
+    3: 22.0,   # Gemini 22°
+}
+
 
 def normalize_sign_index(val: Union[int, str]) -> int:
     """Safely convert sign number or sign name string to 1-12 integer index."""
@@ -261,6 +315,96 @@ class ChartContext:
             return self.d9_planets.get(planet_name)
         return self.d1_planets.get(planet_name)
 
+    def is_moolatrikona(self, planet: str, scope: str = "d1") -> bool:
+        """Check if planet is in Moolatrikona zone per Saravali Ch. 3, v. 34 & Ch. 5, v. 21-24."""
+        p_info = self.get_planet(planet, scope)
+        if not p_info:
+            return False
+        mt = MOOLATRIKONA_DEFINITIONS.get(planet)
+        if not mt:
+            return False
+        sign_req, min_deg, max_deg = mt
+        if p_info["sign_index"] == sign_req:
+            deg = p_info.get("degree_in_sign", 0.0)
+            return min_deg <= deg <= max_deg
+        return False
+
+    def is_friendly_sign(self, planet: str, scope: str = "d1") -> bool:
+        """Check if planet occupies a sign ruled by a natural friend per Saravali Ch. 4, v. 28-29."""
+        p_info = self.get_planet(planet, scope)
+        if not p_info:
+            return False
+        lord = SIGN_LORDS.get(p_info["sign_index"])
+        if not lord or lord == planet:
+            return False
+        friends = NATURAL_FRIENDS.get(planet, set())
+        return lord in friends
+
+    def is_inimical_sign(self, planet: str, scope: str = "d1") -> bool:
+        """Check if planet occupies a sign ruled by a natural enemy per Saravali Ch. 4, v. 28-29."""
+        p_info = self.get_planet(planet, scope)
+        if not p_info:
+            return False
+        lord = SIGN_LORDS.get(p_info["sign_index"])
+        if not lord or lord == planet:
+            return False
+        enemies = NATURAL_ENEMIES.get(planet, set())
+        return lord in enemies
+
+    def count_planets_in_dignity(
+        self,
+        dignity: str,
+        scope: str = "d1",
+        planets: Optional[List[str]] = None,
+    ) -> int:
+        """Count how many planets satisfy a given dignity in the specified scope."""
+        check_planets = planets or ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+        cnt = 0
+        d_lower = dignity.lower()
+        for p in check_planets:
+            p_info = self.get_planet(p, scope)
+            if not p_info:
+                continue
+            s_idx = p_info["sign_index"]
+            if d_lower in ("exalted", "uchcha"):
+                if s_idx == EXALTATION_SIGNS.get(p):
+                    cnt += 1
+            elif d_lower in ("debilitated", "neecha", "fall"):
+                deb = DEBILITATION_SIGNS.get(p)
+                if (isinstance(deb, set) and s_idx in deb) or s_idx == deb:
+                    cnt += 1
+            elif d_lower in ("own_sign", "swakshetra"):
+                if s_idx in OWN_SIGNS.get(p, set()):
+                    cnt += 1
+            elif d_lower == "moolatrikona":
+                if self.is_moolatrikona(p, scope):
+                    cnt += 1
+            elif d_lower == "friendly_sign":
+                if self.is_friendly_sign(p, scope):
+                    cnt += 1
+            elif d_lower == "inimical_sign":
+                if self.is_inimical_sign(p, scope):
+                    cnt += 1
+        return cnt
+
+    def get_planet_bav_bindus(self, planet: str, sign_idx: Optional[int] = None) -> Optional[int]:
+        """Fetch Bhinnashtakavarga bindus for a planet in its sign or target sign."""
+        ashtakavarga = getattr(self.horoscope, "ashtakavarga", None)
+        if not ashtakavarga or not hasattr(ashtakavarga, "bhinnashtakavarga"):
+            return None
+        bav = ashtakavarga.bhinnashtakavarga.get(planet)
+        if not bav:
+            return None
+        sign_bindus = getattr(bav, "sign_bindus", None)
+        if not sign_bindus:
+            return None
+        if sign_idx is None:
+            p_info = self.get_planet(planet, "d1")
+            if not p_info:
+                return None
+            sign_idx = p_info["sign_index"]
+        return sign_bindus.get(sign_idx)
+
 
 # ---------------------------------------------------------------------------
 # Evaluator Class
@@ -375,6 +519,8 @@ class AstrologicalRuleEvaluator:
             cond_type = "planet_house"
         elif cond_type == "planet_sign_placement":
             cond_type = "planet_sign"
+        elif cond_type == "conjunction":
+            cond_type = "planet_conjunction"
 
         # 1. Compound Operator Node (AND, OR, NOT)
         if cond_type == "compound":
@@ -418,7 +564,7 @@ class AstrologicalRuleEvaluator:
         # 2. Planet Sign Condition
         elif cond_type == "planet_sign":
             planet = node.get("planet")
-            target_sign = node.get("sign")
+            target_sign = node.get("sign") if node.get("sign") is not None else node.get("signs")
             chart = node.get("chart", default_scope).lower()
 
             scopes_to_check = ["d1", "d9"] if chart == "both" else [chart]
@@ -449,7 +595,7 @@ class AstrologicalRuleEvaluator:
         # 3. Planet House Condition
         elif cond_type == "planet_house":
             planet = node.get("planet")
-            target_house = node.get("house")
+            target_house = node.get("house") if node.get("house") is not None else node.get("houses")
             chart = node.get("chart", default_scope).lower()
 
             scopes_to_check = ["d1", "d9"] if chart == "both" else [chart]
@@ -719,6 +865,22 @@ class AstrologicalRuleEvaluator:
                 if p_d9 and p_d9.get("is_pushkara_navamsa"):
                     matched = True
                     evidence_str = f"{planet} is in Pushkara Navamsa ({p_d9['sign_name']} Pada {p_d9.get('nakshatra_pada')})"
+            elif dignity == "moolatrikona":
+                if ctx.is_moolatrikona(planet, chart):
+                    matched = True
+                    evidence_str = f"{planet} is in Moolatrikona in {p_info['sign_name']} ({p_info.get('degree_in_sign', 0.0):.2f}°) in {chart.upper()}"
+            elif dignity == "friendly_sign":
+                if ctx.is_friendly_sign(planet, chart):
+                    matched = True
+                    evidence_str = f"{planet} occupies friendly sign {p_info['sign_name']} (Lord: {SIGN_LORDS.get(sign_idx)}) in {chart.upper()}"
+            elif dignity == "inimical_sign":
+                if ctx.is_inimical_sign(planet, chart):
+                    matched = True
+                    evidence_str = f"{planet} occupies inimical sign {p_info['sign_name']} (Lord: {SIGN_LORDS.get(sign_idx)}) in {chart.upper()}"
+            elif dignity == "retrograde":
+                if p_info.get("is_retrograde", False):
+                    matched = True
+                    evidence_str = f"{planet} is retrograde (Vakra) in {p_info['sign_name']} in {chart.upper()}"
 
             if matched:
                 return True, [evidence_str], [f"{planet} satisfies dignity '{dignity}'"]
@@ -1243,5 +1405,72 @@ class AstrologicalRuleEvaluator:
                 reas = ["Planets are engaged in Graha Yuddha within 1.0° orb in the same sign"]
                 return True, ev, reas
             return False, [], [f"No Graha Yuddha event matching status '{req_status}' in {chart.upper()}"]
+
+        # 22. Planet Relative House Condition (Saravali Ch. 13, 14, 32, 33)
+        elif cond_type == "planet_relative_house":
+            planet = node.get("planet")
+            from_planet = node.get("from_planet")
+            rel_h = node.get("relative_house") if node.get("relative_house") is not None else node.get("relative_houses")
+            chart = node.get("chart", default_scope).lower()
+
+            p_info = ctx.get_planet(planet, chart)
+            from_info = ctx.get_planet(from_planet, chart)
+            if not p_info or not from_info:
+                return False, [], [f"Planet {planet} or {from_planet} not found in {chart.upper()}"]
+
+            dist = ((p_info["sign_index"] - from_info["sign_index"]) % 12) + 1
+            target_houses = rel_h if isinstance(rel_h, list) else [rel_h]
+            if dist in target_houses:
+                ev = [f"{planet} is in {dist}th house from {from_planet} ({p_info['sign_name']} from {from_info['sign_name']}) in {chart.upper()}"]
+                reas = [f"{planet} placed in {dist}th house relative to {from_planet}"]
+                return True, ev, reas
+            return False, [], []
+
+        # 23. Multi Planet Dignity Condition (Saravali Ch. 35, 39, 45)
+        elif cond_type == "multi_planet_dignity":
+            dignity = str(node.get("dignity", "")).lower()
+            min_count = node.get("min_count", 1)
+            exact_count = node.get("exact_count")
+            planets_list = node.get("planets")
+            chart = node.get("chart", default_scope).lower()
+
+            actual_cnt = ctx.count_planets_in_dignity(dignity, chart, planets_list)
+            if exact_count is not None:
+                matched = (actual_cnt == exact_count)
+            else:
+                matched = (actual_cnt >= min_count)
+
+            if matched:
+                ev = [f"{actual_cnt} planets found with dignity '{dignity}' in {chart.upper()}"]
+                reas = [f"Met dignity '{dignity}' requirement (found {actual_cnt}, required >= {min_count if exact_count is None else exact_count})"]
+                return True, ev, reas
+            return False, [], [f"Dignity '{dignity}' count ({actual_cnt}) does not satisfy requirement"]
+
+        # 24. Ashtakavarga Bindus Condition (Saravali Ch. 54)
+        elif cond_type == "ashtakavarga_bindus":
+            planet = node.get("planet")
+            min_b = node.get("min_bindus")
+            max_b = node.get("max_bindus")
+            exact_b = node.get("exact_bindus")
+
+            actual_bindus = ctx.get_planet_bav_bindus(planet)
+            if actual_bindus is None:
+                return False, [], [f"Ashtakavarga data unavailable for planet {planet}"]
+
+            matched = True
+            if min_b is not None and actual_bindus < min_b:
+                matched = False
+            if max_b is not None and actual_bindus > max_b:
+                matched = False
+            if exact_b is not None:
+                exact_list = exact_b if isinstance(exact_b, list) else [exact_b]
+                if actual_bindus not in exact_list:
+                    matched = False
+
+            if matched:
+                ev = [f"{planet} has {actual_bindus} Bindus in occupied sign in Bhinnashtakavarga"]
+                reas = [f"BAV bindu count ({actual_bindus}) satisfies condition"]
+                return True, ev, reas
+            return False, [], [f"{planet} BAV bindus ({actual_bindus}) does not match required range"]
 
         return False, [], [f"Unsupported condition type '{cond_type}'"]

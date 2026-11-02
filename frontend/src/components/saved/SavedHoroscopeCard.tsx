@@ -17,6 +17,7 @@ import {
   Eye,
   MessageCircle,
   Sparkles,
+  Star,
   Phone,
 } from "lucide-react";
 
@@ -256,6 +257,15 @@ export function SavedHoroscopeCard({
               >
                 <Sparkles className="w-3.5 h-3.5 text-[#B4872B]" />
                 <span className="hidden sm:inline">{language === "ta" ? "தசா பலன்" : "Dasa Palan"}</span>
+              </Link>
+              {/* Natchathira Deep Analysis Direct Action */}
+              <Link
+                href={`/horoscope/results?id=${horoscope.id}&tab=natchathira`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 hover:border-indigo-400 bg-indigo-50/80 hover:bg-indigo-100 text-xs font-semibold text-indigo-800 transition-colors"
+                title={language === "ta" ? "நட்சத்திர ஆய்வு (Nakshatra Deep Analysis)" : "Nakshatra Deep Analysis"}
+              >
+                <Star className="w-3.5 h-3.5 text-indigo-600 fill-indigo-100" />
+                <span className="hidden sm:inline">{language === "ta" ? "நட்சத்திரம்" : "Nakshatra"}</span>
               </Link>
 
               {/* View Action Button matching Screenshot 2 */}

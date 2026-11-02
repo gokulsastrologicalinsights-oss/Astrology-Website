@@ -52,7 +52,7 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             ],
             short_interpretation="Self-earned wealth, intellectual sharp judgment, prosperous conveyances, and honorable social status.",
             classical_definition="Planets other than Sun, Rahu, or Ketu are situated in the 2nd house from Moon.",
-            classical_reference="Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 5; 300 Important Combinations #6",
+            classical_reference="Saravali Ch. 13, v. 2-8; Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 5; 300 Important Combinations #6",
             verification_status="Corrected from Reference (strictly excludes Rahu/Ketu)"
         )
     )
@@ -78,7 +78,7 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             ],
             short_interpretation="Generous virtues, physical well-being, polite manners, freedom from agony, and refined pleasures.",
             classical_definition="Planets other than Sun, Rahu, or Ketu are situated in the 12th house from Moon.",
-            classical_reference="Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 6; 300 Important Combinations #7",
+            classical_reference="Saravali Ch. 13, v. 9-15; Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 6; 300 Important Combinations #7",
             verification_status="Corrected from Reference (strictly excludes Rahu/Ketu)"
         )
     )
@@ -104,7 +104,7 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             ],
             short_interpretation="Immense bounties of wealth, leadership over conveyances, steady financial security, and benevolence.",
             classical_definition="Planets other than Sun, Rahu, or Ketu occupy both flanks (2nd and 12th) of the Moon.",
-            classical_reference="Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 7; 300 Important Combinations #8",
+            classical_reference="Saravali Ch. 13, v. 16-25; Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 7; 300 Important Combinations #8",
             verification_status="Verified"
         )
     )
@@ -262,7 +262,7 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             ],
             short_interpretation="Fortunate speech, steady economic accumulation, honorable stature, and dignified demeanor.",
             classical_definition="Planets other than Moon, Rahu, or Ketu are placed in the 2nd house from Sun.",
-            classical_reference="Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 1; 300 Important Combinations #11",
+            classical_reference="Saravali Ch. 14, v. 1-6; Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 1; 300 Important Combinations #11",
             verification_status="Verified"
         )
     )
@@ -288,7 +288,7 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             ],
             short_interpretation="Skilled intellect, valorous enterprise, renowned learning, and royal favor.",
             classical_definition="Planets other than Moon, Rahu, or Ketu are placed in the 12th house from Sun.",
-            classical_reference="Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 2; 300 Important Combinations #12",
+            classical_reference="Saravali Ch. 14, v. 7-12; Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 2; 300 Important Combinations #12",
             verification_status="Verified"
         )
     )
@@ -314,7 +314,7 @@ def evaluate_lunar_solar_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
             ],
             short_interpretation="Equal to a king, poised balance of speech and authority, eloquent, charming, and commanding immense respect.",
             classical_definition="Planets other than Moon occupy both sides (2nd and 12th) of the Sun.",
-            classical_reference="Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 3; 300 Important Combinations #13",
+            classical_reference="Saravali Ch. 14, v. 13-18; Brihat Parashara Hora Shastra Ch. 36; Phaladeepika Ch. 6, v. 3; 300 Important Combinations #13",
             verification_status="Verified"
         )
     )

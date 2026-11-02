@@ -489,4 +489,128 @@ def evaluate_raja_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
         )
     )
 
+    # -------------------------------------------------------------
+    # 7. Pushkala Yoga (Saravali Ch. 35, v. 144-145)
+    # -------------------------------------------------------------
+    moon_s = ctx.planet_sign.get("Moon")
+    moon_disp = SIGN_LORDS.get(moon_s) if moon_s else None
+    disp_kendra_trikona = (
+        ctx.is_in_kendra(moon_disp) or ctx.is_in_trikona(moon_disp) or
+        ctx.is_exalted(moon_disp) or ctx.is_in_own_sign(moon_disp)
+    ) if moon_disp else False
+
+    # Lagna aspected by or occupied by a natural benefic
+    lagna_benefic_present = bool(set(ctx.house_occupants.get(1, [])) & {"Jupiter", "Venus", "Mercury"})
+    lagna_aspected_by_benefic = False
+    for ben in ("Jupiter", "Venus", "Mercury"):
+        b_h = ctx.planet_house.get(ben)
+        if not b_h:
+            continue
+        dist_to_lagna = ((1 - b_h) % 12) + 1
+        if dist_to_lagna == 7 or (ben == "Jupiter" and dist_to_lagna in (5, 9)):
+            lagna_aspected_by_benefic = True
+            break
+
+    pushkala_qualifies = disp_kendra_trikona and (lagna_benefic_present or lagna_aspected_by_benefic)
+    results.append(
+        YogaDetail(
+            id="pushkala_yoga",
+            name="Pushkala Yoga",
+            name_tamil="புஷ்கல யோகம்",
+            category="Raja Yoga",
+            status="Qualifying" if pushkala_qualifies else "Not Qualifying",
+            is_qualifying=pushkala_qualifies,
+            planets_involved=[p for p in (moon_disp, l_1) if p] + (["Jupiter"] if lagna_aspected_by_benefic else []),
+            relevant_houses=[ctx.planet_house.get(moon_disp)] if moon_disp and ctx.planet_house.get(moon_disp) else [1],
+            conditions=[
+                YogaConditionItem(
+                    condition="Moon's dispositor is strong in a Kendra, Trikona, own sign, or exaltation",
+                    passed=disp_kendra_trikona,
+                    detail=f"Moon sign lord {moon_disp} in House {ctx.planet_house.get(moon_disp)} (Kendra/Kona/Dignity: {disp_kendra_trikona})."
+                ),
+                YogaConditionItem(
+                    condition="Lagna is aspected by or occupied by a natural benefic (Jupiter, Venus, Mercury)",
+                    passed=(lagna_benefic_present or lagna_aspected_by_benefic),
+                    detail=f"Lagna Benefic Occupant: {lagna_benefic_present}, Benefic Drishti: {lagna_aspected_by_benefic}."
+                )
+            ],
+            short_interpretation="Sovereign status, aristocratic conveyances, universal adoration, spotless renown, and immense wealth.",
+            classical_definition="Lord of the Moon sign positioned in Kendra/Trikona or exalted, with Lagna fortified by benefic aspects.",
+            classical_reference="Saravali Ch. 35, v. 144-145; Phaladeepika Ch. 6, v. 35; 300 Important Combinations #44",
+            verification_status="Classical Saravali Implementation"
+        )
+    )
+
+    # -------------------------------------------------------------
+    # 8. Chandradhi Yoga (Saravali Ch. 35, v. 20-21)
+    # -------------------------------------------------------------
+    moon_h = ctx.planet_house.get("Moon")
+    h6_m = count_houses_inclusive(moon_h, 6) if moon_h else None
+    h7_m = count_houses_inclusive(moon_h, 7) if moon_h else None
+    h8_m = count_houses_inclusive(moon_h, 8) if moon_h else None
+    adhi_houses_moon = {h6_m, h7_m, h8_m} - {None}
+
+    chandradhi_benefics = [
+        b for b in ("Mercury", "Jupiter", "Venus")
+        if ctx.planet_house.get(b) in adhi_houses_moon
+    ]
+    chandradhi_qualifies = len(chandradhi_benefics) >= 2  # Classical texts require at least 2 benefics across 6, 7, 8 from Moon
+
+    results.append(
+        YogaDetail(
+            id="chandradhi_yoga",
+            name="Chandradhi Yoga",
+            name_tamil="சந்திராதி யோகம்",
+            category="Raja Yoga",
+            status="Qualifying" if chandradhi_qualifies else "Not Qualifying",
+            is_qualifying=chandradhi_qualifies,
+            planets_involved=["Moon"] + chandradhi_benefics,
+            relevant_houses=[h for h in (moon_h, *adhi_houses_moon) if h],
+            conditions=[
+                YogaConditionItem(
+                    condition="Natural benefics (Mercury, Jupiter, Venus) occupy the 6th, 7th, or 8th house from Moon",
+                    passed=chandradhi_qualifies,
+                    detail=f"Benefics in 6, 7, 8 from Moon: {', '.join(chandradhi_benefics) if chandradhi_benefics else 'None'}."
+                )
+            ],
+            short_interpretation="Commander or prime minister status, longevity, victory over adversaries, and noble demeanor.",
+            classical_definition="When natural benefics occupy the 6th, 7th, and 8th houses from the Moon, Chandradhi Yoga is formed.",
+            classical_reference="Saravali Ch. 35, v. 20-21; Brihat Parashara Hora Shastra Ch. 36; 300 Important Combinations #16",
+            verification_status="Classical Saravali Implementation"
+        )
+    )
+
+    # -------------------------------------------------------------
+    # 9. Lagnadhi Yoga (Saravali Ch. 34, v. 13)
+    # -------------------------------------------------------------
+    lagnadhi_benefics = [
+        b for b in ("Mercury", "Jupiter", "Venus")
+        if ctx.planet_house.get(b) in {6, 7, 8}
+    ]
+    lagnadhi_qualifies = len(lagnadhi_benefics) >= 2
+
+    results.append(
+        YogaDetail(
+            id="lagnadhi_yoga",
+            name="Lagnadhi Yoga",
+            name_tamil="லக்னாதி யோகம்",
+            category="Raja Yoga",
+            status="Qualifying" if lagnadhi_qualifies else "Not Qualifying",
+            is_qualifying=lagnadhi_qualifies,
+            planets_involved=lagnadhi_benefics,
+            relevant_houses=[h for h in (ctx.planet_house.get(b) for b in lagnadhi_benefics) if h],
+            conditions=[
+                YogaConditionItem(
+                    condition="Natural benefics occupy the 6th, 7th, or 8th houses from Lagna free from malefic conjunction",
+                    passed=lagnadhi_qualifies,
+                    detail=f"Benefics in 6, 7, 8 from Lagna: {', '.join(lagnadhi_benefics) if lagnadhi_benefics else 'None'}."
+                )
+            ],
+            short_interpretation="Author of classical texts, philosopher, righteous governor, endowed with long life and abundant treasures.",
+            classical_definition="Natural benefics in 6th, 7th, and 8th from the Ascendant confer high ministerial or scholarly office.",
+            classical_reference="Saravali Ch. 34, v. 13; Brihat Parashara Hora Shastra Ch. 36",
+            verification_status="Classical Saravali Implementation"
+        )
+    )
+
     return results

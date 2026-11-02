@@ -48,6 +48,7 @@ import {
   Plane,
   Scale,
   Clock,
+  ScrollText,
 } from "lucide-react";
 
 interface AstrologicalPredictionsSectionProps {
@@ -58,6 +59,8 @@ interface AstrologicalPredictionsSectionProps {
 // Quick filter categories requested by user & extracted from classical documents
 const QUICK_FILTER_PILLS = [
   { id: "all", label_en: "All Topics (230+)", label_ta: "அனைத்தும் (230+)", icon: Sparkles },
+  { id: "bphs_classics", label_en: "Parashara Hora (BPHS)", label_ta: "பராசர ஹோரா சாஸ்திரம்", icon: ScrollText, isHighlight: true },
+  { id: "saravali_classics", label_en: "Saravali Classics", label_ta: "சாராவளி நூற்பலன்கள்", icon: BookOpen, isHighlight: true },
   { id: "sexuality_intimacy", label_en: "Sexual Topics & Intimacy", label_ta: "தாம்பத்தியம் & காமம்", icon: Flame, isHighlight: true },
   { id: "longevity_death", label_en: "Longevity & Death", label_ta: "ஆயுள் & மரண அமைப்பு", icon: ShieldAlert, isHighlight: true },
   { id: "event_timing", label_en: "Event Timing (KP)", label_ta: "நிகழ்வு காலக் கணிப்பு (KP)", icon: Clock, isHighlight: true },
@@ -85,7 +88,7 @@ export interface PredictionSubPill {
 }
 
 export interface PredictionDomainConfig {
-  id: "all" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine";
+  id: "all" | "bphs_domain" | "saravali_domain" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "saravali_domain" | "advanced_engine";
   label_en: string;
   label_ta: string;
   icon: any;
@@ -102,6 +105,45 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
     icon: Sparkles,
     colorClass: "text-[#153F6B] bg-blue-50/70 border-blue-200 hover:bg-blue-100",
     activeColorClass: "bg-gradient-to-r from-[#153F6B] to-[#1E4D82] text-white shadow-sm ring-2 ring-blue-400/50",
+  },
+  {
+    id: "bphs_domain",
+    label_en: "Parashara Hora (BPHS)",
+    label_ta: "பராசர ஹோரா சாஸ்திரம்",
+    icon: ScrollText,
+    colorClass: "text-purple-950 bg-purple-50/90 border-purple-300 hover:bg-purple-100",
+    activeColorClass: "bg-gradient-to-r from-purple-800 via-indigo-900 to-purple-950 text-white shadow-sm ring-2 ring-purple-400/50",
+    subPills: [
+      { id: "all", label_en: "All BPHS Rules", label_ta: "அனைத்து பராசர விதிகள்", icon: ScrollText },
+      { id: "bphs_bhava_lords", label_en: "12 Bhava Lords (144 Combinations)", label_ta: "144 பாவாதிபதி பலன்கள்", slug: "bphs_bhava_lords", icon: Crown },
+      { id: "bphs_yogakarakas", label_en: "Yogakarakas & Lagna Lords", label_ta: "யோககாரகர்கள் & லக்னாதிபதிகள்", slug: "bphs_yogakarakas", icon: Sparkles },
+      { id: "bphs_dhana_yogas", label_en: "Special Dhana Yogas", label_ta: "சிறப்பு தன யோகங்கள்", slug: "bphs_dhana_yogas", icon: Coins },
+      { id: "bphs_daridra_yogas", label_en: "Daridra Yogas & Penury", label_ta: "தரித்திர யோகங்கள்", slug: "bphs_daridra_yogas", icon: AlertCircle },
+      { id: "bphs_stri_jataka", label_en: "Stri Jataka & Visha Kanya", label_ta: "ஸ்திரீ ஜாதகம் & விஷ கன்யா", slug: "bphs_stri_jataka", icon: Heart },
+      { id: "bphs_shapas_curses", label_en: "8 Past Life Curses & Remedies", label_ta: "8 சாபங்களும் பரிகாரங்களும்", slug: "bphs_shapas_curses", icon: ShieldAlert },
+      { id: "bphs_inauspicious_births", label_en: "Inauspicious Births & Gandanta", label_ta: "கண்டாந்தம் & அசுப ஜனனம்", slug: "bphs_inauspicious_births", icon: Flame },
+      { id: "bphs_upagrahas_arudhas", label_en: "Arudha Padas & Upagrahas", label_ta: "ஆரூட பாதங்கள் & உபகிரகங்கள்", slug: "bphs_upagrahas_arudhas", icon: Layers },
+    ],
+  },
+  {
+    id: "saravali_domain",
+    label_en: "Saravali Classics",
+    label_ta: "சாராவளி நூற்பலன்கள்",
+    icon: BookOpen,
+    colorClass: "text-amber-950 bg-amber-50/90 border-amber-300 hover:bg-amber-100",
+    activeColorClass: "bg-gradient-to-r from-amber-700 via-amber-800 to-amber-950 text-white shadow-sm ring-2 ring-amber-400/50",
+    subPills: [
+      { id: "all", label_en: "All Saravali Rules", label_ta: "அனைத்து சாராவளி", icon: BookOpen },
+      { id: "saravali_bhava_phala", label_en: "Bhava Phala (1-12 Houses)", label_ta: "1-12 பாவக பலன்கள்", slug: "saravali_bhava_phala", icon: Crown },
+      { id: "saravali_graha_yogas", label_en: "Conjunctions & Angles", label_ta: "சேர்க்கை & கேந்திர யோகங்கள்", slug: "saravali_graha_yogas", icon: Sparkles },
+      { id: "saravali_raja_yogas", label_en: "Raja Yogas", label_ta: "ராஜயோகங்கள்", slug: "saravali_raja_yogas", icon: Crown },
+      { id: "saravali_raja_yoga_bhanga", label_en: "Raja Yoga Bhanga", label_ta: "ராஜயோக பங்கம்", slug: "saravali_raja_yoga_bhanga", icon: AlertCircle },
+      { id: "saravali_worldly_affairs", label_en: "Worldly Affairs & Wealth", label_ta: "தனம் & தொழில் பலன்கள்", slug: "saravali_worldly_affairs", icon: Coins },
+      { id: "saravali_dignities", label_en: "Planetary Dignities", label_ta: "உச்ச/ஆட்சி/நீச நிலைகள்", slug: "saravali_dignities", icon: Star },
+      { id: "saravali_stri_jataka", label_en: "Stri Jataka (Female)", label_ta: "ஸ்திரீ ஜாதகம்", slug: "saravali_stri_jataka", icon: Heart },
+      { id: "saravali_longevity_death", label_en: "Longevity & Death", label_ta: "ஆயுள் & அரிஷ்ட பங்கம்", slug: "saravali_longevity_death", icon: ShieldAlert },
+      { id: "saravali_ashtakavarga", label_en: "Ashtakavarga Bindus", label_ta: "அஷ்டகவர்க்க பரல்கள்", slug: "saravali_ashtakavarga", icon: Layers },
+    ],
   },
   {
     id: "marriage_domain",
@@ -240,7 +282,7 @@ export function AstrologicalPredictionsSection({
   // Filter & Selection state
   // Primary Life Domain state
   const [activeDomain, setActiveDomain] = useState<
-    "all" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine"
+    "all" | "bphs_domain" | "saravali_domain" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine"
   >("all");
 
   // Domain sub-pill filter
@@ -435,7 +477,7 @@ export function AstrologicalPredictionsSection({
   // Filtered displayed rules with search
     // Compute matched counts per life domain
   const domainCounts = useMemo(() => {
-    if (!evaluationResults) return { all: 0, marriage: 0, career: 0, personality: 0, events: 0 };
+    if (!evaluationResults) return { all: 0, marriage: 0, career: 0, personality: 0, events: 0, saravali: 0 };
     const matched = evaluationResults.filter((r) => r.matched);
     const marriageSlugs = new Set(["marriage", "marriage_timing", "first_marriage", "second_marriage", "sexuality_intimacy"]);
     const careerSlugs = new Set(["job", "wealth_yogas"]);
@@ -456,6 +498,8 @@ export function AstrologicalPredictionsSection({
       career: matched.filter((r) => careerSlugs.has(r.category_slug) || careerSlugs.has(r.subcategory || "")).length,
       personality: matched.filter((r) => personalitySlugs.has(r.category_slug) || personalitySlugs.has(r.subcategory || "")).length,
       events: matched.filter((r) => eventsSlugs.has(r.category_slug) || eventsSlugs.has(r.subcategory || "")).length,
+      bphs: matched.filter((r) => r.category_slug?.startsWith("bphs_") || r.rule_id?.startsWith("RULE-BPHS") || r.source_reference?.toLowerCase().includes("parashara")).length,
+      saravali: matched.filter((r) => r.category_slug === "saravali_classics" || r.rule_id?.startsWith("RULE-SARAVALI") || r.source_reference?.toLowerCase().includes("saravali")).length,
     };
   }, [evaluationResults]);
 
@@ -514,6 +558,18 @@ export function AstrologicalPredictionsSection({
         list = list.filter((r) => r.category_slug === activeSubFilter || r.subcategory === activeSubFilter);
       } else {
         list = list.filter((r) => eventsSlugs.includes(r.category_slug) || eventsSlugs.includes(r.subcategory || "") || r.rule_id?.startsWith("RULE-BNS"));
+      }
+    } else if (activeDomain === "bphs_domain") {
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.subcategory === activeSubFilter || r.category_slug === activeSubFilter);
+      } else {
+        list = list.filter((r) => r.category_slug?.startsWith("bphs_") || r.rule_id?.startsWith("RULE-BPHS") || r.source_reference?.toLowerCase().includes("parashara"));
+      }
+    } else if (activeDomain === "saravali_domain") {
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.subcategory === activeSubFilter || r.category_slug === activeSubFilter);
+      } else {
+        list = list.filter((r) => r.category_slug === "saravali_classics" || r.rule_id?.startsWith("RULE-SARAVALI") || r.source_reference?.toLowerCase().includes("saravali"));
       }
     } else if (activeDomain === "advanced_engine") {
       if (activeCategoryFilter === "brighu_naadi") {
@@ -972,6 +1028,8 @@ export function AstrologicalPredictionsSection({
             const badgeCount =
               domain.id === "all"
                 ? domainCounts.all
+                : domain.id === "bphs_domain"
+                ? domainCounts.bphs
                 : domain.id === "marriage_domain"
                 ? domainCounts.marriage
                 : domain.id === "career_wealth_domain"
@@ -980,6 +1038,8 @@ export function AstrologicalPredictionsSection({
                 ? domainCounts.personality
                 : domain.id === "life_events_domain"
                 ? domainCounts.events
+                : domain.id === "saravali_domain"
+                ? domainCounts.saravali
                 : null;
 
             return (

@@ -36,6 +36,10 @@ import { Recent15DayPastEventsCard } from "@/components/results/Recent15DayPastE
 import { MarcBoneyMilestonesCard } from "@/components/results/MarcBoneyMilestonesCard";
 import { GemstoneDownload } from "@/components/results/GemstoneDownload";
 import { BrighuNaadiSection } from "@/components/results/BrighuNaadiSection";
+import { NatchathiraAnalysisSection } from "@/components/results/NatchathiraAnalysisSection";
+import { KnRaoAdvancedPredictionsSection } from "@/components/results/KnRaoAdvancedPredictionsSection";
+import { calculateKnRaoResearch } from "@/lib/api";
+import { KnRaoAdvancedResearchResponse } from "@/lib/types";
 import { AstrologerCockpit } from "@/components/results/AstrologerCockpit";
 import {
   calculateNabhasha,
@@ -47,6 +51,8 @@ import {
   calculateShadbala,
   calculateMedicalAstrology,
   getLiveTransits,
+  fetchSavedHoroscopeNakshatraAnalysis,
+  analyzeChartNakshatras,
 } from "@/lib/api";
 import { buildPlanetContexts, enrichDasaTreeWithBenefitBhavas } from "@/lib/benefit-bhavas";
 import { buildNavamsaHoroscope } from "@/lib/chart-transforms";
@@ -107,11 +113,11 @@ function HoroscopeResultsContent() {
   // Main Tabs: "horoscope" (ஜாதகம்) | "consultation" (ஆலோசனை) | "reports" (அறிக்கைகள் மற்றும் பதிவிறக்கங்கள்)
   const [mainTab, setMainTab] = useState<"horoscope" | "consultation" | "reports">("horoscope");
 
-  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi"
+  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi" | "natchathira" | "kn-rao"
   const [secondaryTab, setSecondaryTab] = useState<
-    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi"
+    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi" | "natchathira" | "kn-rao"
   >(() => {
-    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download", "brighu-naadi"];
+    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download", "brighu-naadi", "natchathira", "kn-rao"];
     if (tabParam && (validSecondary.includes(tabParam) || ["dasa_palangal", "palangal", "dasa-bukthi-palangal"].includes(tabParam))) {
       return (tabParam === "dasa_palangal" || tabParam === "palangal" || tabParam === "dasa-bukthi-palangal") ? "dasa-palangal" : (tabParam as any);
     }
@@ -127,6 +133,9 @@ function HoroscopeResultsContent() {
     if (tabParam && ["brighu", "brighu-naadi", "naadi", "brighu_naadi"].includes(tabParam.toLowerCase())) {
       return "brighu-naadi";
     }
+    if (tabParam && ["natchathira", "nakshatra", "star", "nakshatras", "natchathiram"].includes(tabParam.toLowerCase())) {
+      return "natchathira";
+    }
     if (tabParam && ["d1-d9", "varga", "vargas", "shodashvarga"].includes(tabParam)) {
       return "divisional";
     }
@@ -141,6 +150,10 @@ function HoroscopeResultsContent() {
 
   // Chart Style Switcher: South Indian vs North Indian
   const [chartMode, setChartMode] = useState<"south" | "north">("south");
+  const [nakshatraAnalysis, setNakshatraAnalysis] = useState<any>(null);
+  const [isLoadingNakshatra, setIsLoadingNakshatra] = useState<boolean>(false);
+  const [knRaoData, setKnRaoData] = useState<KnRaoAdvancedResearchResponse | null>(null);
+  const [isLoadingKnRao, setIsLoadingKnRao] = useState<boolean>(false);
 
   // Live Transits state
   const [showTransits, setShowTransits] = useState<boolean>(false);
@@ -191,6 +204,43 @@ function HoroscopeResultsContent() {
       fetchLiveTransits();
     }
   };
+
+  // Auto-load or analyze Nakshatras when navigating to Nakshatra tab
+  useEffect(() => {
+    if (secondaryTab === "natchathira" && !nakshatraAnalysis) {
+      if (result?.natchathira_analysis) {
+        setNakshatraAnalysis(result.natchathira_analysis);
+      } else if (result?.savedId) {
+        setIsLoadingNakshatra(true);
+        fetchSavedHoroscopeNakshatraAnalysis(result.savedId)
+          .then((res) => {
+            if (res) {
+              setNakshatraAnalysis(res);
+            } else if (result?.horoscope) {
+              return analyzeChartNakshatras({ horoscope_data: result.horoscope, birth_date: result.clientInputs?.birthDate }).then((fallback) => {
+                if (fallback) setNakshatraAnalysis(fallback);
+              });
+            }
+          })
+          .catch(() => {
+            if (result?.horoscope) {
+              analyzeChartNakshatras({ horoscope_data: result.horoscope, birth_date: result.clientInputs?.birthDate })
+                .then((fb) => fb && setNakshatraAnalysis(fb))
+                .catch((e) => console.warn("Nakshatra fallback error:", e));
+            }
+          })
+          .finally(() => setIsLoadingNakshatra(false));
+      } else if (result?.horoscope) {
+        setIsLoadingNakshatra(true);
+        analyzeChartNakshatras({ horoscope_data: result.horoscope, birth_date: result.clientInputs?.birthDate })
+          .then((res) => res && setNakshatraAnalysis(res))
+          .catch((e) => console.warn("Nakshatra dynamic analysis error:", e))
+          .finally(() => setIsLoadingNakshatra(false));
+      }
+    } else if (result?.natchathira_analysis && !nakshatraAnalysis) {
+      setNakshatraAnalysis(result.natchathira_analysis);
+    }
+  }, [secondaryTab, nakshatraAnalysis, result]);
 
   // Auto-fetch live ephemeris transits when navigating to Ashtakavarga, Transits, Dasa-Palangal, or Milestones tab
   useEffect(() => {
@@ -405,6 +455,7 @@ function HoroscopeResultsContent() {
             nabhasha: calc.horoscope?.nabhasha_yogas || calc.nabhasha,
             ashtakavarga: calc.horoscope?.ashtakavarga || calc.ashtakavarga,
             vedic_yogas: calc.horoscope?.vedic_yogas || calc.vedic_yogas,
+            natchathira_analysis: calc.horoscope?.natchathira_analysis || calc.natchathira_analysis, 
             doshas: existingDoshas,
             calculatedAt: calc.calculatedAt || item.created_at,
             savedId: item.id,
@@ -1178,6 +1229,42 @@ function HoroscopeResultsContent() {
 
                 <button
                   type="button"
+                  onClick={() => setSecondaryTab("kn-rao")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "kn-rao"
+                      ? "border-b-2 border-orange-600 text-orange-700 font-bold bg-orange-50/50"
+                      : "text-orange-700 hover:text-orange-900 font-semibold"
+                  }`}
+                  title={
+                    language === "ta"
+                      ? "கே.என். ராவ் ஆய்வுக் கட்டுரைகள்: சுயதொழில் vs உத்தியோகம், தொழில்நுட்ப மதிப்பீடு, உபபத தாம்பத்தியம் & மிருத்யு பாகை"
+                      : "K.N. Rao Research Canon: Service vs Business, Technical Scoring, Upapada Marital Discord & Medical Timing"
+                  }
+                >
+                  <Award className="w-3.5 h-3.5 text-orange-600" />
+                  <span>{language === "ta" ? "கே.என். ராவ் ஆய்வு" : "K.N. Rao Research"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSecondaryTab("natchathira")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "natchathira"
+                      ? "border-b-2 border-indigo-600 text-indigo-700 font-bold bg-indigo-50/50"
+                      : "text-indigo-600 hover:text-indigo-800 font-semibold"
+                  }`}
+                  title={
+                    language === "ta"
+                      ? "நட்சத்திர ஆய்வு: 9 நட்சத்திரங்களின் அனுபவ விதிகள், ஆயுள் மைல்கற்கள் & வாஸ்து ஆலோசனைகள்"
+                      : "Nakshatra Deep Analysis: Classical & Research Rules, Age Milestones & Vastu"
+                  }
+                >
+                  <Star className="w-3.5 h-3.5 text-indigo-600 fill-indigo-100" />
+                  <span>{language === "ta" ? "நட்சத்திர ஆய்வு" : "Nakshatra Analysis"}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSecondaryTab("gemstone-download")}
                   className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
                     secondaryTab === "gemstone-download"
@@ -1698,6 +1785,40 @@ function HoroscopeResultsContent() {
                     gender={clientInputs?.gender || "male"}
                     language={language as "en" | "ta"}
                   />
+                </div>
+              )}
+
+              {/* Sub-Tab 10: NATCHATHIRA EMPIRICAL DEEP ANALYSIS */}
+              {secondaryTab === "natchathira" && (
+                <div className="space-y-5">
+                  <NatchathiraAnalysisSection
+                    analysis={nakshatraAnalysis || result?.natchathira_analysis || null}
+                    nativeName={result?.clientInputs?.fullName || (result?.horoscope as any)?.person_name || (language === "ta" ? "ஜாதகர்" : "Native")}
+                    birthDate={result?.clientInputs?.birthDate || (result?.horoscope as any)?.birth_date}
+                    isLoading={isLoadingNakshatra}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 11: K.N. RAO ADVANCED RESEARCH ENGINE */}
+              {secondaryTab === "kn-rao" && (
+                <div className="space-y-5">
+                  {isLoadingKnRao && !knRaoData ? (
+                    <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-3" />
+                      <p className="text-slate-600 dark:text-slate-400 text-sm font-medium">
+                        {language === "ta"
+                          ? "கே.என். ராவ் ஆய்வுக் கட்டுரைகளின் விதிகள் கணக்கிடப்படுகின்றன..."
+                          : "Evaluating K.N. Rao empirical research models..."}
+                      </p>
+                    </div>
+                  ) : (
+                    <KnRaoAdvancedPredictionsSection
+                      data={knRaoData}
+                      horoscope={horoscope}
+                      language={language as "en" | "ta"}
+                    />
+                  )}
                 </div>
               )}
             </div>

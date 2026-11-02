@@ -733,7 +733,7 @@ def test_api_categories_endpoint():
     resp = client.get("/api/v1/rules/categories")
     assert resp.status_code == 200
     groups = resp.json()
-    assert len(groups) == 8
+    assert len(groups) >= 10
     group_codes = [g["group_code"] for g in groups]
     assert "marriage_relationships" in group_codes
     assert "career_profession" in group_codes
@@ -743,6 +743,9 @@ def test_api_categories_endpoint():
     assert "family_children" in group_codes
     assert "education_travel" in group_codes
     assert "other_life_themes" in group_codes
+    assert "saravali_classics" in group_codes
+    assert "bphs_classics" in group_codes
+    assert "saravali_classics" in group_codes
 
 
 # ===========================================================================

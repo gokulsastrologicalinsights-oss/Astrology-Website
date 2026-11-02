@@ -385,6 +385,7 @@ export interface HoroscopeResponse {
   varga_d1_d9?: VargaD1D9Response;
   doshas?: UnifiedDoshaResponse;
   medical_astrology?: MedicalAstrologyResponse;
+  natchathira_analysis?: NatchathiraDeepAnalysisResult;
 }
 
 export interface LiveTransitsResponse {
@@ -786,6 +787,7 @@ export interface FullHoroscopeResult {
   doshas?: UnifiedDoshaResponse;
   shadbala?: ShadbalaResponse;
   medical_astrology?: MedicalAstrologyResponse;
+  natchathira_analysis?: NatchathiraDeepAnalysisResult;
   calculatedAt: string;
   savedId?: string;
   displayNumber?: number;
@@ -6500,4 +6502,224 @@ export interface BrighuNaadiResponse {
     explanation_en: string;
     explanation_ta: string;
   };
+}
+
+export interface NatchathiraMatchedRule {
+  nakshatra: string;
+  technique_id: string;
+  category: string;
+  title_en: string;
+  title_ta: string;
+  severity: "CRITICAL_CAUTION" | "IMPORTANT_MILESTONE" | "LIFE_LESSON" | "POSITIVE_TALENT" | "BEHAVIORAL_TRAIT";
+  trigger_grahas: string[];
+  details_en: string;
+  details_ta: string;
+  case_study?: string;
+  remedy_en?: string;
+  remedy_ta?: string;
+}
+
+export interface NatchathiraAgeMilestone {
+  age: number | string;
+  nakshatra: string;
+  graha: string;
+  status: "PAST" | "CURRENT" | "UPCOMING" | "VULNERABILITY_WINDOW";
+  event_en: string;
+  event_ta: string;
+}
+
+export interface NatchathiraActiveSummary {
+  nakshatra: string;
+  name_ta: string;
+  lord: string;
+  deity: string;
+  symbol: string;
+  grahas: string[];
+  padas: string[];
+}
+
+export interface NatchathiraVastuAdvisory {
+  direction: string;
+  defect_risk: string;
+  remedy: string;
+}
+
+export interface NatchathiraBodyPartAlert {
+  nakshatra: string;
+  graha: string;
+  relative_en: string;
+  relative_ta: string;
+  organ: string;
+}
+
+export interface NatchathiraDeepAnalysisResult {
+  valid: boolean;
+  analyzed_at: string;
+  native_age?: number | null;
+  active_nakshatras_summary: NatchathiraActiveSummary[];
+  total_rules_matched: number;
+  critical_cautions_count: number;
+  milestones_count: number;
+  soul_lessons_count: number;
+  summary_en: string;
+  summary_ta: string;
+  matched_rules: NatchathiraMatchedRule[];
+  age_milestones: NatchathiraAgeMilestone[];
+  vastu_advisories: NatchathiraVastuAdvisory[];
+  body_part_alerts: NatchathiraBodyPartAlert[];
+  person_name?: string;
+  horoscope_id?: string;
+}
+
+
+// ---------------------------------------------------------------------------
+// K.N. Rao Advanced Astrological Research Engine Types
+// ---------------------------------------------------------------------------
+
+export interface ServiceVsSelfEmploymentResult {
+  planets_in_7_to_12: number;
+  planets_in_10_to_3: number;
+  planets_in_4_to_6: number;
+  poorna_parmatmansha_count: number;
+  parmatmansha_nakshatras_count: number;
+  tattwa_distribution: Record<string, number>;
+  agni_vayu_count: number;
+  prithvi_jala_count: number;
+  is_day_birth: boolean;
+  is_sunset_to_midnight: boolean;
+  saturn_status: string;
+  saturn_aspects_career: boolean;
+  lagna_lord_avastha: string;
+  tenth_lord_avastha: string;
+  self_employment_probability: number;
+  service_probability: number;
+  primary_verdict: string;
+  verdict_tamil: string;
+  rule_score_breakdown: Record<string, any>;
+  contributing_factors: string[];
+  contributing_factors_tamil: string[];
+}
+
+export interface TechnicalProfessionResult {
+  karakamsha_sign: string;
+  score_karakamsha_10th: number;
+  score_lagna_10th: number;
+  score_moon_10th: number;
+  score_nakshatra_10th: number;
+  total_score: number;
+  category: string;
+  category_tamil: string;
+  rahu_engineering_prominence: boolean;
+  technical_planets_influencing: string[];
+  non_technical_planets_influencing: string[];
+  detailed_breakdown: Record<string, any>;
+  interpretation: string;
+  interpretation_tamil: string;
+}
+
+export interface AuthorJournalistResult {
+  pac_bond_present: boolean;
+  jupiter_prominence: boolean;
+  mercury_prominence: boolean;
+  mars_mercury_bond: boolean;
+  mars_mercury_bond_details: string;
+  jaimini_writing_aspects: boolean;
+  karakamsha_influences: string[];
+  writing_profile: string;
+  writing_profile_tamil: string;
+  synthesis: string;
+  synthesis_tamil: string;
+}
+
+export interface MaritalDiscordResult {
+  upapada_lagna_sign: string;
+  second_from_upapada_sign: string;
+  malefics_in_second_from_ul: string[];
+  jaimini_malefic_aspects_on_second_from_ul: string[];
+  rule_a_matched: boolean;
+  rule_b_matched: boolean;
+  rule_c_matched: boolean;
+  rule_d_matched: boolean;
+  supplementary_shadashtaka: boolean;
+  supplementary_al_darapada_tension: boolean;
+  main_rules_matched_count: number;
+  discord_intensity: string;
+  discord_intensity_tamil: string;
+  active_dasha_discord_triggers: string[];
+  darakaraka_planet: string;
+  darakaraka_dasha_analysis: string;
+  reasons: string[];
+  reasons_tamil: string[];
+}
+
+export interface KakshyaSegmentItem {
+  kakshya_num: number;
+  kakshya_lord: string;
+  degree_range: string;
+  total_bindus: number;
+  auspicious: boolean;
+}
+
+export interface ConsolidatedSignKakshya {
+  sign_index: number;
+  sign_name: string;
+  sign_name_tamil: string;
+  total_sav_bindus: number;
+  kakshyas: KakshyaSegmentItem[];
+}
+
+export interface VimshottariEightPartItem {
+  part_num: number;
+  kakshya_lord: string;
+  tenth_lord_prastharaka_bindu: number;
+  favorable_for_career: boolean;
+  career_indication: string;
+  career_indication_tamil: string;
+}
+
+export interface ConsolidatedKakshyaResponse {
+  matrix: ConsolidatedSignKakshya[];
+  tenth_lord: string;
+  tenth_lord_rashi: string;
+  active_mahadasha_lord?: string | null;
+  vimshottari_eight_parts: VimshottariEightPartItem[];
+  current_transits_evaluations: Record<string, any>[];
+  summary_insight: string;
+  summary_insight_tamil: string;
+}
+
+export interface MrityuBhagaPlanetItem {
+  planet: string;
+  sign: string;
+  degree_in_sign: number;
+  mrityu_bhaga_degree: number;
+  difference_deg: number;
+  is_in_mrityu_bhaga: boolean;
+}
+
+export interface MedicalTimingResult {
+  planets_in_mrityu_bhaga: MrityuBhagaPlanetItem[];
+  dasha_lords_health_risk: string[];
+  trik_lord_connections: string[];
+  rahu_ketu_axis_on_dasha_lords: boolean;
+  retrograde_benefics_in_kendras: string[];
+  subsequent_dasha_prognosis: string;
+  subsequent_dasha_prognosis_tamil: string;
+  prognosis_verdict: string;
+  prognosis_verdict_tamil: string;
+  protective_factors: string[];
+  adverse_factors: string[];
+}
+
+export interface KnRaoAdvancedResearchResponse {
+  service_vs_self_employment: ServiceVsSelfEmploymentResult;
+  technical_profession: TechnicalProfessionResult;
+  author_vs_journalist: AuthorJournalistResult;
+  marital_discord: MaritalDiscordResult;
+  medical_timing: MedicalTimingResult;
+  jaimini_karakas: Record<string, string>;
+  karakamsha_sign: string;
+  arudha_lagna: string;
+  upapada_lagna: string;
+  darapada: string;
 }

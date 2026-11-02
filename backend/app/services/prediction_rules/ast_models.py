@@ -43,6 +43,9 @@ class DignityType(str, Enum):
     MOOLATRIKONA = "moolatrikona"
     VARGOTTAMA = "vargottama"
     PUSHKARA_NAVAMSA = "pushkara_navamsa"
+    FRIENDLY_SIGN = "friendly_sign"
+    INIMICAL_SIGN = "inimical_sign"
+    RETROGRADE = "retrograde"
 
 
 class BaseCondition(BaseModel):
@@ -167,6 +170,30 @@ class GrahaYuddhaCondition(BaseCondition):
     status: Optional[str] = "defeated"  # "defeated", "victor", "any_war"
     max_orb: float = 1.0
     chart: ChartScope = ChartScope.D1
+
+
+class PlanetRelativeHouseCondition(BaseCondition):
+    condition_type: str = "planet_relative_house"
+    planet: str
+    from_planet: str
+    relative_house: Union[int, List[int]]
+    chart: ChartScope = ChartScope.D1
+
+
+class MultiPlanetDignityCondition(BaseCondition):
+    condition_type: str = "multi_planet_dignity"
+    dignity: str  # "exalted", "moolatrikona", "own_sign", "friendly_sign", "debilitated", "inimical_sign"
+    min_count: int = 1
+    planets: Optional[List[str]] = None
+    chart: ChartScope = ChartScope.D1
+
+
+class AshtakavargaBinduCondition(BaseCondition):
+    condition_type: str = "ashtakavarga_bindus"
+    planet: str
+    min_bindus: Optional[int] = None
+    max_bindus: Optional[int] = None
+    exact_bindus: Optional[Union[int, List[int]]] = None
 
 
 class CompoundCondition(BaseCondition):

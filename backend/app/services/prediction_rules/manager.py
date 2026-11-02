@@ -70,7 +70,9 @@ class RuleManagementService:
             "planet_nakshatra", "planet_dignity", "lagna_sign",
             "dasa_active", "kp_sub_lord", "mutual_exchange",
             "kp_significator", "barren_fruitful_sign", "badhaka_maraka",
-            "mute_voice_sign", "punarphoo", "magi_aspect"
+            "mute_voice_sign", "punarphoo", "magi_aspect",
+            "planetary_avastha", "combustion_aspect_loss", "graha_yuddha",
+            "planet_relative_house", "multi_planet_dignity", "ashtakavarga_bindus"
         }
 
         if cond_type not in supported_types:
@@ -94,10 +96,24 @@ class RuleManagementService:
         elif cond_type in ("planet_sign", "planet_house"):
             if not node.get("planet"):
                 errors.append(f"'{cond_type}' requires 'planet' field.")
-            if cond_type == "planet_house" and "house" not in node:
-                errors.append(f"'{cond_type}' requires 'house' field (1-12).")
-            if cond_type == "planet_sign" and "sign" not in node:
-                errors.append(f"'{cond_type}' requires 'sign' field.")
+            if cond_type == "planet_house" and "house" not in node and "houses" not in node:
+                errors.append(f"'{cond_type}' requires 'house' or 'houses' field (1-12).")
+            if cond_type == "planet_sign" and "sign" not in node and "signs" not in node:
+                errors.append(f"'{cond_type}' requires 'sign' or 'signs' field.")
+
+        elif cond_type == "planet_relative_house":
+            if not node.get("planet") or not node.get("from_planet"):
+                errors.append("'planet_relative_house' requires 'planet' and 'from_planet' fields.")
+            if "relative_house" not in node and "relative_houses" not in node:
+                errors.append("'planet_relative_house' requires 'relative_house' or 'relative_houses' field.")
+
+        elif cond_type == "multi_planet_dignity":
+            if not node.get("dignity"):
+                errors.append("'multi_planet_dignity' requires 'dignity' field.")
+
+        elif cond_type == "ashtakavarga_bindus":
+            if not node.get("planet"):
+                errors.append("'ashtakavarga_bindus' requires 'planet' field.")
 
         elif cond_type == "planet_conjunction":
             planets = node.get("planets")

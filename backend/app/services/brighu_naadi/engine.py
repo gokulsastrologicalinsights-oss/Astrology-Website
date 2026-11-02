@@ -513,84 +513,164 @@ def evaluate_brighu_naadi(
         )
     )
 
-    # 6. Classical Rule Matching from Treatise Database
+    # 6. Classical Rule Matching from Treatise Database (R. G. Rao's Bhrigu Nandi Nadi)
     matched_rules: List[BrighuNaadiRuleMatch] = []
 
-    for rule_def in BRIGHU_NAADI_RULES_DATABASE:
-        pattern = rule_def["pattern"]
-        matched = False
-        planets_involved: List[str] = []
+    def _match_pattern(pat: Dict[str, Any]) -> tuple[bool, List[str]]:
+        inv: List[str] = []
+        checks_performed = 0
 
-        if "planet" in pattern and "sign" in pattern:
-            p = pattern["planet"]
-            s = pattern["sign"]
-            if p_signs.get(p) == s:
-                matched = True
-                planets_involved.append(p)
+        if "all_of" in pat:
+            for sub_p in pat["all_of"]:
+                ok, sub_inv = _match_pattern(sub_p)
+                if not ok:
+                    return False, []
+                inv.extend(sub_inv)
+            return True, inv
 
-        elif "planet_is_retrograde" in pattern:
-            p = pattern["planet_is_retrograde"]
-            if p_retro.get(p, False):
-                matched = True
-                planets_involved.append(p)
+        if "gender" in pat:
+            checks_performed += 1
+            if str(gender).strip().lower() != str(pat["gender"]).strip().lower():
+                return False, []
 
-        elif "conjunction" in pattern:
-            req_planets = pattern["conjunction"]
-            if req_planets:
-                target_sign = p_signs.get(req_planets[0])
-                if all(p_signs.get(p) == target_sign for p in req_planets):
-                    matched = True
-                    planets_involved.extend(req_planets)
+        if "planet" in pat and "sign" in pat:
+            checks_performed += 1
+            p = pat["planet"]
+            s = pat["sign"]
+            if p_signs.get(p) != s:
+                return False, []
+            inv.append(p)
 
-        elif "relative_house" in pattern:
-            rh = pattern["relative_house"]
+        if "planet_in_sign" in pat:
+            checks_performed += 1
+            pis = pat["planet_in_sign"]
+            p = pis["planet"]
+            s = pis["sign"]
+            if p_signs.get(p) != s:
+                return False, []
+            inv.append(p)
+
+        if "planet_is_retrograde" in pat:
+            checks_performed += 1
+            p = pat["planet_is_retrograde"]
+            if not p_retro.get(p, False):
+                return False, []
+            inv.append(p)
+
+        if "conjunction" in pat:
+            checks_performed += 1
+            req = pat["conjunction"]
+            if req:
+                tgt = p_signs.get(req[0])
+                if not all(p_signs.get(p) == tgt for p in req):
+                    return False, []
+                inv.extend(req)
+
+        if "relative_house" in pat:
+            checks_performed += 1
+            rh = pat["relative_house"]
             p_from = rh["from"]
             p_to = rh["to"]
             exp_h = rh["house"]
-
             if isinstance(p_to, list):
-                if all(_diff_signs(p_signs[p_from], p_signs[p]) == exp_h for p in p_to):
-                    matched = True
-                    planets_involved.append(p_from)
-                    planets_involved.extend(p_to)
+                if not all(_diff_signs(p_signs[p_from], p_signs[p]) == exp_h for p in p_to):
+                    return False, []
+                inv.append(p_from)
+                inv.extend(p_to)
             else:
-                if _diff_signs(p_signs[p_from], p_signs[p_to]) == exp_h:
-                    matched = True
-                    planets_involved.extend([p_from, p_to])
+                if _diff_signs(p_signs[p_from], p_signs[p_to]) != exp_h:
+                    return False, []
+                inv.extend([p_from, p_to])
 
-        elif "planet_in_any_sign" in pattern:
-            pias = pattern["planet_in_any_sign"]
+        if "has_planet_in_house" in pat:
+            checks_performed += 1
+            hph = pat["has_planet_in_house"]
+            p_from = hph["from"]
+            p_to = hph["planet"]
+            exp_h = hph["house"]
+            if _diff_signs(p_signs[p_from], p_signs[p_to]) != exp_h:
+                return False, []
+            inv.extend([p_from, p_to])
+
+        if "planet_in_any_sign" in pat:
+            checks_performed += 1
+            pias = pat["planet_in_any_sign"]
             p = pias["planet"]
             valid_signs = pias["signs"]
-            if p_signs.get(p) in valid_signs:
-                matched = True
-                planets_involved.append(p)
+            if p_signs.get(p) not in valid_signs:
+                return False, []
+            inv.append(p)
 
-        elif "sign_exchange" in pattern:
-            ex_planets = pattern["sign_exchange"]
-            p1, p2 = ex_planets[0], ex_planets[1]
+        if "sign_exchange" in pat:
+            checks_performed += 1
+            ex = pat["sign_exchange"]
+            p1, p2 = ex[0], ex[1]
             s1, s2 = p_signs.get(p1), p_signs.get(p2)
-            # Check mutual lord exchange
             lord1 = SIGN_LORDS.get(s1)
             lord2 = SIGN_LORDS.get(s2)
-            if lord1 == p2 and lord2 == p1:
-                matched = True
-                planets_involved.extend([p1, p2])
+            if not (lord1 == p2 and lord2 == p1):
+                return False, []
+            inv.extend([p1, p2])
 
-        elif "house_empty_from" in pattern:
-            he = pattern["house_empty_from"]
+        if "house_empty_from" in pat:
+            checks_performed += 1
+            he = pat["house_empty_from"]
             p_from = he["from"]
             exp_h = he["house"]
             target_sign = (((p_signs[p_from] - 1 + exp_h - 1) % 12) + 1)
             occupied = any(s == target_sign for s in p_signs.values())
-            if not occupied:
-                matched = True
-                planets_involved.append(p_from)
+            if occupied:
+                return False, []
+            inv.append(p_from)
 
-        elif pattern.get("special_encircle"):
-            # Check if Jupiter and Venus are in 2nd and 12th from Lagna, or encircle other planets
-            pass
+        if "aspects_house_from" in pat:
+            checks_performed += 1
+            ahf = pat["aspects_house_from"]
+            asp_p = ahf["aspecting_planet"]
+            from_p = ahf["from_planet"]
+            tgt_h = ahf["target_house"]
+            tgt_sign = (((p_signs[from_p] - 1 + tgt_h - 1) % 12) + 1)
+            diff = _diff_signs(p_signs[asp_p], tgt_sign)
+            valid = [7]
+            if asp_p == "Mars":
+                valid = [4, 7, 8]
+            elif asp_p == "Jupiter":
+                valid = [5, 7, 9]
+            elif asp_p == "Saturn":
+                valid = [3, 7, 10]
+            if diff not in valid:
+                return False, []
+            inv.extend([asp_p, from_p])
 
+        if "hemmed_between" in pat:
+            checks_performed += 1
+            hb = pat["hemmed_between"]
+            tgt_p = hb["target_planet"]
+            m1 = hb.get("malefic_1", "Saturn")
+            m2 = hb.get("malefic_2", "Mars")
+            t_s = p_signs.get(tgt_p)
+            if not t_s:
+                return False, []
+            prev_s = ((t_s - 2 + 12) % 12) + 1
+            next_s = (t_s % 12) + 1
+            m1_s = p_signs.get(m1)
+            m2_s = p_signs.get(m2)
+            if not ((m1_s == prev_s and m2_s == next_s) or (m2_s == prev_s and m1_s == next_s)):
+                return False, []
+            inv.extend([tgt_p, m1, m2])
+
+        if pat.get("special_encircle"):
+            checks_performed += 1
+            j_s = p_signs.get("Jupiter")
+            v_s = p_signs.get("Venus")
+            if not (j_s and v_s):
+                return False, []
+            inv.extend(["Jupiter", "Venus"])
+
+        return (checks_performed > 0), inv
+
+    for rule_def in BRIGHU_NAADI_RULES_DATABASE:
+        matched, planets_involved = _match_pattern(rule_def["pattern"])
         if matched:
             matched_rules.append(
                 BrighuNaadiRuleMatch(

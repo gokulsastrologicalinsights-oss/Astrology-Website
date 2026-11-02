@@ -34,6 +34,23 @@ from app.services.varga_engine import calculate_shodashvarga
 from app.services.medical_astrology_engine import calculate_medical_astrology
 from app.services.kp_service import calculate_kp_chart
 from app.services.dasa_service import calculate_dasa
+from app.services.varga_engine import calculate_varga_d1_d9
+from app.services.kn_rao_engine import (
+    evaluate_kn_rao_advanced_research,
+    evaluate_consolidated_kakshya_and_timing,
+    evaluate_service_vs_self_employment,
+    evaluate_technical_profession,
+    evaluate_author_journalist,
+    evaluate_marital_discord,
+    evaluate_medical_timing,
+    KnRaoAdvancedResearchResponse,
+    ConsolidatedKakshyaResponse,
+    ServiceVsSelfEmploymentResult,
+    TechnicalProfessionResult,
+    AuthorJournalistResult,
+    MaritalDiscordResult,
+    MedicalTimingResult,
+)
 
 router = APIRouter(prefix="/api/v1/vedic", tags=["Vedic Extensions"])
 
@@ -522,6 +539,174 @@ def calculate_kaksha_alerts_endpoint(request: KakshaAlertRequest) -> KakshaAlert
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Kaksha transit alerts calculation failed: {str(exc)}",
+        )
+
+
+# ---------------------------------------------------------------------------
+# K.N. Rao Advanced Astrological Research Engine Endpoints
+# ---------------------------------------------------------------------------
+
+def _extract_kn_rao_chart_inputs(request: HoroscopeRequest):
+    """Internal helper to calculate ephemeris, D1/D9 vargas, and active dasha for K.N. Rao research."""
+    horoscope = calculate_full_horoscope(
+        birth_date=request.birth_date,
+        birth_time=request.birth_time,
+        timezone_str=request.timezone,
+        latitude=request.latitude,
+        longitude=request.longitude,
+        ayanamsa_id=request.ayanamsa or 0,
+        house_system_id=request.house_system or 0,
+        include_panchang=False,
+        include_outer_planets=False,
+    )
+    varga_res = calculate_varga_d1_d9(horoscope.planets, horoscope.ascendant)
+    
+    planets_data = {}
+    for p in horoscope.planets:
+        planets_data[p.name] = {
+            "sign_index": p.sign_index,
+            "degree_in_sign": p.degree_in_sign,
+            "longitude": p.longitude,
+            "is_retrograde": getattr(p, "is_retrograde", False),
+            "is_combust": getattr(p, "is_combust", False),
+            "nakshatra_name": getattr(p, "nakshatra_name", getattr(p, "nakshatra", "")),
+        }
+        
+    d9_planets = {}
+    d9_list = varga_res.d9_chart.get("planets", []) if isinstance(varga_res.d9_chart, dict) else []
+    for dp in d9_list:
+        p_name = dp.get("name")
+        if p_name:
+            d9_planets[p_name] = {
+                "sign_index": dp.get("sign_index", 1),
+                "degree_in_sign": dp.get("degree_in_sign", 0.0),
+            }
+            
+    lagna_sign = horoscope.ascendant.sign_index
+    lagna_deg = (
+        horoscope.ascendant.degree_in_sign
+        if hasattr(horoscope.ascendant, "degree_in_sign")
+        else (horoscope.ascendant.degree % 30.0)
+    )
+    
+    active_md = None
+    active_ad = None
+    try:
+        birth_in = BirthInput(
+            birth_date=request.birth_date,
+            birth_time=request.birth_time,
+            timezone=request.timezone,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            ayanamsa_id=request.ayanamsa or 0,
+            house_system_id=request.house_system or 0,
+        )
+        dasa_res = calculate_dasa(birth_in)
+        if dasa_res and dasa_res.active_period:
+            active_md = dasa_res.active_period.mahadasha
+            active_ad = dasa_res.active_period.antardasha
+    except Exception:
+        pass
+        
+    return planets_data, d9_planets, lagna_sign, lagna_deg, active_md, active_ad
+
+
+@router.post(
+    "/kn-rao-research",
+    response_model=KnRaoAdvancedResearchResponse,
+    summary="Comprehensive K.N. Rao Advanced Astrological Research Suite"
+)
+def calculate_kn_rao_research_endpoint(request: HoroscopeRequest) -> KnRaoAdvancedResearchResponse:
+    """Calculates all empirical research findings from 'Advanced Techniques of Astrological Predictions' (BVB / K.N. Rao)."""
+    try:
+        planets_data, d9_planets, lagna_sign, lagna_deg, active_md, active_ad = _extract_kn_rao_chart_inputs(request)
+        return evaluate_kn_rao_advanced_research(
+            planets_data=planets_data,
+            d9_planets=d9_planets,
+            lagna_sign=lagna_sign,
+            lagna_degree=lagna_deg,
+            active_mahadasha=active_md,
+            active_antardasha=active_ad,
+        )
+    except ValueError as val_err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_err))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"K.N. Rao Advanced Research calculation failed: {str(exc)}",
+        )
+
+
+@router.post(
+    "/consolidated-kakshya",
+    response_model=ConsolidatedKakshyaResponse,
+    summary="Dr. R.K. Aggarwal Table III Kakshya Chart + P.C. Verma 8-Part Timing"
+)
+def calculate_consolidated_kakshya_endpoint(request: HoroscopeRequest) -> ConsolidatedKakshyaResponse:
+    """Evaluates the 12-sign x 8-kakshya consolidated matrix and Mahadasha 8-part career trajectory."""
+    try:
+        planets_data, _, lagna_sign, _, active_md, _ = _extract_kn_rao_chart_inputs(request)
+        return evaluate_consolidated_kakshya_and_timing(
+            planets_data=planets_data,
+            lagna_sign=lagna_sign,
+            active_mahadasha_lord=active_md,
+        )
+    except ValueError as val_err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_err))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Consolidated Kakshya calculation failed: {str(exc)}",
+        )
+
+
+@router.post(
+    "/career-research",
+    summary="Empirical Career Research: Service vs Business, Tech Scoring, and Literary Talents"
+)
+def calculate_career_research_endpoint(request: HoroscopeRequest):
+    """Evaluates S.N. Kapoor, R.C. Sharma, and Col. A.K. Gour career models."""
+    try:
+        planets_data, d9_planets, lagna_sign, _, _, _ = _extract_kn_rao_chart_inputs(request)
+        service_res = evaluate_service_vs_self_employment(planets_data, lagna_sign)
+        tech_res = evaluate_technical_profession(planets_data, d9_planets, lagna_sign)
+        author_res = evaluate_author_journalist(planets_data, d9_planets, lagna_sign)
+        return {
+            "service_vs_self_employment": service_res,
+            "technical_profession": tech_res,
+            "author_vs_journalist": author_res,
+        }
+    except ValueError as val_err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_err))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Career research calculation failed: {str(exc)}",
+        )
+
+
+@router.post(
+    "/marital-discord-research",
+    response_model=MaritalDiscordResult,
+    summary="Shunny Nigam 4 Main + 2 Supplementary Rules Marital Discord Analysis"
+)
+def calculate_marital_discord_endpoint(request: HoroscopeRequest) -> MaritalDiscordResult:
+    """Evaluates Upapada 2nd house affliction, 7th lord D9 dignity, Venus afflictions, and dusthana links."""
+    try:
+        planets_data, d9_planets, lagna_sign, _, active_md, active_ad = _extract_kn_rao_chart_inputs(request)
+        return evaluate_marital_discord(
+            planets_data=planets_data,
+            d9_planets=d9_planets,
+            lagna_sign=lagna_sign,
+            active_mahadasha=active_md,
+            active_antardasha=active_ad,
+        )
+    except ValueError as val_err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_err))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Marital discord research calculation failed: {str(exc)}",
         )
 
 

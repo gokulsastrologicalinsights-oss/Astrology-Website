@@ -570,6 +570,151 @@ export function evaluateBrighuNaadiClient(
     });
   }
 
+  // R. G. Rao Bhrigu Nandi Nadi Classical Yogas & Karma Remedies
+  if (sat && planetMap["Moon"] && sat.sign_index === planetMap["Moon"].sign_index) {
+    matchedRules.push({
+      rule_id: "BN-SAT-013",
+      category: "profession",
+      title_en: "Saturn + Moon: Chandra Mouli Yoga (Ascetic Stature & Public Honors)",
+      title_ta: "சனி + சந்திரன்: சந்திர மௌலி யோகம் (துறவு, தர்ம அறக்கட்டளை & அரசு கௌரவம்)",
+      interpretation_en: "Devotion to Lord Shiva, leadership of religious/charitable trusts, ascetic bent of mind, or high municipal and governmental honors.",
+      interpretation_ta: "சிவபக்தி, தர்ம அறக்கட்டளை தலைமை, ஆன்மீக நாட்டம், துறவு மனப்பாங்கு அல்லது மக்கள் மற்றும் அரசு வழியில் உயரிய கௌரவங்கள்.",
+      planets_involved: ["Saturn", "Moon"],
+      source_page: "Bhrigu Nandi Nadi, Charts 31 & 70, pp. 31, 54",
+    });
+  }
+
+  if (sat && venus && rahu && sat.sign_index === venus.sign_index && sat.sign_index === rahu.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-SAT-014",
+      category: "profession",
+      title_en: "Saturn + Venus + Rahu: Cinema, Visual Media & Shadow Arts",
+      title_ta: "சனி + சுக்கிரன் + ராகு: திரைப்படம், காட்சி ஊடகம் மற்றும் நிழற்கலை யோகம்",
+      interpretation_en: "Careers in film direction, cinematography, television production, glamour entertainment, and optical media.",
+      interpretation_ta: "சினிமா தயாரிப்பு, திரைப்பட இயக்கம், ஒளிப்பதிவு, தொலைக்காட்சி மற்றும் கவர்ச்சி ஊடகத் துறைகளில் அபார சாதனை.",
+      planets_involved: ["Saturn", "Venus", "Rahu"],
+      source_page: "Bhrigu Nandi Nadi, Charts 70, 362, 381, pp. 54, 243, 253",
+    });
+  }
+
+  if (sat && mars && ketu && sat.sign_index === mars.sign_index && sat.sign_index === ketu.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-SAT-018",
+      category: "profession",
+      title_en: "Saturn + Mars + Ketu: Precision Surgery, Medical Cutlery & Defense Hardware",
+      title_ta: "சனி + செவ்வாய் + கேது: அறுவை சிகிச்சை நிபுணர், மருத்துவ கருவிகள் மற்றும் பாதுகாப்பு உபகரணங்கள்",
+      interpretation_en: "Surgeons, orthopedic specialists, manufacturers of hospital surgical instruments, or defense armaments engineering.",
+      interpretation_ta: "அறுவை சிகிச்சை நிபுணர் (Surgeon), மருத்துவக் கூர்முனை உபகரணம் தயாரிப்பு அல்லது ராணுவ பாதுகாப்பு தளவாட உற்பத்தி.",
+      planets_involved: ["Saturn", "Mars", "Ketu"],
+      source_page: "Bhrigu Nandi Nadi, Charts 102, 107, pp. 107, 109",
+    });
+  }
+
+  if (sat && planetMap["Mercury"] && sat.sign_index === planetMap["Mercury"].sign_index) {
+    matchedRules.push({
+      rule_id: "BN-SAT-019",
+      category: "profession",
+      title_en: "Saturn + Mercury: Chartered Accountant, Auditor & Financial Registrar",
+      title_ta: "சனி + புதன்: தலைமை கணக்காயர் (CA), தணிக்கையாளர் மற்றும் நிதி ஆலோசகர்",
+      interpretation_en: "Commercial mathematics, Chartered Accountancy (CA), tax auditing, corporate accounts, or senior banking executive.",
+      interpretation_ta: "கணக்கியல் நிபுணர் (CA), தலைமை தணிக்கை அதிகாரி, கார்ப்பரேட் வரி ஆலோசகர் மற்றும் வங்கி உயர் நிதி நிர்வாகப் பதவிகள்.",
+      planets_involved: ["Saturn", "Mercury"],
+      source_page: "Bhrigu Nandi Nadi, Charts 19, 70, pp. 20, 54",
+    });
+  }
+
+  if (jup && ketu && jup.sign_index === ketu.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-JUP-017",
+      category: "spiritual",
+      title_en: "Jupiter + Ketu: Maha Gnana Yoga (Supreme Vedanta & Intuition)",
+      title_ta: "குரு + கேது: மகா ஞான யோகம் (வேதாந்த ஞானம் & ஆன்மீக விழிப்புணர்வு)",
+      interpretation_en: "Profound metaphysical intuition, mastery over Vedic philosophy, and guidance of spiritual seekers.",
+      interpretation_ta: "ஆழ்ந்த உள்ளுணர்வு, வேதாந்த சாஸ்திர ஞானம், ஆன்மீக பற்று மற்றும் உலக மாயைகளில் பற்றற்ற மேலான நிலை.",
+      planets_involved: ["Jupiter", "Ketu"],
+      source_page: "Bhrigu Nandi Nadi, Charts 19, 41, pp. 20, 41",
+    });
+  }
+
+  if (jup && rahu && jup.sign_index === rahu.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-JUP-018",
+      category: "life_force",
+      title_en: "Jupiter + Rahu: Guru Chandal Yoga & Unconventional Breakthroughs",
+      title_ta: "குரு + ராகு: குரு சண்டாள யோகம் மற்றும் புதுமை சிந்தனைகள்",
+      interpretation_en: "Questions obsolete dogma, masters foreign knowledge or modern science, and achieves breakthroughs through unconventional paths.",
+      interpretation_ta: "பாரம்பரிய மரபுகளைத் தாண்டி சிந்திக்கும் திறன், வெளிநாட்டுத் தொடர்பு, நவீன அறிவியல் மற்றும் வழக்கத்திற்கு மாறான வழிகளில் பெரும் முன்னேற்றம்.",
+      planets_involved: ["Jupiter", "Rahu"],
+      source_page: "Bhrigu Nandi Nadi, Charts 107, 109, pp. 109, 114",
+    });
+  }
+
+  if (isFemale && mars && jup && mars.sign_index === jup.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-MAR-005",
+      category: "marriage",
+      title_en: "Female Chart: Mars + Jupiter (Devaguru Kalatra Yoga - Highly Noble Husband)",
+      title_ta: "பெண் ஜாதகம்: செவ்வாயுடன் குரு (தேவகுரு களத்திர யோகம்) - உத்தம குணமும் அந்தஸ்தும் கொண்ட கணவர்",
+      interpretation_en: "Scholarly, righteous, generous spouse blessed with high societal stature and enduring marital bliss.",
+      interpretation_ta: "தர்ம சிந்தனையும், கல்வியறிவும், சமுதாய மரியாதையும் மற்றும் நிறைந்த பாசமும் கொண்ட உத்தம கணவரை அளிக்கும் தேவகுரு யோகம்.",
+      planets_involved: ["Mars", "Jupiter"],
+      source_page: "Bhrigu Nandi Nadi, Charts 31, 109, pp. 26, 114",
+    });
+  }
+
+  // Karmic Curses & Pilgrimage Remedies (Sanchita Karma)
+  if (jup && rahu && sat && jup.sign_index === rahu.sign_index && ((sat.sign_index - jup.sign_index + 12) % 12) + 1 === 7) {
+    matchedRules.push({
+      rule_id: "BN-KRM-001",
+      category: "spiritual",
+      title_en: "Daivadroha / Sadhu Curse: Jupiter Afflicted by Saturn & Rahu (Remedy: 48 Somavara Vratam)",
+      title_ta: "தெய்வத் துரோகம் / சாது சாபம்: சனி-ராகுவால் குரு பாதிப்பு (பரிகாரம்: 48 சோமவார விரதம் & கோகர்ண யாத்திரை)",
+      interpretation_en: "Past Life Karmic Indication: Breaches of sacred vows. Remedy: Observing 48 consecutive Monday fasts (Somavara Vrata), pilgrimage to Gokarna Mahabaleshwar, and Annadanam.",
+      interpretation_ta: "முற்பிறவி கர்ம வினை: ஆன்மீக பெரியோர்களை அவமதித்ததால் ஏற்படும் தடைகள். பரிகாரம்: 48 வாரங்கள் சோமவார விரதம், கோகர்ணம் மகாபலேஸ்வரர் தரிசனம் மற்றும் சாதுக்களுக்கு அன்னதானம்.",
+      planets_involved: ["Jupiter", "Rahu", "Saturn"],
+      source_page: "Bhrigu Nandi Nadi, Charts 1, 31, pp. 4, 26",
+    });
+  }
+
+  if (venus && ketu && mars && venus.sign_index === ketu.sign_index && ((mars.sign_index - venus.sign_index + 12) % 12) + 1 === 7) {
+    matchedRules.push({
+      rule_id: "BN-KRM-002",
+      category: "spiritual",
+      title_en: "Stri Dosha: Venus Afflicted by Ketu & Mars (Remedy: Vedaranyam Pilgrimage & Widow Support)",
+      title_ta: "ஸ்திரீ தோஷம்: கேது மற்றும் செவ்வாயால் சுக்கிரன் பாதிப்பு (பரிகாரம்: வேதாரண்யம் யாத்திரை & ஆதரவற்றோருக்கு உதவுதல்)",
+      interpretation_en: "Past Life Karmic Indication: Injustice caused to a virtuous woman. Remedy: Pilgrimage to Vedaranyam (Tamil Nadu), holy dip in Veda Theertham, and donating clothes/food to destitute widows and children.",
+      interpretation_ta: "முற்பிறவி கர்ம வினை: உத்தம பெண்ணிற்கு இழைத்த அநீதியால் திருமணத்தில் தடை. பரிகாரம்: வேதாரண்யம் சென்று வேத தீர்த்தத்தில் நீராடி, ஆதரவற்ற விதவை பெண்கள், குழந்தைகளுக்கு ஆடை, உணவு தானம் வழங்குதல்.",
+      planets_involved: ["Venus", "Ketu", "Mars"],
+      source_page: "Bhrigu Nandi Nadi, Charts 12, 87, pp. 12, 92",
+    });
+  }
+
+  if (planetMap["Moon"] && rahu && planetMap["Moon"].sign_index === rahu.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-KRM-003",
+      category: "spiritual",
+      title_en: "Matru Dosha: Moon Afflicted by Rahu (Remedy: Madurai Meenakshi Puja & 5 Kanya Puja)",
+      title_ta: "மாத்ரு தோஷம்: ராகுவால் சந்திரன் பாதிப்பு (பரிகாரம்: மதுரை மீனாட்சி வழிபாடு & 5 கன்னியா பூஜை)",
+      interpretation_en: "Past Life Karmic Indication: Distress caused to motherly figures. Remedy: Worshipping Divine Mother Meenakshi at Madurai, offering silk saree, and performing Kanya Puja for 5 young girls.",
+      interpretation_ta: "முற்பிறவி கர்ம வினை: தாயாரை மனவேதனைக்கு உள்ளாக்கியதால் மன அமைதியின்மை உண்டாதல். பரிகாரம்: மதுரை மீனாட்சி அம்மனை தரிசித்து பட்டு வஸ்திரம் சாற்றுதல் மற்றும் 5 சிறுமிகளுக்கு கன்னியா பூஜை செய்தல்.",
+      planets_involved: ["Moon", "Rahu"],
+      source_page: "Bhrigu Nandi Nadi, Charts 14, 21, pp. 14, 21",
+    });
+  }
+
+  if (sun && rahu && sun.sign_index === rahu.sign_index) {
+    matchedRules.push({
+      rule_id: "BN-KRM-004",
+      category: "spiritual",
+      title_en: "Pitru Dosha: Sun Afflicted by Rahu (Remedy: Shiva Rudrabhishekam & Pradosha Vrata)",
+      title_ta: "பித்ரு தோஷம்: ராகுவால் சூரியன் பாதிப்பு (பரிகாரம்: பிரதோஷ ருத்ராபிஷேகம் & பித்ரு தர்ப்பணம்)",
+      interpretation_en: "Past Life Karmic Indication: Ancestral Pitru obligations. Remedy: Performing Rudrabhishekam to Lord Shiva on Pradosham days, revering elders, and conducting Pitru Tarpanam on Amavasya.",
+      interpretation_ta: "முற்பிறவி கர்ம வினை: முன்னோர்களின் கடமைகளை மறந்ததால் ஏற்படும் பித்ரு தோஷம். பரிகாரம்: பிரதோஷ நாட்களில் சிவபெருமானுக்கு ருத்ராபிஷேகம் செய்தல், அமாவாசை தோறும் பித்ரு தர்ப்பணம் செய்தல்.",
+      planets_involved: ["Sun", "Rahu"],
+      source_page: "Bhrigu Nandi Nadi, Charts 6, 19, pp. 12, 20",
+    });
+  }
+
   // 9. 20 BNN Golden Rules Evaluation
   const bnn20Evaluations: BnnRuleEvaluation[] = [
     {

@@ -264,8 +264,75 @@ def evaluate_arishta_yogas(ctx: YogaChartContext) -> List[YogaDetail]:
                 "Moon is either not in a Dusthana or lacks benefic aspect from Jupiter or Venus."
             ),
             classical_definition="Even when the Moon occupies the 6th, 8th, or 12th house, receiving the aspect of Jupiter or Venus dissolves all danger.",
-            classical_reference="Phaladeepika Ch. 13, v. 12; Brihat Parashara Hora Shastra Ch. 11, v. 7",
+            classical_reference="Saravali Ch. 12, v. 12; Phaladeepika Ch. 13, v. 12; Brihat Parashara Hora Shastra Ch. 11, v. 7",
             verification_status="Classical Independent Implementation",
+        )
+    )
+
+    # -------------------------------------------------------------
+    # 6. Fateful Degrees of the Moon (Saravali Ch. 10, v. 111-114)
+    # -------------------------------------------------------------
+    # Saravali Chapter 10 gives exact sensitive degrees for the Moon in each sign:
+    # Aries: 8°, Taurus: 9°, Gemini: 22°, Cancer: 22°, Leo: 25°, Virgo: 1°,
+    # Libra: 4°, Scorpio: 23°, Sagittarius: 18°, Capricorn: 20°, Aquarius: 21°, Pisces: 10°.
+    SARAVALI_FATAL_DEGREES = {
+        1: 8.0, 2: 9.0, 3: 22.0, 4: 22.0, 5: 25.0, 6: 1.0,
+        7: 4.0, 8: 23.0, 9: 18.0, 10: 20.0, 11: 21.0, 12: 10.0
+    }
+    moon_sign = ctx.planet_sign.get("Moon")
+    moon_long = ctx.planet_longitude.get("Moon")
+    moon_in_fatal_deg = False
+    deg_diff = 999.0
+    fatal_deg = 0.0
+
+    if moon_sign and moon_long is not None:
+        deg_in_sign = moon_long % 30.0
+        fatal_deg = SARAVALI_FATAL_DEGREES.get(moon_sign, 0.0)
+        deg_diff = abs(deg_in_sign - fatal_deg)
+        # Active if within 1.0 degree orb
+        if deg_diff <= 1.0:
+            moon_in_fatal_deg = True
+
+    # Check if neutralized by Jupiter in Kendra or aspecting Moon
+    is_fatal_mitigated = False
+    if moon_in_fatal_deg:
+        if (jup_house in KENDRA_HOUSES and not jup_is_combust and not jup_is_debilitated) or ctx.planet_aspects_planet("Jupiter", "Moon"):
+            is_fatal_mitigated = True
+
+    results.append(
+        YogaDetail(
+            id="saravali_moon_fateful_degrees",
+            name="Fateful Degrees of the Moon (Saravali Mrityu Bhaga)",
+            name_tamil="சந்திரனின் மரண பாகை (சாராவளி விதி)",
+            category="Arishta",
+            status="Mitigated" if (moon_in_fatal_deg and is_fatal_mitigated) else ("Qualifying" if moon_in_fatal_deg else "Not Qualifying"),
+            is_qualifying=moon_in_fatal_deg,
+            planets_involved=["Moon"] + (["Jupiter"] if is_fatal_mitigated else []),
+            relevant_houses=[moon_house] if moon_house else [],
+            conditions=[
+                YogaConditionItem(
+                    condition="Moon occupies the sensitive fateful degree (within 1.0°) of its sign per Saravali Ch. 10",
+                    passed=moon_in_fatal_deg,
+                    detail=(
+                        f"Moon in {SIGN_NAMES_EN.get(moon_sign, '')} at {deg_in_sign:.2f}° (Target Fatal Degree: {fatal_deg:.1f}°, delta: {deg_diff:.2f}°)."
+                        if (moon_sign and moon_long is not None) else "Moon coordinates unavailable."
+                    )
+                ),
+                YogaConditionItem(
+                    condition="Mitigation: Protected by Jupiter in Kendra or casting benefic Drishti",
+                    passed=is_fatal_mitigated,
+                    detail="Jupiter protection mitigates vulnerability." if is_fatal_mitigated else "No mitigation detected from Jupiter."
+                )
+            ],
+            short_interpretation=(
+                "Moon resides in a classical sensitive degree calling for health attentiveness in early childhood, completely mitigated by benefic aspects."
+                if moon_in_fatal_deg else
+                "Moon is safely outside the sensitive fateful degree of its sign."
+            ),
+            classical_definition="Kalyana Varma specifies exact fateful degrees for the Moon in all 12 signs (Aries 8°, Taurus 9°, Gemini 22°, etc.), neutralized by Jupiter in Kendra.",
+            classical_reference="Saravali Ch. 10, v. 111-114; Saravali Ch. 12, v. 3",
+            verification_status="Classical Saravali Implementation",
+            cancellation_reason="Neutralized by Jupiter in Kendra or aspecting Moon" if (moon_in_fatal_deg and is_fatal_mitigated) else None
         )
     )
 

@@ -20,9 +20,23 @@ from app.services.nakshatra_engine import (
     get_28_nakshatra_table,
     get_ebook_treatise,
     get_nakshatra_prediction,
+    analyze_saved_chart_nakshatras,
 )
+from app.services.auth_service import get_supabase_client
+from app.services.ephemeris import calculate_full_horoscope
 
 router = APIRouter(prefix="/api/v1/nakshatras", tags=["Nakshatra Shastra"])
+
+
+class ChartAnalysisRequest(BaseModel):
+    horoscope_data: Optional[Dict[str, Any]] = None
+    birth_date: Optional[str] = None
+    birth_time: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    timezone: Optional[str] = "Asia/Kolkata"
+    ayanamsa: Optional[int] = 0
+    saved_horoscope_id: Optional[str] = None
 
 
 class ActivityCheckRequest(BaseModel):
@@ -120,3 +134,96 @@ def check_pada_dosha(req: PadaDoshaRequest) -> Dict[str, Any]:
             detail=result.get("error", "Invalid nakshatra or pada."),
         )
     return result
+
+
+@router.post("/chart-analysis", response_model=Dict[str, Any])
+def analyze_chart_nakshatras_endpoint(req: ChartAnalysisRequest) -> Dict[str, Any]:
+    """Perform in-depth empirical Nakshatra analysis based on Saptarishis research for a chart."""
+    horo_data = req.horoscope_data
+    b_date = req.birth_date
+
+    # Case A: Saved horoscope ID provided
+    if req.saved_horoscope_id:
+        supabase = get_supabase_client()
+        if supabase:
+            try:
+                res = supabase.table("saved_horoscopes").select("*").eq("id", req.saved_horoscope_id.strip()).execute()
+                if res.data and len(res.data) > 0:
+                    row = res.data[0]
+                    b_date = b_date or row.get("birth_date")
+                    calc_res = row.get("calculation_result") or {}
+                    # Check if already cached
+                    if "natchathira_analysis" in calc_res and calc_res["natchathira_analysis"]:
+                        return calc_res["natchathira_analysis"]
+                    horo_data = calc_res.get("horoscope")
+                    if not horo_data and row.get("birth_date") and row.get("birth_time"):
+                        computed = calculate_full_horoscope(
+                            birth_date=row["birth_date"],
+                            birth_time=row["birth_time"],
+                            latitude=float(row.get("latitude") or 13.0827),
+                            longitude=float(row.get("longitude") or 80.2707),
+                            timezone=row.get("timezone") or "Asia/Kolkata",
+                            ayanamsa_id=int(row.get("ayanamsa_id") or 0),
+                        )
+                        horo_data = computed.model_dump()
+            except Exception as e:
+                print(f"[Nakshatra Analysis] Saved horoscope fetch error: {e}")
+
+    # Case B: Ad-hoc birth parameters provided without pre-computed horoscope
+    if not horo_data and req.birth_date and req.birth_time and req.latitude is not None and req.longitude is not None:
+        computed = calculate_full_horoscope(
+            birth_date=req.birth_date,
+            birth_time=req.birth_time,
+            latitude=req.latitude,
+            longitude=req.longitude,
+            timezone=req.timezone or "Asia/Kolkata",
+            ayanamsa_id=req.ayanamsa or 0,
+        )
+        horo_data = computed.model_dump()
+
+    if not horo_data:
+        raise HTTPException(
+            status_code=422,
+            detail="Must provide either horoscope_data, saved_horoscope_id, or complete birth details.",
+        )
+
+    return analyze_saved_chart_nakshatras(horo_data, birth_date_str=b_date)
+
+
+@router.get("/saved-analysis/{horoscope_id}", response_model=Dict[str, Any])
+def get_saved_horoscope_nakshatra_analysis(horoscope_id: str) -> Dict[str, Any]:
+    """Retrieve or compute in-depth Nakshatra analysis for any saved horoscope."""
+    supabase = get_supabase_client()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database client unavailable.")
+
+    clean_id = horoscope_id.strip()
+    try:
+        res = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+        if not res.data or len(res.data) == 0:
+            raise HTTPException(status_code=404, detail="Saved horoscope not found.")
+        row = res.data[0]
+        calc_res = row.get("calculation_result") or {}
+
+        # If already stored, return it
+        if "natchathira_analysis" in calc_res and calc_res["natchathira_analysis"]:
+            return calc_res["natchathira_analysis"]
+
+        horo_data = calc_res.get("horoscope")
+        if not horo_data:
+            computed = calculate_full_horoscope(
+                birth_date=row["birth_date"],
+                birth_time=row["birth_time"],
+                latitude=float(row.get("latitude") or 13.0827),
+                longitude=float(row.get("longitude") or 80.2707),
+                timezone=row.get("timezone") or "Asia/Kolkata",
+                ayanamsa_id=int(row.get("ayanamsa_id") or 0),
+            )
+            horo_data = computed.model_dump()
+
+        analysis = analyze_saved_chart_nakshatras(horo_data, birth_date_str=row.get("birth_date"))
+        return analysis
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze saved horoscope: {str(e)}")

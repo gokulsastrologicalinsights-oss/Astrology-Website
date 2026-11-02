@@ -158,3 +158,34 @@ def test_bnn_research_paper_rules_and_directions():
     r14 = next((r for r in res_female.bnn_20_rules_evaluations if r["rule_number"] == 14), None)
     assert r14 is not None
     assert r14["is_active"] is True
+
+
+def test_bnn_500_charts_new_rules_and_karmic_remedies():
+    """Validates R. G. Rao's Bhrigu Nandi Nadi (500 Charts) specialized rules and karmic remedies."""
+    planets = {
+        "Jupiter": {"sign_index": 1, "degree": 10.0, "is_retrograde": False},
+        "Rahu": {"sign_index": 1, "degree": 12.0, "is_retrograde": False},
+        "Saturn": {"sign_index": 7, "degree": 14.0, "is_retrograde": False},
+        "Moon": {"sign_index": 7, "degree": 12.0, "is_retrograde": False},
+        "Sun": {"sign_index": 3, "degree": 15.0, "is_retrograde": False},
+        "Mercury": {"sign_index": 4, "degree": 20.0, "is_retrograde": False},
+        "Mars": {"sign_index": 5, "degree": 5.0, "is_retrograde": False},
+        "Venus": {"sign_index": 6, "degree": 10.0, "is_retrograde": False},
+        "Ketu": {"sign_index": 7, "degree": 12.0, "is_retrograde": False},
+    }
+
+    res = evaluate_brighu_naadi(planets, ascendant_sign=1, gender="male")
+    matched_ids = [m.rule_id for m in res.matched_rules]
+
+    # Chandra Mouli Yoga: Saturn + Moon in Libra
+    assert "BN-SAT-013" in matched_ids
+
+    # Guru Chandal Yoga: Jupiter + Rahu
+    assert "BN-JUP-018" in matched_ids
+
+    # Daivadroha / Sadhu Curse: Jupiter + Rahu with Saturn in 7th
+    assert "BN-KRM-001" in matched_ids
+
+    # Check that interpretation contains Somavara Vratam remedy
+    krm1 = next(m for m in res.matched_rules if m.rule_id == "BN-KRM-001")
+    assert "Somavara" in krm1.interpretation_en or "Gokarna" in krm1.interpretation_en

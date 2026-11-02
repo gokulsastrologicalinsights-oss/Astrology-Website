@@ -48,6 +48,9 @@ import {
   KakshaAlertsResponse,
   BrighuNaadiRequest,
   BrighuNaadiResponse,
+  NatchathiraDeepAnalysisResult,
+  KnRaoAdvancedResearchResponse,
+  ConsolidatedKakshyaResponse,
 
   BirthInput,
 
@@ -4999,6 +5002,31 @@ export async function fetchNakshatraPrediction(
 
 
 
+export async function analyzeChartNakshatras(payload: {
+  horoscope_data?: any;
+  birth_date?: string;
+  birth_time?: string;
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  ayanamsa?: number;
+  saved_horoscope_id?: string;
+}): Promise<NatchathiraDeepAnalysisResult> {
+  return request<NatchathiraDeepAnalysisResult>("/api/v1/nakshatras/chart-analysis", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchSavedHoroscopeNakshatraAnalysis(
+  horoscopeId: string
+): Promise<NatchathiraDeepAnalysisResult> {
+  return request<NatchathiraDeepAnalysisResult>(
+    `/api/v1/nakshatras/saved-analysis/${encodeURIComponent(horoscopeId)}`
+  );
+}
+
 export async function calculateJamakkolPrasanam(
 
   payload: JamakkolPrasanamRequest
@@ -5135,6 +5163,29 @@ export async function getBrighuNaadiAnalysis(
   req: BrighuNaadiRequest
 ): Promise<BrighuNaadiResponse> {
   return request<BrighuNaadiResponse>("/api/v1/vedic/brighu-naadi", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+
+// ===========================================================================
+// K.N. Rao Advanced Astrological Research Engine API
+// ===========================================================================
+
+export async function calculateKnRaoResearch(
+  req: HoroscopeRequest
+): Promise<KnRaoAdvancedResearchResponse> {
+  return request<KnRaoAdvancedResearchResponse>("/api/v1/vedic/kn-rao-research", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function calculateConsolidatedKakshya(
+  req: HoroscopeRequest
+): Promise<ConsolidatedKakshyaResponse> {
+  return request<ConsolidatedKakshyaResponse>("/api/v1/vedic/consolidated-kakshya", {
     method: "POST",
     body: JSON.stringify(req),
   });
