@@ -467,6 +467,42 @@ class AstrologicalRuleEvaluator:
     """Evaluates rules against a ChartContext."""
 
     @classmethod
+    def get_planet_dignity_tags(cls, planet: str, ctx: ChartContext, scope: str = "d1") -> List[str]:
+        p_info = ctx.get_planet(planet, scope)
+        if not p_info:
+            return []
+        p_sign_idx = p_info["sign_index"]
+        p_d1 = ctx.get_planet(planet, "d1")
+        p_d9 = ctx.get_planet(planet, "d9")
+
+        dignity_parts: List[str] = []
+        ex_sign = EXALTATION_SIGNS.get(planet)
+        deb_sign = DEBILITATION_SIGNS.get(planet)
+        own_set = OWN_SIGNS.get(planet, set())
+
+        if ex_sign and p_sign_idx == ex_sign:
+            dignity_parts.append("Exalted/உச்சம்")
+        elif deb_sign is not None:
+            if isinstance(deb_sign, (set, list, tuple)) and p_sign_idx in deb_sign:
+                dignity_parts.append("Debilitated/நீசம்")
+            elif p_sign_idx == deb_sign:
+                dignity_parts.append("Debilitated/நீசம்")
+        elif p_sign_idx in own_set:
+            dignity_parts.append("Own Sign/ஆட்சி")
+
+        if p_d1 and p_d9 and (p_d1["sign_index"] == p_d9["sign_index"]):
+            dignity_parts.append("Vargottama/வர்க்கோத்தமம்")
+        if p_info.get("is_retrograde"):
+            dignity_parts.append("Retrograde/வக்ரம்")
+
+        return dignity_parts
+
+    @classmethod
+    def format_dignity_suffix(cls, planet: str, ctx: ChartContext, scope: str = "d1") -> str:
+        tags = cls.get_planet_dignity_tags(planet, ctx, scope)
+        return f" [Dignity: {', '.join(tags)}]" if tags else ""
+
+    @classmethod
     def evaluate_rule(cls, rule: AstrologicalRuleDefinition, ctx: ChartContext) -> RuleEvaluationResult:
         """Evaluate a single rule against chart context."""
         # Check system applicability
@@ -585,7 +621,7 @@ class AstrologicalRuleEvaluator:
                 )
 
                 if actual_sign_idx in target_indices:
-                    ev.append(f"{planet} is in {p_info['sign_name']} ({actual_sign_idx}) in {sc.upper()}")
+                    ev.append(f"{planet}{cls.format_dignity_suffix(planet, ctx, sc)} is in {p_info['sign_name']} ({actual_sign_idx}) in {sc.upper()}")
                     reas.append(f"{planet} occupies required sign {p_info['sign_name']} in {sc.upper()}")
                 else:
                     all_satisfied = False
@@ -612,7 +648,7 @@ class AstrologicalRuleEvaluator:
 
                 actual_house = p_info["house"]
                 if actual_house in target_houses:
-                    ev.append(f"{planet} is in House {actual_house} ({p_info['sign_name']}) in {sc.upper()}")
+                    ev.append(f"{planet} is in House {actual_house} ({p_info['sign_name']}) in {sc.upper()}{cls.format_dignity_suffix(planet, ctx, sc)}")
                     reas.append(f"{planet} placed in target house {actual_house} in {sc.upper()}")
                 else:
                     all_satisfied = False
@@ -710,8 +746,34 @@ class AstrologicalRuleEvaluator:
                 aspect_name = f"Saturn {sign_dist}th special aspect"
 
             if has_aspect:
-                ev = [f"{asp_planet} in {p_info['sign_name']} casts {aspect_name} on {target_desc} in {chart.upper()}"]
-                reas = [f"Valid Parashari aspect ({aspect_name}) detected from {asp_planet}"]
+                p_sign_idx = p_info["sign_index"]
+                p_d1 = ctx.get_planet(asp_planet, "d1")
+                p_d9 = ctx.get_planet(asp_planet, "d9")
+
+                dignity_parts: List[str] = []
+                ex_sign = EXALTATION_SIGNS.get(asp_planet)
+                deb_sign = DEBILITATION_SIGNS.get(asp_planet)
+                own_set = OWN_SIGNS.get(asp_planet, set())
+
+                if ex_sign and p_sign_idx == ex_sign:
+                    dignity_parts.append("Exalted/உச்சம்")
+                elif deb_sign is not None:
+                    if isinstance(deb_sign, (set, list, tuple)) and p_sign_idx in deb_sign:
+                        dignity_parts.append("Debilitated/நீசம்")
+                    elif p_sign_idx == deb_sign:
+                        dignity_parts.append("Debilitated/நீசம்")
+                elif p_sign_idx in own_set:
+                    dignity_parts.append("Own Sign/ஆட்சி")
+
+                if p_d1 and p_d9 and (p_d1["sign_index"] == p_d9["sign_index"]):
+                    dignity_parts.append("Vargottama/வர்க்கோத்தமம்")
+                if p_info.get("is_retrograde"):
+                    dignity_parts.append("Retrograde/வக்ரம்")
+
+                dignity_suffix = f" [Dignity: {', '.join(dignity_parts)}]" if dignity_parts else ""
+
+                ev = [f"{asp_planet} in {p_info['sign_name']}{dignity_suffix} casts {aspect_name} on {target_desc} in {chart.upper()}"]
+                reas = [f"Valid Parashari aspect ({aspect_name}) detected from {asp_planet}{dignity_suffix}"]
                 return True, ev, reas
             return False, [], []
 
@@ -738,7 +800,7 @@ class AstrologicalRuleEvaluator:
                 target_houses = placed_h if isinstance(placed_h, list) else [placed_h]
                 if lord_info["house"] not in target_houses:
                     return False, [], []
-                ev.append(f"{chart.upper()} {h}th Lord ({lord}) is placed in House {lord_info['house']} ({lord_info['sign_name']})")
+                ev.append(f"{chart.upper()} {h}th Lord ({lord}){cls.format_dignity_suffix(lord, ctx, chart)} is placed in House {lord_info['house']} ({lord_info['sign_name']})")
                 reas.append(f"{h}th Lord {lord} occupies required house {lord_info['house']}")
 
             # Check sign placement

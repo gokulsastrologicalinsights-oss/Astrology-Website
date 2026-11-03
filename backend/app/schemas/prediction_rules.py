@@ -53,6 +53,24 @@ class EvaluatedRuleItem(BaseModel):
     limitations_ta: Optional[str] = None
 
 
+class RuleSynthesisItem(BaseModel):
+    synthesis_id: str
+    category: str
+    title_en: str
+    title_ta: str
+    verdict_type: str  # e.g. "protection_overcomes_delay", "affliction_mitigated", "balanced"
+    verdict_badge_en: str
+    verdict_badge_ta: str
+    summary_en: str
+    summary_ta: str
+    detailed_analysis_en: Optional[str] = None
+    detailed_analysis_ta: Optional[str] = None
+    dignity_analysis_en: Optional[str] = None
+    dignity_analysis_ta: Optional[str] = None
+    interacting_rule_ids: List[str] = Field(default_factory=list)
+    participating_planets: List[str] = Field(default_factory=list)
+
+
 class EvaluateRulesRequest(BaseModel):
     horoscope: Optional[HoroscopeResponse] = None
     saved_horoscope_id: Optional[str] = None
@@ -75,6 +93,7 @@ class EvaluateRulesResponse(BaseModel):
     subcategory: Optional[str] = None
     language: str = "en"
     results: List[EvaluatedRuleItem]
+    syntheses: Optional[List[RuleSynthesisItem]] = Field(default_factory=list)
 
 
 class RuleValidationRequest(BaseModel):

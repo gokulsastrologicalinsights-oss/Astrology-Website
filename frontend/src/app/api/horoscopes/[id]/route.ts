@@ -7,6 +7,7 @@ import {
   listCustomersForUser,
   getOrCreateCustomerRecord,
 } from "@/lib/customer-service";
+import { isHoroscopePinned, removeHoroscopePin } from "@/lib/pinned-horoscopes-service";
 
 /**
  * GET /api/horoscopes/[id]
@@ -82,6 +83,7 @@ export async function GET(
     }
 
     const hasPhone = !!customerInfo?.normalized_phone;
+    const isPinned = await isHoroscopePinned(user.id, id);
 
     const resolvedGender = record.calculation_result?.clientInputs?.gender || (record as any).gender || "male";
     return NextResponse.json({
@@ -89,6 +91,8 @@ export async function GET(
       horoscope: {
         gender: resolvedGender,
         ...record,
+        is_pinned: isPinned,
+        pinned_at: record.calculation_result?.pinned_at || null,
         customer_id: customerInfo?.id || null,
         customer: hasPhone ? customerInfo : null,
         customer_phone: customerInfo?.normalized_phone || null,
@@ -580,6 +584,12 @@ export async function DELETE(
         { error: deleteError.message || "Failed to delete horoscope." },
         { status: 500 }
       );
+    }
+
+    try {
+      await removeHoroscopePin(id);
+    } catch {
+      // Ignore
     }
 
     return NextResponse.json({

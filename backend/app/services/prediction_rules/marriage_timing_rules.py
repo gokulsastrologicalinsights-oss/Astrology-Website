@@ -534,8 +534,8 @@ MARRIAGE_TIMING_RULES: List[AstrologicalRuleDefinition] = [
             "சனி பகவானின் தாக்கம் திருமணத்தில் காலதாமதத்தைத் தந்தாலும், பிற்காலத்தில் நிலையான வாழ்வை நல்கும்."
         ),
         source_reference="Marriage Timing in Astrology (Debraj), Step 2 Delay Check; Brihat Parashara Hora Shastra",
-        limitations_en="If Saturn is in own sign (Capricorn/Aquarius) or exalted in Libra, delay yields great stability.",
-        limitations_ta="சனி ஆட்சி அல்லது உச்சம் பெற்று நின்றால் தாமதமானாலும் மிகச் சிறந்த வரன் அமையும்.",
+        limitations_en="If Saturn is in own sign (Capricorn/Aquarius) or exalted in Libra, delay yields great stability. If Saturn is debilitated (Neecha) or Vargottama alongside Jupiter's drishti on 7th, harsh obstruction is mitigated into timely maturation.",
+        limitations_ta="சனி ஆட்சி அல்லது உச்சம் பெற்று நின்றால் தாமதமானாலும் மிகச் சிறந்த வரன் அமையும். சனி நீசம் அல்லது வர்க்கோத்தமம் பெற்று, குருவின் சுபப் பார்வையையும் 7-ஆம் பாவம் பெற்றால் சனியின் காலதாமதம் நீங்கி உரிய காலத்தில் நல்ல வரன் அமையும்.",
         severity=SeverityLevel.UNFAVORABLE,
     ),
 

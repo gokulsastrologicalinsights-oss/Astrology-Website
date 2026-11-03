@@ -7,6 +7,7 @@ import {
   getOrCreateCustomerRecord,
   listCustomersForUser,
 } from "@/lib/customer-service";
+import { getPinnedHoroscopesForUser } from "@/lib/pinned-horoscopes-service";
 
 /**
  * GET /api/horoscopes
@@ -58,40 +59,152 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query with RLS enforcement
-    let query = supabase
-      .from("saved_horoscopes")
-      .select(
-        "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at",
-        { count: "exact" }
-      );
+    // Retrieve pinned charts for the current user
+    const pinnedRecords = await getPinnedHoroscopesForUser(user.id);
+    const pinnedTimeMap = new Map(pinnedRecords.map((p) => [p.horoscope_id, p.pinned_at]));
+    const pinnedIds = Array.from(pinnedTimeMap.keys());
 
-    if (!viewAll) {
-      query = query.eq("user_id", user.id);
+    let horoscopes: any[] = [];
+    let totalCount = 0;
+
+    if (pinnedIds.length === 0) {
+      // Normal flow without pinned charts
+      let query = supabase
+        .from("saved_horoscopes")
+        .select(
+          "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at",
+          { count: "exact" }
+        );
+
+      if (!viewAll) {
+        query = query.eq("user_id", user.id);
+      }
+
+      if (search) {
+        const sanitized = search.replace(/[,()]/g, " ").trim();
+        query = query.or(`person_name.ilike.%${sanitized}%,birthplace.ilike.%${sanitized}%`);
+      }
+
+      query = query
+        .order("created_at", { ascending: false })
+        .order("display_number", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      const { data, count, error } = await query;
+      if (error) {
+        console.error("Supabase saved_horoscopes query error:", error);
+        return NextResponse.json(
+          { error: error.message || "Failed to retrieve saved horoscopes." },
+          { status: 500 }
+        );
+      }
+      horoscopes = data || [];
+      totalCount = count || 0;
+    } else {
+      // Flow with pinned charts: pinned charts ALWAYS appear at the top of page 1
+      if (page === 1) {
+        // 1. Fetch pinned records matching search and user
+        let pinnedQuery = supabase
+          .from("saved_horoscopes")
+          .select(
+            "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at"
+          )
+          .in("id", pinnedIds);
+
+        if (!viewAll) {
+          pinnedQuery = pinnedQuery.eq("user_id", user.id);
+        }
+        if (search) {
+          const sanitized = search.replace(/[,()]/g, " ").trim();
+          pinnedQuery = pinnedQuery.or(`person_name.ilike.%${sanitized}%,birthplace.ilike.%${sanitized}%`);
+        }
+
+        const { data: rawPinned } = await pinnedQuery;
+        const validPinned = (rawPinned || []).sort((a, b) => {
+          const pA = new Date(pinnedTimeMap.get(a.id) || a.created_at || 0).getTime();
+          const pB = new Date(pinnedTimeMap.get(b.id) || b.created_at || 0).getTime();
+          return pB - pA;
+        });
+
+        // 2. Fetch unpinned records for remaining slots on page 1
+        const unpinnedSlots = Math.max(0, limit - validPinned.length);
+        let rawUnpinned: any[] = [];
+        let unpinnedCount = 0;
+
+        let unpinnedQuery = supabase
+          .from("saved_horoscopes")
+          .select(
+            "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at",
+            { count: "exact" }
+          );
+
+        if (!viewAll) {
+          unpinnedQuery = unpinnedQuery.eq("user_id", user.id);
+        }
+        if (search) {
+          const sanitized = search.replace(/[,()]/g, " ").trim();
+          unpinnedQuery = unpinnedQuery.or(`person_name.ilike.%${sanitized}%,birthplace.ilike.%${sanitized}%`);
+        }
+
+        unpinnedQuery = unpinnedQuery
+          .not("id", "in", `(${pinnedIds.join(",")})`)
+          .order("created_at", { ascending: false })
+          .order("display_number", { ascending: false })
+          .order("id", { ascending: false });
+
+        if (unpinnedSlots > 0) {
+          unpinnedQuery = unpinnedQuery.range(0, unpinnedSlots - 1);
+          const { data: uData, count: uCount, error: uErr } = await unpinnedQuery;
+          if (uErr) {
+            console.error("Supabase saved_horoscopes unpinned error:", uErr);
+          }
+          rawUnpinned = uData || [];
+          unpinnedCount = uCount || 0;
+        } else {
+          const { count: uCount } = await unpinnedQuery.limit(1);
+          unpinnedCount = uCount || 0;
+        }
+
+        horoscopes = [...validPinned, ...rawUnpinned];
+        totalCount = validPinned.length + unpinnedCount;
+      } else {
+        // Subsequent pages: page through unpinned records
+        const pinnedCountOnPage1 = Math.min(pinnedIds.length, limit);
+        const unpinnedOffset = Math.max(0, (page - 1) * limit - pinnedCountOnPage1);
+
+        let unpinnedQuery = supabase
+          .from("saved_horoscopes")
+          .select(
+            "id, user_id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at",
+            { count: "exact" }
+          );
+
+        if (!viewAll) {
+          unpinnedQuery = unpinnedQuery.eq("user_id", user.id);
+        }
+        if (search) {
+          const sanitized = search.replace(/[,()]/g, " ").trim();
+          unpinnedQuery = unpinnedQuery.or(`person_name.ilike.%${sanitized}%,birthplace.ilike.%${sanitized}%`);
+        }
+
+        unpinnedQuery = unpinnedQuery
+          .not("id", "in", `(${pinnedIds.join(",")})`)
+          .order("created_at", { ascending: false })
+          .order("display_number", { ascending: false })
+          .order("id", { ascending: false })
+          .range(unpinnedOffset, unpinnedOffset + limit - 1);
+
+        const { data: uData, count: uCount, error: uErr } = await unpinnedQuery;
+        if (uErr) {
+          console.error("Supabase saved_horoscopes page error:", uErr);
+        }
+        horoscopes = uData || [];
+        totalCount = (uCount || 0) + pinnedIds.length;
+      }
     }
 
-    if (search) {
-      const sanitized = search.replace(/[,()]/g, " ").trim();
-      query = query.or(`person_name.ilike.%${sanitized}%,birthplace.ilike.%${sanitized}%`);
-    }
 
-    // Display saved horoscopes in descending order of generation/creation time (newest first)
-    // with stable secondary sort on display_number DESC and primary key id DESC
-    query = query
-      .order("created_at", { ascending: false })
-      .order("display_number", { ascending: false })
-      .order("id", { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    const { data: horoscopes, count, error } = await query;
-
-    if (error) {
-      console.error("Supabase saved_horoscopes query error:", error);
-      return NextResponse.json(
-        { error: error.message || "Failed to retrieve saved horoscopes." },
-        { status: 500 }
-      );
-    }
 
     // Load authoritative customer profiles to enrich horoscopes & detect legacy missing contacts
     const allCustomers = await listCustomersForUser(user.id, isAdmin);
@@ -120,8 +233,13 @@ export async function GET(request: NextRequest) {
         (calc.horoscope?.birth_time && typeof calc.horoscope.birth_time === "string" && calc.horoscope.birth_time.trim()) ||
         null;
 
+      const isPinned = pinnedTimeMap.has(h.id);
+      const pinnedAt = pinnedTimeMap.get(h.id) || null;
+
       return {
         ...cleanHoro,
+        is_pinned: isPinned,
+        pinned_at: pinnedAt,
         gender: calc.clientInputs?.gender || (h as any).gender || "male",
         birth_time: resolvedBirthTime,
         customer_id: matchedCust?.id || savedCust?.id || null,
@@ -153,7 +271,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const totalCount = count || 0;
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     return NextResponse.json({

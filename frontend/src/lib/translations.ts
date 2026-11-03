@@ -378,6 +378,9 @@ export interface TranslationDictionary {
   totalHoroscopes: string;
   deleteHoroscope: string;
   confirmDeleteHoroscope: string;
+  pinHoroscope: string;
+  unpinHoroscope: string;
+  pinnedBadge: string;
 
   // Numerology Module Keys
   navNumerology: string;
@@ -816,6 +819,9 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     deleteHoroscope: "Delete",
     confirmDeleteHoroscope:
       "Are you sure you want to delete this saved horoscope? This action cannot be undone.",
+    pinHoroscope: "Pin to top",
+    unpinHoroscope: "Unpin from top",
+    pinnedBadge: "Pinned",
 
 
     // Numerology
@@ -1258,6 +1264,9 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     deleteHoroscope: "நீக்கு",
     confirmDeleteHoroscope:
       "இந்த சேமிக்கப்பட்ட ஜாதகத்தை நிச்சயம் நீக்க விரும்புகிறீர்களா? இதை மீட்டெடுக்க முடியாது.",
+    pinHoroscope: "மேலே பின் செய்",
+    unpinHoroscope: "பின்னை நீக்கு",
+    pinnedBadge: "முதன்மையானது",
 
 
     // Numerology

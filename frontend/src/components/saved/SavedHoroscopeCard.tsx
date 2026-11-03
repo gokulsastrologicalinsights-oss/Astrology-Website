@@ -19,23 +19,38 @@ import {
   Sparkles,
   Star,
   Phone,
+  Pin,
 } from "lucide-react";
 
 interface SavedHoroscopeCardProps {
   horoscope: SavedHoroscopeItem;
   onEdit: (horoscope: SavedHoroscopeItem) => void;
   onDelete?: (id: string) => Promise<void> | void;
+  onTogglePin?: (id: string, currentPinned: boolean) => Promise<void> | void;
 }
 
 export function SavedHoroscopeCard({
   horoscope,
   onEdit,
   onDelete,
+  onTogglePin,
 }: SavedHoroscopeCardProps) {
   const { language, t } = useLanguage();
   const { user } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPinning, setIsPinning] = useState(false);
+  const isPinned = !!horoscope.is_pinned;
+
+  const handlePinToggle = async () => {
+    if (!onTogglePin || isPinning) return;
+    setIsPinning(true);
+    try {
+      await onTogglePin(horoscope.id, isPinned);
+    } finally {
+      setIsPinning(false);
+    }
+  };
 
   const displayName = horoscope.person_name?.trim() || t.unnamedHoroscope || "Unnamed";
   const initial = displayName.charAt(0).toUpperCase() || "H";
@@ -91,7 +106,11 @@ export function SavedHoroscopeCard({
   return (
     <div
       data-testid="saved-horoscope-card"
-      className="rounded-2xl border border-[#D9DEE7] hover:border-[#B4872B] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+      className={`rounded-2xl border transition-all flex flex-col justify-between group ${
+        isPinned
+          ? "border-[#B4872B] bg-gradient-to-b from-[#FFFDF9] via-white to-white p-4 sm:p-5 shadow-sm ring-1 ring-[#B4872B]/35 hover:shadow-md"
+          : "border-[#D9DEE7] hover:border-[#B4872B] bg-white p-4 sm:p-5 shadow-xs hover:shadow-md"
+      }`}
     >
       <div>
         {/* Top Section: Avatar, ID, Name, Language Badge */}
@@ -108,6 +127,12 @@ export function SavedHoroscopeCard({
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FAF2DE] text-[#B4872B] border border-[#D8BD80]">
                   {idNumber}
                 </span>
+                {isPinned && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                    <Pin className="w-2.5 h-2.5 fill-amber-700 text-amber-800 rotate-45" />
+                    <span>{language === "ta" ? "முதன்மையானது" : "Pinned"}</span>
+                  </span>
+                )}
                 {(horoscope as any).gender && (
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
                     (horoscope as any).gender === "female"
@@ -145,8 +170,32 @@ export function SavedHoroscopeCard({
             </div>
           </div>
 
-          {/* Language Indicator Badge */}
+          {/* Top Right Badges & Pin Toggle */}
           <div className="shrink-0 flex flex-col items-end gap-1">
+            {onTogglePin && (
+              <button
+                type="button"
+                onClick={handlePinToggle}
+                disabled={isPinning}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
+                  isPinned
+                    ? "bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 ring-2 ring-amber-300/40"
+                    : "bg-white text-slate-700 border-[#CBD5E1] hover:text-amber-800 hover:border-amber-400 hover:bg-amber-50"
+                }`}
+                title={
+                  isPinned
+                    ? t.unpinHoroscope || (language === "ta" ? "பின்னை நீக்கு" : "Unpin from top")
+                    : t.pinHoroscope || (language === "ta" ? "மேலே பின் செய்" : "Pin to top")
+                }
+              >
+                <Pin className={`w-3 h-3 ${isPinned ? "fill-amber-600 text-amber-800 rotate-45" : ""}`} />
+                <span>
+                  {isPinned
+                    ? (language === "ta" ? "பின் நீக்கு" : "Unpin")
+                    : (language === "ta" ? "பின் செய்" : "Pin")}
+                </span>
+              </button>
+            )}
             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F2F3F5] text-[#8190A6] border border-[#D9DEE7]">
               {language === "ta" ? "🌐 TA" : "🌐 EN"}
             </span>
@@ -227,6 +276,26 @@ export function SavedHoroscopeCard({
 
             {/* Actions: Edit, Delete, KP Events, View */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {onTogglePin && (
+                <button
+                  type="button"
+                  onClick={handlePinToggle}
+                  disabled={isPinning}
+                  className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                    isPinned
+                      ? "border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200 shadow-2xs"
+                      : "border-[#D9DEE7] bg-white hover:bg-amber-50 hover:border-amber-300 text-[#8190A6] hover:text-amber-700"
+                  }`}
+                  title={
+                    isPinned
+                      ? t.unpinHoroscope || (language === "ta" ? "பின்னை நீக்கு" : "Unpin from top")
+                      : t.pinHoroscope || (language === "ta" ? "மேலே பின் செய்" : "Pin to top")
+                  }
+                  aria-label={isPinned ? "Unpin horoscope" : "Pin horoscope to top"}
+                >
+                  <Pin className={`w-3.5 h-3.5 ${isPinned ? "fill-amber-600 text-amber-800 rotate-45" : ""}`} />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onEdit(horoscope)}

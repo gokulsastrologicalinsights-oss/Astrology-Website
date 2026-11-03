@@ -34,6 +34,7 @@ import {
   Filter,
   Crown,
   Plus,
+  Pin,
 } from "lucide-react";
 
 interface SavedHoroscopesListProps {
@@ -42,6 +43,24 @@ interface SavedHoroscopesListProps {
   showBanner?: boolean;
   title?: string;
   columns?: 2 | 3;
+}
+
+// Helper to order horoscopes with pinned charts always at the top
+function sortHoroscopesWithPins(list: SavedHoroscopeItem[]): SavedHoroscopeItem[] {
+  return [...list].sort((a, b) => {
+    const pinA = a.is_pinned ? 1 : 0;
+    const pinB = b.is_pinned ? 1 : 0;
+    if (pinB !== pinA) return pinB - pinA; // Pinned items ALWAYS at the top
+    if (a.is_pinned && b.is_pinned) {
+      const pA = new Date(a.pinned_at || a.created_at || 0).getTime();
+      const pB = new Date(b.pinned_at || b.created_at || 0).getTime();
+      if (pB !== pA) return pB - pA;
+    }
+    const tA = new Date(a.created_at || 0).getTime();
+    const tB = new Date(b.created_at || 0).getTime();
+    if (tB !== tA) return tB - tA;
+    return (b.display_number || 0) - (a.display_number || 0);
+  });
 }
 
 export function SavedHoroscopesList({
@@ -151,14 +170,9 @@ export function SavedHoroscopesList({
         }
 
         const data: SavedHoroscopesListResponse = await res.json();
-        // Preserve strictly descending order of generation/creation time with stable secondary sort
+        // Preserve pinned charts at top, followed by descending creation time
         const rawList = data.horoscopes || [];
-        const sortedList = [...rawList].sort((a, b) => {
-          const tA = new Date(a.created_at || 0).getTime();
-          const tB = new Date(b.created_at || 0).getTime();
-          if (tB !== tA) return tB - tA;
-          return (b.display_number || 0) - (a.display_number || 0);
-        });
+        const sortedList = sortHoroscopesWithPins(rawList);
         setHoroscopes(sortedList);
         setTotalCount(data.totalCount || 0);
         setTotalPages(data.totalPages || 1);
@@ -195,6 +209,48 @@ export function SavedHoroscopesList({
 
   const handleEditSuccess = () => {
     fetchHoroscopes(currentPage, debouncedSearch, pageSize, true);
+  };
+
+  const handleTogglePin = async (id: string, currentPinned: boolean) => {
+    const nextPinned = !currentPinned;
+    const nowIso = new Date().toISOString();
+
+    // Optimistic UI update: immediately move pinned chart to first position
+    setHoroscopes((prev) => {
+      const updated = prev.map((h) =>
+        h.id === id ? { ...h, is_pinned: nextPinned, pinned_at: nextPinned ? nowIso : null } : h
+      );
+      return sortHoroscopesWithPins(updated);
+    });
+
+    try {
+      const res = await fetch(`/api/horoscopes/${id}/pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_pinned: nextPinned }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update pin status.");
+      }
+
+      // Re-fetch page 1 if pinned so the pinned chart appears as first chart
+      if (nextPinned && currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        await fetchHoroscopes(currentPage, debouncedSearch, pageSize, true);
+      }
+    } catch (err: any) {
+      console.error("Error updating pin status:", err);
+      // Revert optimistic update on failure
+      setHoroscopes((prev) => {
+        const reverted = prev.map((h) =>
+          h.id === id ? { ...h, is_pinned: currentPinned } : h
+        );
+        return sortHoroscopesWithPins(reverted);
+      });
+      alert(err.message || "Failed to update pin status.");
+    }
   };
 
   const handleDeleteHoroscope = async (id: string) => {
@@ -479,6 +535,7 @@ export function SavedHoroscopesList({
                   horoscope={item}
                   onEdit={handleOpenEdit}
                   onDelete={handleDeleteHoroscope}
+                  onTogglePin={handleTogglePin}
                 />
               ))}
             </div>
@@ -524,14 +581,26 @@ export function SavedHoroscopesList({
                         : "";
 
                       return (
-                        <tr key={item.id} className="hover:bg-[#FAF7F0]/60 transition-colors">
+                        <tr key={item.id} className={`transition-colors ${
+                        item.is_pinned
+                          ? "bg-amber-50/60 hover:bg-amber-50/90"
+                          : "hover:bg-[#FAF7F0]/60"
+                      }`}>
                           <td className="px-4 py-3.5">
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#FAF2DE] text-[#B4872B] border border-[#D8BD80]">
                               {seqText}
                             </span>
                           </td>
                           <td className="px-4 py-3.5 font-bold text-[#183047]">
-                            {item.person_name?.trim() || t.unnamedHoroscope}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{item.person_name?.trim() || t.unnamedHoroscope}</span>
+                              {item.is_pinned && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                                  <Pin className="w-2.5 h-2.5 fill-amber-700 text-amber-800 rotate-45" />
+                                  <span>{language === "ta" ? "முதன்மையானது" : "Pinned"}</span>
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3.5">
                             <span
@@ -559,6 +628,22 @@ export function SavedHoroscopesList({
                           </td>
                           <td className="px-4 py-3.5 text-right">
                             <div className="inline-flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePin(item.id, !!item.is_pinned)}
+                                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                  item.is_pinned
+                                    ? "border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200 shadow-2xs"
+                                    : "border-[#D9DEE7] bg-white hover:bg-amber-50 hover:border-amber-300 text-[#8190A6] hover:text-amber-700"
+                                }`}
+                                title={
+                                  item.is_pinned
+                                    ? t.unpinHoroscope || (language === "ta" ? "பின்னை நீக்கு" : "Unpin from top")
+                                    : t.pinHoroscope || (language === "ta" ? "மேலே பின் செய்" : "Pin to top")
+                                }
+                              >
+                                <Pin className={`w-3 h-3 ${item.is_pinned ? "fill-amber-600 text-amber-800 rotate-45" : ""}`} />
+                              </button>
                               <Link
                                 href={`/horoscope/results?id=${item.id}`}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-[11px] font-semibold transition-colors"

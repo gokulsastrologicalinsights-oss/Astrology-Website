@@ -845,6 +845,8 @@ export interface SavedHoroscopeItem {
   normalized_phone?: string | null;
   whatsapp_number?: string | null;
   has_missing_contact?: boolean;
+  is_pinned?: boolean;
+  pinned_at?: string | null;
   calculation_result?: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -5296,6 +5298,24 @@ export interface EvaluatePredictionRulesRequest {
   custom_rules?: any[];
 }
 
+export interface RuleSynthesisItem {
+  synthesis_id: string;
+  category: string;
+  title_en: string;
+  title_ta: string;
+  verdict_type: string;
+  verdict_badge_en: string;
+  verdict_badge_ta: string;
+  summary_en: string;
+  summary_ta: string;
+  detailed_analysis_en?: string;
+  detailed_analysis_ta?: string;
+  dignity_analysis_en?: string;
+  dignity_analysis_ta?: string;
+  interacting_rule_ids: string[];
+  participating_planets: string[];
+}
+
 export interface EvaluatePredictionRulesResponse {
   total_rules_evaluated: number;
   total_matched: number;
@@ -5304,6 +5324,7 @@ export interface EvaluatePredictionRulesResponse {
   subcategory?: string;
   language: string;
   results: EvaluatedPredictionRule[];
+  syntheses?: RuleSynthesisItem[];
 }
 
 export interface ShodashvargaPdfReportRequest {

@@ -52,6 +52,8 @@ interface SavedHoroItem {
   longitude: number;
   location_name?: string;
   display_number?: number;
+  is_pinned?: boolean;
+  pinned_at?: string;
 }
 
 const ZODIAC_SIGNS: Record<number, { en: string; ta: string; lord: string }> = {
@@ -403,7 +405,7 @@ function AshtakavargaContent() {
                       }`}
                     >
                       <div className="flex items-center justify-between font-bold text-[#102A4C]">
-                        <span>{h.person_name}</span>
+                        <span className="flex items-center gap-1">{h.person_name}{h.is_pinned && <span title="Pinned">📌</span>}</span>
                         {isSelected && <CheckCircle2 className="w-4 h-4 text-[#B8862B]" />}
                       </div>
                       <div className="text-[11px] text-[#64748B] mt-1 space-y-0.5">

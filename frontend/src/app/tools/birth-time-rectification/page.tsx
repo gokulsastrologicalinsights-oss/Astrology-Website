@@ -46,6 +46,8 @@ interface SavedHoroItem {
   longitude: number;
   location_name?: string;
   display_number?: number;
+  is_pinned?: boolean;
+  pinned_at?: string;
 }
 
 const CANONICAL_TEMPLATES = [
@@ -454,8 +456,8 @@ export default function BirthTimeRectificationPage() {
                           }`}
                         >
                           <div>
-                            <strong className="text-xs text-[#102A4C] block">
-                              {h.person_name || "Unnamed"}
+                            <strong className="text-xs text-[#102A4C] flex items-center gap-1">
+                              {h.person_name || "Unnamed"}{h.is_pinned && <span title="Pinned">📌</span>}
                             </strong>
                             <span className="text-[10px] font-mono text-[#64748B]">
                               {h.birth_date} @ {h.birth_time} • {h.location_name || `${h.latitude}, ${h.longitude}`}

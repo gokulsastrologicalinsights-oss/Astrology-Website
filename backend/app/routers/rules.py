@@ -43,6 +43,7 @@ from app.services.prediction_rules.evaluator import (
     ChartContext,
 )
 from app.services.prediction_rules.manager import RuleManagementService
+from app.services.prediction_rules.synthesizer import PredictionSynthesizer
 from app.services.auth_service import (
     get_current_user,
     get_admin_user,
@@ -279,6 +280,8 @@ async def evaluate_rules(
             )
             total_unevaluable += 1
 
+    syntheses = PredictionSynthesizer.synthesize_evaluated_rules(results, ctx, language=request.language)
+
     return EvaluateRulesResponse(
         total_rules_evaluated=len(filtered_rules),
         total_matched=total_matched,
@@ -287,6 +290,7 @@ async def evaluate_rules(
         subcategory=target_subcategory,
         language=request.language,
         results=results,
+        syntheses=syntheses,
     )
 
 

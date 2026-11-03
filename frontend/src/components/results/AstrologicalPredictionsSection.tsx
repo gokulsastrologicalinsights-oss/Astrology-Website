@@ -7,6 +7,7 @@ import {
   PredictionCategoryGroup,
   PredictionSubcategory,
   EvaluatedPredictionRule,
+  RuleSynthesisItem,
 } from "@/lib/types";
 import {
   getPredictionCategories,
@@ -298,6 +299,7 @@ export function AstrologicalPredictionsSection({
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [evaluationResults, setEvaluationResults] = useState<EvaluatedPredictionRule[] | null>(null);
+  const [syntheses, setSyntheses] = useState<RuleSynthesisItem[]>([]);
   const [evaluatedAt, setEvaluatedAt] = useState<string | null>(null);
   const [lastEvaluatedKey, setLastEvaluatedKey] = useState<string | null>(null);
 
@@ -429,6 +431,11 @@ export function AstrologicalPredictionsSection({
 
         const resp = await evaluatePredictionRules(payload);
         setEvaluationResults(resp.results);
+        if (resp.syntheses && resp.syntheses.length > 0) {
+          setSyntheses(resp.syntheses);
+        } else {
+          setSyntheses([]);
+        }
         setEvaluatedAt(new Date().toLocaleTimeString());
         setLastEvaluatedKey(`${chartIdentityKey}-${categorySlugToQuery}`);
 
@@ -1391,6 +1398,110 @@ export function AstrologicalPredictionsSection({
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Astrological Synthesized Verdict Cards */}
+          {syntheses && syntheses.length > 0 && (
+            <div className="space-y-4 mb-6">
+              {syntheses.map((synth) => (
+                <div
+                  key={synth.synthesis_id}
+                  className="rounded-2xl border-2 border-amber-300/80 bg-gradient-to-br from-[#FFFDF9] via-amber-50/40 to-indigo-50/30 p-5 sm:p-6 shadow-md transition-all relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 rounded-full blur-2xl pointer-events-none" />
+
+                  {/* Top Badges */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-600 to-indigo-700 text-white font-bold shadow-xs">
+                        <Scale className="w-4 h-4 text-amber-200" />
+                        <span>{language === "ta" ? "ஒருங்கிணைந்த ஜோதிடத் தீர்ப்பு (Synthesized Reading)" : "Synthesized Astrological Verdict"}</span>
+                      </span>
+
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-bold border border-emerald-300">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{language === "ta" ? synth.verdict_badge_ta : synth.verdict_badge_en}</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#52667E]">
+                      <span className="font-semibold">{language === "ta" ? "தொடர்புடைய விதிகள்:" : "Linked Rules:"}</span>
+                      {synth.interacting_rule_ids.map((rid) => (
+                        <a
+                          key={rid}
+                          href={`#rule-${rid}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const el = document.getElementById(`rule-${rid}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: "smooth", block: "center" });
+                              setExpandedRuleIds((prev) => new Set(prev).add(rid));
+                            }
+                          }}
+                          className="px-2 py-0.5 rounded bg-white hover:bg-amber-100 text-[#153F6B] font-bold border border-amber-200 transition-colors shadow-2xs cursor-pointer"
+                        >
+                          {rid}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Synthesis Title */}
+                  <h3 className="text-base sm:text-lg font-bold text-[#183047] flex items-center gap-2 mb-3">
+                    <span>{language === "ta" ? synth.title_ta : synth.title_en}</span>
+                  </h3>
+
+                  {/* Apparent Contradiction Explanation Callout */}
+                  <div className="bg-amber-100/60 rounded-xl p-3.5 border border-amber-200/80 mb-3.5 text-xs text-[#8C6D23] space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-amber-900">
+                      <Info className="w-3.5 h-3.5 text-amber-700" />
+                      <span>
+                        {language === "ta"
+                          ? "தனித்தனி விதிகளாகப் பார்க்கும்போது ஏன் முரண்பட்டதாகத் தோன்றும்?"
+                          : "Why Isolated Rules Appear Contradictory:"}
+                      </span>
+                    </div>
+                    <p className="leading-relaxed text-[#5F4610]">
+                      {language === "ta"
+                        ? "ஒரு விதியில் 'சனி 7-ல் / பார்வை - காலதாமதம் (28 முதல் 32 வயது வரை)' என்றும், மற்றொரு விதியில் 'குருவின் சுபப் பார்வை - தெய்வீக திருமண யோகம்' என்றும் தனித்தனியாகக் குறிப்பிடப்பட்டுள்ளது. ஜோதிடத்தில் ஒரு பாவத்தின் மீது இரு கிரகங்களின் பார்வை படும்போது கிரக பலத்தின் அடிப்படையில் ஒரே முடிவாகத் தொகுத்து பலன் காண வேண்டும்."
+                        : "Rule-12 flags Saturn's delay while Rule-14 notes Jupiter's timely blessing. Classical Jyotish requires synthesizing opposing aspects by examining planetary dignity."}
+                    </p>
+                  </div>
+
+                  {/* Planetary Dignity Analysis Breakdown */}
+                  {(synth.dignity_analysis_ta || synth.dignity_analysis_en) && (
+                    <div className="bg-white/90 rounded-xl p-3.5 sm:p-4 border border-[#D9DEE7] mb-3.5 space-y-2 text-xs">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#153F6B] uppercase tracking-wider">
+                        <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
+                        <span>
+                          {language === "ta"
+                            ? "கிரக பல ஆய்வு (Planetary Dignity: நீசம் & வர்க்கோத்தம பலன்):"
+                            : "Planetary Dignity & Strength Analysis:"}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 text-[#183047] leading-relaxed whitespace-pre-line font-medium text-xs sm:text-[13px]">
+                        {language === "ta" ? synth.dignity_analysis_ta : synth.dignity_analysis_en}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Final Synthesized Reading Box */}
+                  <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 rounded-xl p-3.5 sm:p-4 border border-emerald-200 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-900 uppercase tracking-wider">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>
+                        {language === "ta"
+                          ? "ஒருங்கிணைந்த இறுதிப் பலன் (Final Unified Prediction):"
+                          : "Final Synthesized Prediction:"}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-emerald-950 font-semibold leading-relaxed">
+                      {language === "ta" ? synth.summary_ta : synth.summary_en}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {displayedRules.map((rule) => {
             const isExpanded = expandedRuleIds.has(rule.rule_id);
             const isCustom = rule.rule_id.startsWith("CUSTOM-");
@@ -1406,6 +1517,7 @@ export function AstrologicalPredictionsSection({
             return (
               <div
                 key={rule.rule_id}
+                id={`rule-${rule.rule_id}`}
                 className={`rounded-xl border transition-all ${
                   rule.matched
                     ? "bg-white border-[#D9DEE7] shadow-sm hover:border-[#B4872B]"
