@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -77,11 +77,12 @@ export default function KuladeivamFinderPage() {
   const [ancestralDistrict, setAncestralDistrict] = useState("Madurai (மதுரை)");
 
   // Prasanna Inputs
-  const [prasannaDateTime, setPrasannaDateTime] = useState(() => {
-    const now = new Date();
-    return now.toISOString().slice(0, 19);
-  });
+  const [prasannaDateTime, setPrasannaDateTime] = useState("2026-01-01T12:00:00");
   const [querentSeed, setQuerentSeed] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    setPrasannaDateTime(new Date().toISOString().slice(0, 19));
+  }, []);
 
   // States
   const [isLoading, setIsLoading] = useState(false);

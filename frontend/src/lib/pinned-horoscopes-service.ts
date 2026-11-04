@@ -23,8 +23,8 @@ export function loadLocalPinnedRecords(): PinnedHoroscopeRecord[] {
   const candidatePaths = getCandidatePaths();
   for (const filePath of candidatePaths) {
     try {
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, "utf-8");
+      if (fs.existsSync(/*turbopackIgnore: true*/ filePath)) {
+        const raw = fs.readFileSync(/*turbopackIgnore: true*/ filePath, "utf-8");
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           return parsed;
@@ -47,10 +47,10 @@ export function saveLocalPinnedRecords(records: PinnedHoroscopeRecord[]): void {
   for (const filePath of candidatePaths) {
     try {
       const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) {
+      if (!fs.existsSync(/*turbopackIgnore: true*/ dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(filePath, serialized, "utf-8");
+      fs.writeFileSync(/*turbopackIgnore: true*/ filePath, serialized, "utf-8");
     } catch {
       // Ignore write errors to non-existent roots
     }
