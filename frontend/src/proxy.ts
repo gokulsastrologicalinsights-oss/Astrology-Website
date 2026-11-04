@@ -73,8 +73,8 @@ export async function proxy(request: NextRequest) {
   }
 
   // 2. Protected Backend API Endpoints:
-  // Pass through /api/v1/* to FastAPI backend (FastAPI handles its own token auth & public endpoints)
-  if (pathname.startsWith("/api/v1/")) {
+  // Pass through /api/v1/* and /api/marriage-compatibility/* to FastAPI backend (FastAPI handles its own token auth & public endpoints)
+  if (pathname.startsWith("/api/v1/") || pathname.startsWith("/api/marriage-compatibility/")) {
     return response;
   }
 

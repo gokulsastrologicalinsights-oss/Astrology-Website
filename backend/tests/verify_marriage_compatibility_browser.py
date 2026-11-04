@@ -41,8 +41,8 @@ from playwright.sync_api import sync_playwright
 SCREENSHOT_DIR = "browser_test_screenshots"
 os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 
-FRONTEND_URL = "http://localhost:3000"
-BACKEND_URL = "http://127.0.0.1:8000"
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 TEST_USER_EMAIL = os.getenv("TEST_ADMIN_EMAIL", "admin@gokul-astrology.local")
 TEST_USER_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "Gokul741@")

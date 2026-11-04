@@ -153,20 +153,20 @@ def run_browser_acceptance():
         # TEST 4: Save Report Action & Duplicate Prevention
         # ----------------------------------------------------------------------
         print("\n[TEST 4] Testing Save Report action and modal dialog...")
-        save_btn = page.locator("button:has-text('Save Report')")
+        save_btn = page.locator("button:has-text('Save Report'), button:has-text('அறிக்கையைச் சேமி')").first
         assert save_btn.is_visible(), "Save Report button must be visible in results"
         save_btn.click()
 
-        page.wait_for_selector("input[placeholder='e.g. Groom & Bride Compatibility']", timeout=5000)
-        title_input = page.locator("input[placeholder='e.g. Groom & Bride Compatibility']")
+        page.wait_for_selector("input[placeholder*='Groom'], input[placeholder*='Compatibility']", timeout=5000)
+        title_input = page.locator("input[placeholder*='Groom'], input[placeholder*='Compatibility']").first
         title_input.fill("E2E Acceptance Vivaha Report")
 
-        confirm_save_btn = page.locator("button:has-text('Confirm Save')")
+        confirm_save_btn = page.locator("button:has-text('Confirm Save'), button:has-text('சேமிக்கவும்')").first
         confirm_save_btn.click()
 
         # Verify saved badge appears in Hero Card
-        page.wait_for_selector("text=Saved (#", timeout=10000)
-        saved_badge_text = page.locator("span:has-text('Saved (#')").text_content()
+        page.wait_for_selector("text=Saved (#, text=சேமிக்கப்பட்டது (#", timeout=10000)
+        saved_badge_text = page.locator("span:has-text('Saved (#'), span:has-text('சேமிக்கப்பட்டது (#')").first.text_content()
         print(f"  [PASS] Report saved successfully! Status badge: '{saved_badge_text}'")
         page.screenshot(path=f"{SCREENSHOT_DIR}/phase11e_03_saved_badge.png")
 
@@ -174,7 +174,7 @@ def run_browser_acceptance():
         # TEST 5: Saved Reports List Navigation & Summary Cards
         # ----------------------------------------------------------------------
         print("\n[TEST 5] Testing Saved Reports tab and listing...")
-        saved_tab_btn = page.locator("button:has-text('Saved Reports')")
+        saved_tab_btn = page.locator("button:has-text('Saved Reports'), button:has-text('சேமிக்கப்பட்ட அறிக்கைகள்')").first
         saved_tab_btn.click()
         page.wait_for_selector("text=E2E Acceptance Vivaha Report", timeout=10000)
         assert page.locator("text=#1").is_visible() or page.locator("text=#").is_visible()
@@ -185,14 +185,14 @@ def run_browser_acceptance():
         # TEST 6: Metadata Editing Modal
         # ----------------------------------------------------------------------
         print("\n[TEST 6] Testing metadata editing (title & partner names)...")
-        edit_btn = page.locator("button[title*='Edit metadata']").first
+        edit_btn = page.locator("button[title*='Edit metadata'], button[title*='மெட்டாடேட்டா']").first
         edit_btn.click()
 
-        page.wait_for_selector("input[placeholder*='Match']", timeout=5000)
-        edit_title_input = page.locator("input[placeholder*='Match']")
+        page.wait_for_selector("input[placeholder*='Match'], input[placeholder*='பொருத்தம்']", timeout=5000)
+        edit_title_input = page.locator("input[placeholder*='Match'], input[placeholder*='பொருத்தம்']").first
         edit_title_input.fill("Updated E2E Vivaha Report")
 
-        save_changes_btn = page.locator("button[type='submit']:has-text('Save')")
+        save_changes_btn = page.locator("button[type='submit']:has-text('Save'), button[type='submit']:has-text('சேமி')").first
         save_changes_btn.click()
 
         page.wait_for_selector("text=Updated E2E Vivaha Report", timeout=8000)
@@ -203,20 +203,20 @@ def run_browser_acceptance():
         # TEST 7: Open Report & Historical Snapshot Fidelity
         # ----------------------------------------------------------------------
         print("\n[TEST 7] Testing Open Report and historical snapshot rendering...")
-        open_btn = page.locator("button:has-text('Open Report')").first
+        open_btn = page.locator("button:has-text('Open Report'), button:has-text('அறிக்கையைத் திற')").first
         open_btn.click()
 
         # Must switch back to analysis view with historical banner
-        page.wait_for_selector("text=Historical snapshot saved on", timeout=10000)
-        assert page.locator("text=Close Historical View").is_visible()
+        page.wait_for_selector("text=Historical snapshot saved on, text=வரலாற்று அறிக்கை சேமிக்கப்பட்ட தேதி", timeout=10000)
+        assert page.locator("text=Close Historical View, text=மூடுக").is_visible()
         assert page.locator("#compatibility-results").is_visible()
         print("  [PASS] Historical snapshot rendered directly into results view with banner.")
         page.screenshot(path=f"{SCREENSHOT_DIR}/phase11e_06_historical_snapshot_view.png")
 
         # Close historical view
-        page.locator("button:has-text('Close Historical View')").click()
+        page.locator("button:has-text('Close Historical View'), button:has-text('மூடுக')").first.click()
         page.wait_for_timeout(1000)
-        assert not page.locator("text=Historical snapshot saved on").is_visible()
+        assert not page.locator("text=Historical snapshot saved on, text=வரலாற்று அறிக்கை சேமிக்கப்பட்ட தேதி").is_visible()
         print("  [PASS] Closed historical snapshot view cleanly.")
 
         # ----------------------------------------------------------------------

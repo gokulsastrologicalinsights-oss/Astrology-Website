@@ -3695,7 +3695,7 @@ export async function predictMarriageEvent(
 
 /**
 
- * 24. Dual-Horoscope Marriage Compatibility Analysis (POST /api/marriage-compatibility/analyze)
+ * 24. Dual-Horoscope Marriage Compatibility Analysis (POST /api/v1/marriage-compatibility/analyze)
 
  */
 
@@ -3709,7 +3709,7 @@ export async function analyzeMarriageCompatibility(
 
   const authHeaders = await resolveAuthHeaders(token);
 
-  return request<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze", {
+  return request<MarriageCompatibilityResponse>("/api/v1/marriage-compatibility/analyze", {
 
     method: "POST",
 
@@ -3731,13 +3731,13 @@ export async function analyzeMarriageCompatibility(
 
 /**
 
- * 25. Marriage Compatibility Rules Register (GET /api/marriage-compatibility/rules)
+ * 25. Marriage Compatibility Rules Register (GET /api/v1/marriage-compatibility/rules)
 
  */
 
 export async function getMarriageCompatibilityRules(): Promise<RuleRegisterResponse> {
 
-  return request<RuleRegisterResponse>("/api/marriage-compatibility/rules", {
+  return request<RuleRegisterResponse>("/api/v1/marriage-compatibility/rules", {
 
     method: "GET",
 
@@ -3749,7 +3749,7 @@ export async function getMarriageCompatibilityRules(): Promise<RuleRegisterRespo
 
 /**
 
- * 26. Save Marriage Compatibility Report (POST /api/marriage-compatibility/saved)
+ * 26. Save Marriage Compatibility Report (POST /api/v1/marriage-compatibility/saved)
 
  */
 
@@ -3763,7 +3763,7 @@ export async function saveMarriageCompatibilityReport(
 
   const authHeaders = await resolveAuthHeaders(token);
 
-  return request<SavedMarriageReportDetail>("/api/marriage-compatibility/saved", {
+  return request<SavedMarriageReportDetail>("/api/v1/marriage-compatibility/saved", {
 
     method: "POST",
 
@@ -3785,7 +3785,7 @@ export async function saveMarriageCompatibilityReport(
 
 /**
 
- * 27. List Saved Marriage Compatibility Reports (GET /api/marriage-compatibility/saved)
+ * 27. List Saved Marriage Compatibility Reports (GET /api/v1/marriage-compatibility/saved)
 
  */
 
@@ -3811,7 +3811,7 @@ export async function listSavedMarriageCompatibilityReports(
 
 
 
-  return request<SavedMarriageReportsListResponse>(`/api/marriage-compatibility/saved${queryStr}`, {
+  return request<SavedMarriageReportsListResponse>(`/api/v1/marriage-compatibility/saved${queryStr}`, {
 
     method: "GET",
 
@@ -3829,7 +3829,7 @@ export async function listSavedMarriageCompatibilityReports(
 
 /**
 
- * 28. Get Saved Marriage Compatibility Report by ID (GET /api/marriage-compatibility/saved/{id})
+ * 28. Get Saved Marriage Compatibility Report by ID (GET /api/v1/marriage-compatibility/saved/{id})
 
  */
 
@@ -3843,7 +3843,7 @@ export async function getSavedMarriageCompatibilityReport(
 
   const authHeaders = await resolveAuthHeaders(token);
 
-  return request<SavedMarriageReportDetail>(`/api/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
+  return request<SavedMarriageReportDetail>(`/api/v1/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
 
     method: "GET",
 
@@ -3861,7 +3861,7 @@ export async function getSavedMarriageCompatibilityReport(
 
 /**
 
- * 29. Update Saved Marriage Compatibility Report Metadata (PATCH /api/marriage-compatibility/saved/{id})
+ * 29. Update Saved Marriage Compatibility Report Metadata (PATCH /api/v1/marriage-compatibility/saved/{id})
 
  */
 
@@ -3877,7 +3877,7 @@ export async function updateSavedMarriageCompatibilityReportMetadata(
 
   const authHeaders = await resolveAuthHeaders(token);
 
-  return request<SavedMarriageReportDetail>(`/api/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
+  return request<SavedMarriageReportDetail>(`/api/v1/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
 
     method: "PATCH",
 
@@ -3899,7 +3899,7 @@ export async function updateSavedMarriageCompatibilityReportMetadata(
 
 /**
 
- * 30. Delete Saved Marriage Compatibility Report (DELETE /api/marriage-compatibility/saved/{id})
+ * 30. Delete Saved Marriage Compatibility Report (DELETE /api/v1/marriage-compatibility/saved/{id})
 
  */
 
@@ -3913,7 +3913,7 @@ export async function deleteSavedMarriageCompatibilityReport(
 
   const authHeaders = await resolveAuthHeaders(token);
 
-  return request<{ success: boolean; message: string }>(`/api/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
+  return request<{ success: boolean; message: string }>(`/api/v1/marriage-compatibility/saved/${encodeURIComponent(reportId)}`, {
 
     method: "DELETE",
 

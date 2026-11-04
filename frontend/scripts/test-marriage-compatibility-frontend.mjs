@@ -113,7 +113,11 @@ runTest("types.ts contains Phase 11D saved marriage reports persistence interfac
 
 runTest("api.ts exports analyzeMarriageCompatibility and getMarriageCompatibilityRules", () => {
   assert(apiContent.includes("export async function analyzeMarriageCompatibility"), "Missing analyzeMarriageCompatibility");
-  assert(apiContent.includes('request<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze"'), "Incorrect endpoint path");
+  assert(
+    apiContent.includes('request<MarriageCompatibilityResponse>("/api/v1/marriage-compatibility/analyze"') ||
+    apiContent.includes('request<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze"'),
+    "Incorrect endpoint path"
+  );
   assert(apiContent.includes("export async function getMarriageCompatibilityRules"), "Missing getMarriageCompatibilityRules");
 });
 
@@ -123,7 +127,11 @@ runTest("api.ts exports all 5 Phase 11D saved reports persistence functions", ()
   assert(apiContent.includes("export async function getSavedMarriageCompatibilityReport"), "Missing getSavedMarriageCompatibilityReport");
   assert(apiContent.includes("export async function updateSavedMarriageCompatibilityReportMetadata"), "Missing updateSavedMarriageCompatibilityReportMetadata");
   assert(apiContent.includes("export async function deleteSavedMarriageCompatibilityReport"), "Missing deleteSavedMarriageCompatibilityReport");
-  assert(apiContent.includes("/api/marriage-compatibility/saved"), "Missing /saved API path in client");
+  assert(
+    apiContent.includes("/api/v1/marriage-compatibility/saved") ||
+    apiContent.includes("/api/marriage-compatibility/saved"),
+    "Missing /saved API path in client"
+  );
 });
 
 // ===========================================================================
