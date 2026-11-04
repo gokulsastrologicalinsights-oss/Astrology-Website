@@ -781,6 +781,85 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 }
 
+/**
+ * Request binary Blob stream with automatic fallback from API_BASE_URL to same-origin proxy.
+ */
+export async function requestBlob(path: string, options: RequestInit = {}): Promise<Blob> {
+  const url = `${API_BASE_URL}${path}`;
+
+  try {
+    const requestHeaders: Record<string, string> = {
+      ...((options.headers as Record<string, string>) || {}),
+    };
+
+    const currentAuth = requestHeaders["Authorization"] || requestHeaders["authorization"];
+    if (
+      !currentAuth ||
+      currentAuth === "Bearer" ||
+      currentAuth === "Bearer undefined" ||
+      currentAuth === "Bearer null"
+    ) {
+      const autoAuth = await resolveAuthHeaders();
+      if (autoAuth["Authorization"]) {
+        requestHeaders["Authorization"] = autoAuth["Authorization"];
+      }
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: requestHeaders,
+      });
+    } catch (primaryFetchErr) {
+      // In the browser, if direct fetch to API_BASE_URL failed (e.g. cross-origin, host mismatch, or PNA policy),
+      // fallback to same-origin path via Next.js rewrites proxy
+      if (typeof window !== "undefined" && url.startsWith("http")) {
+        try {
+          response = await fetch(path, {
+            ...options,
+            headers: requestHeaders,
+          });
+        } catch {
+          throw primaryFetchErr;
+        }
+      } else {
+        throw primaryFetchErr;
+      }
+    }
+
+    if (!response.ok) {
+      let errorData: ApiErrorResponse | undefined;
+      try {
+        errorData = await response.json();
+      } catch {
+        // Response was not JSON
+      }
+
+      const message = formatApiErrorMessage(errorData, response.status, response.statusText);
+      throw new ApiError(message, response.status, errorData);
+    }
+
+    return await response.blob();
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    const rawMsg = err instanceof Error ? err.message : "";
+    const isConnRefused =
+      !rawMsg ||
+      rawMsg.toLowerCase().includes("failed to fetch") ||
+      rawMsg.toLowerCase().includes("networkerror") ||
+      rawMsg.toLowerCase().includes("connection refused");
+
+    const errorMsg = isConnRefused
+      ? "Unable to connect to astrology calculation backend. Please ensure the backend is running."
+      : rawMsg || "Failed to download PDF report.";
+
+    throw new ApiError(errorMsg, 0);
+  }
+}
+
 
 
 /**
@@ -4760,47 +4839,18 @@ export async function downloadGemstoneRudrakshaPlaybookPdf(
  */
 
 export async function downloadMarriageCompatibilityPdf(
-
   req: MarriageCompatibilityPdfReportRequest,
-
   token?: string
-
 ): Promise<Blob> {
-
   const authHeaders = await resolveAuthHeaders(token);
-
-  const url = `${API_BASE_URL}/api/v1/reports/marriage-compatibility/pdf`;
-
-  const response = await fetch(url, {
-
+  return requestBlob("/api/v1/reports/marriage-compatibility/pdf", {
     method: "POST",
-
     headers: {
-
       ...authHeaders,
-
       "Content-Type": "application/json",
-
     },
-
     body: JSON.stringify(req),
-
   });
-
-
-
-  if (!response.ok) {
-
-    const errorText = await response.text();
-
-    throw new Error(`Failed to generate Marriage Compatibility PDF: ${response.status} ${errorText}`);
-
-  }
-
-
-
-  return response.blob();
-
 }
 
 
@@ -4821,9 +4871,7 @@ export async function downloadSinglePageHoroscopePdf(
   token?: string
 ): Promise<Blob> {
   const authHeaders = await resolveAuthHeaders(token);
-  const url = `${API_BASE_URL}/api/v1/reports/horoscope/single-page-pdf`;
-
-  const response = await fetch(url, {
+  return requestBlob("/api/v1/reports/horoscope/single-page-pdf", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -4831,13 +4879,6 @@ export async function downloadSinglePageHoroscopePdf(
     },
     body: JSON.stringify(req),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to generate Single-Page Horoscope PDF: ${response.status} ${errorText}`);
-  }
-
-  return response.blob();
 }
 
 /**
@@ -4849,21 +4890,15 @@ export async function downloadSavedSinglePageHoroscopePdf(
   token?: string
 ): Promise<Blob> {
   const authHeaders = await resolveAuthHeaders(token);
-  const url = `${API_BASE_URL}/api/v1/reports/horoscope/single-page-pdf/${encodeURIComponent(horoscopeId)}?language=${encodeURIComponent(language)}`;
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      ...authHeaders,
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to download Single-Page Horoscope PDF: ${response.status} ${errorText}`);
-  }
-
-  return response.blob();
+  return requestBlob(
+    `/api/v1/reports/horoscope/single-page-pdf/${encodeURIComponent(horoscopeId)}?language=${encodeURIComponent(language)}`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeaders,
+      },
+    }
+  );
 }
 
 export async function predictSpouseEvent(

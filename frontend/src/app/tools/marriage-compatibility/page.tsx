@@ -25,6 +25,7 @@ import {
   saveMarriageCompatibilityReport,
   downloadMarriageCompatibilityPdf,
   ApiError,
+  safeErrorMessage,
 } from "@/lib/api";
 import { SavedMarriageReportsList } from "@/components/marriage-compatibility/SavedMarriageReportsList";
 import {
@@ -267,7 +268,7 @@ function MarriageCompatibilityContent() {
       setIsDownloadModalOpen(false);
     } catch (err: any) {
       console.error("Failed to download compatibility report PDF:", err);
-      setDownloadError(err?.message || "Failed to generate report PDF. Please try again.");
+      setDownloadError(safeErrorMessage(err, "Failed to generate report PDF. Please try again."));
     } finally {
       setDownloadingPdf(false);
     }

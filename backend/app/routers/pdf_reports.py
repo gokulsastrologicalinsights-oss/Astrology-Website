@@ -10,6 +10,7 @@ import logging
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Security, Response, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.concurrency import run_in_threadpool
 
 from app.schemas.pdf_report import (
     SinglePageHoroscopePdfRequest,
@@ -282,7 +283,8 @@ async def generate_single_page_pdf_endpoint(
         else:
             final_native_id = request.native_id or saved_native_id
 
-        pdf_bytes = generate_single_page_horoscope_pdf_bytes(
+        pdf_bytes = await run_in_threadpool(
+            generate_single_page_horoscope_pdf_bytes,
             birth_input=birth_input,
             native_name=native_name,
             father_name=request.father_name,
@@ -622,7 +624,9 @@ async def generate_marriage_compatibility_pdf_endpoint(
         lang = request.language or "en"
         filename = f"Marriage_Compatibility_{groom_name}_{bride_name}_{lang}.pdf"
 
-        pdf_bytes = generate_marriage_compatibility_pdf_bytes(report_data, language=lang)
+        pdf_bytes = await run_in_threadpool(
+            generate_marriage_compatibility_pdf_bytes, report_data, language=lang
+        )
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",

@@ -1014,17 +1014,22 @@ def generate_marriage_compatibility_pdf_bytes(data: Dict[str, Any], language: st
     
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page()
-            page.set_content(html_doc)
-            page.wait_for_load_state("networkidle")
-            pdf_bytes = page.pdf(
-                format="A4",
-                print_background=True,
-                margin={"top": "0", "bottom": "0", "left": "0", "right": "0"},
-            )
-            browser.close()
-            return pdf_bytes
+            browser = p.chromium.launch(headless=True)
+            try:
+                page = browser.new_page()
+                page.set_content(html_doc)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    page.wait_for_load_state("domcontentloaded")
+                pdf_bytes = page.pdf(
+                    format="A4",
+                    print_background=True,
+                    margin={"top": "0", "bottom": "0", "left": "0", "right": "0"},
+                )
+                return pdf_bytes
+            finally:
+                browser.close()
     except Exception as exc:
         logger.error("Chromium PDF generation failed, falling back to ReportLab: %s", exc)
         # Fallback to ReportLab if Playwright is unavailable
