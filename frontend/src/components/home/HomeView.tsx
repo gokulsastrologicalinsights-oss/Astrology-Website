@@ -20,7 +20,6 @@ import {
   HeartHandshake,
   Heart,
   Hash,
-  Flame,
   Briefcase,
   Cake,
   Eye,
@@ -149,14 +148,6 @@ interface AstrologyToolCard {
       href: "/muhurta",
       icon: CalendarCheck,
       color: "text-emerald-600 border-emerald-300 bg-emerald-50",
-    },
-    {
-      id: "remedies",
-      titleTa: "பரிகாரங்கள் & ஆலயங்கள்",
-      titleEn: "Remedies & Pariharam",
-      href: "/remedies",
-      icon: Flame,
-      color: "text-amber-700 border-amber-300 bg-amber-50",
     },
   ];
 
