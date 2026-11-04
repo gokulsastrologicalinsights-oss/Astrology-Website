@@ -42,6 +42,7 @@ import { calculateKnRaoResearch } from "@/lib/api";
 import { KnRaoAdvancedResearchResponse, HoroscopeRequest } from "@/lib/types";
 import { AstrologerCockpit } from "@/components/results/AstrologerCockpit";
 import {
+  downloadSinglePageHoroscopePdf,
   calculateNabhasha,
   calculateAshtakavarga,
   calculateVedicYogas,
@@ -335,6 +336,57 @@ function HoroscopeResultsContent() {
 
 
   // Notes Modal state
+
+  const [isDownloadingSinglePdf, setIsDownloadingSinglePdf] = useState<boolean>(false);
+  const [selectedPdfFont, setSelectedPdfFont] = useState<string>("auto");
+
+  const handleDownloadSinglePagePdf = async () => {
+    try {
+      setIsDownloadingSinglePdf(true);
+      const bDate = clientInputs?.birthDate || (horoscope?.metadata ? horoscope.metadata.birth_utc_iso.split("T")[0] : "");
+      const bTime = clientInputs?.birthTime || (horoscope?.metadata ? horoscope.metadata.birth_utc_iso.split("T")[1]?.slice(0, 8) : "12:00:00");
+      const lat = clientInputs?.latitude ?? (horoscope?.metadata?.coordinates?.latitude ?? 13.0827);
+      const lon = clientInputs?.longitude ?? (horoscope?.metadata?.coordinates?.longitude ?? 80.2707);
+      const tz = clientInputs?.timezone || horoscope?.metadata?.local_timezone || "Asia/Kolkata";
+
+      const blob = await downloadSinglePageHoroscopePdf({
+        birth_input: {
+          birth_date: bDate,
+          birth_time: bTime.length === 5 ? `${bTime}:00` : bTime,
+          timezone: tz,
+          latitude: Number(lat),
+          longitude: Number(lon),
+        },
+        saved_horoscope_id: idParam || undefined,
+        native_name: clientInputs?.fullName || "Native",
+        father_name: (clientInputs as any)?.fatherName || "-",
+        mother_name: (clientInputs as any)?.motherName || "-",
+        gender: clientInputs?.gender || "male",
+        birth_place: (clientInputs as any)?.birthPlace || clientInputs?.locationName || "Chennai, Tamil Nadu",
+        native_id: idParam ? `#${idParam.slice(0, 4)}` : "#001",
+        language: "ta",
+        ayanamsa: clientInputs?.ayanamsaId ?? 0,
+        house_system: clientInputs?.houseSystemId ?? 0,
+        font_family: selectedPdfFont,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cleanName = (clientInputs?.fullName || "Horoscope").replace(/\s+/g, "_");
+      a.download = `Single_Page_Horoscope_${cleanName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Failed to download single-page horoscope PDF:", err);
+      alert(language === "ta" ? "PDF பதிவிறக்கம் செய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்." : "Failed to download single-page PDF. Please try again.");
+    } finally {
+      setIsDownloadingSinglePdf(false);
+    }
+  };
+
   const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
   const [consultationNotes, setConsultationNotes] = useState<string>("");
   const [isSavingNotes, setIsSavingNotes] = useState<boolean>(false);
@@ -960,6 +1012,22 @@ function HoroscopeResultsContent() {
             >
               <FileText className="w-3.5 h-3.5 text-[#B4872B]" />
               <span>{language === "ta" ? "குறிப்புகள்" : "Notes"}</span>
+            </button>
+
+            {/* Single-Page Traditional Tamil PDF Download Button */}
+            <button
+              type="button"
+              onClick={handleDownloadSinglePagePdf}
+              disabled={isDownloadingSinglePdf}
+              title={language === "ta" ? "ஒரு பக்க பாரம்பரிய ஜாதக PDF பதிவிறக்கம்" : "Download 1-Page Traditional Tamil Horoscope PDF"}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#B4872B] bg-[#FAF2DE] text-xs font-bold text-[#153F6B] hover:bg-[#F3E5C2] shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isDownloadingSinglePdf ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#B4872B]" />
+              ) : (
+                <Download className="w-3.5 h-3.5 text-[#B4872B]" />
+              )}
+              <span>{language === "ta" ? "ஒரு பக்க PDF" : "1-Page PDF"}</span>
             </button>
 
             <button
@@ -1980,6 +2048,55 @@ function HoroscopeResultsContent() {
           {mainTab === "reports" && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 0. Single-Page Traditional Tamil Horoscope PDF */}
+                <div className="bg-white rounded-xl border-2 border-[#153F6B] p-5 shadow-2xs space-y-3 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-[#153F6B] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl">
+                    {language === "ta" ? "அதிகாரப்பூர்வ முறை" : "TRADITIONAL"}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-10 h-10 rounded-lg bg-[#153F6B]/10 border border-[#153F6B]/20 flex items-center justify-center text-[#153F6B]">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-bold text-sm text-[#183047]">
+                      {language === "ta" ? "ஒரு பக்க ஜாதகம் (Single-Page PDF)" : "1-Page Traditional Horoscope PDF"}
+                    </h3>
+                    <p className="text-xs text-[#8190A6]">
+                      {language === "ta"
+                        ? "சுத்த திருக்கணித முறையில் ஜாதகர் விவரங்கள், 11 கிரக நிலைகள் (பாகை, நட்சத்திரம், அதிபதி, நிலை), ராசி & நவாம்சக் கட்டங்கள் மற்றும் தசா-புக்தி இருப்புடன் கூடிய பிரத்யேக ஒரு பக்க PDF அறிக்கை."
+                        : "Complete 1-page authentic traditional horoscope with birth particulars, 11 planetary positions, D1 Rasi & D9 Navamsha charts, and Dasa-Bukthi balance."}
+                    </p>
+                    <div className="pt-1.5 space-y-1">
+                      <label className="text-[10px] font-semibold text-[#52667E] block">
+                        {language === "ta" ? "எழுத்துரு (Tamil Font Style):" : "Tamil Font Style:"}
+                      </label>
+                      <select
+                        value={selectedPdfFont}
+                        onChange={(e) => setSelectedPdfFont(e.target.value)}
+                        className="w-full text-[11px] px-2 py-1 rounded border border-[#D9DEE7] bg-[#F8FAFC] text-[#183047] focus:outline-none focus:ring-1 focus:ring-[#153F6B]"
+                      >
+                        <option value="auto">{language === "ta" ? "தானியங்கி / முன்னுரிமை (Auto / Preferred)" : "Auto (Preferred Font)"}</option>
+                        <option value="vijaya">{language === "ta" ? "விஜயா (Vijaya - Traditional Serif)" : "Vijaya (Traditional Serif)"}</option>
+                        <option value="latha">{language === "ta" ? "லதா (Latha - Windows Standard)" : "Latha (Windows Standard)"}</option>
+                        <option value="noto">{language === "ta" ? "நோட்டோ சான்ஸ் (Noto Sans Tamil)" : "Noto Sans Tamil"}</option>
+                        <option value="lohit">{language === "ta" ? "லோஹித் தமிழ் (Lohit Tamil)" : "Lohit Tamil"}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadSinglePagePdf}
+                    disabled={isDownloadingSinglePdf}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#153F6B] hover:bg-[#0F3155] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isDownloadingSinglePdf ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    <span>{language === "ta" ? "ஒரு பக்க PDF பதிவிறக்கு" : "Download 1-Page PDF"}</span>
+                  </button>
+                </div>
+
                 {/* 1. Print / PDF */}
                 <div className="bg-white rounded-xl border border-[#D9DEE7] p-5 shadow-2xs space-y-3 flex flex-col justify-between">
                   <div className="space-y-2">

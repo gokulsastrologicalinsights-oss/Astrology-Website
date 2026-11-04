@@ -24,6 +24,12 @@ from app.services.pdf_report_engine.marriage_compatibility_generator import (
 )
 
 
+from app.services.pdf_report_engine.single_page_generator import (
+    SinglePageHoroscopePdfGenerator,
+    generate_single_page_horoscope_pdf_bytes,
+)
+
+
 def generate_horoscope_pdf_bytes(report_data: ReportData) -> bytes:
     """Convenience entrypoint: generates and returns raw PDF bytes for Vedic Horoscope Report."""
     generator = HoroscopePdfReportGenerator(report_data)
@@ -42,6 +48,8 @@ __all__ = [
     "build_report_data",
     "HoroscopePdfReportGenerator",
     "generate_horoscope_pdf_bytes",
+    "SinglePageHoroscopePdfGenerator",
+    "generate_single_page_horoscope_pdf_bytes",
     "create_south_indian_chart",
     # KP Report Engine
     "KpReportData",

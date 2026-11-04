@@ -4,12 +4,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getTodayDasaCautionAlerts,
   markDasaCautionAlertSent,
+  unmarkDasaCautionAlertSent,
 } from "@/lib/dasa-caution-service";
 
 /**
  * GET /api/customers/dasa-cautions
  * Scans saved charts for the authenticated user (or all if admin) and identifies
  * clients who are currently in or entering an adverse Dasa-Bhukti period.
+ * Supports ?hide_sent=true or ?skip_sent=true to skip profiles already sent.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +31,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const lang = (searchParams.get("lang") === "ta" ? "ta" : "en") as "en" | "ta";
     const forceFresh = searchParams.get("fresh") === "true";
+    const hideSent =
+      searchParams.get("hide_sent") === "true" || searchParams.get("skip_sent") === "true";
 
     // Use admin client to reliably check role without anon client RLS restrictions
     const adminClient = createAdminClient();
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = profile?.role === "admin";
 
-    const data = await getTodayDasaCautionAlerts(user.id, isAdmin, lang, forceFresh);
+    const data = await getTodayDasaCautionAlerts(user.id, isAdmin, lang, forceFresh, hideSent);
 
     return NextResponse.json({
       success: true,
@@ -111,6 +115,59 @@ export async function POST(request: NextRequest) {
     console.error("POST /api/customers/dasa-cautions error:", err);
     return NextResponse.json(
       { error: err?.message || "Failed to mark caution alert as sent." },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/customers/dasa-cautions
+ * Unmarks a caution reminder, reverting it back to pending status.
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized access: Sign-in required." },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      horoscope_id,
+      dasa_lord,
+      bhukti_lord,
+      andhar_lord,
+      period_start,
+    } = body;
+
+    if (!horoscope_id || !dasa_lord || !bhukti_lord || !period_start) {
+      return NextResponse.json(
+        { error: "Missing required caution alert identification fields to unmark." },
+        { status: 400 }
+      );
+    }
+
+    const result = await unmarkDasaCautionAlertSent({
+      horoscopeId: horoscope_id,
+      dasaLord: dasa_lord,
+      bhuktiLord: bhukti_lord,
+      andharLord: andhar_lord,
+      periodStart: period_start,
+    });
+
+    return NextResponse.json(result);
+  } catch (err: any) {
+    console.error("DELETE /api/customers/dasa-cautions error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Failed to unmark caution alert." },
       { status: 500 }
     );
   }

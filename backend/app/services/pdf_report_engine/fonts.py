@@ -6,7 +6,7 @@ Ensures complete Unicode glyph coverage for both Tamil script and Latin characte
 
 from pathlib import Path
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 
 import re
 from reportlab.pdfbase import pdfmetrics
@@ -53,8 +53,17 @@ def reorder_tamil_for_pdf(text: Any) -> Any:
 FONTS_DIR = Path(__file__).resolve().parent.parent.parent / "assets" / "fonts"
 NOTO_REGULAR = FONTS_DIR / "NotoSansTamil-Regular.ttf"
 NOTO_BOLD = FONTS_DIR / "NotoSansTamil-Bold.ttf"
+LATHA_REGULAR = FONTS_DIR / "Latha.ttf"
+LATHA_BOLD = FONTS_DIR / "Latha-Bold.ttf"
+VIJAYA_REGULAR = FONTS_DIR / "Vijaya.ttf"
+VIJAYA_BOLD = FONTS_DIR / "Vijaya-Bold.ttf"
+LOHIT_REGULAR = FONTS_DIR / "Lohit-Tamil.ttf"
+PREFERRED_REGULAR = FONTS_DIR / "preferred_tamil.ttf"
+PREFERRED_BOLD = FONTS_DIR / "preferred_tamil_bold.ttf"
 
 _FONTS_REGISTERED = False
+_ACTIVE_FONT_REGULAR = "NotoSansTamil"
+_ACTIVE_FONT_BOLD = "NotoSansTamil-Bold"
 
 # Palette constants
 GOLD_PRIMARY = colors.HexColor("#8B6914")       # Rich Vedic Gold / Saffron
@@ -68,40 +77,95 @@ BORDER_COLOR = colors.HexColor("#CBD5E1")       # Subtle border slate
 EMERALD_GREEN = colors.HexColor("#15803D")      # Auspicious Green
 
 
-def register_report_fonts() -> None:
-    """Register NotoSansTamil regular and bold TrueType fonts in ReportLab."""
-    global _FONTS_REGISTERED
-    if _FONTS_REGISTERED:
-        return
+def register_report_fonts(preferred_family: Optional[str] = None) -> Tuple[str, str]:
+    """Register TrueType fonts in ReportLab and return (active_regular, active_bold).
 
-    if not NOTO_REGULAR.exists() or not NOTO_BOLD.exists():
-        logger.warning(
-            "Tamil font files not found at %s. Falling back to Helvetica.", FONTS_DIR
-        )
-        return
+    Supports:
+    - User Preferred Font: preferred_tamil.ttf / custom_tamil.ttf in assets/fonts/
+    - Vijaya / Vijaya-Bold (Traditional Tamil serif)
+    - Latha / Latha-Bold (Standard Windows Tamil)
+    - Lohit-Tamil (Open-source Indic font)
+    - NotoSansTamil / NotoSansTamil-Bold (Google Noto OFL)
+    """
+    global _FONTS_REGISTERED, _ACTIVE_FONT_REGULAR, _ACTIVE_FONT_BOLD
 
-    try:
-        pdfmetrics.registerFont(TTFont("NotoSansTamil", str(NOTO_REGULAR)))
-        pdfmetrics.registerFont(TTFont("NotoSansTamil-Bold", str(NOTO_BOLD)))
-        pdfmetrics.registerFontFamily(
-            "NotoSansTamil",
-            normal="NotoSansTamil",
-            bold="NotoSansTamil-Bold",
-            italic="NotoSansTamil",
-            boldItalic="NotoSansTamil-Bold",
-        )
-        _FONTS_REGISTERED = True
-        logger.info("Successfully registered NotoSansTamil fonts.")
-    except Exception as exc:
-        logger.error("Error registering NotoSansTamil fonts: %s", exc)
+    # 1. Register NotoSansTamil
+    if NOTO_REGULAR.exists():
+        try:
+            pdfmetrics.registerFont(TTFont("NotoSansTamil", str(NOTO_REGULAR)))
+            if NOTO_BOLD.exists():
+                pdfmetrics.registerFont(TTFont("NotoSansTamil-Bold", str(NOTO_BOLD)))
+        except Exception:
+            pass
+
+    # 2. Register Latha
+    if LATHA_REGULAR.exists():
+        try:
+            pdfmetrics.registerFont(TTFont("Latha", str(LATHA_REGULAR)))
+            b_path = LATHA_BOLD if LATHA_BOLD.exists() else LATHA_REGULAR
+            pdfmetrics.registerFont(TTFont("Latha-Bold", str(b_path)))
+        except Exception:
+            pass
+
+    # 3. Register Vijaya
+    if VIJAYA_REGULAR.exists():
+        try:
+            pdfmetrics.registerFont(TTFont("Vijaya", str(VIJAYA_REGULAR)))
+            b_path = VIJAYA_BOLD if VIJAYA_BOLD.exists() else VIJAYA_REGULAR
+            pdfmetrics.registerFont(TTFont("Vijaya-Bold", str(b_path)))
+        except Exception:
+            pass
+
+    # 4. Register Lohit-Tamil
+    if LOHIT_REGULAR.exists():
+        try:
+            pdfmetrics.registerFont(TTFont("Lohit-Tamil", str(LOHIT_REGULAR)))
+            pdfmetrics.registerFont(TTFont("Lohit-Tamil-Bold", str(LOHIT_REGULAR)))
+        except Exception:
+            pass
+
+    # 5. Register User's custom preferred font if present
+    for custom_candidate in [PREFERRED_REGULAR, FONTS_DIR / "preferred_font.ttf", FONTS_DIR / "custom_tamil.ttf"]:
+        if custom_candidate.exists():
+            try:
+                pdfmetrics.registerFont(TTFont("PreferredTamil", str(custom_candidate)))
+                b_cand = PREFERRED_BOLD if PREFERRED_BOLD.exists() else custom_candidate
+                pdfmetrics.registerFont(TTFont("PreferredTamil-Bold", str(b_cand)))
+                _ACTIVE_FONT_REGULAR = "PreferredTamil"
+                _ACTIVE_FONT_BOLD = "PreferredTamil-Bold"
+                break
+            except Exception as e:
+                logger.warning("Could not register preferred custom font: %s", e)
+
+    _FONTS_REGISTERED = True
+
+    # Determine which font to activate based on user preference
+    req_f = (preferred_family or "").lower().strip()
+    if req_f in ("preferred", "custom") and PREFERRED_REGULAR.exists():
+        _ACTIVE_FONT_REGULAR = "PreferredTamil"
+        _ACTIVE_FONT_BOLD = "PreferredTamil-Bold"
+    elif req_f == "vijaya" and VIJAYA_REGULAR.exists():
+        _ACTIVE_FONT_REGULAR = "Vijaya"
+        _ACTIVE_FONT_BOLD = "Vijaya-Bold"
+    elif req_f == "latha" and LATHA_REGULAR.exists():
+        _ACTIVE_FONT_REGULAR = "Latha"
+        _ACTIVE_FONT_BOLD = "Latha-Bold"
+    elif req_f == "lohit" and LOHIT_REGULAR.exists():
+        _ACTIVE_FONT_REGULAR = "Lohit-Tamil"
+        _ACTIVE_FONT_BOLD = "Lohit-Tamil-Bold"
+    elif req_f == "noto":
+        _ACTIVE_FONT_REGULAR = "NotoSansTamil"
+        _ACTIVE_FONT_BOLD = "NotoSansTamil-Bold"
+    elif PREFERRED_REGULAR.exists():
+        _ACTIVE_FONT_REGULAR = "PreferredTamil"
+        _ACTIVE_FONT_BOLD = "PreferredTamil-Bold"
+
+    return _ACTIVE_FONT_REGULAR, _ACTIVE_FONT_BOLD
 
 
-def get_report_styles():
+def get_report_styles(preferred_family: Optional[str] = None):
     """Create and return a comprehensive ParagraphStyle collection configured for Tamil/English."""
-    register_report_fonts()
-
-    font_name = "NotoSansTamil" if _FONTS_REGISTERED else "Helvetica"
-    font_bold = "NotoSansTamil-Bold" if _FONTS_REGISTERED else "Helvetica-Bold"
+    font_name, font_bold = register_report_fonts(preferred_family)
 
     styles = getSampleStyleSheet()
 

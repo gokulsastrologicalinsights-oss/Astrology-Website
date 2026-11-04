@@ -37,6 +37,58 @@ class HoroscopePdfReportRequest(BaseModel):
         description="House system ID (0=Whole Sign, 2=Placidus/KP). Default 0."
     )
 
+class SinglePageHoroscopePdfRequest(BaseModel):
+    """Request model for generating the authentic 1-page traditional Tamil horoscope PDF."""
+    birth_input: Optional[BirthInput] = Field(
+        None,
+        description="Ad-hoc birth particulars. Required if saved_horoscope_id is not provided."
+    )
+    saved_horoscope_id: Optional[str] = Field(
+        None,
+        description="UUID of a previously saved horoscope."
+    )
+    native_name: Optional[str] = Field(
+        "Native",
+        description="Full name of native."
+    )
+    father_name: Optional[str] = Field(
+        "-",
+        description="Father's name."
+    )
+    mother_name: Optional[str] = Field(
+        "-",
+        description="Mother's name."
+    )
+    gender: Optional[str] = Field(
+        "male",
+        description="Gender of native ('male' or 'female')."
+    )
+    birth_place: Optional[str] = Field(
+        "Chennai, Tamil Nadu",
+        description="Birth place name (e.g. Chennai, Tamil Nadu)."
+    )
+    native_id: Optional[str] = Field(
+        "#001",
+        description="Native code or record index (e.g. #001)."
+    )
+    language: str = Field(
+        "ta",
+        description="Report language (default 'ta' for Tamil)."
+    )
+    ayanamsa: int = Field(
+        0,
+        description="Ayanamsa ID (0=Lahiri Chitra Paksha). Default 0."
+    )
+    house_system: int = Field(
+        0,
+        description="House system ID (0=Whole Sign, 2=Placidus). Default 0."
+    )
+    font_family: Optional[str] = Field(
+        "auto",
+        description="Tamil font family: 'auto', 'vijaya', 'latha', 'noto', 'lohit', 'preferred'."
+    )
+
+
 
 class KpPdfReportRequest(BaseModel):
     """Request model for generating a dedicated 6-page branded English/Tamil KP PDF report."""

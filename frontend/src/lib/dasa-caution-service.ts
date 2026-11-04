@@ -360,20 +360,25 @@ export async function getTodayDasaCautionAlerts(
   userId: string,
   isAdmin: boolean = false,
   lang: "ta" | "en" = "ta",
-  forceFresh: boolean = false
+  forceFresh: boolean = false,
+  hideSent: boolean = false
 ): Promise<{
   alerts: DasaCautionItem[];
   activeCount: number;
   upcomingCount: number;
+  activePendingCount: number;
+  upcomingPendingCount: number;
+  sentCount: number;
+  pendingCount: number;
   todayKolkata: string;
   totalScanned?: number;
   queryError?: string | null;
 }> {
-  const cacheKey = `${userId}_${isAdmin}_${lang}`;
+  const cacheKey = `${userId}_${isAdmin}_${lang}_${hideSent}`;
   if (!forceFresh) {
     const cached = CAUTION_CACHE.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      return cached.data;
+      return cached.data as any;
     }
   }
 
@@ -1214,13 +1219,27 @@ export async function getTodayDasaCautionAlerts(
     return a.startDateIso.localeCompare(b.startDateIso);
   });
 
-  const activeCount = alerts.filter((a) => a.isActiveNow).length;
-  const upcomingCount = alerts.filter((a) => a.isUpcoming).length;
+  const pendingAlerts = alerts.filter((a) => !a.alertSent);
+  const sentAlerts = alerts.filter((a) => a.alertSent);
+  const activePendingCount = alerts.filter((a) => a.isActiveNow && !a.alertSent).length;
+  const upcomingPendingCount = alerts.filter((a) => a.isUpcoming && !a.alertSent).length;
+  const sentCount = sentAlerts.length;
+  const pendingCount = pendingAlerts.length;
+
+  // Active / Upcoming count reflects actionable pending alerts by default
+  const activeCount = activePendingCount;
+  const upcomingCount = upcomingPendingCount;
+
+  const returnedAlerts = hideSent ? pendingAlerts : alerts;
 
   const result = {
-    alerts,
+    alerts: returnedAlerts,
     activeCount,
     upcomingCount,
+    activePendingCount,
+    upcomingPendingCount,
+    sentCount,
+    pendingCount,
     todayKolkata: kolkataDate,
     totalScanned: savedList.length,
     queryError,
@@ -1307,4 +1326,50 @@ export async function markDasaCautionAlertSent(params: {
   invalidateCautionCache();
 
   return { success: true, sent_at: nowIso };
+}
+
+/**
+ * Unmark / revert a caution reminder as sent (restore to pending).
+ */
+export async function unmarkDasaCautionAlertSent(params: {
+  horoscopeId: string;
+  dasaLord: string;
+  bhuktiLord: string;
+  andharLord?: string;
+  periodStart: string;
+}): Promise<{ success: boolean }> {
+  // 1. Try deleting from Supabase table if present
+  try {
+    const adminClient = createAdminClient();
+    let query = (adminClient.from("customer_dasa_caution_alerts") as any)
+      .delete()
+      .eq("horoscope_id", params.horoscopeId)
+      .eq("dasa_lord", params.dasaLord)
+      .eq("bhukti_lord", params.bhuktiLord)
+      .eq("period_start", params.periodStart);
+
+    if (params.andharLord) {
+      query = query.eq("andhar_lord", params.andharLord);
+    }
+    await query;
+  } catch {
+    // Ignore if table not present
+  }
+
+  // 2. Remove from local JSON storage
+  const localAlerts = loadLocalCautionAlerts();
+  const updated = localAlerts.filter(
+    (a) =>
+      !(
+        a.horoscope_id === params.horoscopeId &&
+        a.dasa_lord === params.dasaLord &&
+        a.bhukti_lord === params.bhuktiLord &&
+        (!params.andharLord || a.andhar_lord === params.andharLord) &&
+        a.period_start === params.periodStart
+      )
+  );
+  saveLocalCautionAlerts(updated);
+  invalidateCautionCache();
+
+  return { success: true };
 }

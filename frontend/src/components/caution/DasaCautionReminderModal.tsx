@@ -26,6 +26,7 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import { DasaCautionItem, CautionSeverity } from "@/lib/dasa-caution-service";
 import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
@@ -55,10 +56,21 @@ export function DasaCautionReminderModal({
   const [alerts, setAlerts] = useState<DasaCautionItem[]>([]);
   const [todayKolkata, setTodayKolkata] = useState<string>("");
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [unmarkingId, setUnmarkingId] = useState<string | null>(null);
 
-  // Filter tabs: "active" | "upcoming" | "all"
-  const [filterTab, setFilterTab] = useState<"active" | "upcoming" | "all">("active");
+  // Hide Sent toggle: Defaults to true so completed/sent profiles are automatically hidden from the active caution workflow
+  const [hideSent, setHideSent] = useState<boolean>(true);
+
+  // Filter tabs: "active" | "upcoming" | "all" | "completed"
+  const [filterTab, setFilterTab] = useState<"active" | "upcoming" | "all" | "completed">("active");
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Toast banner for immediate feedback and 1-click Undo
+  const [actionToast, setActionToast] = useState<{
+    message: string;
+    item: DasaCautionItem;
+    type: "sent" | "unmarked";
+  } | null>(null);
 
   // Advisory language: Default to Tamil
   const [messageLang, setMessageLang] = useState<"ta" | "en">("ta");
@@ -73,7 +85,7 @@ export function DasaCautionReminderModal({
   const [contactSaveError, setContactSaveError] = useState<string | null>(null);
 
   // Modal open is true if explicitly controlled open OR internally auto-opened on login
-  const isOpen = controlledIsOpen !== undefined ? (controlledIsOpen || internalIsOpen) : internalIsOpen;
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen || internalIsOpen : internalIsOpen;
 
   const handleClose = () => {
     if (todayKolkata) {
@@ -103,11 +115,13 @@ export function DasaCautionReminderModal({
             console.warn("Dasa caution query notice:", data.queryError);
           }
 
+          // Count only actionable pending active alerts for dashboard badge
+          const pendingActive = items.filter((a) => a.isActiveNow && !a.alertSent).length;
           if (onAlertsCountChange) {
-            onAlertsCountChange(data.activeCount !== undefined ? data.activeCount : items.length);
+            onAlertsCountChange(pendingActive);
           }
 
-          if (isAuto && autoOpenOnLogin && items.length > 0) {
+          if (isAuto && autoOpenOnLogin && pendingActive > 0) {
             // Check if already dismissed today in this session
             const sessionKey = `dasa_caution_dismissed_${data.todayKolkata}`;
             const alreadyDismissed = sessionStorage.getItem(sessionKey);
@@ -117,7 +131,9 @@ export function DasaCautionReminderModal({
           }
         } else {
           const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error || (isTa ? "எச்சரிக்கை பட்டியலை ஏற்றுவதில் பிழை ஏற்பட்டது." : "Failed to load caution alerts.");
+          const errMsg =
+            errData.error ||
+            (isTa ? "எச்சரிக்கை பட்டியலை ஏற்றுவதில் பிழை ஏற்பட்டது." : "Failed to load caution alerts.");
           setFetchError(errMsg);
         }
       } catch (err: any) {
@@ -127,7 +143,7 @@ export function DasaCautionReminderModal({
         setLoading(false);
       }
     },
-    [isAuthenticated, messageLang, onAlertsCountChange, isTa]
+    [isAuthenticated, messageLang, onAlertsCountChange, isTa, autoOpenOnLogin]
   );
 
   // Initial check on login
@@ -144,8 +160,18 @@ export function DasaCautionReminderModal({
     }
   }, [isOpen, fetchAlerts]);
 
-  // Manual mark as sent action
-  const handleMarkAlertSent = async (item: DasaCautionItem) => {
+  // Auto-dismiss toast after 6 seconds
+  useEffect(() => {
+    if (actionToast) {
+      const timer = setTimeout(() => {
+        setActionToast(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionToast]);
+
+  // Manual mark as sent action (Hide profile from active workflow)
+  const handleMarkAlertSent = async (item: DasaCautionItem, fromWhatsApp = false) => {
     setMarkingId(item.id);
     try {
       const res = await fetch("/api/customers/dasa-cautions", {
@@ -164,16 +190,69 @@ export function DasaCautionReminderModal({
       });
       if (res.ok) {
         const nowIso = new Date().toISOString();
-        setAlerts((prev) =>
-          prev.map((a) =>
-            a.id === item.id ? { ...a, alertSent: true, alertSentAt: nowIso } : a
-          )
-        );
+        const updatedItem = { ...item, alertSent: true, alertSentAt: nowIso };
+        setAlerts((prev) => {
+          const next = prev.map((a) => (a.id === item.id ? updatedItem : a));
+          const newActivePending = next.filter((a) => a.isActiveNow && !a.alertSent).length;
+          if (onAlertsCountChange) {
+            onAlertsCountChange(newActivePending);
+          }
+          return next;
+        });
+
+        setActionToast({
+          message: isTa
+            ? `${fromWhatsApp ? "வாட்ஸ்அப் அனுப்பப்பட்டது!" : "அனுப்பப்பட்டதாகக் குறிக்கப்பட்டது!"} "${item.fullName}" பதிவு பட்டியலிலிருந்து மறைக்கப்பட்டது.`
+            : `${fromWhatsApp ? "WhatsApp alert dispatched!" : "Marked as sent!"} "${item.fullName}" hidden from pending list.`,
+          item: updatedItem,
+          type: "sent",
+        });
       }
     } catch (err) {
       console.warn("Could not mark caution alert as sent:", err);
     } finally {
       setMarkingId(null);
+    }
+  };
+
+  // Revert / unmark sent alert (Restores profile back to pending list)
+  const handleUnmarkAlertSent = async (item: DasaCautionItem) => {
+    setUnmarkingId(item.id);
+    try {
+      const res = await fetch("/api/customers/dasa-cautions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          horoscope_id: item.horoscopeId,
+          dasa_lord: item.mahadashaLord,
+          bhukti_lord: item.antardashaLord,
+          andhar_lord: item.andharLord,
+          period_start: item.startDateIso,
+        }),
+      });
+      if (res.ok) {
+        const updatedItem = { ...item, alertSent: false, alertSentAt: null };
+        setAlerts((prev) => {
+          const next = prev.map((a) => (a.id === item.id ? updatedItem : a));
+          const newActivePending = next.filter((a) => a.isActiveNow && !a.alertSent).length;
+          if (onAlertsCountChange) {
+            onAlertsCountChange(newActivePending);
+          }
+          return next;
+        });
+
+        setActionToast({
+          message: isTa
+            ? `"${item.fullName}" எச்சரிக்கை மீண்டும் நிலுவைப் பட்டியலுக்குக் கொண்டுவரப்பட்டது.`
+            : `Restored "${item.fullName}" back to pending alerts list.`,
+          item: updatedItem,
+          type: "unmarked",
+        });
+      }
+    } catch (err) {
+      console.warn("Could not unmark caution alert:", err);
+    } finally {
+      setUnmarkingId(null);
     }
   };
 
@@ -214,19 +293,25 @@ export function DasaCautionReminderModal({
         // Optimistically update the alerts in local React state immediately so WhatsApp button transforms instantly
         setAlerts((prev) =>
           prev.map((a) => {
-            if (a.id === item.id || a.horoscopeId === item.horoscopeId || (a.customerId && a.customerId === updatedCust?.id)) {
+            if (
+              a.id === item.id ||
+              a.horoscopeId === item.horoscopeId ||
+              (a.customerId && a.customerId === updatedCust?.id)
+            ) {
               const updatedWhatsapp = norm.whatsappNumber || (updatedCust?.whatsapp_number ?? null);
               const updatedNormPhone = norm.normalizedPhone || (updatedCust?.normalized_phone ?? null);
               const updatedNational = norm.nationalNumber || editPhone.trim();
               const hasPhone = norm.isValid;
 
               const clean = updatedWhatsapp ? updatedWhatsapp.replace(/\D/g, "") : "";
-              const wLinkTa = clean && clean.length >= 7
-                ? `https://api.whatsapp.com/send/?phone=${clean}&text=${encodeURIComponent(a.messageTextTa)}`
-                : "";
-              const wLinkEn = clean && clean.length >= 7
-                ? `https://api.whatsapp.com/send/?phone=${clean}&text=${encodeURIComponent(a.messageTextEn)}`
-                : "";
+              const wLinkTa =
+                clean && clean.length >= 7
+                  ? `https://api.whatsapp.com/send/?phone=${clean}&text=${encodeURIComponent(a.messageTextTa)}`
+                  : "";
+              const wLinkEn =
+                clean && clean.length >= 7
+                  ? `https://api.whatsapp.com/send/?phone=${clean}&text=${encodeURIComponent(a.messageTextEn)}`
+                  : "";
 
               return {
                 ...a,
@@ -257,14 +342,48 @@ export function DasaCautionReminderModal({
     }
   };
 
-  // Filtered and searched list
+  // Counts calculated dynamically
+  const activePendingCount = useMemo(
+    () => alerts.filter((a) => a.isActiveNow && !a.alertSent).length,
+    [alerts]
+  );
+  const upcomingPendingCount = useMemo(
+    () => alerts.filter((a) => a.isUpcoming && !a.alertSent).length,
+    [alerts]
+  );
+  const allPendingCount = useMemo(
+    () => alerts.filter((a) => !a.alertSent).length,
+    [alerts]
+  );
+  const sentCount = useMemo(
+    () => alerts.filter((a) => a.alertSent).length,
+    [alerts]
+  );
+  const criticalPendingCount = useMemo(
+    () => alerts.filter((a) => a.severity === "critical" && !a.alertSent).length,
+    [alerts]
+  );
+
+  // Filtered and searched list: respects hideSent and active tab
   const filteredAlerts = useMemo(() => {
     let result = alerts;
 
     if (filterTab === "active") {
       result = result.filter((a) => a.isActiveNow);
+      if (hideSent) {
+        result = result.filter((a) => !a.alertSent);
+      }
     } else if (filterTab === "upcoming") {
       result = result.filter((a) => a.isUpcoming);
+      if (hideSent) {
+        result = result.filter((a) => !a.alertSent);
+      }
+    } else if (filterTab === "all") {
+      if (hideSent) {
+        result = result.filter((a) => !a.alertSent);
+      }
+    } else if (filterTab === "completed") {
+      result = result.filter((a) => a.alertSent);
     }
 
     if (searchTerm.trim()) {
@@ -283,11 +402,7 @@ export function DasaCautionReminderModal({
     }
 
     return result;
-  }, [alerts, filterTab, searchTerm]);
-
-  const activeCount = alerts.filter((a) => a.isActiveNow).length;
-  const upcomingCount = alerts.filter((a) => a.isUpcoming).length;
-  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
+  }, [alerts, filterTab, hideSent, searchTerm]);
 
   if (!isOpen) return null;
 
@@ -303,13 +418,11 @@ export function DasaCautionReminderModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-serif text-lg sm:text-xl font-bold tracking-tight">
-                  {isTa
-                    ? "தசா-புத்தி கண்ட கால எச்சரிக்கை"
-                    : "Dasa-Bhukti Caution Reminders"}
+                  {isTa ? "தசா-புத்தி கண்ட கால எச்சரிக்கை" : "Dasa-Bhukti Caution Reminders"}
                 </h2>
-                {criticalCount > 0 && (
+                {criticalPendingCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white border border-rose-400 animate-pulse">
-                    {criticalCount} {isTa ? "கண்டம்" : "Critical"}
+                    {criticalPendingCount} {isTa ? "கண்டம்" : "Critical"}
                   </span>
                 )}
               </div>
@@ -328,9 +441,7 @@ export function DasaCautionReminderModal({
                 type="button"
                 onClick={() => setMessageLang("ta")}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  messageLang === "ta"
-                    ? "bg-white text-rose-950 shadow-xs"
-                    : "text-rose-100 hover:text-white"
+                  messageLang === "ta" ? "bg-white text-rose-950 shadow-xs" : "text-rose-100 hover:text-white"
                 }`}
               >
                 தமிழ்
@@ -339,9 +450,7 @@ export function DasaCautionReminderModal({
                 type="button"
                 onClick={() => setMessageLang("en")}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  messageLang === "en"
-                    ? "bg-white text-rose-950 shadow-xs"
-                    : "text-rose-100 hover:text-white"
+                  messageLang === "en" ? "bg-white text-rose-950 shadow-xs" : "text-rose-100 hover:text-white"
                 }`}
               >
                 EN
@@ -368,6 +477,50 @@ export function DasaCautionReminderModal({
           </div>
         </div>
 
+        {/* Action Toast Banner */}
+        {actionToast && (
+          <div className="mx-5 sm:mx-6 mt-3 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex items-center justify-between gap-3 text-xs shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold truncate">{actionToast.message}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {actionToast.type === "sent" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUnmarkAlertSent(actionToast.item);
+                    setActionToast(null);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 font-bold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                >
+                  <RotateCcw className="w-3 h-3 text-emerald-700" />
+                  <span>{isTa ? "மீட்டமை (Undo)" : "Undo"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleMarkAlertSent(actionToast.item);
+                    setActionToast(null);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 font-bold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                >
+                  <Check className="w-3 h-3 text-emerald-700" />
+                  <span>{isTa ? "மீண்டும் முடித்ததாகக் குறி" : "Mark Sent Again"}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setActionToast(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Toolbar & Filter Tabs */}
         <div className="px-5 sm:px-6 py-3 bg-[#FFFBF8] border-b border-[#F2E8DF] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Tabs */}
@@ -382,9 +535,13 @@ export function DasaCautionReminderModal({
               }`}
             >
               <Flame className="w-3.5 h-3.5" />
-              <span>{isTa ? "தற்போது நடப்பில் உள்ளவை" : "Active Now"}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${filterTab === "active" ? "bg-rose-800 text-rose-100" : "bg-slate-100 text-slate-700"}`}>
-                {activeCount}
+              <span>{isTa ? "தற்போது நடப்பில்" : "Active Now"}</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  filterTab === "active" ? "bg-rose-800 text-rose-100" : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {activePendingCount}
               </span>
             </button>
 
@@ -399,8 +556,12 @@ export function DasaCautionReminderModal({
             >
               <Clock className="w-3.5 h-3.5" />
               <span>{isTa ? "அடுத்து வரும் 60 நாட்கள்" : "Upcoming (60 Days)"}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${filterTab === "upcoming" ? "bg-amber-800 text-amber-100" : "bg-slate-100 text-slate-700"}`}>
-                {upcomingCount}
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  filterTab === "upcoming" ? "bg-amber-800 text-amber-100" : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {upcomingPendingCount}
               </span>
             </button>
 
@@ -414,23 +575,85 @@ export function DasaCautionReminderModal({
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>{isTa ? "அனைத்தும்" : "All Flagged"}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${filterTab === "all" ? "bg-slate-900 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
-                {alerts.length}
+              <span>{isTa ? "அனைத்து நிலுவை" : "All Pending"}</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  filterTab === "all" ? "bg-slate-900 text-slate-200" : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {allPendingCount}
+              </span>
+            </button>
+
+            {/* Completed / Sent Tab */}
+            <button
+              type="button"
+              onClick={() => setFilterTab("completed")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                filterTab === "completed"
+                  ? "bg-emerald-700 text-white shadow-xs"
+                  : "bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50"
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isTa ? "அனுப்பப்பட்டவை" : "Sent / Completed"}</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  filterTab === "completed" ? "bg-emerald-900 text-emerald-100" : "bg-emerald-100 text-emerald-800"
+                }`}
+              >
+                {sentCount}
               </span>
             </button>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={isTa ? "பெயர் அல்லது தசா தேடுக..." : "Search name or Dasa..."}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white rounded-xl border border-slate-200 focus:outline-hidden focus:ring-1 focus:ring-rose-500 text-slate-800"
-            />
+          {/* Right Toolbar: Hide Sent Toggle & Search Box */}
+          <div className="flex items-center gap-2">
+            {/* Toggle Hide Sent (Active in non-completed views) */}
+            {filterTab !== "completed" && (
+              <button
+                type="button"
+                onClick={() => setHideSent((prev) => !prev)}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap border ${
+                  hideSent
+                    ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
+                    : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs"
+                }`}
+                title={
+                  hideSent
+                    ? isTa
+                      ? "அனுப்பியவை மறைக்கப்பட்டுள்ளன. காட்ட கிளிக் செய்க."
+                      : "Sent items are hidden. Click to show sent items in this list."
+                    : isTa
+                    ? "அனுப்பியவையும் காட்டப்படுகின்றன. மறைக்க கிளிக் செய்க."
+                    : "Showing sent items. Click to hide sent items from this list."
+                }
+              >
+                {hideSent ? (
+                  <>
+                    <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="hidden sm:inline">{isTa ? "அனுப்பியவை மறைவு" : "Sent Hidden"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="hidden sm:inline">{isTa ? "அனைத்தும் காண்" : "Showing Sent"}</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Search Box */}
+            <div className="relative w-full sm:w-56">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={isTa ? "பெயர் / தசா தேடுக..." : "Search name or Dasa..."}
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white rounded-xl border border-slate-200 focus:outline-hidden focus:ring-1 focus:ring-rose-500 text-slate-800"
+              />
+            </div>
           </div>
         </div>
 
@@ -453,9 +676,7 @@ export function DasaCautionReminderModal({
               <h3 className="font-bold text-slate-800 text-sm sm:text-base">
                 {isTa ? "தகவல் பெறுவதில் தாமதம் / பிழை" : "Unable to Load Caution Alerts"}
               </h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                {fetchError}
-              </p>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">{fetchError}</p>
               <button
                 type="button"
                 onClick={() => fetchAlerts(false, true)}
@@ -485,27 +706,87 @@ export function DasaCautionReminderModal({
                     {isTa ? "தேடலை நீக்குக (Clear Search)" : "Clear Search"}
                   </button>
                 </>
-              ) : filterTab === "upcoming" && upcomingCount === 0 ? (
+              ) : filterTab === "completed" && sentCount === 0 ? (
+                <>
+                  <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm sm:text-base">
+                    {isTa ? "இன்னும் எச்சரிக்கை செய்திகள் அனுப்பப்படவில்லை" : "No Alerts Marked as Sent Yet"}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    {isTa
+                      ? "நடப்பு அல்லது வரவிருக்கும் எச்சரிக்கைகளுக்கு செய்தி அனுப்பியவுடன், அல்லது 'அனுப்பியதாகக் குறி' பொத்தானை அழுத்தியதும் அப்பதிவுகள் இங்கே பட்டியலிடப்படும்."
+                      : "Once you dispatch WhatsApp messages or click 'Mark as Sent', completed profiles will be archived here."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("active")}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Flame className="w-3.5 h-3.5" />
+                    <span>{isTa ? "நடப்பு எச்சரிக்கைகள் காண்க" : "View Active Alerts"}</span>
+                  </button>
+                </>
+              ) : filterTab === "active" && activePendingCount === 0 && sentCount > 0 ? (
+                <>
+                  <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="w-7 h-7" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm sm:text-base">
+                    {isTa
+                      ? "அனைத்து நடப்பு கண்ட கால எச்சரிக்கைகளும் அனுப்பப்பட்டுவிட்டன!"
+                      : "All Active Caution Alerts Completed & Sent!"}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    {isTa
+                      ? `தற்போது நடப்பில் உள்ள அனைத்து வாடிக்கையாளர்களுக்கும் எச்சரிக்கை அனுப்பப்பட்டுவிட்டது (${sentCount} ஜாதகங்கள்). நிலுவையில் பதிவுகள் ஏதுமில்லை.`
+                      : `All clients with currently active caution periods have been notified (${sentCount} completed). No pending actions remaining.`}
+                  </p>
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setFilterTab("completed")}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{isTa ? `அனுப்பப்பட்ட ${sentCount} பதிவுகளைக் காண்க` : `View ${sentCount} Sent Profiles`}</span>
+                    </button>
+                    {upcomingPendingCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setFilterTab("upcoming")}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-colors cursor-pointer"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        <span>{isTa ? `அடுத்து வரும் 60 நாட்கள் (${upcomingPendingCount})` : `Upcoming (${upcomingPendingCount})`}</span>
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : filterTab === "upcoming" && upcomingPendingCount === 0 ? (
                 <>
                   <div className="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
                     <Clock className="w-6 h-6" />
                   </div>
                   <h3 className="font-bold text-slate-800 text-sm sm:text-base">
-                    {isTa ? "அடுத்த 60 நாட்களில் தொடங்கும் கண்ட காலங்கள் ஏதுமில்லை" : "No Critical Periods Entering in Next 60 Days"}
+                    {isTa
+                      ? "அடுத்து வரும் 60 நாட்களில் தொடங்கும் கண்ட காலங்கள் ஏதுமில்லை"
+                      : "No Critical Periods Entering in Next 60 Days"}
                   </h3>
                   <p className="text-xs text-slate-500 max-w-md mx-auto">
                     {isTa
-                      ? `தற்போது நடப்பில் உள்ள கண்ட காலங்களைக் காண 'தற்போது நடப்பில் உள்ளவை' (${activeCount}) தாவலைத் தேர்ந்தெடுக்கவும்.`
-                      : `Switch to 'Active Now' (${activeCount}) tab to view clients currently in adverse periods.`}
+                      ? `தற்போது நடப்பில் உள்ள கண்ட காலங்களைக் காண 'நடப்பில் உள்ளவை' (${activePendingCount}) தாவலைத் தேர்ந்தெடுக்கவும்.`
+                      : `Switch to 'Active Now' (${activePendingCount}) tab to view clients currently in adverse periods.`}
                   </p>
-                  {activeCount > 0 && (
+                  {activePendingCount > 0 && (
                     <button
                       type="button"
                       onClick={() => setFilterTab("active")}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors cursor-pointer"
                     >
                       <Flame className="w-3.5 h-3.5" />
-                      <span>{isTa ? `நடப்பில் உள்ளவை காண (${activeCount})` : `View Active Now (${activeCount})`}</span>
+                      <span>{isTa ? `நடப்பில் உள்ளவை காண (${activePendingCount})` : `View Active Now (${activePendingCount})`}</span>
                     </button>
                   )}
                 </>
@@ -537,24 +818,52 @@ export function DasaCautionReminderModal({
             filteredAlerts.map((item) => {
               const waLink = messageLang === "ta" ? item.whatsappLinkTa : item.whatsappLinkEn;
               const isMarkingThis = markingId === item.id;
+              const isUnmarkingThis = unmarkingId === item.id;
               const isCritical = item.severity === "critical";
 
               return (
                 <div
                   key={item.id}
                   className={`rounded-2xl border bg-white p-4 sm:p-5 shadow-xs transition-all hover:shadow-md ${
-                    isCritical
+                    item.alertSent
+                      ? "border-emerald-200 bg-emerald-50/20"
+                      : isCritical
                       ? "border-rose-300 ring-1 ring-rose-200/50"
                       : "border-amber-200 hover:border-amber-300"
                   }`}
                 >
+                  {/* Sent Status Banner if profile is marked as sent */}
+                  {item.alertSent && (
+                    <div className="mb-3 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-900">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>
+                          {isTa
+                            ? `எச்சரிக்கை செய்தி அனுப்பப்பட்டது (${item.alertSentAt ? new Date(item.alertSentAt).toLocaleDateString() : "முடிந்தது"})`
+                            : `Caution alert dispatched (${item.alertSentAt ? new Date(item.alertSentAt).toLocaleDateString() : "Completed"})`}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleUnmarkAlertSent(item)}
+                        disabled={isUnmarkingThis}
+                        className="text-[11px] text-emerald-800 hover:text-rose-700 font-bold underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>{isTa ? "மீண்டும் நிலுவைக்கு மாற்று" : "Restore to Pending"}</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Top Row: Client Info, Period, Severity Badge */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
                       {/* Avatar */}
                       <div
                         className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white font-serif font-bold text-base shrink-0 shadow-xs ${
-                          isCritical
+                          item.alertSent
+                            ? "bg-gradient-to-br from-emerald-600 to-teal-800"
+                            : isCritical
                             ? "bg-gradient-to-br from-rose-700 to-rose-900"
                             : "bg-gradient-to-br from-amber-600 to-amber-800"
                         }`}
@@ -587,9 +896,7 @@ export function DasaCautionReminderModal({
                           {/* Severity Badge */}
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isCritical
-                                ? "bg-rose-600 text-white shadow-2xs"
-                                : "bg-amber-500 text-white"
+                              isCritical ? "bg-rose-600 text-white shadow-2xs" : "bg-amber-500 text-white"
                             }`}
                           >
                             {isCritical
@@ -737,9 +1044,7 @@ export function DasaCautionReminderModal({
                         <span className="text-rose-600 font-bold">⛔</span>
                         <span>
                           {isTa ? "தவிர்க்க வேண்டியவை:" : "Avoid:"}{" "}
-                          <span className="font-normal">
-                            {isTa ? item.avoidNotesTa : item.avoidNotesEn}
-                          </span>
+                          <span className="font-normal">{isTa ? item.avoidNotesTa : item.avoidNotesEn}</span>
                         </span>
                       </li>
                     </ul>
@@ -795,9 +1100,7 @@ export function DasaCautionReminderModal({
                       <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-amber-700" />
                         <span>
-                          {isTa
-                            ? "வாட்ஸ்அப் எண் சேர்க்க / புதுப்பிக்க:"
-                            : "Add or Update WhatsApp Number:"}
+                          {isTa ? "வாட்ஸ்அப் எண் சேர்க்க / புதுப்பிக்க:" : "Add or Update WhatsApp Number:"}
                         </span>
                       </div>
                       <div className="flex flex-wrap sm:flex-nowrap gap-2">
@@ -829,13 +1132,7 @@ export function DasaCautionReminderModal({
                           className="px-3.5 py-1.5 bg-rose-900 hover:bg-rose-950 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-1"
                         >
                           <Check className="w-3 h-3" />
-                          <span>
-                            {isSavingContact
-                              ? "Saving..."
-                              : isTa
-                              ? "சேமி"
-                              : "Save Number"}
-                          </span>
+                          <span>{isSavingContact ? "Saving..." : isTa ? "சேமி" : "Save Number"}</span>
                         </button>
                         <button
                           type="button"
@@ -849,9 +1146,7 @@ export function DasaCautionReminderModal({
                         </button>
                       </div>
                       {contactSaveError && (
-                        <p className="text-[11px] text-rose-600 font-medium">
-                          {contactSaveError}
-                        </p>
+                        <p className="text-[11px] text-rose-600 font-medium">{contactSaveError}</p>
                       )}
                     </div>
                   )}
@@ -862,9 +1157,7 @@ export function DasaCautionReminderModal({
                       <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 border-b border-slate-200 pb-1.5">
                         <span className="flex items-center gap-1.5">
                           <MessageCircle className="w-3.5 h-3.5 text-rose-700" />
-                          <span>
-                            {isTa ? "எச்சரிக்கை செய்தி முன்னோட்டம்:" : "WhatsApp Message Preview:"}
-                          </span>
+                          <span>{isTa ? "எச்சரிக்கை செய்தி முன்னோட்டம்:" : "WhatsApp Message Preview:"}</span>
                         </span>
                         <button
                           type="button"
@@ -934,6 +1227,10 @@ export function DasaCautionReminderModal({
                           href={waLink}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => {
+                            // Automatically mark as sent and hide profile when WhatsApp alert is dispatched
+                            handleMarkAlertSent(item, true);
+                          }}
                           className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
                         >
                           <MessageCircle className="w-3.5 h-3.5" />
@@ -955,39 +1252,41 @@ export function DasaCautionReminderModal({
                         </button>
                       )}
 
-                      {/* Mark as Sent Toggle Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleMarkAlertSent(item)}
-                        disabled={isMarkingThis}
-                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
-                          item.alertSent
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
-                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                        }`}
-                      >
-                        {item.alertSent ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>
-                              {isTa
-                                ? "அனுப்பப்பட்டது ✓"
-                                : "Alerted ✓"}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            <span>
-                              {isMarkingThis
-                                ? "..."
-                                : isTa
-                                ? "அனுப்பியதாகக் குறி"
-                                : "Mark as Sent"}
-                            </span>
-                          </>
-                        )}
-                      </button>
+                      {/* Mark as Sent / Unmark Toggle Button */}
+                      {item.alertSent ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUnmarkAlertSent(item)}
+                          disabled={isUnmarkingThis}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer border bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 group"
+                          title={isTa ? "மீண்டும் நிலுவைப் பட்டியலுக்கு மாற்ற" : "Revert back to pending"}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 group-hover:hidden" />
+                          <RotateCcw
+                            className={`w-3.5 h-3.5 text-rose-600 hidden group-hover:block ${
+                              isUnmarkingThis ? "animate-spin" : ""
+                            }`}
+                          />
+                          <span className="group-hover:hidden">
+                            {isTa ? "அனுப்பப்பட்டது ✓" : "Alerted ✓"}
+                          </span>
+                          <span className="hidden group-hover:inline">
+                            {isTa ? "நிலுவைக்கு மாற்று" : "Restore to Pending"}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkAlertSent(item)}
+                          disabled={isMarkingThis}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer border bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                        >
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>
+                            {isMarkingThis ? "..." : isTa ? "அனுப்பியதாகக் குறி" : "Mark as Sent"}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1001,9 +1300,7 @@ export function DasaCautionReminderModal({
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             <span>
-              {isTa
-                ? "தினசரி தானியங்கி கண்ட கால ஸ்கேனர்"
-                : "Daily Automatic Dasa Caution Scanner"}
+              {isTa ? "தினசரி தானியங்கி கண்ட கால ஸ்கேனர்" : "Daily Automatic Dasa Caution Scanner"}
             </span>
           </div>
 

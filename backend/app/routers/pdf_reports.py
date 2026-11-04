@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Depends, Security, Response, statu
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.schemas.pdf_report import (
+    SinglePageHoroscopePdfRequest,
     HoroscopePdfReportRequest,
     KpPdfReportRequest,
     ShodashvargaPdfReportRequest,
@@ -22,6 +23,7 @@ from app.schemas.pdf_report import (
 )
 from app.schemas.common import BirthInput
 from app.services.pdf_report_engine import (
+    generate_single_page_horoscope_pdf_bytes,
     build_report_data,
     generate_horoscope_pdf_bytes,
     build_kp_report_data,
@@ -192,6 +194,114 @@ async def download_pdf_by_id_endpoint(
         language=language,
     )
     return await generate_pdf_report_endpoint(req, current_user=current_user)
+
+
+@router.post("/single-page-pdf", summary="Generate authentic 1-page traditional Tamil horoscope PDF")
+async def generate_single_page_pdf_endpoint(
+    request: SinglePageHoroscopePdfRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Generates a pixel-perfect 1-page traditional Tamil horoscope PDF conforming to Gokul's Astrological Insights layout."""
+    try:
+        birth_input: Optional[BirthInput] = None
+        native_name = request.native_name or "Native"
+        gender = request.gender or "male"
+        clean_id = "001"
+
+        if request.saved_horoscope_id:
+            clean_id = _validate_uuid(request.saved_horoscope_id)
+            supabase = get_supabase_client()
+            if not supabase:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database service unavailable.",
+                )
+            is_admin = current_user.get("role") == "admin" if current_user else False
+            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
+            if not resp.data:
+                raise HTTPException(status_code=404, detail="Saved horoscope not found.")
+            row = resp.data[0]
+            if not is_admin and current_user and str(row.get("user_id")) != str(current_user.get("id")):
+                raise HTTPException(status_code=403, detail="Unauthorized access to saved horoscope.")
+
+            from datetime import date as d_cls, time as t_cls
+            b_date = row["birth_date"]
+            if isinstance(b_date, str):
+                b_date = d_cls.fromisoformat(b_date)
+            b_time = row["birth_time"]
+            if isinstance(b_time, str):
+                parts = b_time.split(":")
+                b_time = t_cls(int(parts[0]), int(parts[1]), int(float(parts[2])) if len(parts) > 2 else 0)
+
+            birth_input = BirthInput(
+                birth_date=b_date,
+                birth_time=b_time,
+                timezone=row.get("timezone", "Asia/Kolkata"),
+                latitude=float(row["latitude"]),
+                longitude=float(row["longitude"]),
+            )
+            if request.native_name == "Native" and row.get("name"):
+                native_name = row.get("name")
+            gender = row.get("gender") or gender
+
+        elif request.birth_input:
+            birth_input = request.birth_input
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Must provide either birth_input or saved_horoscope_id.",
+            )
+
+        pdf_bytes = generate_single_page_horoscope_pdf_bytes(
+            birth_input=birth_input,
+            native_name=native_name,
+            father_name=request.father_name,
+            mother_name=request.mother_name,
+            gender=gender,
+            birth_place=request.birth_place,
+            native_id=request.native_id or f"#{clean_id[:3]}",
+            ayanamsa_id=request.ayanamsa,
+            house_system_id=request.house_system,
+            language=request.language,
+            font_family=request.font_family,
+        )
+
+        safe_name = native_name.replace(" ", "_").strip() or "Horoscope"
+        filename = f"Single_Page_Horoscope_{safe_name}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error generating single page PDF horoscope report: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Single-page PDF generation failed: {str(exc)}",
+        )
+
+
+@router.get("/single-page-pdf/{horoscope_id}", summary="Download 1-page traditional Tamil horoscope PDF by saved ID")
+async def download_single_page_pdf_by_id_endpoint(
+    horoscope_id: str,
+    language: str = "ta",
+    font_family: str = "auto",
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Download 1-page PDF report for a saved horoscope ID."""
+    req = SinglePageHoroscopePdfRequest(
+        saved_horoscope_id=horoscope_id,
+        language=language,
+        font_family=font_family,
+    )
+    return await generate_single_page_pdf_endpoint(req, current_user=current_user)
+
 
 
 # -----------------------------------------------------------------------------

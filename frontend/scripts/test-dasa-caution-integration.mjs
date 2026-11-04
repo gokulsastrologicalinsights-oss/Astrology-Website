@@ -10,6 +10,8 @@
  * 5. Clean, emoji-safe WhatsApp link generation in Tamil and English.
  * 6. Alert tracking mechanism (deduplication key format and persistence contracts).
  * 7. Active vs Upcoming status segregation.
+ * 8. Skipping & hiding profiles once marked as sent / work completed.
+ * 9. Unmarking sent alert status and restoring to pending queue.
  */
 
 import assert from "node:assert";
@@ -170,6 +172,62 @@ runTest("Severity Classification (Critical vs Moderate)", () => {
   assert.strictEqual(isCriticalA(true, 40), true);
   assert.strictEqual(isCriticalA(false, 60), true);
   assert.strictEqual(isCriticalA(false, 50), false);
+});
+
+runTest("Skipping and hiding sent profiles when marked as completed (hideSent contract)", () => {
+  const mockAlerts = [
+    { id: "1", fullName: "User A", isActiveNow: true, isUpcoming: false, alertSent: false },
+    { id: "2", fullName: "User B", isActiveNow: true, isUpcoming: false, alertSent: true },
+    { id: "3", fullName: "User C", isActiveNow: false, isUpcoming: true, alertSent: false },
+    { id: "4", fullName: "User D", isActiveNow: false, isUpcoming: true, alertSent: true },
+  ];
+
+  // When hideSent is true (default user expectation)
+  const hideSent = true;
+  const activeFiltered = mockAlerts.filter((a) => a.isActiveNow && (!hideSent || !a.alertSent));
+  assert.strictEqual(activeFiltered.length, 1);
+  assert.strictEqual(activeFiltered[0].id, "1");
+
+  const upcomingFiltered = mockAlerts.filter((a) => a.isUpcoming && (!hideSent || !a.alertSent));
+  assert.strictEqual(upcomingFiltered.length, 1);
+  assert.strictEqual(upcomingFiltered[0].id, "3");
+
+  // All pending
+  const allPendingFiltered = mockAlerts.filter((a) => !a.alertSent);
+  assert.strictEqual(allPendingFiltered.length, 2);
+
+  // Sent / completed archive
+  const sentFiltered = mockAlerts.filter((a) => a.alertSent);
+  assert.strictEqual(sentFiltered.length, 2);
+  assert.deepStrictEqual(sentFiltered.map((a) => a.id), ["2", "4"]);
+});
+
+runTest("Pending and sent dynamic count synchronization", () => {
+  let alerts = [
+    { id: "1", fullName: "Client 1", isActiveNow: true, alertSent: false },
+    { id: "2", fullName: "Client 2", isActiveNow: true, alertSent: false },
+  ];
+
+  const getActivePending = (list) => list.filter((a) => a.isActiveNow && !a.alertSent).length;
+  const getSentCount = (list) => list.filter((a) => a.alertSent).length;
+
+  assert.strictEqual(getActivePending(alerts), 2);
+  assert.strictEqual(getSentCount(alerts), 0);
+
+  // Mark Client 1 as sent
+  alerts = alerts.map((a) => (a.id === "1" ? { ...a, alertSent: true, alertSentAt: "2026-11-04T12:00:00Z" } : a));
+  assert.strictEqual(getActivePending(alerts), 1);
+  assert.strictEqual(getSentCount(alerts), 1);
+
+  // Mark Client 2 as sent -> badge drops to 0
+  alerts = alerts.map((a) => (a.id === "2" ? { ...a, alertSent: true, alertSentAt: "2026-11-04T12:05:00Z" } : a));
+  assert.strictEqual(getActivePending(alerts), 0);
+  assert.strictEqual(getSentCount(alerts), 2);
+
+  // Unmark Client 1 -> restores back to pending
+  alerts = alerts.map((a) => (a.id === "1" ? { ...a, alertSent: false, alertSentAt: null } : a));
+  assert.strictEqual(getActivePending(alerts), 1);
+  assert.strictEqual(getSentCount(alerts), 1);
 });
 
 console.log(`\nResults: ${passed} passed, ${failed} failed out of ${passed + failed} tests.`);

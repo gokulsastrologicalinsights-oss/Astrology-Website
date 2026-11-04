@@ -631,6 +631,7 @@ export interface HoraryKpRequest {
   location_name?: string;
   ayanamsa?: number;
   house_system?: number;
+  font_family?: string;
 }
 
 export interface HoraryDivisionDetail {
@@ -3168,6 +3169,7 @@ export interface VargaD1D9Request {
   longitude?: number;
   ayanamsa?: number;
   house_system?: number;
+  font_family?: string;
 }
 
 // ==========================================
@@ -3235,6 +3237,7 @@ export interface ShodashvargaRequest {
   longitude?: number;
   ayanamsa?: number;
   house_system?: number;
+  font_family?: string;
 }
 
 // ==========================================
@@ -6746,3 +6749,164 @@ export interface KnRaoAdvancedResearchResponse {
   upapada_lagna: string;
   darapada: string;
 }
+
+
+// ===========================================================================
+// Kuladeivam (குலதெய்வம்) Finding & Ancestral Guidance Types
+// ===========================================================================
+
+export interface KuladeivamRequest {
+  birth_date: string;
+  birth_time: string;
+  timezone: string;
+  latitude: number;
+  longitude: number;
+  gender?: string;
+  ayanamsa?: number;
+  house_system?: number;
+  ancestral_district?: string;
+  community_tradition?: string;
+}
+
+export interface KuladeivamPrasannaRequest {
+  query_datetime: string;
+  latitude: number;
+  longitude: number;
+  timezone?: string;
+  ayanamsa_id?: number;
+  querent_seed?: number;
+  ancestral_district?: string;
+}
+
+export interface DeityIndicator {
+  deity_name_ta: string;
+  deity_name_en: string;
+  deity_category_ta: string;
+  deity_category_en: string;
+  gender_ta: string;
+  gender_en: string;
+  governing_planet_ta: string;
+  governing_planet_en: string;
+  governing_house_ta: string;
+  governing_house_en: string;
+  sign_name_ta: string;
+  sign_name_en: string;
+  sign_tattva_ta: string;
+  sign_tattva_en: string;
+  prominence_score: number;
+  traditional_forms_ta: string[];
+  traditional_forms_en: string[];
+  description_ta: string;
+  description_en: string;
+}
+
+export interface TempleLandscape {
+  primary_direction_ta: string;
+  primary_direction_en: string;
+  alternate_direction_ta?: string;
+  alternate_direction_en?: string;
+  landscape_nature_ta: string;
+  landscape_nature_en: string;
+  temple_setting_ta: string;
+  temple_setting_en: string;
+  associated_sacred_tree_ta: string;
+  associated_sacred_tree_en: string;
+  distance_indication_ta: string;
+  distance_indication_en: string;
+}
+
+export interface KuladeivamDoshaAnalysis {
+  status_ta: string;
+  status_en: string;
+  is_afflicted: boolean;
+  affliction_factors_ta: string[];
+  affliction_factors_en: string[];
+  explanation_ta: string;
+  explanation_en: string;
+  traditional_symptoms_ta: string[];
+  traditional_symptoms_en: string[];
+  mitigation_steps_ta: string[];
+  mitigation_steps_en: string[];
+}
+
+export interface UniversalRefugeTemple {
+  temple_name_ta: string;
+  temple_name_en: string;
+  location_ta: string;
+  location_en: string;
+  spiritual_significance_ta: string;
+  spiritual_significance_en: string;
+}
+
+export interface UnknownDeityDiscoveryProtocol {
+  title_ta: string;
+  title_en: string;
+  overview_ta: string;
+  overview_en: string;
+  steps_ta: string[];
+  steps_en: string[];
+  deepam_procedure_ta: string;
+  deepam_procedure_en: string;
+  pongal_offering_ta: string;
+  pongal_offering_en: string;
+  coin_knot_ritual_ta: string;
+  coin_knot_ritual_en: string;
+  universal_refuge_temples: UniversalRefugeTemple[];
+}
+
+export interface HouseAnalysisDetails {
+  house_num: number;
+  sign_name_ta: string;
+  sign_name_en: string;
+  sign_lord_ta: string;
+  sign_lord_en: string;
+  sign_tattva_ta: string;
+  sign_tattva_en: string;
+  sign_gender_ta: string;
+  sign_gender_en: string;
+  occupants_ta: string[];
+  occupants_en: string[];
+  aspecting_grahas_ta: string[];
+  aspecting_grahas_en: string[];
+  navamsha_sign_ta: string;
+  navamsha_sign_en: string;
+  navamsha_lord_ta: string;
+  navamsha_lord_en: string;
+}
+
+export interface KuladeivamResponse {
+  analysis_mode: "horoscope" | "prasanna";
+  native_summary: Record<string, any>;
+  fifth_house: HouseAnalysisDetails;
+  ninth_house: HouseAnalysisDetails;
+  primary_deity: DeityIndicator;
+  secondary_deity?: DeityIndicator;
+  temple_landscape: TempleLandscape;
+  dosha_analysis: KuladeivamDoshaAnalysis;
+  discovery_protocol: UnknownDeityDiscoveryProtocol;
+  lineage_insights_ta: string[];
+  lineage_insights_en: string[];
+  classical_references: string[];
+}
+
+export interface SinglePageHoroscopePdfRequest {
+  birth_input?: {
+    birth_date: string;
+    birth_time: string;
+    timezone: string;
+    latitude: number;
+    longitude: number;
+  };
+  saved_horoscope_id?: string;
+  native_name?: string;
+  father_name?: string;
+  mother_name?: string;
+  gender?: string;
+  birth_place?: string;
+  native_id?: string;
+  language?: string;
+  ayanamsa?: number;
+  house_system?: number;
+  font_family?: string;
+}
+

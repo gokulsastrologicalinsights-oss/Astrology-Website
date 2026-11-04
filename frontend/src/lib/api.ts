@@ -259,6 +259,7 @@ import {
   GemstoneRudrakshaPlaybookPdfRequest,
 
   MarriageCompatibilityPdfReportRequest,
+  SinglePageHoroscopePdfRequest,
 
   SavedHoroscopeWritingListResponse,
 
@@ -4812,6 +4813,59 @@ export async function downloadMarriageCompatibilityPdf(
 
  */
 
+/**
+ * 23c. Download 1-Page Traditional Tamil Horoscope PDF (POST /api/v1/reports/horoscope/single-page-pdf)
+ */
+export async function downloadSinglePageHoroscopePdf(
+  req: SinglePageHoroscopePdfRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/horoscope/single-page-pdf`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate Single-Page Horoscope PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * 23d. Download Saved 1-Page Traditional Tamil Horoscope PDF (GET /api/v1/reports/horoscope/single-page-pdf/{id})
+ */
+export async function downloadSavedSinglePageHoroscopePdf(
+  horoscopeId: string,
+  language = "ta",
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/reports/horoscope/single-page-pdf/${encodeURIComponent(horoscopeId)}?language=${encodeURIComponent(language)}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...authHeaders,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to download Single-Page Horoscope PDF: ${response.status} ${errorText}`);
+  }
+
+  return response.blob();
+}
+
 export async function predictSpouseEvent(
 
   req: SpousePredictionRequest,
@@ -5188,5 +5242,41 @@ export async function calculateConsolidatedKakshya(
   return request<ConsolidatedKakshyaResponse>("/api/v1/vedic/consolidated-kakshya", {
     method: "POST",
     body: JSON.stringify(req),
+  });
+}
+
+
+// ===========================================================================
+// Kuladeivam (Family Deity) Finding API
+// ===========================================================================
+
+import type {
+  KuladeivamRequest,
+  KuladeivamPrasannaRequest,
+  KuladeivamResponse,
+  UniversalRefugeTemple,
+} from "./types";
+
+export async function findKuladeivamFromHoroscope(
+  req: KuladeivamRequest
+): Promise<KuladeivamResponse> {
+  return request<KuladeivamResponse>("/api/v1/kuladeivam/find", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function findKuladeivamFromPrasanna(
+  req: KuladeivamPrasannaRequest
+): Promise<KuladeivamResponse> {
+  return request<KuladeivamResponse>("/api/v1/kuladeivam/prasanna", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export async function getKuladeivamUniversalTemples(): Promise<UniversalRefugeTemple[]> {
+  return request<UniversalRefugeTemple[]>("/api/v1/kuladeivam/universal-temples", {
+    method: "GET",
   });
 }
