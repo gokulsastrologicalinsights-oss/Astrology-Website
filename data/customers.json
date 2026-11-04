@@ -213,12 +213,12 @@
     "full_name": "Selva Kumar S",
     "birth_date": "1994-11-04",
     "country_code": "+91",
-    "phone_number": null,
-    "normalized_phone": null,
-    "whatsapp_number": null,
+    "phone_number": "7330730244",
+    "normalized_phone": "+917330730244",
+    "whatsapp_number": "917330730244",
     "created_at": "2026-10-01T00:00:17Z",
-    "updated_at": "2026-10-01T00:00:17Z",
-    "is_legacy_without_phone": true
+    "updated_at": "2026-11-04T06:12:08.240Z",
+    "is_legacy_without_phone": false
   },
   {
     "id": "b0a1e59d-43b6-45f9-abb2-b263c6641f51",
@@ -3177,12 +3177,12 @@
     "full_name": "HARIHARAN",
     "birth_date": "2000-11-04",
     "country_code": "+91",
-    "phone_number": null,
-    "normalized_phone": null,
-    "whatsapp_number": null,
+    "phone_number": "9361494991",
+    "normalized_phone": "+919361494991",
+    "whatsapp_number": "919361494991",
     "created_at": "2026-10-01T00:04:05Z",
-    "updated_at": "2026-10-01T00:04:05Z",
-    "is_legacy_without_phone": true
+    "updated_at": "2026-11-04T06:11:26.537Z",
+    "is_legacy_without_phone": false
   },
   {
     "id": "9302fc90-cfd1-4e0a-aea9-2930aab1c2b1",
