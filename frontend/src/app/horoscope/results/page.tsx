@@ -357,13 +357,17 @@ function HoroscopeResultsContent() {
           latitude: Number(lat),
           longitude: Number(lon),
         },
-        saved_horoscope_id: idParam || undefined,
-        native_name: clientInputs?.fullName || "Native",
+        saved_horoscope_id: idParam || (result as any)?.savedId || undefined,
+        native_name: clientInputs?.fullName || (result as any)?.clientInputs?.fullName || "Native",
         father_name: (clientInputs as any)?.fatherName || "-",
         mother_name: (clientInputs as any)?.motherName || "-",
         gender: clientInputs?.gender || "male",
         birth_place: (clientInputs as any)?.birthPlace || clientInputs?.locationName || "Chennai, Tamil Nadu",
-        native_id: idParam ? `#${idParam.slice(0, 4)}` : "#001",
+        native_id: (result as any)?.displayNumber
+          ? `#${formatSerialNumber((result as any).displayNumber)}`
+          : (horoscope as any)?.display_number
+          ? `#${formatSerialNumber((horoscope as any).display_number)}`
+          : undefined,
         language: "ta",
         ayanamsa: clientInputs?.ayanamsaId ?? 0,
         house_system: clientInputs?.houseSystemId ?? 0,

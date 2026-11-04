@@ -125,7 +125,14 @@ async def generate_pdf_report_endpoint(
                 latitude=float(horoscope_row["latitude"]),
                 longitude=float(horoscope_row["longitude"]),
             )
-            native_name = request.native_name if request.native_name != "Native" else horoscope_row.get("name", "Native")
+            disp_num = horoscope_row.get("display_number")
+            if disp_num is not None:
+                formatted_num = f"{disp_num:02d}" if isinstance(disp_num, int) and disp_num < 10 else str(disp_num)
+                saved_report_id = f"#{formatted_num}"
+            else:
+                saved_report_id = clean_id[:8].upper()
+
+            native_name = request.native_name if request.native_name != "Native" else (horoscope_row.get("person_name") or horoscope_row.get("name", "Native"))
 
             report_data = build_report_data(
                 birth_input=birth_input,
@@ -134,7 +141,7 @@ async def generate_pdf_report_endpoint(
                 ayanamsa_id=request.ayanamsa or horoscope_row.get("ayanamsa_id", 0),
                 house_system_id=request.house_system or horoscope_row.get("house_system_id", 0),
                 language=request.language,
-                report_id=clean_id[:8].upper(),
+                report_id=saved_report_id,
                 is_verified=True,
             )
 
@@ -240,17 +247,40 @@ async def generate_single_page_pdf_endpoint(
                 latitude=float(row["latitude"]),
                 longitude=float(row["longitude"]),
             )
-            if request.native_name == "Native" and row.get("name"):
-                native_name = row.get("name")
+            if request.native_name in ("Native", "", None):
+                native_name = row.get("person_name") or row.get("name") or "Native"
+            else:
+                native_name = request.native_name
+
             gender = row.get("gender") or gender
+            birth_place = request.birth_place or row.get("birthplace") or "Chennai, Tamil Nadu"
+
+            # Resolve saved horoscope display number
+            disp_num = row.get("display_number")
+            if disp_num is not None:
+                formatted_num = f"{disp_num:02d}" if isinstance(disp_num, int) and disp_num < 10 else str(disp_num)
+                saved_native_id = f"#{formatted_num}"
+            else:
+                saved_native_id = f"#{clean_id[:4]}"
 
         elif request.birth_input:
             birth_input = request.birth_input
+            saved_native_id = "#001"
+            birth_place = request.birth_place or "Chennai, Tamil Nadu"
         else:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Must provide either birth_input or saved_horoscope_id.",
             )
+
+        # Determine native_id: prioritize real display_number / saved_native_id over raw uuid slices or placeholders
+        if request.saved_horoscope_id:
+            if request.native_id and request.native_id not in ("#001", "") and not request.native_id.startswith(f"#{clean_id[:3]}"):
+                final_native_id = request.native_id
+            else:
+                final_native_id = saved_native_id
+        else:
+            final_native_id = request.native_id or saved_native_id
 
         pdf_bytes = generate_single_page_horoscope_pdf_bytes(
             birth_input=birth_input,
@@ -258,8 +288,8 @@ async def generate_single_page_pdf_endpoint(
             father_name=request.father_name,
             mother_name=request.mother_name,
             gender=gender,
-            birth_place=request.birth_place,
-            native_id=request.native_id or f"#{clean_id[:3]}",
+            birth_place=birth_place,
+            native_id=final_native_id,
             ayanamsa_id=request.ayanamsa,
             house_system_id=request.house_system,
             language=request.language,

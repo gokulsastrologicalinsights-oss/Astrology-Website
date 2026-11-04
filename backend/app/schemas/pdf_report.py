@@ -68,8 +68,8 @@ class SinglePageHoroscopePdfRequest(BaseModel):
         description="Birth place name (e.g. Chennai, Tamil Nadu)."
     )
     native_id: Optional[str] = Field(
-        "#001",
-        description="Native code or record index (e.g. #001)."
+        None,
+        description="Native code or record index (e.g. #001 or #708). If omitted and saved_horoscope_id is present, uses the saved horoscope's display_number."
     )
     language: str = Field(
         "ta",

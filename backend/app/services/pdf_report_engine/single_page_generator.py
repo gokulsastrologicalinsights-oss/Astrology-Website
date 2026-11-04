@@ -514,7 +514,10 @@ class SinglePageHoroscopePdfGenerator:
         self.mother_name = mother_name or "-"
         self.gender = gender or "male"
         self.birth_place = birth_place or "Chennai, Tamil Nadu"
-        self.native_id = native_id or ""
+        clean_native_id = (native_id or "").strip()
+        if clean_native_id and not clean_native_id.startswith("#"):
+            clean_native_id = f"#{clean_native_id}"
+        self.native_id = clean_native_id or "#001"
         self.ayanamsa_id = ayanamsa_id
         self.house_system_id = house_system_id
         self.language = language
@@ -1100,21 +1103,33 @@ class SinglePageHoroscopePdfGenerator:
 """
 
     def generate_playwright(self) -> bytes:
-        """Renders single-page PDF via Playwright Chromium for flawless Indic shaping."""
-        from playwright.sync_api import sync_playwright
+        """Renders single-page PDF via Playwright Chromium for flawless Indic shaping.
+
+        Runs inside a dedicated thread pool to guarantee safety when called from within
+        FastAPI / Uvicorn asyncio event loops.
+        """
+        import concurrent.futures
 
         html_content = self.generate_html()
-        with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page()
-            page.set_content(html_content)
-            pdf_bytes = page.pdf(
-                format="A4",
-                print_background=True,
-                margin={"top": "0mm", "bottom": "0mm", "left": "0mm", "right": "0mm"},
-            )
-            browser.close()
-            return pdf_bytes
+
+        def _render_worker() -> bytes:
+            from playwright.sync_api import sync_playwright
+
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                page = browser.new_page()
+                page.set_content(html_content)
+                pdf_bytes = page.pdf(
+                    format="A4",
+                    print_background=True,
+                    margin={"top": "0mm", "bottom": "0mm", "left": "0mm", "right": "0mm"},
+                )
+                browser.close()
+                return pdf_bytes
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_render_worker)
+            return future.result(timeout=45.0)
 
     def _calculate_all(self) -> Dict[str, Any]:
         """Calculates all horoscope attributes, positions, Mandi, and Dasa trees."""
