@@ -8,8 +8,8 @@ import {
 } from "@/lib/permissions";
 
 export async function GET(_request: NextRequest) {
+  const supabase = await createClient();
   try {
-    const supabase = await createClient();
     const {
       data: { user },
       error: userError,
