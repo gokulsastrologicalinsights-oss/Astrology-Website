@@ -31,6 +31,10 @@ import {
   Eye,
   Award,
   RefreshCw,
+  Briefcase,
+  Users,
+  Activity,
+  ShieldAlert,
 } from "lucide-react";
 
 const MAJOR_TN_CITIES = [
@@ -161,6 +165,28 @@ export default function InstantRevelationPage() {
       lines.push(`  EN: "${m.script_en}"`);
       lines.push(`  TA: "${m.script_ta}"`);
     });
+
+    lines.push(`\n--- THE 5 SHOCK AMPLIFIERS ---`);
+    lines.push(`[1. CAREER CALLING]:`);
+    lines.push(`  EN: "${data.career_calling_en}"`);
+    lines.push(`  TA: "${data.career_calling_ta}"`);
+    lines.push(`[2. BIRTH ORDER & SIBLINGS]:`);
+    lines.push(`  EN: "${data.family_birth_order_en}"`);
+    lines.push(`  TA: "${data.family_birth_order_ta}"`);
+    lines.push(`[3. SHANI & GURU GOCHARA]:`);
+    lines.push(`  Phase: ${data.gochara_saturn_phase}`);
+    lines.push(`  Shani EN: "${data.gochara_saturn_verdict_en}"`);
+    lines.push(`  Shani TA: "${data.gochara_saturn_verdict_ta}"`);
+    lines.push(`  Guru EN: "${data.gochara_jupiter_verdict_en}"`);
+    lines.push(`  Guru TA: "${data.gochara_jupiter_verdict_ta}"`);
+    if (data.dasa_chidra_active) {
+      lines.push(`[4. DASA CHIDRA ALERT (UNTIL ${data.dasa_chidra_end_date})]:`);
+      lines.push(`  EN: "${data.dasa_chidra_warning_en}"`);
+      lines.push(`  TA: "${data.dasa_chidra_warning_ta}"`);
+    }
+    lines.push(`[5. MEDICAL VULNERABILITY]:`);
+    lines.push(`  EN: "${data.medical_organ_vulnerability_en}"`);
+    lines.push(`  TA: "${data.medical_organ_vulnerability_ta}"`);
 
     lines.push(`\n--- 4. EXACT FUTURE WINDOWS ---`);
     data.future_windows.forEach((w) => {
@@ -655,6 +681,209 @@ export default function InstantRevelationPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* THE 5 SHOCK AMPLIFIERS (5 துல்லிய அதிர்ச்சி உண்மைகள்) */}
+            <div className="bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#1E293B] text-white rounded-2xl shadow-xl border-2 border-amber-400/60 p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-700 gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-400/20 rounded-xl border border-amber-400/30">
+                    <Zap className="w-6 h-6 text-amber-300 fill-amber-300 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-amber-300 uppercase tracking-widest block">
+                      The 5 Shock Amplifiers • துல்லிய உச்சக்கட்ட உண்மைகள்
+                    </span>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <span>எந்த வாடிக்கையாளரும் மறுக்க முடியாத 5 ரகசியங்கள்</span>
+                    </h3>
+                  </div>
+                </div>
+                <span className="text-xs bg-amber-400/10 text-amber-200 border border-amber-400/40 px-3 py-1 rounded-full font-mono self-start sm:self-auto">
+                  100% Cold-Reading Verification
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* 1. Career Calling */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-5 hover:border-amber-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                        1. தொழில் காரகம் & துறை (Career Calling)
+                      </span>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {data.career_fields.map((f, i) => (
+                        <span key={i} className="text-[10px] font-semibold bg-amber-400/20 text-amber-200 px-2 py-0.5 rounded">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                      "{data.career_calling_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                      "{data.career_calling_en}"
+                    </p>
+                  )}
+                </div>
+
+                {/* 2. Birth Order & Sibling Secret */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-5 hover:border-amber-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-rose-400" />
+                      <span className="text-xs font-bold text-rose-300 uppercase tracking-wider">
+                        2. பிறப்பு வரிசை & குடும்ப ரகசியம் (Birth Order)
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30">
+                      மூத்தவர் / உடன்பிறப்பு கண்டம்
+                    </span>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                      "{data.family_birth_order_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                      "{data.family_birth_order_en}"
+                    </p>
+                  )}
+                </div>
+
+                {/* 3. Gochara Sledgehammer: Shani & Guru */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-5 hover:border-amber-400/50 transition lg:col-span-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-purple-400" />
+                      <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">
+                        3. சனி மற்றும் குரு பெயர்ச்சி நேரடி தாக்கம் (Gochara Sledgehammer)
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-950 border border-purple-400 text-purple-200 self-start sm:self-auto">
+                      {data.gochara_saturn_phase}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div className="bg-slate-900/70 p-3 rounded-lg border border-slate-700 space-y-1.5">
+                      <span className="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                        <Flame className="w-3.5 h-3.5 text-amber-400" />
+                        சனிப் பெயர்ச்சி நேரடி வாக்கு (Saturn Verdict):
+                      </span>
+                      <p className="font-serif text-gray-200 leading-relaxed">
+                        {scriptLanguage === "en" ? data.gochara_saturn_verdict_en : data.gochara_saturn_verdict_ta}
+                      </p>
+                      {scriptLanguage === "both" && (
+                        <p className="font-serif text-gray-400 text-xs italic">
+                          {data.gochara_saturn_verdict_en}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="bg-slate-900/70 p-3 rounded-lg border border-slate-700 space-y-1.5">
+                      <span className="font-bold text-emerald-300 text-xs flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        குருப் பார்வை மற்றும் அருள் (Jupiter Shield):
+                      </span>
+                      <p className="font-serif text-gray-200 leading-relaxed">
+                        {scriptLanguage === "en" ? data.gochara_jupiter_verdict_en : data.gochara_jupiter_verdict_ta}
+                      </p>
+                      {scriptLanguage === "both" && (
+                        <p className="font-serif text-gray-400 text-xs italic">
+                          {data.gochara_jupiter_verdict_en}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Dasa Chidra Alert */}
+                <div
+                  className={`border rounded-xl p-5 transition ${
+                    data.dasa_chidra_active
+                      ? "bg-rose-950/60 border-rose-500 shadow-lg shadow-rose-950/50 ring-2 ring-rose-500/50"
+                      : "bg-slate-800/80 border-slate-700/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className={`w-4 h-4 ${data.dasa_chidra_active ? "text-rose-400 animate-bounce" : "text-emerald-400"}`} />
+                      <span className={`text-xs font-bold uppercase tracking-wider ${data.dasa_chidra_active ? "text-rose-300" : "text-emerald-300"}`}>
+                        4. தசா சந்தி எச்சரிக்கை (Dasa Chidra Alert)
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        data.dasa_chidra_active
+                          ? "bg-rose-500 text-white animate-pulse"
+                          : "bg-emerald-500/20 text-emerald-300"
+                      }`}
+                    >
+                      {data.dasa_chidra_active ? `தீவிர முடக்கம் (${data.dasa_chidra_end_date} வரை)` : "சீரான தசா காலம் (Normal)"}
+                    </span>
+                  </div>
+
+                  {data.dasa_chidra_active ? (
+                    <div className="space-y-2">
+                      {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                        <p className="text-sm font-serif text-rose-100 leading-relaxed bg-black/40 p-3 rounded-lg border border-rose-500/40">
+                          "{data.dasa_chidra_warning_ta}"
+                        </p>
+                      )}
+                      {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                        <p className="text-xs font-serif text-rose-200 leading-relaxed bg-black/40 p-3 rounded-lg border border-rose-500/40">
+                          "{data.dasa_chidra_warning_en}"
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 leading-relaxed bg-slate-900/60 p-3 rounded-lg">
+                      மகாதிசை சுமுகமாக இயங்குகிறது; தசா சந்தி தொடர்பான திடீர் முடக்கங்கள் தற்சமயம் இல்லை.
+                    </p>
+                  )}
+                </div>
+
+                {/* 5. Medical Vulnerability */}
+                <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-5 hover:border-amber-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                        5. உடல்நலக் கோளாறு & பலவீன உறுப்பு (Medical Alert)
+                      </span>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {data.vulnerable_organs.map((org, idx) => (
+                        <span key={idx} className="text-[10px] font-medium bg-red-950/80 text-rose-300 border border-rose-800/50 px-2 py-0.5 rounded">
+                          {org}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                      "{data.medical_organ_vulnerability_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                      "{data.medical_organ_vulnerability_en}"
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

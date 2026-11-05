@@ -266,6 +266,35 @@ class InstantRevelationEngine:
         )
 
         # ------------------------------------------------------------------
+        # THE 5 SHOCK AMPLIFIERS
+        # ------------------------------------------------------------------
+        career_calling_en, career_calling_ta, career_fields = cls._synthesize_career_calling(planets_dict)
+        birth_order_en, birth_order_ta = cls._synthesize_birth_order(planets_dict, ascendant_sign)
+
+        transit_saturn = next((tp for tp in jamakkol_res.get("transit_planets", []) if "Saturn" in tp.get("name_en", "")), None)
+        transit_saturn_sign = transit_saturn["sign_index"] if transit_saturn else 11
+        transit_jupiter = next((tp for tp in jamakkol_res.get("transit_planets", []) if "Jupiter" in tp.get("name_en", "")), None)
+        transit_jupiter_sign = transit_jupiter["sign_index"] if transit_jupiter else 2
+
+        sat_phase, sat_en, sat_ta, jup_en, jup_ta = cls._synthesize_gochara_transits(
+            natal_moon_sign=natal_moon_sign,
+            transit_saturn_sign=transit_saturn_sign,
+            transit_jupiter_sign=transit_jupiter_sign,
+        )
+
+        dasa_chidra_active, chidra_en, chidra_ta, chidra_end = cls._evaluate_dasa_chidra(
+            dasa_tree=dasa_res.dasa_tree,
+            arrival_date=arrival_dt.date(),
+            current_md=current_md,
+            current_md_ta=current_md_ta,
+        )
+
+        med_en, med_ta, vulnerable_organs = cls._synthesize_medical_vulnerability(
+            ascendant_sign=ascendant_sign,
+            planets_dict=planets_dict,
+        )
+
+        # ------------------------------------------------------------------
         # FAST 10-SECOND GLANCE TELEPROMPTER
         # ------------------------------------------------------------------
         door_en_clean = bnn_res.birth_environment.door_facing_en.replace("Facing ", "")
@@ -274,16 +303,16 @@ class InstantRevelationEngine:
 
         glance_en = [
             f"Arrival Cause: {primary_en}",
-            f"Active Running Cycle: {current_dasa_str_en}",
-            f"Vastu Check: Main door faces {door_en_clean}, road runs {bnn_res.birth_environment.road_direction_en}.",
+            f"Career Sector: {', '.join(career_fields[:2])}",
+            f"Saturn Transit: {sat_phase}",
             f"Past Verification: Major life event around age {first_hit_period}.",
             f"Next Urgent Action: {remedy_data['temple_en']} - {remedy_data['action_en']}",
         ]
 
         glance_ta = [
             f"வருகை நோக்கம்: {primary_ta}",
-            f"நடப்பு தசா காலம்: {current_dasa_str_ta}",
-            f"வீட்டு வாஸ்து: தலைவாசல் {door_ta_clean} திசை, பாதை {bnn_res.birth_environment.road_direction_ta}.",
+            f"தொழில் துறை: {', '.join(career_fields[:2])}",
+            f"சனிப் பெயர்ச்சி: {sat_phase}",
             f"கடந்த கால உண்மை: சுமார் {first_hit_period} வயதில் பெரிய திருப்புமுனை / மாற்றம்.",
             f"உடனடி பரிகாரம்: {remedy_data['temple_ta']} - {remedy_data['action_ta']}",
         ]
@@ -311,6 +340,23 @@ class InstantRevelationEngine:
             gem_or_rudraksha_ta=remedy_data["gem_ta"],
             quick_glance_teleprompter_en=glance_en,
             quick_glance_teleprompter_ta=glance_ta,
+            career_calling_en=career_calling_en,
+            career_calling_ta=career_calling_ta,
+            career_fields=career_fields,
+            family_birth_order_en=birth_order_en,
+            family_birth_order_ta=birth_order_ta,
+            gochara_saturn_phase=sat_phase,
+            gochara_saturn_verdict_en=sat_en,
+            gochara_saturn_verdict_ta=sat_ta,
+            gochara_jupiter_verdict_en=jup_en,
+            gochara_jupiter_verdict_ta=jup_ta,
+            dasa_chidra_active=dasa_chidra_active,
+            dasa_chidra_warning_en=chidra_en,
+            dasa_chidra_warning_ta=chidra_ta,
+            dasa_chidra_end_date=chidra_end,
+            medical_organ_vulnerability_en=med_en,
+            medical_organ_vulnerability_ta=med_ta,
+            vulnerable_organs=vulnerable_organs,
         )
 
     # ----------------------------------------------------------------------
@@ -945,3 +991,254 @@ class InstantRevelationEngine:
             "gem_en": data["gem_en"],
             "gem_ta": data["gem_ta"],
         }
+
+    # ----------------------------------------------------------------------
+    # Helper 1: Synthesize Career & Industry Calling
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_career_calling(
+        cls,
+        planets_dict: Dict[str, Dict[str, Any]],
+    ) -> Tuple[str, str, List[str]]:
+        sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        trines_and_adjacent = {
+            sat_sign,
+            ((sat_sign + 4 - 1) % 12) + 1,
+            ((sat_sign + 8 - 1) % 12) + 1,
+            ((sat_sign + 1 - 1) % 12) + 1,
+            ((sat_sign + 11 - 1) % 12) + 1,
+        }
+
+        contacted: List[str] = []
+        for p_name in ["Mercury", "Mars", "Venus", "Sun", "Jupiter", "Rahu", "Ketu"]:
+            p_sign = planets_dict.get(p_name, {}).get("sign_index", 1)
+            if p_sign in trines_and_adjacent:
+                contacted.append(p_name)
+
+        fields: List[str] = []
+        if "Mercury" in contacted:
+            fields.extend(["Software & Coding", "Accounts & Auditing", "Commercial Trading", "Media & Agency"])
+        if "Mars" in contacted:
+            fields.extend(["Civil & Mechanical Engineering", "Real Estate & Construction", "Machinery & Tech", "Police & Defense"])
+        if "Venus" in contacted:
+            fields.extend(["Banking & Finance", "Luxury Goods & Media", "Automotive Industry", "Architecture & Design"])
+        if "Sun" in contacted:
+            fields.extend(["Government & Administration", "Public Sector Leadership", "Medical & Pharmacology"])
+        if "Jupiter" in contacted:
+            fields.extend(["Management & Advisory", "Law & Consulting", "Education & Training", "Trusts & Institutions"])
+        if "Rahu" in contacted:
+            fields.extend(["Foreign & MNC Enterprises", "Cutting-edge IT & Cloud", "Chemicals & Aviation", "Unconventional Tech"])
+        if "Ketu" in contacted:
+            fields.extend(["Research & Testing", "Textile & Weaving", "Legal Drafting & Arbitration", "Low-Profile Specialization"])
+
+        if not fields:
+            fields = ["Engineering & Technical Fabrication", "Logistics & Supply Operations", "Trade & Commerce"]
+
+        primary_fields_en = ", ".join(fields[:3])
+        career_en = (
+            f"Your livelihood and profession are decisively anchored in {primary_fields_en}. "
+            "You are not suited for a routine generic job; your mind demands practical problem-solving, "
+            "handling technical systems or financial accounts, and having an independent sphere of execution."
+        )
+        career_ta = (
+            f"உங்கள் ஜீவன தொழில் மற்றும் வருமான வழி முக்கியமாக {', '.join(fields[:3])} சார்ந்த துறைகளுடன் தொடர்புடையது. "
+            "நீங்கள் ஒரு சாதாரண மேலோட்டமான பணியில் நீடிக்க முடியாது; கணக்கு, தொழில்நுட்பம், நிர்வாகம் அல்லது நடைமுறை "
+            "சிக்கல்களுக்குத் தீர்வு காணும் தனித்துவமான பொறுப்புகளில் இருக்கும்போதே உங்கள் தொழில் வளம் பிரகாசிக்கும்."
+        )
+        return career_en, career_ta, fields[:4]
+
+    # ----------------------------------------------------------------------
+    # Helper 2: Synthesize Sibling Order & Family Secret
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_birth_order(
+        cls,
+        planets_dict: Dict[str, Dict[str, Any]],
+        ascendant_sign: int,
+    ) -> Tuple[str, str]:
+        mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
+        mars_house = ((mars_sign - ascendant_sign) % 12) + 1
+        sun_sign = planets_dict.get("Sun", {}).get("sign_index", 1)
+        jup_sign = planets_dict.get("Jupiter", {}).get("sign_index", 1)
+
+        is_eldest_pattern = (mars_house in (1, 4, 7, 10)) or (mars_sign in (sun_sign, jup_sign))
+        is_youngest_pattern = (mars_house in (3, 8, 12))
+
+        if is_eldest_pattern:
+            order_en = (
+                "In your family, you hold the position of the eldest child—either you are literally the firstborn, "
+                "or you shoulder the primary family burdens and decisions as if you were the eldest. "
+                "Furthermore, Shastric indications show that either before your birth or shortly after, "
+                "there was a lost pregnancy (miscarriage) or a difficult health struggle for a sibling."
+            )
+            order_ta = (
+                "உங்கள் குடும்பத்தில் நீங்கள் மூத்த பிள்ளையாகப் பிறந்தவர்; அல்லது மூத்த பிள்ளைக்குரிய அனைத்து குடும்பப் "
+                "பொறுப்புகளையும், முடிவுகளையும் சுமப்பவராக இருப்பீர்கள். மேலும் உங்கள் பிறப்பிற்கு முன்போ அல்லது பிறப்பிற்குப் "
+                "பின்னரோ தாயாருக்கு ஒரு கருச்சிதைவு அல்லது ஒரு உடன்பிறப்புக்குக் கடுமையான கண்டம் ஏற்பட்டிருக்க வாய்ப்பு அதிகம்."
+            )
+        elif is_youngest_pattern:
+            order_en = (
+                "You are either the youngest sibling or occupied a protected, independent position in youth. "
+                "However, there is an unspoken distance or lack of deep reliance with your siblings; "
+                "whatever you have achieved in life, you had to fight for single-handedly without relying on them."
+            )
+            order_ta = (
+                "குடும்பத்தில் நீங்கள் இளைய பிள்ளையாகவோ அல்லது தனித்து நின்றவராகவோ இருப்பீர்கள். உடன்பிறந்தவர்களுடன் ஒரு "
+                "மறைமுக இடைவெளி உண்டு; அவர்கள் உங்களுக்குப் பெரிய அளவில் கை கொடுக்காமல், நீங்கள் ஒவ்வொரு வெற்றியையும் "
+                "சுய உழைப்பால் மட்டுமே சாதிக்கும் நிலை உள்ளது."
+            )
+        else:
+            order_en = (
+                "You occupy a middle or distinct birth rank among siblings, often serving as the emotional bridge "
+                "for the parents while absorbing hidden domestic anxieties."
+            )
+            order_ta = (
+                "நீங்கள் உடன்பிறந்தவர்களிடையே ஒரு சமநிலையான பாலமாக செயல்பட்டு, பெற்றோரின் மனக்கவலைகளையும் "
+                "குடும்பப் பொறுப்புகளையும் அமைதியாகப் பகிர்ந்து கொள்ளும் சுபாவம் கொண்டவர்."
+            )
+        return order_en, order_ta
+
+    # ----------------------------------------------------------------------
+    # Helper 3: Synthesize Gochara Sledgehammer (Saturn & Jupiter Transits)
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_gochara_transits(
+        cls,
+        natal_moon_sign: int,
+        transit_saturn_sign: int,
+        transit_jupiter_sign: int,
+    ) -> Tuple[str, str, str, str, str]:
+        shani_offset = ((transit_saturn_sign - natal_moon_sign) % 12) + 1
+        guru_offset = ((transit_jupiter_sign - natal_moon_sign) % 12) + 1
+
+        if shani_offset == 12:
+            phase = "Sade Sati - 1st Phase (விரய சனி / Rising)"
+            s_en = "You are under the 1st phase of Sade Sati (Viraya Shani). Unplanned expenses are dissolving your liquid savings, sleep is disrupted, and long journeys cause fatigue. Avoid risky speculative trading."
+            s_ta = "தற்போது உங்களுக்கு ஏழரை சனியின் முதல் பகுதியான 'விரய சனி' நிலவுகிறது. வரவுக்கு மீறிய திடீர் செலவுகள் சேமிப்பைக் கரைக்கின்றன; தூக்கமின்மையும், வீண் அலைச்சலும் சோர்வடையச் செய்கின்றன. ஊக வணிகத்தில் ஈடுபடாதீர்கள்."
+        elif shani_offset == 1:
+            phase = "Sade Sati - 2nd Phase (ஜென்ம சனி / Peak)"
+            s_en = "You are actively enduring the 2nd phase of Sade Sati (Janma Shani). This is the supreme testing phase—heavy mental anxiety, physical lethargy, and a feeling that people you helped are now judging or misunderstanding you. Maintain absolute humility."
+            s_ta = "தற்போது உங்களுக்கு ஏழரை சனியின் உச்சகட்டமான 'ஜென்ம சனி' நடக்கிறது. மன உளைச்சல், தூக்கமின்மை, உடல் சோர்வு மற்றும் நீங்கள் நல்லதே செய்தாலும் பிறர் தவறாகக் குற்றம் சாட்டும் சூழ்நிலை வாட்டுகிறது. நிதானமும் பொறுமையும் மட்டுமே உங்களைக் காக்கும்."
+        elif shani_offset == 2:
+            phase = "Sade Sati - 3rd Phase (பாத சனி / Setting)"
+            s_en = "You are passing through the 3rd phase of Sade Sati (Paadha Shani). Financial cash flow is under pressure and your words or tone can easily trigger heated family arguments. Keep commercial dealings strictly documented."
+            s_ta = "தற்போது உங்களுக்கு ஏழரை சனியின் நிறைவுப் பகுதியான 'பாத சனி' நடக்கிறது. பண வரவில் சுணக்கம், பேச்சினால் உறவினர்களிடம் பகை மற்றும் குடும்பத்தில் வாக்குவாதங்கள் ஏற்பட வாய்ப்புள்ளது. பேச்சில் மிகுந்த கவனம் தேவை."
+        elif shani_offset == 8:
+            phase = "Ashtama Shani (அஷ்டம சனி - 8th House Transit)"
+            s_en = "You are enduring Ashtama Shani (transiting Saturn in your 8th house). This is the primary reason for sudden road-blocks, delayed payments, health vulnerabilities in legs/digestion, and fear of prestige loss. Do NOT stand surety/guarantee for anyone."
+            s_ta = "தற்போது உங்களுக்குக் கடுமையான 'அஷ்டம சனி' (ராசிக்கு 8-ல் சனி) நடக்கிறது. திட்டமிட்ட காரியங்கள் கடைசி வினாடியில் முட்டுக்கட்டையாவது, பண விரயம், மூட்டு/செரிமானக் கோளாறு மற்றும் வீண் அவப்பெயர் அச்சம் நிலவுகிறது. எவருக்கும் கடனுக்கு ஜாமீன் கையெழுத்து போடாதீர்கள்."
+        elif shani_offset in (4, 10):
+            phase = f"Kantaka Shani (கண்டக சனி - {shani_offset}th House)"
+            s_en = f"You are under Kantaka Shani (Saturn in your {shani_offset}th house). Friction with superiors, mother's health, or unexpected repairs to house/vehicle drain your peace of mind. Avoid walking away from your job abruptly."
+            s_ta = f"தற்போது உங்கள் ராசிக்கு {shani_offset}-ல் 'கண்டக சனி' அமர்ந்துள்ளது. தொழில் ரீதியான அழுத்தம், மேலதிகாரிகளுடன் மனஸ்தாபம் அல்லது வீடு/வாகனப் பழுதுகளால் அலைச்சல் நிலவுகிறது. ஆத்திரத்தில் வேலையை விட வேண்டாம்."
+        elif shani_offset in (3, 6, 11):
+            phase = "Upachaya Shani (வெற்றி சனி - Favorable Transit)"
+            s_en = f"Transit Saturn is in your {shani_offset}th Upachaya house. You possess the inner resilience to conquer competitors and gradually liquidate historical debts."
+            s_ta = f"கோச்சார சனிபகவான் உங்கள் ராசிக்கு {shani_offset}-ஆம் இடத்தில் அமர்ந்து விசேஷ வலிமையை அளிக்கிறார். மறைமுக எதிர்ப்புகளை முறியடிக்கும் தைரியமும், பழைய கடன்களைப் படிப்படியாக அடைக்கும் வழிகளும் திறக்கும்."
+        else:
+            phase = "Neutral Shani Transit (நடுத்தர சனி)"
+            s_en = "Saturn transit is neutral. Focus on continuous daily discipline and shun get-rich-quick schemes."
+            s_ta = "சனிப் பெயர்ச்சி நடுத்தர பலனையே தருகிறது. குறுக்கு வழிகளை நாடாமல் சீரான உழைப்பை மேற்கொள்ளுங்கள்."
+
+        # Guru Gochara
+        if guru_offset in (2, 5, 7, 9, 11):
+            j_en = f"Transit Jupiter is in your {guru_offset}th house, casting an auspicious protective aspect. Divine grace is quietly operating behind the scenes; unexpected help will rescue you from tight corners."
+            j_ta = f"கோச்சார குருபகவான் உங்கள் ராசிக்கு {guru_offset}-ஆம் இடத்தில் அமர்ந்து சுப பார்வையைத் தருகிறார். தெய்வ அனுகூலம் உங்களுக்குப் பாதுகாப்பாக உள்ளது; இக்கட்டான நேரங்களில் எதிர்பாராத மனிதர்கள் மூலம் உதவி கிடைக்கும்."
+        else:
+            j_en = f"Transit Jupiter is in your {guru_offset}th house (hidden sthana). Do not depend on sheer luck; double-check all documents and avoid financial complacency."
+            j_ta = f"கோச்சார குருபகவான் உங்கள் ராசிக்கு {guru_offset}-ஆம் இடத்தில் மறைந்துள்ளார். எனவே அதிர்ஷ்டத்தை நம்பி பெரிய முதலீடுகள் செய்வதைத் தவிர்த்து, எச்சரிக்கையுடன் செயல்பட வேண்டும்."
+
+        return phase, s_en, s_ta, j_en, j_ta
+
+    # ----------------------------------------------------------------------
+    # Helper 4: Evaluate Dasa Chidra Alert (Dasa Sandhi)
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _evaluate_dasa_chidra(
+        cls,
+        dasa_tree: List[Any],
+        arrival_date: date,
+        current_md: str,
+        current_md_ta: str,
+    ) -> Tuple[bool, Optional[str], Optional[str], Optional[str]]:
+        for node in dasa_tree:
+            s_iso = getattr(node, "start_date_iso", None)
+            e_iso = getattr(node, "end_date_iso", None)
+            if not s_iso or not e_iso:
+                continue
+            s_d = date.fromisoformat(s_iso[:10])
+            e_d = date.fromisoformat(e_iso[:10])
+
+            if s_d <= arrival_date <= e_d:
+                days_left = (e_d - arrival_date).days
+                if 0 <= days_left <= 365:
+                    end_str = e_d.isoformat()
+                    w_en = (
+                        f"CRITICAL DASA CHIDRA ALERT: You are in the final {days_left} days of your {current_md} Mahadasha (terminating on {end_str}). "
+                        "Classical treatises strictly warn that in Dasa Sandhi, old karmic energy dissolves to prepare for the incoming Dasa. "
+                        "All initiatives drag, and forced actions collapse. Maintain status-quo until the new Mahadasha dawns."
+                    )
+                    w_ta = (
+                        f"முக்கிய தசா சந்தி எச்சரிக்கை: நீங்கள் தற்போது உங்கள் {current_md_ta} மகாதிசையின் இறுதி {days_left} நாட்களான 'தசா சந்தியில்' ({end_str} வரை) உள்ளீர்கள். "
+                        "சாஸ்திர விதிகளின்படி தசா சந்தி காலத்தில் பழைய வினைகள் முழுமையாகக் கழிந்து புதிய திசைக்கு வழிவிடும். "
+                        "இந்த காலத்தில் எதை அவசரப்பட்டுத் துவங்கினாலும் முட்டுக்கட்டையே மிஞ்சும். இந்த தேதி முடியும் வரை பெரிய முடிவுகளைத் தள்ளிப்போடவும்."
+                    )
+                    return True, w_en, w_ta, end_str
+                break
+        return False, None, None, None
+
+    # ----------------------------------------------------------------------
+    # Helper 5: Synthesize Medical & Organ Vulnerability
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_medical_vulnerability(
+        cls,
+        ascendant_sign: int,
+        planets_dict: Dict[str, Dict[str, Any]],
+    ) -> Tuple[str, str, List[str]]:
+        sixth_sign = ((ascendant_sign + 5 - 1) % 12) + 1
+
+        organs_map = {
+            1: (["Head & Cranium", "Blood Pressure", "Acid Reflux / Bile"],
+                "தலைப்பகுதி, இரத்த அழுத்தம் மற்றும் பித்த உஷ்ணம்",
+                "Severe vulnerability to cranial migraines, eye heat, elevated blood pressure, and acidic gastric fire. Maintain hydration and avoid spicy heating foods."),
+            2: (["Throat & Thyroid", "Vocal Cords", "Cervical Neck"],
+                "தொண்டை, தைராய்டு சுரப்பி மற்றும் கழுத்து நரம்பு",
+                "Tendency toward chronic throat irritation, tonsil/thyroid imbalances, and stiffness in the cervical neck vertebrae. Avoid refrigerated items."),
+            3: (["Shoulders & Arms", "Bronchial Asthma", "Nervous Fatigue"],
+                "தோள்பட்டை, மூச்சுக்குழாய் மற்றும் நரம்பு சோர்வு",
+                "Susceptibility to bronchial allergies, dry coughs, shoulder blade tension, and nervous exhaustion from overthinking. Practice Pranayama daily."),
+            4: (["Chest & Lungs", "Gastric Ulcers", "Fluid Retention"],
+                "மார்பு சளி, இரைப்பை புண் மற்றும் நீர் வீக்கம்",
+                "Vulnerability to chest congestion, excess phlegm, stomach lining irritation, and water retention. Guard digestive fire."),
+            5: (["Spine & Back", "Heart Palpitations", "Eye Strain"],
+                "முதுகெலும்பு, இதய படபடப்பு மற்றும் கண் எரிச்சல்",
+                "Tendency toward spinal stiffness, mid-back pain, heart palpitations under stress, and eye burning. Practice Surya Namaskar."),
+            6: (["Lower Intestines", "Digestive Colic / IBS", "Skin Dermatitis"],
+                "குடல் கோளாறு, செரிமான அழற்சி மற்றும் தோல் ஒவ்வாமை",
+                "Afflictions centered in the lower abdomen: irritable bowel, food sensitivities, skin allergies, and digestive sluggishness. Consume probiotics."),
+            7: (["Kidneys & Filtration", "Lumbar Spine", "Urinary Tract"],
+                "சிறுநீரகம், கீழ் இடுப்பு மற்றும் சிறுநீர்ப் பாதை",
+                "Vulnerability to renal filtration sluggishness, urinary burning sensations, and lower lumbar disc pain. Drink ample copper-charged water."),
+            8: (["Excretory / Piles", "Reproductive Organs", "Sudden Surgeries"],
+                "மூல நோய் / ஆசனவாய், மர்ம உறுப்பு மற்றும் தையல் காயங்கள்",
+                "Risk of hemorrhoids/piles, fistula, reproductive heat, and sudden sharp surgical interventions or cuts. Avoid excessive sedentary heat."),
+            9: (["Hips & Arteries", "Sciatica Nerve", "Liver Lipid Balance"],
+                "இடுப்பு மூட்டு, சயாடிகா நரம்பு மற்றும் கல்லீரல்",
+                "Tendency toward sciatic nerve irritation, hip joint stiffness, and fatty liver / cholesterol buildup. Avoid excess oily carbohydrates."),
+            10: (["Knee Cartilage", "Arthritis / Rheumatism", "Bone Stiffness"],
+                 "முழங்கால் மூட்டு தேய்மானம், வாதம் மற்றும் எலும்பு வலி",
+                 "High vulnerability to knee cartilage degeneration, joint stiffness, cracking bones, and dry rheumatic tendencies. Apply warm sesame oil to knees."),
+            11: (["Calf Muscles & Shins", "Circulatory Varicose Veins", "Neurological Spasms"],
+                 "கால் கெண்டைக்கால், இரத்த நாள வீக்கம் மற்றும் நரம்பு சுளுக்கு",
+                 "Tendency toward painful calf muscle cramps, lower limb varicose veins, and restless leg spasms at night. Elevate legs before sleeping."),
+            12: (["Lymphatics & Feet", "Ankle Swelling", "Immune Depletion"],
+                 "நிணநீர் மண்டலம், பாத வலி மற்றும் தூக்கமின்மை",
+                 "Vulnerability to lymphatic congestion, swollen feet/ankles, cold extremities, and restless insomnia. Practice foot massage with castor oil."),
+        }
+
+        organs_list, ta_organs, en_desc = organs_map.get(sixth_sign, organs_map[1])
+        ta_desc = f"ரோக ஸ்தானமான 6-ஆம் பாவக ரீதியாக {ta_organs} சார்ந்த பகுதிகளில் உபாதைகள் ஏற்பட வாய்ப்புள்ளது. முறையான உணவுப் பழக்கமும், முன்னெச்சரிக்கையும் அவசியம்."
+
+        return en_desc, ta_desc, organs_list
+

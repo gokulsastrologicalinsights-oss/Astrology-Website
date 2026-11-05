@@ -6982,4 +6982,21 @@ export interface InstantRevelationResponse {
   gem_or_rudraksha_ta: string;
   quick_glance_teleprompter_en: string[];
   quick_glance_teleprompter_ta: string[];
+  career_calling_en: string;
+  career_calling_ta: string;
+  career_fields: string[];
+  family_birth_order_en: string;
+  family_birth_order_ta: string;
+  gochara_saturn_phase: string;
+  gochara_saturn_verdict_en: string;
+  gochara_saturn_verdict_ta: string;
+  gochara_jupiter_verdict_en: string;
+  gochara_jupiter_verdict_ta: string;
+  dasa_chidra_active: boolean;
+  dasa_chidra_warning_en?: string | null;
+  dasa_chidra_warning_ta?: string | null;
+  dasa_chidra_end_date?: string | null;
+  medical_organ_vulnerability_en: string;
+  medical_organ_vulnerability_ta: string;
+  vulnerable_organs: string[];
 }

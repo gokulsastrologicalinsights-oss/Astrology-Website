@@ -59,6 +59,28 @@ def test_instant_revelation_engine_direct():
     assert len(res.instant_remedy_ta) > 0
     assert len(res.temple_recommendation_en) > 0
 
+    # The 5 Shock Amplifiers
+    # 1. Career Calling
+    assert len(res.career_calling_en) > 0
+    assert len(res.career_calling_ta) > 0
+    assert len(res.career_fields) > 0
+
+    # 2. Birth Order
+    assert len(res.family_birth_order_en) > 0
+    assert len(res.family_birth_order_ta) > 0
+
+    # 3. Gochara Transits
+    assert len(res.gochara_saturn_phase) > 0
+    assert len(res.gochara_saturn_verdict_en) > 0
+    assert len(res.gochara_saturn_verdict_ta) > 0
+    assert len(res.gochara_jupiter_verdict_en) > 0
+    assert len(res.gochara_jupiter_verdict_ta) > 0
+
+    # 4. Medical Vulnerability
+    assert len(res.medical_organ_vulnerability_en) > 0
+    assert len(res.medical_organ_vulnerability_ta) > 0
+    assert len(res.vulnerable_organs) > 0
+
     # Quick Glance Teleprompter
     assert len(res.quick_glance_teleprompter_en) == 5
     assert len(res.quick_glance_teleprompter_ta) == 5

@@ -89,6 +89,34 @@ class InstantRevelationResponse(BaseModel):
     gem_or_rudraksha_en: str = Field(..., description="Gemstone and Rudraksha alignment")
     gem_or_rudraksha_ta: str = Field(..., description="ரத்தினம் மற்றும் ருத்ராட்ச வழிகாட்டல்")
 
+    # The 5 Accuracy & Shock Amplifiers
+    # 1. Career & Industry Calling
+    career_calling_en: str = Field(..., description="Exact professional calling & industry description in English")
+    career_calling_ta: str = Field(..., description="துல்லியமான தொழில் காரகம் மற்றும் துறை விளக்கம் (தமிழ்)")
+    career_fields: List[str] = Field(default_factory=list, description="Indicated professional sectors")
+
+    # 2. Sibling Order & Family Secret
+    family_birth_order_en: str = Field(..., description="Birth order & maternal lineage clues in English")
+    family_birth_order_ta: str = Field(..., description="பிறப்பு வரிசை மற்றும் குடும்ப ரகசியக் குறிப்புகள் (தமிழ்)")
+
+    # 3. Gochara Sledgehammer: Active Shani & Guru Transits
+    gochara_saturn_phase: str = Field(..., description="Active Saturn transit phase (Sade Sati, Ashtama Shani, Kantaka Shani, etc.)")
+    gochara_saturn_verdict_en: str = Field(..., description="Saturn transit script in English")
+    gochara_saturn_verdict_ta: str = Field(..., description="சனிப் பெயர்ச்சி நேரடி வாக்கு பலன் (தமிழ்)")
+    gochara_jupiter_verdict_en: str = Field(..., description="Jupiter transit script in English")
+    gochara_jupiter_verdict_ta: str = Field(..., description="குருப் பெயர்ச்சி நேரடி வாக்கு பலன் (தமிழ்)")
+
+    # 4. Dasa Chidra Alert (Dasa Sandhi)
+    dasa_chidra_active: bool = Field(False, description="True if native is in the final 12 months of Mahadasha")
+    dasa_chidra_warning_en: Optional[str] = Field(None, description="Dasa Chidra explanation in English")
+    dasa_chidra_warning_ta: Optional[str] = Field(None, description="தசா சந்தி முடக்க எச்சரிக்கை (தமிழ்)")
+    dasa_chidra_end_date: Optional[str] = Field(None, description="Date when current Mahadasha terminates")
+
+    # 5. Specific Anatomical & Organ Vulnerability
+    medical_organ_vulnerability_en: str = Field(..., description="Vulnerable organ & bodily affliction in English")
+    medical_organ_vulnerability_ta: str = Field(..., description="உடல்நலக் கோளாறு & பலவீனமான உறுப்பு எச்சரிக்கை (தமிழ்)")
+    vulnerable_organs: List[str] = Field(default_factory=list, description="Specific anatomical organs at risk")
+
     # Fast 10-Second Executive Teleprompter (Bullet points for instant speaking)
     quick_glance_teleprompter_en: List[str] = Field(default_factory=list, description="Fast bulleted teleprompter points in English")
     quick_glance_teleprompter_ta: List[str] = Field(default_factory=list, description="நொடிப் பொழுதில் பார்த்து பேசக்கூடிய குறிப்புகள் (தமிழ்)")
