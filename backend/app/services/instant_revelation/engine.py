@@ -64,7 +64,7 @@ BODY_MARK_MAP = {
     5: {"en": "upper spine, heart center, or back", "ta": "முதுகெலும்பு, இதயப் பகுதி அல்லது மேல் முதுகு"},
     6: {"en": "lower abdomen, waist, or navel area", "ta": "அடிவயிறு, இடுப்பு அல்லது தொப்புள் பகுதி"},
     7: {"en": "pelvis, groin, or lower lumbar spine", "ta": "இடுப்பெலும்பு, அடி இடுப்பு அல்லது கீழ் முதுகு"},
-    8: {"en": "private organs, tailbone, or upper thigh", "ta": "மர்மஸ்தானம், வால் எலும்பு அல்லது மேல் தொடை"},
+    8: {"en": "lower hip, pelvic edge, or upper thigh", "ta": "இடுப்புப் பகுதி, தொடை அல்லது அடி முதுகு"},
     9: {"en": "hips, thighs, or arterial joints", "ta": "இடுப்பு, தொடை அல்லது மூட்டுப் பகுதி"},
     10: {"en": "knees, knee-caps, or joints", "ta": "முழங்கால், மூட்டு சில்லு அல்லது மூட்டுகள்"},
     11: {"en": "shins, calves, or left leg", "ta": "கால் கெண்டைக்கால், முழங்கால் கீழ் பகுதி அல்லது இடது கால்"},
@@ -872,25 +872,35 @@ class InstantRevelationEngine:
             id="marker-vastu",
             category="personal_marker",
             shock_factor="EXTREME",
-            headline_en="Birth Residence Vastu & Surroundings",
-            headline_ta="பிறந்த வீட்டின் வாஸ்து மற்றும் சுற்றுப்புறம்",
+            headline_en="Birth / Ancestral Residence Vastu & Surroundings",
+            headline_ta="பிறந்த / பூர்வீக வீட்டின் வாஸ்து மற்றும் சுற்றுப்புறம்",
             script_en=(
-                f"Your ancestral/birth home has its main entrance {door_en}. "
-                f"The street or road directly in front runs {road_en}. Furthermore, within close walking "
-                f"proximity of the birthplace, there is a prominent {temple_en}."
+                f"Your birth home or paternal ancestral residence has its main entrance {door_en}. "
+                f"The street or path directly in front runs {road_en}. Furthermore, in that native surroundings, "
+                f"there is an established {temple_en}."
             ),
             script_ta=(
-                f"நீங்கள் பிறந்த வீட்டின் பிரதான தலைவாசல் {door_ta} நோக்கி அமைந்துள்ளது. "
-                f"வீட்டின் முன் செல்லும் சாலை {road_ta} செல்கிறது. மேலும், உங்கள் பிறந்த இடத்திற்கு "
+                f"நீங்கள் பிறந்த வீடு அல்லது உங்கள் பூர்வீக வீட்டின் பிரதான தலைவாசல் {door_ta} நோக்கி அமைந்திருக்கும். "
+                f"வீட்டின் முன் செல்லும் சாலை {road_ta} செல்கிறது. மேலும், உங்கள் பிறந்த இடத்தின் சுற்றுப்புறத்தில் "
                 f"அருகில் ஒரு பிரசித்தி பெற்ற {temple_ta} உள்ளது."
             ),
             astrological_proof="Brighu Naadi Sangraha: Rahu-Ketu door vector & Sun devata sthana.",
             nature="identity",
         ))
 
-        # 2. Physical Scar / Mole Marker
+        # 2. Physical Scar / Mole Marker (Composite Lagna & Mars/Ketu Anatomical Zones)
         mars_sign = planets_dict.get("Mars", {}).get("sign_index", ascendant_sign)
-        body_target = BODY_MARK_MAP.get(mars_sign, BODY_MARK_MAP.get(ascendant_sign, {"en": "shoulder or head", "ta": "தோள்பட்டை அல்லது தலை"}))
+        ketu_sign = planets_dict.get("Ketu", {}).get("sign_index", ascendant_sign)
+        target_1 = BODY_MARK_MAP.get(ascendant_sign, BODY_MARK_MAP[1])
+        target_2 = BODY_MARK_MAP.get(mars_sign, BODY_MARK_MAP[3])
+
+        if ascendant_sign != mars_sign:
+            body_ta = f"{target_1['ta']} அல்லது {target_2['ta']}"
+            body_en = f"{target_1['en']} or {target_2['en']}"
+        else:
+            target_ketu = BODY_MARK_MAP.get(ketu_sign, BODY_MARK_MAP[7])
+            body_ta = f"{target_1['ta']} அல்லது {target_ketu['ta']}"
+            body_en = f"{target_1['en']} or {target_ketu['en']}"
 
         markers.append(RevelationBullet(
             id="marker-body",
@@ -898,9 +908,9 @@ class InstantRevelationEngine:
             shock_factor="HIGH",
             headline_en="Physical Identification Mark (Mole / Scar)",
             headline_ta="உடலில் அமைந்த மச்சம் / தழும்பு அடையாளம்",
-            script_en=f"You possess a clear identification mark—a prominent mole, burn mark, or childhood scar—on your {body_target['en']}.",
-            script_ta=f"உங்கள் உடலில் ஒரு தெளிவான அடையாளம்—குறிப்பாக {body_target['ta']}யில் ஒரு தழும்பு, மச்சம் அல்லது தழும்பு போன்ற அடையாளம் நிச்சயமாக இருக்கும்.",
-            astrological_proof=f"Classical Saravali & BNN: Mars placed in {SIGN_NAMES_EN[mars_sign - 1]} governing anatomical sector.",
+            script_en=f"You possess a clear physical identification mark—a prominent mole, birthmark, or childhood injury scar—on your {body_en}.",
+            script_ta=f"உங்கள் உடலில் ஒரு தெளிவான அடையாளம்—குறிப்பாக {body_ta}யில் ஒரு தழும்பு, மச்சம் அல்லது சிறு காயத்தழும்பு அடையாளம் உண்டு.",
+            astrological_proof=f"Classical Saravali: Lagna ({SIGN_NAMES_EN[ascendant_sign - 1]}) & Mars/Ketu anatomical sector mapping.",
             nature="identity",
         ))
 
