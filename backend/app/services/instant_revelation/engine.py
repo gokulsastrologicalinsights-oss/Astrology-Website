@@ -212,6 +212,25 @@ class InstantRevelationEngine:
             gender=gender,
         )
 
+        # Determine Active Dasha & Bhukti Activated Bhavas from Lagna
+        planet_signs_map = {
+            "Sun": [5], "Moon": [4], "Mars": [1, 8], "Mercury": [3, 6],
+            "Jupiter": [9, 12], "Venus": [2, 7], "Saturn": [10, 11],
+            "Rahu": [], "Ketu": [],
+        }
+
+        def get_planet_bhavas(pname: str) -> set[int]:
+            bhavas: set[int] = set()
+            p_sign = planets_dict.get(pname, {}).get("sign_index")
+            if p_sign:
+                bhavas.add(((p_sign - ascendant_sign) % 12) + 1)
+            for s in planet_signs_map.get(pname, []):
+                bhavas.add(((s - ascendant_sign) % 12) + 1)
+            return bhavas
+
+        ad_houses = get_planet_bhavas(current_ad)
+        md_houses = get_planet_bhavas(current_md)
+
         # ------------------------------------------------------------------
         # PILLAR 1: THE MIND READER (Why You Came Here Today)
         # ------------------------------------------------------------------
@@ -220,6 +239,9 @@ class InstantRevelationEngine:
             kavippu_house=kavippu_house,
             chandra_lagna_offset=chandra_lagna_offset,
             natal_lagna_offset=natal_lagna_offset,
+            native_age=native_age,
+            ad_houses=ad_houses,
+            md_houses=md_houses,
             current_md=current_md,
             current_ad=current_ad,
             current_pd=current_pd,
@@ -329,7 +351,24 @@ class InstantRevelationEngine:
         # ------------------------------------------------------------------
         door_en_clean = bnn_res.birth_environment.door_facing_en.replace("Facing ", "")
         door_ta_clean = bnn_res.birth_environment.door_facing_ta.replace("நோக்கிய தலைவாசல்", "").strip()
-        first_hit_period = past_hits[0].calendar_period.replace("Age ", "") if past_hits and past_hits[0].calendar_period else "24-26"
+        # Pick the most resonant hit period (prefer adult age >= 18 for adult natives, else first hit)
+        first_hit_period = "24-26"
+        if past_hits:
+            best_hit = None
+            if native_age >= 21:
+                for h in past_hits:
+                    if h.calendar_period and "Age " in h.calendar_period:
+                        try:
+                            # e.g. "Age 22 (2021)" -> 22
+                            parts = h.calendar_period.split()
+                            if len(parts) >= 2 and parts[1].isdigit() and int(parts[1]) >= 18:
+                                best_hit = h
+                                break
+                        except Exception:
+                            pass
+            if not best_hit:
+                best_hit = past_hits[0]
+            first_hit_period = best_hit.calendar_period.replace("Age ", "")
 
         glance_en = [
             f"Arrival Cause: {primary_en}",
@@ -407,6 +446,9 @@ class InstantRevelationEngine:
         kavippu_house: int,
         chandra_lagna_offset: int,
         natal_lagna_offset: int,
+        native_age: int,
+        ad_houses: set[int],
+        md_houses: set[int],
         current_md: str,
         current_ad: str,
         current_pd: str,
@@ -418,10 +460,24 @@ class InstantRevelationEngine:
     ) -> Tuple[List[RevelationBullet], str, str]:
         bullets: List[RevelationBullet] = []
 
-        # 1. Primary Diagnosis from Jamakkol Aarudham & Kavippu
-        if aarudham_house in (10, 1) or kavippu_house == 10:
+        # 1. Primary Diagnosis Synthesis: Natal Dasa-Bhukti Lords + Age + Jamakkol Prasanam
+        if native_age < 21:
+            primary_en = "Academic Uncertainty, Higher Studies Admission, or Future Career Direction"
+            primary_ta = "கல்வித் தேக்கம், உயர்கல்வி தேர்வு அல்லது எதிர்கால வேலைக்கான வழிகாட்டுதல்"
+            script_en = (
+                "You have arrived today primarily seeking clarity regarding your education, competitive examinations, "
+                "or career direction. There is uncertainty over choosing the right academic stream or securing anticipated marks."
+            )
+            script_ta = (
+                "நீங்கள் இன்று இங்கு வந்துள்ளதன் முதன்மையான நோக்கம், உங்கள் படிப்பு, உயர்கல்வி சேர்க்கை, போட்டித் தேர்வு "
+                "அல்லது எதிர்கால வேலைக்கான வழிகாட்டுதல் பற்றிய கவலையே ஆகும். எந்தத் துறையைத் தேர்ந்தெடுப்பது அல்லது தேர்வில் "
+                "எதிர்பார்த்த வெற்றி கிடைக்குமா என்ற குழப்பம் உங்கள் மனதில் ஓடுகிறது."
+            )
+            proof = f"Native in academic age ({native_age} yrs) under {current_md}-{current_ad} Dasa cycle."
+
+        elif any(h in (10, 1) for h in ad_houses) or (10 in md_houses) or (aarudham_house in (10, 1) and kavippu_house != 7):
             primary_en = "Career Upheaval, Workplace Politics, or Sudden Status Threat"
-            primary_ta = "தொழில் முடக்கம், உத்தியோக நெருக்கடி அல்லது வேலை இழப்பு அச்சம்"
+            primary_ta = "தொழில் முடக்கம், உத்தியோக நெருக்கடி அல்லது வேலை மாற்ற சிந்தனை"
             script_en = (
                 "You have arrived today primarily due to intense professional turbulence and insecurity. "
                 "In the last 45 to 60 days, an anticipated promotion or business opportunity was stalled, "
@@ -433,9 +489,9 @@ class InstantRevelationEngine:
                 "எதிர்பார்த்த பதவி உயர்வு அல்லது வியாபார வாய்ப்பு தடைபட்டுள்ளது அல்லது உடன் பணிபுரிபவர்களால் "
                 "குடைச்சல் ஏற்பட்டுள்ளது. வேலையை விட்டுவிடலாமா அல்லது தொடரலாமா என்ற குழப்பம் உங்கள் மனதில் ஓடுகிறது."
             )
-            proof = f"Jamakkol Aarudham in {aarudham_house}th house, Kavippu in {kavippu_house}th house affecting Karma Bhava."
+            proof = f"Active Dasha Lord ({current_ad}) activating Karma Bhava (10th/1st house) with Jamakkol Aarudham in {aarudham_house}th house."
 
-        elif aarudham_house in (7, 5) or kavippu_house == 7:
+        elif (21 <= native_age <= 45) and (any(h == 7 for h in ad_houses) or (aarudham_house in (7, 5) and any(h in (7, 5, 2) for h in (ad_houses | md_houses)))):
             primary_en = "Marital Discord, Relationship Coldness, or Alliance Delays"
             primary_ta = "களத்திரப் போராட்டம், திருமணத் தடை அல்லது தாம்பத்யத்தில் கடும் பிரிவு"
             script_en = (
@@ -449,9 +505,9 @@ class InstantRevelationEngine:
                 "மூன்றாம் நபர்களின் தலையீட்டால் மன அமைதி பறிபோயுள்ளது. வரன் தேடுபவராக இருந்தால், "
                 "கடைசி நேரத்தில் கைநழுவிப் போன வரன்களால் ஏமாற்றம் அடைந்துள்ளீர்கள்."
             )
-            proof = f"Jamakkol Aarudham in 7th Kalathra Bhava, Kavippu afflicting relationship axis ({kavippu_house}th house)."
+            proof = f"Kalathra Bhava (7th house) activated under {current_md}-{current_ad} Dasa for age {native_age} native."
 
-        elif aarudham_house in (2, 11) or kavippu_house in (2, 11):
+        elif any(h in (2, 11) for h in ad_houses) or (kavippu_house in (2, 11) and any(h in (2, 11) for h in md_houses)):
             primary_en = "Frozen Finances, Blocked Payments, and Liquidity Trap"
             primary_ta = "கடுமையான பணத் தட்டுப்பாடு, வர வேண்டிய பணம் முடக்கம் மற்றும் கடன் அழுத்தம்"
             script_en = (
@@ -465,9 +521,9 @@ class InstantRevelationEngine:
                 "முன்பு நீங்கள் வலியச் சென்று உதவி செய்த நபர்கள் கூட, இன்று உங்கள் அழைப்பைத் தவிர்க்கின்றனர். "
                 "கடன் மற்றும் பணத் தேவைகள் உங்கள் கழுத்தை நெரிக்கின்றன."
             )
-            proof = f"Jamakkol Kavippu in {kavippu_house}th house blocking Dhana/Labha sthanas."
+            proof = f"Dhana/Labha Bhavas (2nd/11th house) triggered by active {current_ad} Bhukti."
 
-        elif aarudham_house in (6, 8, 12) or kavippu_house in (6, 8):
+        elif any(h in (6, 8, 12) for h in ad_houses) or (aarudham_house in (6, 8, 12)):
             primary_en = "Hidden Enemies, Sudden Health Vulnerability, or Debt Trap"
             primary_ta = "மறைமுக எதிர்ப்புகள், உடல்நலக் கோளாறு மற்றும் எதிர்பாராத அவப்பெயர் அச்சம்"
             script_en = (
@@ -481,9 +537,9 @@ class InstantRevelationEngine:
                 "வயிற்றுப் பகுதி அல்லது உடல் சோர்வு உங்களை வாட்டுகிறது. எதிர்பாராத இழப்பு அல்லது வீண் பழி "
                 "வந்துவிடுமோ என்ற அச்சம் உங்களை ஆட்டிப்படைக்கிறது."
             )
-            proof = f"Jamakkol Aarudham in Dusthana ({aarudham_house}th Bhava) with Kavippu in {kavippu_house}th house."
+            proof = f"Dusthana activation (6th/8th/12th house) under {current_ad} Bhukti and Jamakkol {aarudham_house}th house."
 
-        else: # 4th or 9th
+        elif any(h == 4 for h in ad_houses):
             primary_en = "Property Dispute, Mother's Health, or Relocation Deadlock"
             primary_ta = "சொத்து விவகாரம், தாயாரின் உடல்நலக் குறைவு அல்லது இருப்பிட மாற்றத் தடை"
             script_en = (
@@ -496,7 +552,33 @@ class InstantRevelationEngine:
                 "உங்கள் வருகையின் நோக்கம். நீங்கள் நினைத்த வீடு மாற்றம் அல்லது சொத்து வாங்குதல் விவகாரத்தில் "
                 "சட்டச்சிக்கல் அல்லது உறவினர்களின் முட்டுக்கட்டை ஏற்பட்டுள்ளது."
             )
-            proof = f"Jamakkol Aarudham in Sukha/Bhagya Bhava ({aarudham_house}th house)."
+            proof = f"Sukha Bhava (4th house) activated under {current_ad} Bhukti."
+
+        elif (23 <= native_age <= 48) and any(h == 5 for h in ad_houses):
+            primary_en = "Progeny Delay or Children's Future Settlement"
+            primary_ta = "புத்திர பாக்கிய தாமதம் அல்லது பிள்ளைகளின் எதிர்காலக் கவலை"
+            script_en = (
+                "Your arrival is primarily centered around progeny matters—either a delay in childbirth "
+                "requiring medical/spiritual solutions, or deep anxiety regarding the settlement of your growing children."
+            )
+            script_ta = (
+                "புத்திர பாக்கியம் அமைவதில் ஏற்பட்டுள்ள காலதாமதம் அல்லது பிள்ளைகளின் படிப்பு/எதிர்காலம் "
+                "குறித்த தீவிர கவலையே உங்கள் வருகையின் நோக்கம். இதற்கான நல்வழி பிறக்குமா என்ற ஏக்கத்துடன் வந்துள்ளீர்கள்."
+            )
+            proof = f"Putra Bhava (5th house) activated under {current_ad} Bhukti for age {native_age}."
+
+        else:
+            primary_en = "Family Harmony, Children's Settlement, and Long-Term Stability"
+            primary_ta = "குடும்ப அமைதி, நல்வாழ்வு மற்றும் எதிர்காலத்திற்கான வழிகாட்டுதல்"
+            script_en = (
+                "You have arrived today seeking broad guidance on overall life stability, domestic peace, "
+                "and ensuring the long-term protection and settlement of your household."
+            )
+            script_ta = (
+                "குடும்பத்தில் உள்ளவர்களின் மன அமைதி, பிள்ளைகளின் சுபகாரியங்கள் மற்றும் எதிர்கால வாழ்க்கை "
+                "நல்வழியில் அமைய வேண்டும் என்ற பொதுவான நலனை நாடியே நீங்கள் இன்று வந்துள்ளீர்கள்."
+            )
+            proof = f"Native age {native_age} under {current_md}-{current_ad} Dasa cycle."
 
         bullets.append(RevelationBullet(
             id="mind-01",
@@ -578,61 +660,98 @@ class InstantRevelationEngine:
         # 1. Past Career / Life Turning Point from BNN Milestones list
         milestones: List[Any] = getattr(bnn_res, "timing_milestones", [])
 
-        # Relocation / Travel
+        # Relocation / Travel / Career Launch
         travel_m = next((m for m in milestones if m.category == "travel"), None)
         if travel_m:
-            for age in travel_m.age_years:
-                if age < current_age:
-                    reloc_year = birth_year + age
-                    hits.append(RevelationBullet(
-                        id=f"past-relo-{age}",
-                        category="past_hit",
-                        shock_factor="EXTREME",
-                        headline_en="Major Relocation or Career Turning Point",
-                        headline_ta="பெரிய இடமாற்றம் அல்லது தொழில் திருப்புமுனை",
-                        script_en=(
-                            f"Around age {age} (approximately calendar year {reloc_year} to {reloc_year + 1}): "
-                            f"You experienced a decisive turning point in your life. There was a major house shift, "
-                            f"city relocation, or a dramatic reset in your daily career/education."
-                        ),
-                        script_ta=(
-                            f"சுமார் {age} வயதில் ({reloc_year} - {reloc_year + 1} ஆம் ஆண்டு காலகட்டம்): "
-                            f"உங்கள் வாழ்வில் மிக முக்கியமான ஒரு திருப்புமுனை நிகழ்ந்தது. பெரிய இருப்பிட மாற்றம், "
-                            f"ஊர் மாற்றம் அல்லது கல்வி/தொழிலில் முற்றிலும் புதியதொரு பாதை அப்போதுதான் துவங்கியது."
-                        ),
-                        astrological_proof=f"{travel_m.basis_en} - Age {age}",
-                        calendar_period=f"Age {age} ({reloc_year})",
-                        nature="breakthrough",
-                    ))
-                    break
+            chosen_age = None
+            if current_age >= 21:
+                # Prioritize adult turning points (age 18 to current_age - 1)
+                for age in travel_m.age_years:
+                    if 18 <= age < current_age:
+                        chosen_age = age
+                        break
+            if chosen_age is None:
+                for age in travel_m.age_years:
+                    if age < current_age:
+                        chosen_age = age
+                        break
+
+            if chosen_age is not None:
+                reloc_year = birth_year + chosen_age
+                if chosen_age >= 18:
+                    h_en = "Major Career Milestone or Life Turning Point"
+                    h_ta = "பெரிய தொழில் உயர்வு அல்லது வாழ்வின் திருப்புமுனை"
+                    s_en = (
+                        f"Around age {chosen_age} (approximately calendar year {reloc_year} to {reloc_year + 1}): "
+                        f"You experienced a decisive turning point in your career and status. There was a major job breakthrough, "
+                        f"city relocation, or a bold independent chapter that reset your life path."
+                    )
+                    s_ta = (
+                        f"சுமார் {chosen_age} வயதில் ({reloc_year} - {reloc_year + 1} ஆம் ஆண்டு காலகட்டம்): "
+                        f"உங்கள் வாழ்வில் மிக முக்கியமான ஒரு தொழில் அல்லது வாழ்வாதாரத் திருப்புமுனை நிகழ்ந்தது. பெரிய இருப்பிட மாற்றம், "
+                        f"புதிய வேலை அல்லது தொழிலில் முற்றிலும் புதியதொரு வெற்றிப் பாதை அப்போதுதான் துவங்கியது."
+                    )
+                else:
+                    h_en = "Family Relocation or Academic Transition"
+                    h_ta = "குடும்ப இடமாற்றம் அல்லது பள்ளிக் கல்விப் பிரிவு"
+                    s_en = (
+                        f"Around age {chosen_age} (approximately calendar year {reloc_year}): "
+                        f"Your family experienced a significant residence shift or an important academic school change."
+                    )
+                    s_ta = (
+                        f"சுமார் {chosen_age} வயதில் ({reloc_year} ஆம் ஆண்டு காலகட்டம்): "
+                        f"உங்கள் குடும்பத்தில் ஒரு பெரிய இருப்பிட மாற்றம் அல்லது பள்ளி/கல்வி சார்ந்த புதிய சூழல் துவங்கியது."
+                    )
+
+                hits.append(RevelationBullet(
+                    id=f"past-relo-{chosen_age}",
+                    category="past_hit",
+                    shock_factor="EXTREME",
+                    headline_en=h_en,
+                    headline_ta=h_ta,
+                    script_en=s_en,
+                    script_ta=s_ta,
+                    astrological_proof=f"{travel_m.basis_en} - Age {chosen_age}",
+                    calendar_period=f"Age {chosen_age} ({reloc_year})",
+                    nature="breakthrough",
+                ))
 
         # Caution / Physical Vulnerability / Accident
         caution_m = next((m for m in milestones if m.category == "caution"), None)
         if caution_m:
+            chosen_c_age = None
             for age in caution_m.age_years:
-                if age < current_age:
-                    acc_year = birth_year + age
-                    hits.append(RevelationBullet(
-                        id=f"past-acc-{age}",
-                        category="past_hit",
-                        shock_factor="EXTREME",
-                        headline_en="Sudden Injury, Burn, or Physical Vulnerability",
-                        headline_ta="திடீர் விபத்து, காயம் அல்லது மருத்துவ சிகிச்சை",
-                        script_en=(
-                            f"Around age {age} (approximately {acc_year}): "
-                            f"You suffered a sharp physical shock—a sudden fall, vehicle skid, deep cut, burn mark, "
-                            f"or an acute fever/surgery that required intense medical attention."
-                        ),
-                        script_ta=(
-                            f"சுமார் {age} வயதில் ({acc_year} ஆம் ஆண்டு): "
-                            f"உங்களுக்கு எதிர்பாராத ஒரு உடல் உபாதை, கீழே விழுந்து அடிபடுதல், வாகனம் சறுக்குதல், "
-                            f"வெட்டுக் காயம், தீக்காயம் அல்லது திடீர் தீவிர மருத்துவ சிகிச்சை ஏற்பட்டது."
-                        ),
-                        astrological_proof=f"{caution_m.basis_en} - Age {age}",
-                        calendar_period=f"Age {age} ({acc_year})",
-                        nature="danger",
-                    ))
+                if 6 <= age < current_age:
+                    chosen_c_age = age
                     break
+            if chosen_c_age is None:
+                for age in caution_m.age_years:
+                    if age < current_age:
+                        chosen_c_age = age
+                        break
+
+            if chosen_c_age is not None:
+                acc_year = birth_year + chosen_c_age
+                hits.append(RevelationBullet(
+                    id=f"past-acc-{chosen_c_age}",
+                    category="past_hit",
+                    shock_factor="EXTREME",
+                    headline_en="Sudden Injury, Burn, or Physical Vulnerability",
+                    headline_ta="திடீர் விபத்து, காயம் அல்லது மருத்துவ சிகிச்சை",
+                    script_en=(
+                        f"Around age {chosen_c_age} (approximately {acc_year}): "
+                        f"You suffered a sharp physical shock—a sudden fall, vehicle skid, deep cut, burn mark, "
+                        f"or an acute fever/surgery that required intense medical attention."
+                    ),
+                    script_ta=(
+                        f"சுமார் {chosen_c_age} வயதில் ({acc_year} ஆம் ஆண்டு): "
+                        f"உங்களுக்கு எதிர்பாராத ஒரு உடல் உபாதை, கீழே விழுந்து அடிபடுதல், வாகனம் சறுக்குதல், "
+                        f"வெட்டுக் காயம், தீக்காயம் அல்லது திடீர் தீவிர மருத்துவ சிகிச்சை ஏற்பட்டது."
+                    ),
+                    astrological_proof=f"{caution_m.basis_en} - Age {chosen_c_age}",
+                    calendar_period=f"Age {chosen_c_age} ({acc_year})",
+                    nature="danger",
+                ))
 
         # Property / Asset Acquisition
         prop_m = next((m for m in milestones if m.category == "property"), None)
@@ -1315,21 +1434,17 @@ class InstantRevelationEngine:
         }
         sp_dir_en, sp_dir_ta = dir_map.get(seventh_lord_sign, dir_map.get(sp_sign, ("East", "கிழக்கு திசை")))
 
-        # 2. Distance: Movable/Dual signs or Rahu/Moon = Distant; Fixed signs = Local/Relative
+        # 2. Distance: Chara/Water signs or Rahu = Distant; Sthira = Local; Dvisvabhava = Moderate
         rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
-        moon_sign = planets_dict.get("Moon", {}).get("sign_index", 1)
-
-        is_distant = (seventh_sign in (1, 3, 4, 6, 7, 9, 10, 12)) and (
-            (rahu_sign in (seventh_sign, seventh_lord_sign))
-            or (moon_sign in (seventh_sign, seventh_lord_sign))
-            or (((seventh_sign - ascendant_sign) % 12) in (6, 8, 11))
-        )
-        if is_distant:
+        if (seventh_lord_sign in (1, 4, 7, 10, 12)) or (rahu_sign in (seventh_sign, seventh_lord_sign)):
             dist_en = "Your spouse was born at a noticeable distance—either across district borders, beyond a major water body/river, or from another town."
             dist_ta = "உங்கள் வாழ்க்கைத் துணை உங்கள் சொந்த ஊரிலிருந்து குறிப்பிட்ட தூரமான பகுதியிலிருந்தோ, நதி/கடல் தாண்டிய மாவட்டத்திலிருந்தோ அல்லது வேறு ஊர் பின்னணியிலிருந்தோ அமைந்தவர்."
-        else:
+        elif seventh_lord_sign in (2, 5, 8, 11):
             dist_en = "Your spouse originates within a familiar district radius, often linked to maternal/paternal ancestral connections or known family circles."
             dist_ta = "உங்கள் வாழ்க்கைத் துணை உள்ளூரிலோ அல்லது தாய்/தந்தை வழிப் பழக்கப்பட்ட உறவினர்/நண்பர்கள் வட்டத்திலோ அமைந்தவர்."
+        else:  # Dual signs (3, 6, 9)
+            dist_en = "Your spouse was born in an adjoining taluk or neighboring district within convenient travel distance."
+            dist_ta = "உங்கள் வாழ்க்கைத் துணை பக்கத்து தாலுகா அல்லது அண்டை மாவட்ட எல்லைப் பகுதியிலிருந்து அமைந்தவர்."
 
         # 3. Dignified, universally resonant personality
         personality_en = "Spouse possesses sharp intellect, strong domestic administration, and an unyielding, principled will with deep self-respect."
@@ -1419,10 +1534,8 @@ class InstantRevelationEngine:
         # Affliction on 9th house or Sun
         is_rift = (
             (sat_sign in (ninth_sign, sun_sign))
-            or (mars_sign in (ninth_sign, sun_sign))
             or (rahu_sign in (ninth_sign, sun_sign))
             or (ketu_sign in (ninth_sign, sun_sign))
-            or (((sat_sign - sun_sign) % 12) in (6, 7, 8))
         )
 
         if is_rift:
