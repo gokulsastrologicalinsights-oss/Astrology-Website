@@ -351,30 +351,40 @@ class InstantRevelationEngine:
         # ------------------------------------------------------------------
         door_en_clean = bnn_res.birth_environment.door_facing_en.replace("Facing ", "")
         door_ta_clean = bnn_res.birth_environment.door_facing_ta.replace("நோக்கிய தலைவாசல்", "").strip()
-        # Pick the most resonant hit period (prefer adult age >= 18 for adult natives, else first hit)
+        # Pick the most resonant hit period (prefer adult age >= 18 or major Dasa transition year)
         first_hit_period = "24-26"
         if past_hits:
             best_hit = None
-            if native_age >= 21:
+            if native_age >= 18:
                 for h in past_hits:
-                    if h.calendar_period and "Age " in h.calendar_period:
-                        try:
-                            # e.g. "Age 22 (2021)" -> 22
-                            parts = h.calendar_period.split()
-                            if len(parts) >= 2 and parts[1].isdigit() and int(parts[1]) >= 18:
-                                best_hit = h
-                                break
-                        except Exception:
-                            pass
+                    if h.calendar_period:
+                        if "Year " in h.calendar_period:
+                            best_hit = h
+                            break
+                        if "Age " in h.calendar_period:
+                            try:
+                                parts = h.calendar_period.split()
+                                if len(parts) >= 2 and parts[1].isdigit() and int(parts[1]) >= 18:
+                                    best_hit = h
+                                    break
+                            except Exception:
+                                pass
             if not best_hit:
                 best_hit = past_hits[0]
-            first_hit_period = best_hit.calendar_period.replace("Age ", "")
+            first_hit_period = best_hit.calendar_period.replace("Age ", "").replace("Year ", "")
+
+        if best_hit and "Year " in getattr(best_hit, "calendar_period", ""):
+            hit_str_en = f"Major life transition around year {first_hit_period}."
+            hit_str_ta = f"{first_hit_period} ஆம் ஆண்டில் பெரிய தசா மாற்றம் / திருப்புமுனை."
+        else:
+            hit_str_en = f"Major life event around age {first_hit_period}."
+            hit_str_ta = f"சுமார் {first_hit_period} வயதில் பெரிய திருப்புமுனை / மாற்றம்."
 
         glance_en = [
             f"Arrival Cause: {primary_en}",
             f"Career Sector: {', '.join(career_fields[:2])}",
             f"Saturn Transit: {sat_phase}",
-            f"Past Verification: Major life event around age {first_hit_period}.",
+            f"Past Verification: {hit_str_en}",
             f"Next Urgent Action: {remedy_data['temple_en']} - {remedy_data['action_en']}",
         ]
 
@@ -382,7 +392,7 @@ class InstantRevelationEngine:
             f"வருகை நோக்கம்: {primary_ta}",
             f"தொழில் துறை: {', '.join(career_fields[:2])}",
             f"சனிப் பெயர்ச்சி: {sat_phase}",
-            f"கடந்த கால உண்மை: சுமார் {first_hit_period} வயதில் பெரிய திருப்புமுனை / மாற்றம்.",
+            f"கடந்த கால உண்மை: {hit_str_ta}",
             f"உடனடி பரிகாரம்: {remedy_data['temple_ta']} - {remedy_data['action_ta']}",
         ]
 
@@ -815,11 +825,11 @@ class InstantRevelationEngine:
                 except Exception:
                     pass
 
-        # If we still have fewer than 2 hits, add career trigger
+        # If we still have fewer than 3 hits, add career trigger for working-age adults
         career_m = next((m for m in milestones if m.category == "career"), None)
-        if len(hits) < 3 and career_m:
+        if len(hits) < 3 and career_m and current_age >= 19:
             for age in career_m.age_years:
-                if age < current_age:
+                if 18 <= age < current_age:
                     c_year = birth_year + age
                     hits.append(RevelationBullet(
                         id=f"past-career-{age}",
@@ -1482,33 +1492,107 @@ class InstantRevelationEngine:
         fourth_lord = SIGN_LORDS.get(fourth_sign, "Moon")
         fourth_lord_sign = planets_dict.get(fourth_lord, {}).get("sign_index", fourth_sign)
         ven_sign = planets_dict.get("Venus", {}).get("sign_index", 2)
+        sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
+        rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
 
-        # Sign-based realistic Indian vehicle palette (12 signs)
-        color_map = {
-            1: ("Deep Maroon, Bold Red, or Metallic Charcoal Grey", "அடர் மெரூன், சிவப்பு அல்லது சாம்பல் நிறம்"),
-            2: ("Pearl White, Lustrous Silver, or Ivory Cream", "முத்து வெள்ளை, சில்வர் அல்லது பளபளப்பான வெளிர் நிறம்"),
-            3: ("Metallic Silver-Grey, Platinum, or Dual-Tone Dark", "சில்வர் கிரே, பிளாட்டினம் அல்லது இரட்டை வண்ணக் கலவை"),
-            4: ("Pure Pearl White, Classic Silver, or Sea-Mist Ivory", "தூய வெள்ளை, கிளாசிக் சில்வர் அல்லது முத்து நிறம்"),
-            5: ("Rich Maroon, Copper Red, or Bold Metallic Grey", "அடர் மெரூன், காப்பர் அல்லது மெட்டாலிக் சாம்பல்"),
-            6: ("Metallic Titanium Grey, Silver, or Dual-Tone", "டைட்டானியம் சாம்பல், சில்வர் அல்லது டூயல்-டோன்"),
-            7: ("Diamond White, Sleek Silver, or Elegant Pearl", "பளபளப்பான வெள்ளை, சில்வர் அல்லது முத்து நிறம்"),
-            8: ("Deep Wine Red, Midnight Black, or Dark Maroon", "அடர் ஒயின் ரெட், கருப்பு அல்லது மெரூன் நிறம்"),
-            9: ("Pearl White, Champagne Silver, or Metallic Royal Blue", "முத்து வெள்ளை, ஷாம்பெயின் சில்வர் அல்லது ராயல் நீலம்"),
-            10: ("Midnight Navy Blue, Charcoal Grey, or Classic Black", "அடர் கருநீலம், சாம்பல் அல்லது கிளாசிக் கருப்பு"),
-            11: ("Steel Grey, Royal Navy Blue, or Matte Black", "ஸ்டீல் கிரே, அடர் நீலம் அல்லது மேட் பிளாக்"),
-            12: ("Pearl White, Glaze Silver, or Light Metallic Grey", "முத்து வெள்ளை, சில்வர் அல்லது வெளிர் சாம்பல் நிறம்"),
+        # 1. 4th House Occupants (Direct Physical Conveyance Karakas)
+        occupants_4th = [p for p in ["Saturn", "Mars", "Venus", "Moon", "Mercury", "Sun", "Jupiter", "Rahu", "Ketu"] if planets_dict.get(p, {}).get("sign_index") == fourth_sign]
+
+        if "Saturn" in occupants_4th:
+            color_en = "Royal Blue, Midnight Navy Blue, or Metallic Steel Grey"
+            color_ta = "ராயல் ப்ளூ, அடர் நீலம், கருநீலம் அல்லது ஸ்டீல் கிரே"
+        elif "Mars" in occupants_4th:
+            color_en = "Deep Crimson Maroon, Bold Red, or Flame Metallic"
+            color_ta = "அடர் மெரூன், சிவப்பு அல்லது சுடர் வண்ணம்"
+        elif "Venus" in occupants_4th:
+            color_en = "Diamond White, Pearl Silver, or Lustrous Cream"
+            color_ta = "பளபளப்பான வெள்ளை, சில்வர் அல்லது முத்து நிறம்"
+        elif "Moon" in occupants_4th:
+            color_en = "Pure Pearl White, Classic Silver, or Sea-Mist Cream"
+            color_ta = "தூய வெள்ளை, கிளாசிக் சில்வர் அல்லது முத்து நிறம்"
+        elif "Sun" in occupants_4th:
+            color_en = "Rich Maroon, Metallic Copper, or Warm Golden Metallic"
+            color_ta = "அடர் மெரூன், காப்பர் அல்லது அரச கோல்டன் மெட்டாலிக்"
+        elif "Mercury" in occupants_4th:
+            color_en = "Metallic Titanium Grey, Silver, or Dual-Tone"
+            color_ta = "டைட்டானியம் சாம்பல், சில்வர் அல்லது டூயல்-டோன் (இரட்டை வண்ணம்)"
+        elif "Jupiter" in occupants_4th:
+            color_en = "Golden Champagne, Royal Pearl, or Sandalwood Beige"
+            color_ta = "கோல்டன் மெட்டாலிக், சந்தன கிரீம் அல்லது ராயல் வெள்ளை"
+        elif "Rahu" in occupants_4th:
+            color_en = "Phantom Matte Black, Shadow Charcoal, or Dark Dual-Tone"
+            color_ta = "மேட் பிளாக் (Matte Black), சாம்பல் அல்லது நிழல் வண்ணம்"
+        elif "Ketu" in occupants_4th:
+            color_en = "Off-White, Minimalist Cement Grey, or Earthy Tone"
+            color_ta = "ஆஃப்-ஒயிட் (Off-White), சாம்பல் அல்லது சிமெண்ட் கிரே"
+        else:
+            # Check Saturn or Mars aspect on 4th house
+            sat_aspect_4th = ((fourth_sign - sat_sign) % 12) in (2, 6, 9)  # 3rd, 7th, 10th aspect
+            mars_aspect_4th = ((fourth_sign - mars_sign) % 12) in (3, 6, 7)  # 4th, 7th, 8th aspect
+
+            if sat_aspect_4th:
+                color_en = "Royal Blue, Midnight Navy Blue, or Steel Grey"
+                color_ta = "ராயல் ப்ளூ, அடர் நீலம் அல்லது ஸ்டீல் கிரே"
+            elif mars_aspect_4th:
+                color_en = "Deep Crimson Maroon, Bold Red, or Metallic Flame"
+                color_ta = "அடர் மெரூன், சிவப்பு அல்லது மெட்டாலிக்"
+            else:
+                # Sign-based palette from 4th Lord or Venus
+                color_map = {
+                    1: ("Deep Maroon, Bold Red, or Metallic Charcoal Grey", "அடர் மெரூன், சிவப்பு அல்லது சாம்பல் நிறம்"),
+                    2: ("Pearl White, Lustrous Silver, or Ivory Cream", "முத்து வெள்ளை, சில்வர் அல்லது பளபளப்பான வெளிர் நிறம்"),
+                    3: ("Metallic Silver-Grey, Platinum, or Dual-Tone Dark", "சில்வர் கிரே, பிளாட்டினம் அல்லது இரட்டை வண்ணக் கலவை"),
+                    4: ("Pure Pearl White, Classic Silver, or Sea-Mist Ivory", "தூய வெள்ளை, கிளாசிக் சில்வர் அல்லது முத்து நிறம்"),
+                    5: ("Rich Maroon, Copper Red, or Bold Metallic Grey", "அடர் மெரூன், காப்பர் அல்லது மெட்டாலிக் சாம்பல்"),
+                    6: ("Metallic Titanium Grey, Silver, or Dual-Tone", "டைட்டானியம் சாம்பல், சில்வர் அல்லது டூயல்-டோன்"),
+                    7: ("Diamond White, Sleek Silver, or Elegant Pearl", "பளபளப்பான வெள்ளை, சில்வர் அல்லது முத்து நிறம்"),
+                    8: ("Deep Wine Red, Midnight Black, or Dark Maroon", "அடர் ஒயின் ரெட், கருப்பு அல்லது மெரூன் நிறம்"),
+                    9: ("Pearl White, Champagne Silver, or Metallic Royal Blue", "முத்து வெள்ளை, ஷாம்பெயின் சில்வர் அல்லது ராயல் நீலம்"),
+                    10: ("Midnight Navy Blue, Charcoal Grey, or Classic Black", "அடர் கருநீலம், சாம்பல் அல்லது கிளாசிக் கருப்பு"),
+                    11: ("Steel Grey, Royal Navy Blue, or Matte Black", "ஸ்டீல் கிரே, அடர் நீலம் அல்லது மேட் பிளாக்"),
+                    12: ("Pearl White, Glaze Silver, or Light Metallic Grey", "முத்து வெள்ளை, சில்வர் அல்லது வெளிர் சாம்பல் நிறம்"),
+                }
+                color_en, color_ta = color_map.get(fourth_lord_sign, color_map.get(ven_sign, ("Pearl White, Silver, or Metallic Grey", "வெள்ளை, சில்வர் அல்லது சாம்பல்")))
+
+        # 2. Vehicle Pristine Condition vs Scratches Evaluation
+        own_signs_map = {
+            "Sun": [5], "Moon": [4], "Mars": [1, 8], "Mercury": [3, 6],
+            "Jupiter": [9, 12], "Venus": [2, 7], "Saturn": [10, 11],
         }
-        color_en, color_ta = color_map.get(fourth_lord_sign, color_map.get(ven_sign, ("Pearl White, Silver, or Metallic Grey", "வெள்ளை, சில்வர் அல்லது சாம்பல்")))
+        exalted_signs_map = {
+            "Sun": 1, "Moon": 2, "Mars": 10, "Mercury": 6,
+            "Jupiter": 4, "Venus": 12, "Saturn": 7,
+        }
 
-        # Conveyance signature: realistic bumper/traffic scratch + battery/puncture maintenance
-        blemish_en = (
-            "Your vehicle carries a minor scratch or brush mark on the front/side bumper, mirror edge, or exhaust guard from tight traffic navigation, "
-            "along with periodic tire puncture or battery/servicing maintenance."
-        )
-        blemish_ta = (
-            "உங்கள் வாகனத்தில் முன்/பக்கவாட்டு பம்பர், மிரர் அல்லது விளிம்பில் டிராஃபிக்கில் உரசிய சிறு கீறல் அல்லது தட்டுப்பாடு அடையாளம் உண்டு; "
-            "மேலும் டயர் பஞ்சர் அல்லது பேட்டரி/ஆயில் சர்வீஸ் தாமதத்தால் ஏற்படும் சிறு தொந்தரவு ஏற்படுவது இயல்பு."
-        )
+        fl_is_own = fourth_lord_sign in own_signs_map.get(fourth_lord, [])
+        fl_is_exalted = fourth_lord_sign == exalted_signs_map.get(fourth_lord)
+        ven_is_own = ven_sign in [2, 7]
+        ven_is_exalted = ven_sign == 12
+        fl_house = ((fourth_lord_sign - ascendant_sign) % 12) + 1
+        fl_dusthana = fl_house in (6, 8, 12)
+        has_direct_malefic_4th = (mars_sign == fourth_sign) or (rahu_sign == fourth_sign)
+
+        is_scratchless = (fl_is_own or fl_is_exalted or ven_is_own or ven_is_exalted) and not (has_direct_malefic_4th or fl_dusthana)
+
+        if is_scratchless:
+            blemish_en = (
+                "The vehicle is maintained pristine, clean, and without noticeable scratches; you guard it with keen pride "
+                "against even small grazes, keeping it spotless and attending to regular maintenance with care."
+            )
+            blemish_ta = (
+                "வாகனம் எந்தவொரு பெரிய கீறலும் இன்றி மிக நேர்த்தியாகவும் சுத்தமாகவும் பராமரிக்கப்படுகிறது; வண்டியில் ஒரு சிறு கீறல் அல்லது "
+                "தூசு கூட விழாமல் கண்ணும் கருத்துமாகப் பாதுகாக்கும் சுபாவம், மற்றும் முறையான ஆயில் பராமரிப்பில் தனி அக்கறை உண்டு."
+            )
+        else:
+            blemish_en = (
+                "Your vehicle carries a minor scratch or brush mark on the front/side bumper, mirror edge, or exhaust guard from tight traffic navigation, "
+                "along with periodic tire puncture or battery/servicing maintenance."
+            )
+            blemish_ta = (
+                "உங்கள் வாகனத்தில் முன்/பக்கவாட்டு பம்பர், மிரர் அல்லது விளிம்பில் டிராஃபிக்கில் உரசிய சிறு கீறல் அல்லது தட்டுப்பாடு அடையாளம் உண்டு; "
+                "மேலும் டயர் பஞ்சர் அல்லது பேட்டரி/ஆயில் சர்வீஸ் தாமதத்தால் ஏற்படும் சிறு தொந்தரவு ஏற்படுவது இயல்பு."
+            )
 
         v_en = f"You are naturally drawn to or operate vehicles in {color_en} (commuter two-wheeler or family car). Conveyance signature: {blemish_en}"
         v_ta = f"நீங்கள் இயற்கையாக விரும்பும் அல்லது இயக்கும் வாகன நிறம்: {color_ta} (இருசக்கர வாகனம் அல்லது பயன்பாட்டு கார்). வாகன நேரடி அடையாளம்: {blemish_ta}"
