@@ -471,7 +471,7 @@ class InstantRevelationEngine:
         bullets: List[RevelationBullet] = []
 
         # 1. Primary Diagnosis Synthesis: Natal Dasa-Bhukti Lords + Age + Jamakkol Prasanam
-        if native_age < 21:
+        if native_age < 23:
             primary_en = "Academic Uncertainty, Higher Studies Admission, or Future Career Direction"
             primary_ta = "கல்வித் தேக்கம், உயர்கல்வி தேர்வு அல்லது எதிர்கால வேலைக்கான வழிகாட்டுதல்"
             script_en = (
@@ -485,37 +485,53 @@ class InstantRevelationEngine:
             )
             proof = f"Native in academic age ({native_age} yrs) under {current_md}-{current_ad} Dasa cycle."
 
-        elif any(h in (10, 1) for h in ad_houses) or (10 in md_houses) or (aarudham_house in (10, 1) and kavippu_house != 7):
-            primary_en = "Career Upheaval, Workplace Politics, or Sudden Status Threat"
-            primary_ta = "தொழில் முடக்கம், உத்தியோக நெருக்கடி அல்லது வேலை மாற்ற சிந்தனை"
+        elif (23 <= native_age <= 38) and (
+            current_ad == "Venus"
+            or any(h == 7 for h in ad_houses)
+            or (7 in md_houses and any(h in (2, 7, 11) for h in ad_houses))
+            or (aarudham_house in (7, 5) or kavippu_house == 7)
+        ):
+            primary_en = "Marriage Alliance, Partner Settlement, or Marital Future"
+            primary_ta = "திருமண வரன் தேடுதல், புதிய குடும்ப வாழ்க்கை அல்லது களத்திர அத்தியாயம்"
             script_en = (
-                "You have arrived today primarily due to intense professional turbulence and insecurity. "
-                "In the last 45 to 60 days, an anticipated promotion or business opportunity was stalled, "
-                "or colleagues/superiors have acted against you. You are contemplating whether to quit or hold on."
+                "You have arrived today primarily seeking clarity regarding your marriage, finding the right life partner, "
+                "or stepping into a new family chapter. You wish to know when wedding knots will be tied, how the partner will be, "
+                "and whether upcoming proposals will materialize successfully."
             )
             script_ta = (
-                "நீங்கள் இன்று இங்கு வந்து அமர்ந்திருப்பதன் முதன்மையான காரணம், உங்கள் தொழில் அல்லது வேலையில் "
-                "ஏற்பட்டுள்ள கடுமையான தேக்கமும் நிம்மதியின்மையுமே ஆகும். கடந்த 45 முதல் 60 நாட்களாக "
-                "எதிர்பார்த்த பதவி உயர்வு அல்லது வியாபார வாய்ப்பு தடைபட்டுள்ளது அல்லது உடன் பணிபுரிபவர்களால் "
-                "குடைச்சல் ஏற்பட்டுள்ளது. வேலையை விட்டுவிடலாமா அல்லது தொடரலாமா என்ற குழப்பம் உங்கள் மனதில் ஓடுகிறது."
+                "நீங்கள் இன்று இங்கு வந்துள்ளதன் முதன்மையான நோக்கம், திருமணம், வரன் தேடுதல், புதிய குடும்ப வாழ்க்கை "
+                "அல்லது வாழ்க்கைத் துணை பற்றிய ஆலோசனையே ஆகும். நல்ல வரன் எப்போது அமையும், குடும்பப் பொறுப்புகளைத் "
+                "தொடங்குவதற்கான காலம் கைகூடி வந்துள்ளதா மற்றும் வரக்கூடிய வரன்கள் சுபமாக முடியுமா என்ற சிந்தனை உங்கள் மனதில் பிரதானமாக உள்ளது."
+            )
+            proof = f"Kalathra Karaka / 7th house active under {current_md}-{current_ad} Dasa for age {native_age} native."
+
+        elif any(h in (10, 1) for h in ad_houses) or (10 in md_houses) or (aarudham_house in (10, 1) and kavippu_house != 7):
+            primary_en = "Career Growth, Professional Milestone, or Job Transition Direction"
+            primary_ta = "தொழில் உயர்வு, புதிய பொறுப்பு அல்லது வேலை மாற்றத்திற்கான நல்வழி"
+            script_en = (
+                "You have arrived today primarily seeking direction on your career, professional next steps, or business expansion. "
+                "You are contemplating whether to undertake a new venture/role or maintain your current position, and looking for "
+                "clarity on achieving long-term status and stable professional growth."
+            )
+            script_ta = (
+                "நீங்கள் இன்று இங்கு வந்துள்ளதன் நோக்கம், உங்கள் தொழில் அல்லது வேலையில் அடுத்தகட்ட வளர்ச்சி, "
+                "புதிய பொறுப்பு, புதிய தொழில் முயற்சி அல்லது வேலை மாற்றத்திற்கான நல்வழியை அறிவதே ஆகும். "
+                "தற்போதைய திட்டங்களை விரிவுபடுத்துவதா அல்லது புதிய வாய்ப்பை நோக்கி நகர்வதா என்ற தீவிர யோசனை உங்கள் மனதில் ஓடுகிறது."
             )
             proof = f"Active Dasha Lord ({current_ad}) activating Karma Bhava (10th/1st house) with Jamakkol Aarudham in {aarudham_house}th house."
 
-        elif (21 <= native_age <= 45) and (any(h == 7 for h in ad_houses) or (aarudham_house in (7, 5) and any(h in (7, 5, 2) for h in (ad_houses | md_houses)))):
-            primary_en = "Marital Discord, Relationship Coldness, or Alliance Delays"
-            primary_ta = "களத்திரப் போராட்டம், திருமணத் தடை அல்லது தாம்பத்யத்தில் கடும் பிரிவு"
+        elif (39 <= native_age <= 48) and (any(h == 7 for h in ad_houses) or (aarudham_house in (7, 5))):
+            primary_en = "Marital Harmony, Relationship Tuning, or Domestic Stability"
+            primary_ta = "தாம்பத்ய அமைதி, குடும்ப ஒற்றுமை மற்றும் வாழ்க்கைத் துணை நலம்"
             script_en = (
-                "You have come to me carrying severe emotional weight regarding your marriage or life partner. "
-                "There is deep communication breakdown, mutual suspicion, or outside family interference that has "
-                "drained your peace of mind. If seeking marriage, promising proposals have collapsed at the final stage."
+                "You have come seeking clarity on marital harmony, domestic balance, and mutual understanding with your spouse. "
+                "Family responsibilities or differing opinions have created subtle strain, and you seek lasting peace."
             )
             script_ta = (
-                "உங்கள் வாழ்க்கைத் துணை அல்லது திருமண விவகாரத்தில் ஏற்பட்டுள்ள கடுமையான மனவேதனையுடன் "
-                "நீங்கள் இன்று வந்துள்ளீர்கள். கணவன்-மனைவிக்குள் பேச்சுவார்த்தை குறைந்து, கருத்து வேறுபாடு அல்லது "
-                "மூன்றாம் நபர்களின் தலையீட்டால் மன அமைதி பறிபோயுள்ளது. வரன் தேடுபவராக இருந்தால், "
-                "கடைசி நேரத்தில் கைநழுவிப் போன வரன்களால் ஏமாற்றம் அடைந்துள்ளீர்கள்."
+                "உங்கள் வாழ்க்கைத் துணையுடன் பரஸ்பர புரிதல், குடும்ப அமைதி மற்றும் தாம்பத்ய ஒற்றுமை குறித்த ஆலோசனையே "
+                "உங்கள் வருகையின் நோக்கம். குடும்பச் சுமைகளால் ஏற்பட்ட மன அழுத்தத்தைக் குறைத்து நிம்மதியைக் காண விழைகிறீர்கள்."
             )
-            proof = f"Kalathra Bhava (7th house) activated under {current_md}-{current_ad} Dasa for age {native_age} native."
+            proof = f"Kalathra Bhava (7th house) activated under {current_md}-{current_ad} Dasa for mature native (age {native_age})."
 
         elif any(h in (2, 11) for h in ad_houses) or (kavippu_house in (2, 11) and any(h in (2, 11) for h in md_houses)):
             primary_en = "Frozen Finances, Blocked Payments, and Liquidity Trap"
@@ -1537,71 +1553,73 @@ class InstantRevelationEngine:
             color_en = "Off-White, Minimalist Cement Grey, or Earthy Tone"
             color_ta = "ஆஃப்-ஒயிட் (Off-White), சாம்பல் அல்லது சிமெண்ட் கிரே"
         else:
-            # Check Saturn or Mars aspect on 4th house
+            # 4th house is empty: Synthesize from 4th Lord, Vahana Karaka Venus, and their dispositors
+            fl_dispositor = SIGN_LORDS.get(fourth_lord_sign, "Saturn")
+            ven_dispositor = SIGN_LORDS.get(ven_sign, "Venus")
+
+            # Check primary dispositor influence
+            if fl_dispositor == "Saturn" or ven_dispositor == "Saturn" or fourth_lord_sign in (10, 11) or ven_sign in (10, 11):
+                color_en = "Classic Black, Midnight Navy Blue, or Metallic Charcoal / Steel Grey"
+                color_ta = "அடர் கருப்பு, ராயல் நேவி ப்ளூ, சாம்பல் அல்லது சில்வர் மெட்டாலிக்"
+            elif fl_dispositor in ("Venus", "Moon") or ven_dispositor in ("Venus", "Moon") or fourth_lord_sign in (2, 4, 7):
+                color_en = "Diamond White, Classic Silver, or Lustrous Pearl Cream"
+                color_ta = "பளபளப்பான வெள்ளை, கிளாசிக் சில்வர் அல்லது முத்து நிறம்"
+            elif fl_dispositor == "Mercury" or ven_dispositor == "Mercury" or fourth_lord_sign in (3, 6):
+                color_en = "Metallic Titanium Grey, Silver, or Sleek Dual-Tone"
+                color_ta = "டைட்டானியம் சாம்பல், சில்வர் அல்லது டூயல்-டோன் (இரட்டை வண்ணம்)"
+            elif fl_dispositor == "Jupiter" or ven_dispositor == "Jupiter" or fourth_lord_sign in (9, 12):
+                color_en = "Golden Champagne, Sandalwood Beige, or Royal Pearl White"
+                color_ta = "ராயல் முத்து வெள்ளை, ஷாம்பெயின் கோல்ட் அல்லது சந்தன நிறம்"
+            elif fl_dispositor == "Mars" or ven_dispositor == "Mars" or fourth_lord_sign in (1, 8):
+                color_en = "Deep Crimson Maroon, Flame Red, or Dark Metallic"
+                color_ta = "அடர் மெரூன், சிவப்பு அல்லது மெட்டாலிக் சாம்பல்"
+            elif fl_dispositor == "Sun" or ven_dispositor == "Sun" or fourth_lord_sign == 5:
+                color_en = "Rich Copper Maroon, Royal Golden Metallic, or Warm Crimson"
+                color_ta = "காப்பர், அடர் மெரூன் அல்லது கோல்டன் மெட்டாலிக்"
+            else:
+                color_en = "Pearl White, Classic Silver, or Metallic Grey"
+                color_ta = "முத்து வெள்ளை, சில்வர் அல்லது மெட்டாலிக் சாம்பல்"
+
+            # Check if Mars or Saturn casts a special aspect on 4th house
             sat_aspect_4th = ((fourth_sign - sat_sign) % 12) in (2, 6, 9)  # 3rd, 7th, 10th aspect
             mars_aspect_4th = ((fourth_sign - mars_sign) % 12) in (3, 6, 7)  # 4th, 7th, 8th aspect
 
-            if sat_aspect_4th:
-                color_en = "Royal Blue, Midnight Navy Blue, or Steel Grey"
-                color_ta = "ராயல் ப்ளூ, அடர் நீலம் அல்லது ஸ்டீல் கிரே"
+            if sat_aspect_4th and "Navy Blue" not in color_en and "Black" not in color_en:
+                color_en += " (with dark navy or matte grey undertone)"
+                color_ta += " (அடர் நீலம் அல்லது மேட் கிரே நிழலுடன்)"
             elif mars_aspect_4th:
-                color_en = "Deep Crimson Maroon, Bold Red, or Metallic Flame"
-                color_ta = "அடர் மெரூன், சிவப்பு அல்லது மெட்டாலிக்"
-            else:
-                # Sign-based palette from 4th Lord or Venus
-                color_map = {
-                    1: ("Deep Maroon, Bold Red, or Metallic Charcoal Grey", "அடர் மெரூன், சிவப்பு அல்லது சாம்பல் நிறம்"),
-                    2: ("Pearl White, Lustrous Silver, or Ivory Cream", "முத்து வெள்ளை, சில்வர் அல்லது பளபளப்பான வெளிர் நிறம்"),
-                    3: ("Metallic Silver-Grey, Platinum, or Dual-Tone Dark", "சில்வர் கிரே, பிளாட்டினம் அல்லது இரட்டை வண்ணக் கலவை"),
-                    4: ("Pure Pearl White, Classic Silver, or Sea-Mist Ivory", "தூய வெள்ளை, கிளாசிக் சில்வர் அல்லது முத்து நிறம்"),
-                    5: ("Rich Maroon, Copper Red, or Bold Metallic Grey", "அடர் மெரூன், காப்பர் அல்லது மெட்டாலிக் சாம்பல்"),
-                    6: ("Metallic Titanium Grey, Silver, or Dual-Tone", "டைட்டானியம் சாம்பல், சில்வர் அல்லது டூயல்-டோன்"),
-                    7: ("Diamond White, Sleek Silver, or Elegant Pearl", "பளபளப்பான வெள்ளை, சில்வர் அல்லது முத்து நிறம்"),
-                    8: ("Deep Wine Red, Midnight Black, or Dark Maroon", "அடர் ஒயின் ரெட், கருப்பு அல்லது மெரூன் நிறம்"),
-                    9: ("Pearl White, Champagne Silver, or Metallic Royal Blue", "முத்து வெள்ளை, ஷாம்பெயின் சில்வர் அல்லது ராயல் நீலம்"),
-                    10: ("Midnight Navy Blue, Charcoal Grey, or Classic Black", "அடர் கருநீலம், சாம்பல் அல்லது கிளாசிக் கருப்பு"),
-                    11: ("Steel Grey, Royal Navy Blue, or Matte Black", "ஸ்டீல் கிரே, அடர் நீலம் அல்லது மேட் பிளாக்"),
-                    12: ("Pearl White, Glaze Silver, or Light Metallic Grey", "முத்து வெள்ளை, சில்வர் அல்லது வெளிர் சாம்பல் நிறம்"),
-                }
-                color_en, color_ta = color_map.get(fourth_lord_sign, color_map.get(ven_sign, ("Pearl White, Silver, or Metallic Grey", "வெள்ளை, சில்வர் அல்லது சாம்பல்")))
+                color_en += " (with sporty pickup and sleek metallic styling)"
+                color_ta += " (ஸ்போர்ட்டியான வேகம் மற்றும் கவர்ச்சிகரமான மெட்டாலிக் ஃபினிஷிங்)"
 
         # 2. Vehicle Pristine Condition vs Scratches Evaluation
-        own_signs_map = {
-            "Sun": [5], "Moon": [4], "Mars": [1, 8], "Mercury": [3, 6],
-            "Jupiter": [9, 12], "Venus": [2, 7], "Saturn": [10, 11],
-        }
-        exalted_signs_map = {
-            "Sun": 1, "Moon": 2, "Mars": 10, "Mercury": 6,
-            "Jupiter": 4, "Venus": 12, "Saturn": 7,
-        }
-
-        fl_is_own = fourth_lord_sign in own_signs_map.get(fourth_lord, [])
-        fl_is_exalted = fourth_lord_sign == exalted_signs_map.get(fourth_lord)
-        ven_is_own = ven_sign in [2, 7]
-        ven_is_exalted = ven_sign == 12
         fl_house = ((fourth_lord_sign - ascendant_sign) % 12) + 1
+        ven_house = ((ven_sign - ascendant_sign) % 12) + 1
         fl_dusthana = fl_house in (6, 8, 12)
-        has_direct_malefic_4th = (mars_sign == fourth_sign) or (rahu_sign == fourth_sign)
+        ven_dusthana = ven_house in (6, 8, 12)
+        has_direct_malefic_4th = ("Mars" in occupants_4th) or ("Rahu" in occupants_4th)
 
-        is_scratchless = (fl_is_own or fl_is_exalted or ven_is_own or ven_is_exalted) and not (has_direct_malefic_4th or fl_dusthana)
+        # Benefic conditions: 4th house is Subha rasi OR 4th Lord/Venus in Kendra/Trikona/Upachaya and free from Dusthana & direct malefic in 4th
+        is_subha_4th = fourth_sign in (2, 3, 4, 6, 7, 9, 12)  # Taurus, Gemini, Cancer, Virgo, Libra, Sagittarius, Pisces
+        is_scratchless = (is_subha_4th or fl_house in (1, 2, 4, 5, 7, 9, 10, 11) or not ven_dusthana) and not (has_direct_malefic_4th or fl_dusthana)
 
         if is_scratchless:
             blemish_en = (
-                "The vehicle is maintained pristine, clean, and without noticeable scratches; you guard it with keen pride "
-                "against even small grazes, keeping it spotless and attending to regular maintenance with care."
+                "The vehicle is maintained with genuine personal care, neatness, and cleanliness; "
+                "you dislike dust or even small blemishes on it, washing and servicing it regularly to keep it scratch-protected."
             )
             blemish_ta = (
-                "வாகனம் எந்தவொரு பெரிய கீறலும் இன்றி மிக நேர்த்தியாகவும் சுத்தமாகவும் பராமரிக்கப்படுகிறது; வண்டியில் ஒரு சிறு கீறல் அல்லது "
-                "தூசு கூட விழாமல் கண்ணும் கருத்துமாகப் பாதுகாக்கும் சுபாவம், மற்றும் முறையான ஆயில் பராமரிப்பில் தனி அக்கறை உண்டு."
+                "வாகனம் மிக நேர்த்தியாகவும், சுத்தமாகவும் பராமரிக்கப்படுகிறது; வண்டியில் தூசு அல்லது சிறு கீறல் கூட விழாமல் "
+                "கண்ணும் கருத்துமாகப் பாதுகாக்கும் சுபாவம் உண்டு. ஆயில் சர்வீஸ் மற்றும் வாகனப் பராமரிப்பில் தனி அக்கறை செலுத்துவீர்கள்."
             )
         else:
             blemish_en = (
-                "Your vehicle carries a minor scratch or brush mark on the front/side bumper, mirror edge, or exhaust guard from tight traffic navigation, "
-                "along with periodic tire puncture or battery/servicing maintenance."
+                "Even though you strive to keep the vehicle in good order, tight traffic navigation or crowded parking "
+                "has left minor grazes or brush marks on the bumper/mirror edges, along with occasional tyre puncture or servicing delays."
             )
             blemish_ta = (
-                "உங்கள் வாகனத்தில் முன்/பக்கவாட்டு பம்பர், மிரர் அல்லது விளிம்பில் டிராஃபிக்கில் உரசிய சிறு கீறல் அல்லது தட்டுப்பாடு அடையாளம் உண்டு; "
-                "மேலும் டயர் பஞ்சர் அல்லது பேட்டரி/ஆயில் சர்வீஸ் தாமதத்தால் ஏற்படும் சிறு தொந்தரவு ஏற்படுவது இயல்பு."
+                "வாகனத்தை நீங்கள் கவனமாகப் பராமரித்தாலும், அன்றாட டிராஃபிக் நெரிசல் அல்லது குறுகிய இடங்களில் "
+                "பக்கவாட்டு மிரர், பம்பர் அல்லது விளிம்பில் தவிர்க்க முடியாத சிறு உரசல் கீறல் ஏற்படுவதும், "
+                "அவ்வப்போது டயர் பஞ்சர் அல்லது பேட்டரி/சர்வீஸ் தாமதங்கள் வந்து நீங்குவதும் இயல்பு."
             )
 
         v_en = f"You are naturally drawn to or operate vehicles in {color_en} (commuter two-wheeler or family car). Conveyance signature: {blemish_en}"
