@@ -5315,3 +5315,22 @@ export async function getKuladeivamUniversalTemples(): Promise<UniversalRefugeTe
     method: "GET",
   });
 }
+
+
+// ===========================================================================
+// Instant Customer Arrival & Revelation Teleprompter API
+// ===========================================================================
+
+import type {
+  InstantRevelationRequest,
+  InstantRevelationResponse,
+} from "./types";
+
+export async function analyzeInstantRevelation(
+  req: InstantRevelationRequest
+): Promise<InstantRevelationResponse> {
+  return request<InstantRevelationResponse>("/api/v1/instant-revelation/analyze", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}

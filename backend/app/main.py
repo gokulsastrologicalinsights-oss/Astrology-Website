@@ -40,6 +40,7 @@ from app.routers import (
     tamil_sastra,
     brighu_naadi,
     kuladeivam,
+    instant_revelation,
 )
 
 
@@ -179,5 +180,7 @@ app.include_router(brighu_naadi.router)
 app.include_router(brighu_naadi.router, prefix="/api/brighu-naadi")
 app.include_router(kuladeivam.router)
 app.include_router(kuladeivam.router, prefix="/api/kuladeivam")
+app.include_router(instant_revelation.router)
+app.include_router(instant_revelation.router, prefix="/api/instant-revelation")
 
 

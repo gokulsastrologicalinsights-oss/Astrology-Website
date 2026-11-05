@@ -6910,3 +6910,76 @@ export interface SinglePageHoroscopePdfRequest {
   font_family?: string;
 }
 
+
+
+// ============================================================================
+// Instant Customer Arrival & Revelation Teleprompter Models
+// ============================================================================
+
+export interface InstantRevelationRequest {
+  birth_date: string;
+  birth_time: string;
+  timezone: string;
+  latitude: number;
+  longitude: number;
+  name?: string;
+  gender?: "male" | "female" | string;
+  ayanamsa?: number;
+  consultation_time?: string;
+  consultation_latitude?: number;
+  consultation_longitude?: number;
+  saved_horoscope_id?: string;
+  customer_id?: string;
+}
+
+export interface RevelationBullet {
+  id: string;
+  category: "mind_reading" | "past_hit" | "personal_marker" | "future_window" | "remedy" | string;
+  shock_factor: "EXTREME" | "HIGH" | "MODERATE" | string;
+  headline_en: string;
+  headline_ta: string;
+  script_en: string;
+  script_ta: string;
+  astrological_proof: string;
+  calendar_period?: string | null;
+  nature?: "danger" | "breakthrough" | "neutral" | "identity" | string | null;
+}
+
+export interface FutureTimelineWindow {
+  start_date: string;
+  end_date: string;
+  status: "RED_ALERT" | "PREPARATION" | "GOLDEN_BREAKTHROUGH" | string;
+  title_en: string;
+  title_ta: string;
+  script_en: string;
+  script_ta: string;
+  do_rules_en: string[];
+  do_rules_ta: string[];
+  dont_rules_en: string[];
+  dont_rules_ta: string[];
+}
+
+export interface InstantRevelationResponse {
+  name: string;
+  birth_date: string;
+  current_age: number;
+  current_dasa_summary: string;
+  current_dasa_summary_ta: string;
+  arrival_moment_iso: string;
+  primary_arrival_reason_en: string;
+  primary_arrival_reason_ta: string;
+  arrival_reason_bullets: RevelationBullet[];
+  past_verifiable_hits: RevelationBullet[];
+  personal_and_home_markers: RevelationBullet[];
+  future_windows: FutureTimelineWindow[];
+  instant_remedy_en: string;
+  instant_remedy_ta: string;
+  temple_recommendation_en: string;
+  temple_recommendation_ta: string;
+  daily_karma_action_en: string;
+  daily_karma_action_ta: string;
+  gem_or_rudraksha_en: string;
+  gem_or_rudraksha_ta: string;
+  quick_glance_teleprompter_en: string[];
+  quick_glance_teleprompter_ta: string[];
+}

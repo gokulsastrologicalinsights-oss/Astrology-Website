@@ -208,6 +208,17 @@ export default function DashboardPage() {
               Quick Navigation
             </span>
             <Link
+              href="/tools/instant-revelation"
+              className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-800 bg-rose-50/80 hover:bg-rose-100/90 transition-colors group border border-rose-200/80"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Flame className="w-3.5 h-3.5 text-rose-600 shrink-0 animate-pulse" />
+                <span className="truncate">நேரடி வாக்கு பலகை (Instant Reading)</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-rose-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </Link>
+
+            <Link
               href="/tools/horoscope"
               className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
             >

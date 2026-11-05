@@ -62,6 +62,16 @@ interface AstrologyToolCard {
   // Section 1: Astrology Tools Cards (matching Screenshot 1)
   const astrologyTools: AstrologyToolCard[] = [
     {
+      id: "instant-revelation",
+      titleTa: "வாடிக்கையாளர் நேரடி வாக்கு பலகை (உடனடி பலன்)",
+      titleEn: "Instant Customer Revelation Teleprompter",
+      descriptionTa: "வாடிக்கையாளர் வந்தவுடன் எவ்வித கிரகக் கணக்கீடும் இன்றி வருகை நோக்கம், 3 கடந்த கால உண்மைகள், மற்றும் எதிர்காலத்தை நேரடியாகப் பேசும் வாக்கு பலகை.",
+      descriptionEn: "Zero-analysis cold-reading teleprompter: instant arrival mind-reading, 3 verifiable past shock hits, Vastu markers, and future timing windows.",
+      href: "/tools/instant-revelation",
+      icon: Zap,
+      color: "text-rose-700 border-rose-300 bg-rose-50/70 ring-2 ring-rose-400/40",
+    },
+    {
       id: "horoscope",
       titleTa: "ஜாதகம் (வேத & கே.பி)",
       titleEn: "Horoscope (Vedic & KP)",
