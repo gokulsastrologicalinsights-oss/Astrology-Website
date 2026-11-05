@@ -20,6 +20,7 @@ import {
   Star,
   Phone,
   Pin,
+  Flame,
 } from "lucide-react";
 
 interface SavedHoroscopeCardProps {
@@ -335,6 +336,16 @@ export function SavedHoroscopeCard({
               >
                 <Star className="w-3.5 h-3.5 text-indigo-600 fill-indigo-100" />
                 <span className="hidden sm:inline">{language === "ta" ? "நட்சத்திரம்" : "Nakshatra"}</span>
+              </Link>
+
+              {/* Instant Revelation Teleprompter Direct Action */}
+              <Link
+                href={`/tools/instant-revelation?id=${horoscope.id}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-400 bg-amber-50 hover:bg-amber-100 text-xs font-semibold text-[#8C6D23] transition-colors"
+                title={language === "ta" ? "வாடிக்கையாளர் நேரடி வாக்கு பலகை (Instant Revelation Teleprompter)" : "Instant Revelation Teleprompter"}
+              >
+                <Flame className="w-3.5 h-3.5 text-[#B4872B] animate-pulse" />
+                <span className="hidden sm:inline">{language === "ta" ? "வாக்கு பலகை" : "Revelation"}</span>
               </Link>
 
               {/* View Action Button matching Screenshot 2 */}

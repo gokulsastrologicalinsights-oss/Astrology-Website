@@ -1,16 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { analyzeInstantRevelation } from "@/lib/api";
+import { analyzeInstantRevelation, calculateHoroscope } from "@/lib/api";
+import { SouthIndianChart } from "@/components/charts/SouthIndianChart";
+import { buildNavamsaHoroscope } from "@/lib/chart-transforms";
 import {
   InstantRevelationRequest,
   InstantRevelationResponse,
   RevelationBullet,
   FutureTimelineWindow,
+  HoroscopeResponse,
 } from "@/lib/types";
+import {
+  getRasiNameTamil,
+  getPlanetNameTamil,
+  getNakshatraTamil,
+} from "@/lib/tamil-astrology";
+import { getGrahaDignity } from "@/lib/dignity";
+import { formatDms } from "@/lib/formatters";
 import {
   Sparkles,
   Compass,
@@ -39,6 +51,11 @@ import {
   Car,
   Landmark,
   Shield,
+  Search,
+  ExternalLink,
+  FolderOpen,
+  X,
+  Check,
 } from "lucide-react";
 
 const MAJOR_TN_CITIES = [
@@ -54,8 +71,17 @@ const MAJOR_TN_CITIES = [
   { name: "New Delhi (புது தில்லி)", lat: 28.6139, lon: 77.209, tz: "Asia/Kolkata" },
 ];
 
-export default function InstantRevelationPage() {
+function InstantRevelationContent() {
   const { language, t } = useLanguage();
+  const { session, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
+  const idParam = searchParams.get("id");
+
+  // Mode: Saved Horoscopes vs Manual Entry
+  const [inputMode, setInputMode] = useState<"saved" | "manual">(idParam ? "saved" : "saved");
+  const [savedSearchQuery, setSavedSearchQuery] = useState("");
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(idParam);
+  const [loadingSavedList, setLoadingSavedList] = useState(false);
 
   // Form State
   const [name, setName] = useState("Client / ஜாதகர்");
@@ -72,6 +98,12 @@ export default function InstantRevelationPage() {
   // Saved Horoscopes for 1-Click Load
   const [savedProfiles, setSavedProfiles] = useState<any[]>([]);
 
+  // Chart Viewer State
+  const [showChartViewer, setShowChartViewer] = useState(false);
+  const [chartTab, setChartTab] = useState<"rasi" | "navamsa" | "table">("rasi");
+  const [chartData, setChartData] = useState<HoroscopeResponse | null>(null);
+  const [loadingChartData, setLoadingChartData] = useState(false);
+
   // Response State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,20 +111,48 @@ export default function InstantRevelationPage() {
   const [scriptLanguage, setScriptLanguage] = useState<"ta" | "en" | "both">("both");
   const [copied, setCopied] = useState(false);
 
-  // Load Saved Horoscopes on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("gai_saved_horoscopes") || localStorage.getItem("saved_horoscopes");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSavedProfiles(parsed);
-        }
-      }
-    } catch {
-      // Ignore fallback
+  // Ensure Chart Data exists (computes or extracts from snapshot)
+  const ensureChartData = useCallback(async (profileToUse?: any) => {
+    // If profile has calculation snapshot with planets
+    const snapshot = profileToUse?.calculation_result || profileToUse?.horoscope;
+    if (snapshot?.planets && snapshot?.ascendant) {
+      setChartData(snapshot as HoroscopeResponse);
+      return snapshot as HoroscopeResponse;
     }
-  }, []);
+    const innerHoro = snapshot?.horoscope;
+    if (innerHoro?.planets && innerHoro?.ascendant) {
+      setChartData(innerHoro as HoroscopeResponse);
+      return innerHoro as HoroscopeResponse;
+    }
+
+    setLoadingChartData(true);
+    try {
+      const bDate = profileToUse?.birth_date || birthDate;
+      const bTime = profileToUse?.birth_time || birthTime;
+      const lat = profileToUse?.latitude || latitude;
+      const lon = profileToUse?.longitude || longitude;
+      const tz = profileToUse?.timezone || timezone;
+
+      const res = await calculateHoroscope({
+        birth_date: bDate,
+        birth_time: bTime,
+        latitude: lat,
+        longitude: lon,
+        timezone: tz,
+        ayanamsa: 0,
+        house_system: 0,
+        include_panchang: false,
+        include_outer_planets: true,
+      });
+      setChartData(res);
+      return res;
+    } catch (e) {
+      console.warn("Could not calculate visual chart data:", e);
+      return null;
+    } finally {
+      setLoadingChartData(false);
+    }
+  }, [birthDate, birthTime, latitude, longitude, timezone]);
 
   const handleCityChange = (cityName: string) => {
     setSelectedCity(cityName);
@@ -104,34 +164,147 @@ export default function InstantRevelationPage() {
     }
   };
 
-  const handleLoadProfile = (profile: any) => {
+  const handleLoadProfile = useCallback((profile: any, autoRun = false) => {
     if (!profile) return;
-    if (profile.name) setName(profile.name);
+    const resolvedName = profile.person_name || profile.name || "Client";
+    setName(resolvedName);
     if (profile.birth_date) setBirthDate(profile.birth_date);
     if (profile.birth_time) setBirthTime(profile.birth_time);
     if (profile.latitude) setLatitude(profile.latitude);
     if (profile.longitude) setLongitude(profile.longitude);
     if (profile.timezone) setTimezone(profile.timezone);
     if (profile.gender) setGender(profile.gender.toLowerCase());
-  };
+    if (profile.id) setSelectedSavedId(profile.id);
 
-  const handleGenerate = async () => {
+    const place = profile.birthplace || profile.location_name;
+    if (place) setSelectedCity(place);
+
+    // Extract or pre-fill chart data
+    const snapshot = profile.calculation_result || profile.horoscope;
+    if (snapshot?.planets && snapshot?.ascendant) {
+      setChartData(snapshot as HoroscopeResponse);
+    } else if (snapshot?.horoscope?.planets) {
+      setChartData(snapshot.horoscope as HoroscopeResponse);
+    }
+
+    if (autoRun) {
+      setTimeout(() => {
+        runRevelationWithPayload({
+          name: resolvedName,
+          birth_date: profile.birth_date,
+          birth_time: profile.birth_time,
+          latitude: profile.latitude,
+          longitude: profile.longitude,
+          timezone: profile.timezone || "Asia/Kolkata",
+          gender: (profile.gender || "male").toLowerCase(),
+          saved_horoscope_id: profile.id,
+        });
+      }, 50);
+    }
+  }, []);
+
+  // Load Saved Horoscopes on mount & fetch from database
+  useEffect(() => {
+    async function loadAllSaved() {
+      setLoadingSavedList(true);
+      const combined: any[] = [];
+
+      // 1. Local Storage Fallback
+      try {
+        const stored = localStorage.getItem("gai_saved_horoscopes") || localStorage.getItem("saved_horoscopes");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((item) => {
+              combined.push({
+                ...item,
+                person_name: item.name || item.person_name,
+              });
+            });
+          }
+        }
+      } catch {}
+
+      // 2. Fetch authenticated database horoscopes
+      try {
+        const headers: Record<string, string> = {};
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+        const resp = await fetch("/api/horoscopes?limit=1000", { headers });
+        if (resp.ok) {
+          const resJson = await resp.json();
+          const dbItems = resJson.horoscopes || [];
+          dbItems.forEach((h: any) => {
+            if (!combined.some((c) => c.id === h.id)) {
+              combined.push(h);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Could not load database horoscopes:", err);
+      }
+
+      setSavedProfiles(combined);
+      setLoadingSavedList(false);
+
+      // Handle ?id= param
+      if (idParam) {
+        const target = combined.find((p) => p.id === idParam);
+        if (target) {
+          handleLoadProfile(target, true);
+        } else {
+          // Fetch single horoscope by ID
+          try {
+            const singleResp = await fetch(`/api/horoscopes/${idParam}`);
+            if (singleResp.ok) {
+              const singleJson = await singleResp.json();
+              if (singleJson.horoscope) {
+                handleLoadProfile(singleJson.horoscope, true);
+              }
+            }
+          } catch {}
+        }
+      }
+    }
+
+    loadAllSaved();
+  }, [session?.access_token, idParam, handleLoadProfile]);
+
+  // Filtered saved profiles
+  const filteredSavedProfiles = useMemo(() => {
+    if (!savedSearchQuery.trim()) return savedProfiles;
+    const q = savedSearchQuery.toLowerCase().trim();
+    return savedProfiles.filter((p) => {
+      const pName = (p.person_name || p.name || "").toLowerCase();
+      const pDate = (p.birth_date || "").toLowerCase();
+      const pCity = (p.birthplace || p.location_name || "").toLowerCase();
+      return pName.includes(q) || pDate.includes(q) || pCity.includes(q);
+    });
+  }, [savedProfiles, savedSearchQuery]);
+
+  const runRevelationWithPayload = async (customPayload?: Partial<InstantRevelationRequest>) => {
     setLoading(true);
     setError(null);
     try {
       const payload: InstantRevelationRequest = {
-        name,
-        birth_date: birthDate,
-        birth_time: birthTime,
-        latitude,
-        longitude,
-        timezone,
-        gender,
+        name: customPayload?.name || name,
+        birth_date: customPayload?.birth_date || birthDate,
+        birth_time: customPayload?.birth_time || birthTime,
+        latitude: customPayload?.latitude || latitude,
+        longitude: customPayload?.longitude || longitude,
+        timezone: customPayload?.timezone || timezone,
+        gender: customPayload?.gender || gender,
+        saved_horoscope_id: customPayload?.saved_horoscope_id || selectedSavedId || undefined,
         consultation_time: useCurrentTime ? new Date().toISOString() : customArrivalMoment || undefined,
       };
 
       const res = await analyzeInstantRevelation(payload);
       setData(res);
+
+      // Auto-load chart data in background so the user can toggle chart immediately
+      ensureChartData();
+
       // Smooth scroll to teleprompter
       setTimeout(() => {
         document.getElementById("teleprompter-view")?.scrollIntoView({ behavior: "smooth" });
@@ -141,6 +314,10 @@ export default function InstantRevelationPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerate = () => {
+    runRevelationWithPayload();
   };
 
   const handleCopyScript = () => {
@@ -178,25 +355,23 @@ export default function InstantRevelationPage() {
     lines.push(`  EN: "${data.family_birth_order_en}"`);
     lines.push(`  TA: "${data.family_birth_order_ta}"`);
     lines.push(`[3. SHANI & GURU GOCHARA]:`);
-    lines.push(`  Phase: ${data.gochara_saturn_phase}`);
-    lines.push(`  Shani EN: "${data.gochara_saturn_verdict_en}"`);
-    lines.push(`  Shani TA: "${data.gochara_saturn_verdict_ta}"`);
-    lines.push(`  Guru EN: "${data.gochara_jupiter_verdict_en}"`);
-    lines.push(`  Guru TA: "${data.gochara_jupiter_verdict_ta}"`);
+    lines.push(`  EN: "${data.gochara_saturn_verdict_en} | ${data.gochara_jupiter_verdict_en}"`);
+    lines.push(`  TA: "${data.gochara_saturn_verdict_ta} | ${data.gochara_jupiter_verdict_ta}"`);
+    lines.push(`[4. DASA CHIDRA ALERT]:`);
+    lines.push(`  Active: ${data.dasa_chidra_active}`);
     if (data.dasa_chidra_active) {
-      lines.push(`[4. DASA CHIDRA ALERT (UNTIL ${data.dasa_chidra_end_date})]:`);
       lines.push(`  EN: "${data.dasa_chidra_warning_en}"`);
       lines.push(`  TA: "${data.dasa_chidra_warning_ta}"`);
     }
-    lines.push(`[5. MEDICAL VULNERABILITY]:`);
+    lines.push(`[5. MEDICAL ORGAN VULNERABILITY]:`);
     lines.push(`  EN: "${data.medical_organ_vulnerability_en}"`);
     lines.push(`  TA: "${data.medical_organ_vulnerability_ta}"`);
 
-    lines.push(`\n--- THE 4 ULTRA-PRECISION NADI SHOCKERS (OPTION B) ---`);
-    lines.push(`[1. SPOUSE & IN-LAWS]:`);
+    lines.push(`\n--- 4 ULTRA-PRECISION NADI SHOCKERS (OPTION B) ---`);
+    lines.push(`[1. SPOUSE & IN-LAWS SECRETS]:`);
     lines.push(`  EN: "${data.spouse_secrets_en}"`);
     lines.push(`  TA: "${data.spouse_secrets_ta}"`);
-    lines.push(`[2. VEHICLE COLOR & SCRATCH MARKER]:`);
+    lines.push(`[2. VEHICLE & CONVEYANCE MARKER]:`);
     lines.push(`  EN: "${data.vehicle_marker_en}"`);
     lines.push(`  TA: "${data.vehicle_marker_ta}"`);
     lines.push(`[3. ANCESTRAL LAND & WELL DISPUTE]:`);
@@ -256,8 +431,8 @@ export default function InstantRevelationPage() {
               </h1>
               <p className="mt-1 text-sm text-gray-200 max-w-3xl">
                 வாடிக்கையாளர் அமர்ந்தவுடன் எந்தவித கிரகக் கணக்கீடும் இன்றி, அவர்களின் வருகை நோக்கம், நடந்து முடிந்த 3
-                அதிர்ச்சி சம்பவங்கள், வீட்டு வாஸ்து அடையாளங்கள் மற்றும் எதிர்கால துல்லிய காலங்களை நேரடியாகப் பேசும்
-                வாக்கு பலகை.
+                அதிர்ச்சி சம்பவங்கள், வீட்டு வாஸ்து அடையாளங்கள், 4 பிருகு நாடி ரகசியங்கள் மற்றும் எதிர்கால துல்லிய காலங்களை
+                நேரடியாகப் பேசும் வாக்கு பலகை.
               </p>
             </div>
 
@@ -278,34 +453,129 @@ export default function InstantRevelationPage() {
             <div className="flex items-center gap-2">
               <User className="w-5 h-5 text-[#B4872B]" />
               <h2 className="text-base font-bold text-[#153F6B]">
-                வாடிக்கையாளர் விபரம் (Customer Input & 1-Click Load)
+                வாடிக்கையாளர் விபரம் (Customer Intake & Saved Charts)
               </h2>
             </div>
 
-            {savedProfiles.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">சேமிக்கப்பட்ட ஜாதகர்:</span>
-                <select
-                  className="text-xs bg-amber-50/70 border border-amber-300 rounded-lg px-2.5 py-1 text-amber-900 font-medium focus:ring-1 focus:ring-amber-500 outline-none"
-                  onChange={(e) => {
-                    const prof = savedProfiles.find((p) => (p.id || p.name) === e.target.value);
-                    if (prof) handleLoadProfile(prof);
-                  }}
-                  defaultValue=""
+            {/* Input Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg bg-gray-100 p-1 border border-gray-200 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setInputMode("saved")}
+                  className={`px-3 py-1.5 rounded-md font-semibold transition flex items-center gap-1.5 ${
+                    inputMode === "saved"
+                      ? "bg-[#153F6B] text-white shadow-xs"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
-                  <option value="" disabled>
-                    -- ஜாதகரைத் தேர்ந்தெடுக்கவும் --
-                  </option>
-                  {savedProfiles.map((p, i) => (
-                    <option key={p.id || i} value={p.id || p.name}>
-                      {p.name || `Profile #${i + 1}`} ({p.birth_date})
-                    </option>
-                  ))}
-                </select>
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span>சேமிக்கப்பட்ட ஜாதகங்கள் ({savedProfiles.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode("manual")}
+                  className={`px-3 py-1.5 rounded-md font-semibold transition flex items-center gap-1.5 ${
+                    inputMode === "manual"
+                      ? "bg-[#153F6B] text-white shadow-xs"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>புதிய வாடிக்கையாளர் (Manual)</span>
+                </button>
               </div>
-            )}
+            </div>
           </div>
 
+          {/* SAVED HOROSCOPES SELECTOR */}
+          {inputMode === "saved" && (
+            <div className="mb-5 space-y-3 bg-amber-50/50 border border-amber-200/70 p-4 rounded-xl">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={savedSearchQuery}
+                    onChange={(e) => setSavedSearchQuery(e.target.value)}
+                    placeholder="பெயர், பிறந்த தேதி அல்லது ஊர் மூலம் தேடுங்கள் (Search saved charts by name, date or place)..."
+                    className="w-full text-xs sm:text-sm pl-9 pr-8 py-2 bg-white border border-amber-300 rounded-lg focus:ring-2 focus:ring-[#B4872B] focus:border-transparent outline-none"
+                  />
+                  {savedSearchQuery && (
+                    <button
+                      onClick={() => setSavedSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="sm:w-80">
+                  <select
+                    className="w-full text-xs sm:text-sm bg-white border border-amber-300 rounded-lg px-3 py-2 text-gray-800 font-medium focus:ring-2 focus:ring-[#B4872B] outline-none"
+                    value={selectedSavedId || ""}
+                    onChange={(e) => {
+                      const found = savedProfiles.find((p) => (p.id || p.name) === e.target.value);
+                      if (found) handleLoadProfile(found);
+                    }}
+                  >
+                    <option value="" disabled>
+                      {filteredSavedProfiles.length === 0
+                        ? "-- பொருந்தும் ஜாதகங்கள் இல்லை --"
+                        : `-- ஜாதகரைத் தேர்ந்தெடுக்கவும் (${filteredSavedProfiles.length}) --`}
+                    </option>
+                    {filteredSavedProfiles.map((p, i) => {
+                      const pName = p.person_name || p.name || `Profile #${i + 1}`;
+                      const pDate = p.birth_date || "";
+                      const pCity = p.birthplace || p.location_name || "";
+                      return (
+                        <option key={p.id || i} value={p.id || pName}>
+                          {pName} {pDate ? `(${pDate})` : ""} {pCity ? `• ${pCity}` : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              {selectedSavedId && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 border-t border-amber-200/60 gap-3">
+                  <div className="flex items-center gap-2 text-xs text-amber-900 font-medium">
+                    <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>
+                      தேர்ந்தெடுக்கப்பட்ட ஜாதகர்: <strong className="font-bold text-[#153F6B]">{name}</strong> (பிறப்பு: {birthDate} {birthTime}, {selectedCity})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowChartViewer(!showChartViewer);
+                        if (!chartData) ensureChartData();
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-bold transition cursor-pointer"
+                    >
+                      <Compass className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{showChartViewer ? "கட்டத்தை மறை (Hide Chart)" : "ஜாதகக் கட்டம் பார் (View Natal Chart)"}</span>
+                    </button>
+
+                    <Link
+                      href={`/horoscope/results?id=${selectedSavedId}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 text-xs font-semibold transition"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-gray-600" />
+                      <span>முழு ஜாதகம் (Results Page)</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* FORM FIELDS (Editable in both Saved and Manual modes) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="lg:col-span-2">
               <label className="block text-xs font-semibold text-gray-700 mb-1">வாடிக்கையாளர் பெயர் (Client Name)</label>
@@ -389,23 +659,38 @@ export default function InstantRevelationPage() {
               )}
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#B4872B] to-[#996f21] hover:from-[#996f21] hover:to-[#7f5a18] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>கணக்கிடுகிறது... (Synthesizing...)</span>
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4 text-amber-200 fill-amber-200" />
-                  <span>உடனடி வாக்கு பலன் திரையிடு (Generate Teleprompter)</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChartViewer(!showChartViewer);
+                  if (!chartData) ensureChartData();
+                }}
+                className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl border border-slate-300 transition-all flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
+                title="இராசி மற்றும் நவாம்ச கட்டத்தைப் பார்க்க"
+              >
+                <Compass className="w-4 h-4 text-indigo-600" />
+                <span>{showChartViewer ? "கட்டத்தை மறை" : "ஜாதகக் கட்டம்"}</span>
+              </button>
+
+              <button
+                onClick={handleGenerate}
+                disabled={loading}
+                className="flex-1 sm:flex-initial px-8 py-3 bg-gradient-to-r from-[#B4872B] to-[#996f21] hover:from-[#996f21] hover:to-[#7f5a18] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-60 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>கணக்கிடுகிறது... (Synthesizing...)</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 text-amber-200 fill-amber-200" />
+                    <span>உடனடி வாக்கு பலன் திரையிடு (Generate Teleprompter)</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -415,6 +700,194 @@ export default function InstantRevelationPage() {
             </div>
           )}
         </div>
+
+        {/* =========================================================================
+            ASTROLOGICAL NATAL CHART VIEWER (ராசி & நவாம்ச கட்ட நேரடி பார்வை)
+           ========================================================================= */}
+        {showChartViewer && (
+          <div className="bg-white rounded-2xl shadow-xl border-2 border-indigo-200 overflow-hidden mb-8 transition-all print:hidden">
+            <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-500/20 rounded-xl border border-indigo-400/30">
+                  <Compass className="w-6 h-6 text-indigo-300" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-widest block">
+                    Natal Chart Viewer • ஜாதகக் கட்ட நேரடி பார்வை
+                  </span>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span>{name} - இராசி & நவாம்ச கட்டங்கள்</span>
+                    {selectedSavedId && (
+                      <span className="text-xs bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded font-mono">
+                        Saved #{selectedSavedId.slice(0, 8)}
+                      </span>
+                    )}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Sub-tabs: Rasi / Navamsa / Table */}
+                <div className="inline-flex rounded-lg bg-black/30 p-1 border border-indigo-500/30 text-xs">
+                  <button
+                    onClick={() => setChartTab("rasi")}
+                    className={`px-3 py-1 rounded-md font-medium transition ${
+                      chartTab === "rasi" ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    இராசி (D1 Rasi)
+                  </button>
+                  <button
+                    onClick={() => setChartTab("navamsa")}
+                    className={`px-3 py-1 rounded-md font-medium transition ${
+                      chartTab === "navamsa" ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    நவாம்சம் (D9 Navamsa)
+                  </button>
+                  <button
+                    onClick={() => setChartTab("table")}
+                    className={`px-3 py-1 rounded-md font-medium transition ${
+                      chartTab === "table" ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    கிரக பாதசாரம் (Table)
+                  </button>
+                </div>
+
+                {selectedSavedId && (
+                  <Link
+                    href={`/horoscope/results?id=${selectedSavedId}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow transition"
+                    title="முழுமையான 100-பக்க ஜாதகப் பக்கத்தை புதிய தத்தலில் திறக்க"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>முழு ஜாதகம்</span>
+                  </Link>
+                )}
+
+                <button
+                  onClick={() => setShowChartViewer(false)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition"
+                  title="கட்டத்தை மூடு"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {loadingChartData ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+                  <p className="text-sm text-gray-600">ஜாதகக் கட்டத்தை கணித்துக் கொண்டிருக்கிறது...</p>
+                </div>
+              ) : chartData ? (
+                <div>
+                  {chartTab === "rasi" && (
+                    <div className="flex flex-col items-center">
+                      <div className="w-full max-w-xl">
+                        <SouthIndianChart
+                          horoscope={chartData}
+                          centerLabel={language === "ta" ? "இராசி" : "Rasi"}
+                          centerNumber="(1)"
+                          isSaved={Boolean(selectedSavedId)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {chartTab === "navamsa" && (
+                    <div className="flex flex-col items-center">
+                      <div className="w-full max-w-xl">
+                        <SouthIndianChart
+                          horoscope={buildNavamsaHoroscope(chartData)}
+                          centerLabel={language === "ta" ? "நவாம்சம்" : "Navamsa"}
+                          centerNumber="(9)"
+                          isSaved={Boolean(selectedSavedId)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {chartTab === "table" && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <th className="p-2.5 font-bold">கிரகம் (Graha)</th>
+                            <th className="p-2.5 font-bold">இராசி (Sign)</th>
+                            <th className="p-2.5 font-bold">பாகை (Longitude)</th>
+                            <th className="p-2.5 font-bold">நட்சத்திரம் & பாதம் (Nakshatra)</th>
+                            <th className="p-2.5 font-bold">அதிபதி (Lord)</th>
+                            <th className="p-2.5 font-bold">நிலை (Status)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {/* Ascendant */}
+                          <tr className="bg-amber-50/40 font-semibold">
+                            <td className="p-2.5 text-[#B4872B] font-bold">லக்னம் (Lagna)</td>
+                            <td className="p-2.5">{chartData.ascendant.sign_name_tamil || getRasiNameTamil(chartData.ascendant.sign_name)} ({chartData.ascendant.sign_name})</td>
+                            <td className="p-2.5 font-mono">{formatDms(chartData.ascendant.degree_in_sign)}</td>
+                            <td className="p-2.5">{getNakshatraTamil(chartData.ascendant.nakshatra?.name)} (பாதம் {chartData.ascendant.nakshatra?.pada})</td>
+                            <td className="p-2.5">{chartData.ascendant.nakshatra?.lord}</td>
+                            <td className="p-2.5 text-xs text-amber-800">ஜன்ம லக்னம்</td>
+                          </tr>
+                          {/* Planets */}
+                          {chartData.planets.map((p) => {
+                            const dig = getGrahaDignity(p.name, p.sign_index);
+                            return (
+                              <tr key={p.name} className="hover:bg-slate-50 transition">
+                                <td className="p-2.5 font-bold text-slate-800">
+                                  {getPlanetNameTamil(p.name)} ({p.name})
+                                </td>
+                                <td className="p-2.5">{p.sign_name_tamil || getRasiNameTamil(p.sign_name)} ({p.sign_name})</td>
+                                <td className="p-2.5 font-mono">{formatDms(p.degree_in_sign)}</td>
+                                <td className="p-2.5">{getNakshatraTamil(p.nakshatra?.name)} (பாதம் {p.nakshatra?.pada})</td>
+                                <td className="p-2.5">{p.nakshatra?.lord}</td>
+                                <td className="p-2.5">
+                                  <div className="flex items-center gap-1">
+                                    {p.is_retrograde && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-100 text-red-700 font-bold">
+                                        வக்கிரம் (R)
+                                      </span>
+                                    )}
+                                    {dig.isUcham && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-bold">
+                                        உச்சம்
+                                      </span>
+                                    )}
+                                    {dig.isNeecham && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold">
+                                        நீசம்
+                                      </span>
+                                    )}
+                                    <span className="text-[11px] text-slate-600 font-medium capitalize">{dig.status}</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">ஜாதகக் கட்ட விபரங்கள் இன்னும் கணக்கிடப்படவில்லை.</p>
+                  <button
+                    onClick={() => ensureChartData()}
+                    className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 cursor-pointer"
+                  >
+                    இப்போது கணக்கிடு (Compute Chart)
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* =========================================================================
             THE TELEPROMPTER VIEW
@@ -434,7 +907,32 @@ export default function InstantRevelationPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* View Natal Chart Toggle in Teleprompter */}
+                <button
+                  onClick={() => {
+                    setShowChartViewer(!showChartViewer);
+                    if (!chartData) ensureChartData();
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium border border-indigo-500 flex items-center gap-1.5 transition cursor-pointer"
+                  title="இராசி மற்றும் நவாம்ச கட்டத்தை திற/மறை"
+                >
+                  <Compass className="w-3.5 h-3.5 text-indigo-200" />
+                  <span>{showChartViewer ? "கட்டத்தை மறை" : "ஜாதகக் கட்டம்"}</span>
+                </button>
+
+                {selectedSavedId && (
+                  <Link
+                    href={`/horoscope/results?id=${selectedSavedId}`}
+                    target="_blank"
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-medium border border-amber-500/40 flex items-center gap-1.5 transition"
+                    title="முழுமையான ஜாதக முடிவுகள் பக்கத்தை திற"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">முழு ஜாதகம்</span>
+                  </Link>
+                )}
+
                 {/* Language Switch */}
                 <div className="inline-flex rounded-lg bg-gray-800 p-1 border border-gray-700 text-xs">
                   <button
@@ -465,7 +963,7 @@ export default function InstantRevelationPage() {
 
                 <button
                   onClick={handleCopyScript}
-                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium border border-gray-700 flex items-center gap-1.5 transition"
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium border border-gray-700 flex items-center gap-1.5 transition cursor-pointer"
                   title="முழு வாக்கு பலனையும் நகலெடு"
                 >
                   <Copy className="w-3.5 h-3.5 text-amber-400" />
@@ -474,7 +972,7 @@ export default function InstantRevelationPage() {
 
                 <button
                   onClick={handlePrint}
-                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium border border-gray-700 flex items-center gap-1.5 transition"
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium border border-gray-700 flex items-center gap-1.5 transition cursor-pointer"
                   title="ஜோதிடர் பலன் ஏடு அச்சிடு"
                 >
                   <Printer className="w-3.5 h-3.5 text-gray-300" />
@@ -702,7 +1200,7 @@ export default function InstantRevelationPage() {
               </div>
             </div>
 
-            {/* THE 5 SHOCK AMPLIFIERS (5 துல்லிய அதிர்ச்சி உண்மைகள்) */}
+            {/* THE 5 SHOCK AMPLIFIERS (5 துல்லிய உச்சக்கட்ட உண்மைகள்) */}
             <div className="bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#1E293B] text-white rounded-2xl shadow-xl border-2 border-amber-400/60 p-6 space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-700 gap-2">
                 <div className="flex items-center gap-3">
@@ -1076,55 +1574,59 @@ export default function InstantRevelationPage() {
                               isRed
                                 ? "bg-rose-600 text-white"
                                 : isGreen
-                                ? "bg-emerald-600 text-white"
+                                ? "bg-emerald-700 text-white"
                                 : "bg-amber-600 text-white"
                             }`}
                           >
-                            {isRed ? "🔴 எச்சரிக்கை காலம் (Caution)" : isGreen ? "🟢 வெற்றி காலம் (Breakthrough)" : "🟡 தயாரிப்பு காலம் (Preparation)"}
+                            {win.status === "RED_ALERT"
+                              ? "சிவப்பு எச்சரிக்கை (RED ALERT)"
+                              : win.status === "GOLDEN_BREAKTHROUGH"
+                              ? "பொற்காலம் (GOLDEN BREAKTHROUGH)"
+                              : "தயாரிப்பு காலம் (PREPARATION)"}
                           </span>
-                          <h4 className="font-bold text-gray-900 text-sm sm:text-base">
-                            {scriptLanguage === "en" ? win.title_en : win.title_ta}
-                          </h4>
+                          <span className="text-xs text-gray-600 font-mono font-medium">
+                            {win.start_date} முதல் {win.end_date} வரை
+                          </span>
                         </div>
 
-                        <span className="text-xs font-mono font-bold bg-white px-3 py-1 rounded-lg border border-gray-300 text-gray-800 shadow-2xs">
-                          {win.start_date} முதல் {win.end_date} வரை
+                        <span className="text-xs font-bold text-gray-800">
+                          {scriptLanguage === "en" ? win.title_en : win.title_ta}
                         </span>
                       </div>
 
                       {(scriptLanguage === "ta" || scriptLanguage === "both") && (
-                        <p className="text-base font-serif text-gray-900 leading-relaxed mb-2 bg-white p-3 rounded-lg border border-gray-200 shadow-2xs font-medium">
+                        <p className="text-sm sm:text-base font-serif text-gray-900 leading-relaxed mb-3 bg-white p-3 rounded-lg border border-gray-200">
                           "{win.script_ta}"
                         </p>
                       )}
 
                       {(scriptLanguage === "en" || scriptLanguage === "both") && (
-                        <p className="text-sm font-serif text-gray-700 leading-relaxed bg-white p-3 rounded-lg border border-gray-200 shadow-2xs mb-3">
+                        <p className="text-xs sm:text-sm font-serif text-gray-700 leading-relaxed bg-white p-3 rounded-lg border border-gray-200 mb-3">
                           "{win.script_en}"
                         </p>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-200 text-xs">
-                        <div className="bg-emerald-100/60 p-2.5 rounded-lg border border-emerald-200">
-                          <span className="font-bold text-emerald-900 flex items-center gap-1 mb-1">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+                        <div className="bg-emerald-50/80 p-3 rounded-lg border border-emerald-200">
+                          <span className="font-bold text-emerald-900 flex items-center gap-1.5 mb-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             செய்ய வேண்டியவை (Do's):
                           </span>
-                          <ul className="list-disc list-inside space-y-0.5 text-emerald-950 font-medium">
-                            {(scriptLanguage === "ta" || scriptLanguage === "both" ? win.do_rules_ta : win.do_rules_en).map((rule, rIdx) => (
-                              <li key={rIdx}>{rule}</li>
+                          <ul className="list-disc list-inside space-y-1 text-emerald-950">
+                            {(scriptLanguage === "en" ? win.do_rules_en : win.do_rules_ta).map((r, i) => (
+                              <li key={i}>{r}</li>
                             ))}
                           </ul>
                         </div>
 
-                        <div className="bg-rose-100/60 p-2.5 rounded-lg border border-rose-200">
-                          <span className="font-bold text-rose-900 flex items-center gap-1 mb-1">
-                            <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
-                            தவிர்க்க வேண்டியவை (Don'ts):
+                        <div className="bg-rose-50/80 p-3 rounded-lg border border-rose-200">
+                          <span className="font-bold text-rose-900 flex items-center gap-1.5 mb-1.5">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                            தவிர்க்க வேண்டியவை (Don'ts / Hazards):
                           </span>
-                          <ul className="list-disc list-inside space-y-0.5 text-rose-950 font-medium">
-                            {(scriptLanguage === "ta" || scriptLanguage === "both" ? win.dont_rules_ta : win.dont_rules_en).map((rule, rIdx) => (
-                              <li key={rIdx}>{rule}</li>
+                          <ul className="list-disc list-inside space-y-1 text-rose-950">
+                            {(scriptLanguage === "en" ? win.dont_rules_en : win.dont_rules_ta).map((r, i) => (
+                              <li key={i}>{r}</li>
                             ))}
                           </ul>
                         </div>
@@ -1135,64 +1637,82 @@ export default function InstantRevelationPage() {
               </div>
             </div>
 
-            {/* CARD 5: 🪔 DIRECT TURN-KEY REMEDY */}
-            <div className="bg-white rounded-2xl shadow-md border-2 border-[#B4872B] overflow-hidden">
-              <div className="bg-gradient-to-r from-[#153F6B] to-[#205284] text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            {/* CARD 5: 🛡️ TURN-KEY ACTIONABLE REMEDY */}
+            <div className="bg-white rounded-2xl shadow-md border-2 border-amber-400 overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/10 rounded-lg">
-                    <Flame className="w-6 h-6 text-amber-300" />
+                    <ShieldCheck className="w-6 h-6 text-amber-100" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-semibold text-amber-200 tracking-wider uppercase block">
-                      Pillar 5 • Direct Turn-Key Remedy
+                    <span className="text-[11px] font-semibold text-amber-100 tracking-wider uppercase block">
+                      Pillar 5 • Actionable Remedy
                     </span>
-                    <h3 className="text-lg font-bold">5. உடனடி நேரடி பரிகாரம் & திருப்புமுனை</h3>
+                    <h3 className="text-lg font-bold">5. உடனடி நிவர்த்தி & எளிய பரிகாரம் (1 ஆலயம் • 1 தானம் • 1 மணி)</h3>
                   </div>
                 </div>
 
-                <span className="text-xs bg-[#B4872B] text-white font-bold px-3 py-1 rounded-full shadow-sm">
-                  1-Action Solution
+                <span className="text-xs bg-amber-900/60 text-amber-100 border border-amber-300/30 px-3 py-1 rounded-full font-medium">
+                  செலவில்லாத நேரடி கர்மா நிவர்த்தி
                 </span>
               </div>
 
-              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4">
-                  <span className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-                    <Compass className="w-4 h-4 text-[#B4872B]" />
-                    செல்ல வேண்டிய புண்ணிய தலம் (Sacred Temple):
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-4 flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-[#8B6914] uppercase tracking-wide block mb-1">
+                      1. செல்ல வேண்டிய பரிகார ஸ்தலம்
+                    </span>
+                    <p className="text-sm font-bold text-gray-900 mb-2">
+                      {scriptLanguage === "en" ? data.temple_recommendation_en : data.temple_recommendation_ta}
+                    </p>
+                    {scriptLanguage === "both" && (
+                      <p className="text-xs text-gray-600 italic">
+                        {data.temple_recommendation_en}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-amber-700 font-medium mt-3 block">
+                    ஆரூடம் மற்றும் லக்னாதிபதியின் சாப நிவர்த்தி ஸ்தலம்
                   </span>
-                  <p className="text-base font-bold text-gray-900 mb-1">
-                    {data.temple_recommendation_ta}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {data.temple_recommendation_en}
-                  </p>
                 </div>
 
-                <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4">
-                  <span className="text-xs font-bold text-emerald-900 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    வாராந்திர கர்ம செயல் (Weekly Action):
+                <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-4 flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block mb-1">
+                      2. வாராந்திர கர்மா தானம்
+                    </span>
+                    <p className="text-sm font-bold text-gray-900 mb-2">
+                      {scriptLanguage === "en" ? data.daily_karma_action_en : data.daily_karma_action_ta}
+                    </p>
+                    {scriptLanguage === "both" && (
+                      <p className="text-xs text-gray-600 italic">
+                        {data.daily_karma_action_en}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-emerald-700 font-medium mt-3 block">
+                    தசா நாதனின் கர்ம வினையை நீக்கும் ஜீவ காருண்யம்
                   </span>
-                  <p className="text-sm font-medium text-gray-900 leading-snug mb-1">
-                    {data.daily_karma_action_ta}
-                  </p>
-                  <p className="text-xs text-gray-600 leading-snug">
-                    {data.daily_karma_action_en}
-                  </p>
                 </div>
 
-                <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4">
-                  <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
-                    ரத்தினம் & ருத்ராட்சம் (Gem & Rudraksha):
+                <div className="bg-purple-50/60 border border-purple-200 rounded-xl p-4 flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-purple-800 uppercase tracking-wide block mb-1">
+                      3. நவரத்தினம் அல்லது ருத்ராட்சம்
+                    </span>
+                    <p className="text-sm font-bold text-gray-900 mb-2">
+                      {scriptLanguage === "en" ? data.gem_or_rudraksha_en : data.gem_or_rudraksha_ta}
+                    </p>
+                    {scriptLanguage === "both" && (
+                      <p className="text-xs text-gray-600 italic">
+                        {data.gem_or_rudraksha_en}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-purple-700 font-medium mt-3 block">
+                    உடல் காந்த அலைவரிசையை பலப்படுத்தும் தாரணை
                   </span>
-                  <p className="text-sm font-medium text-gray-900 leading-snug mb-1">
-                    {data.gem_or_rudraksha_ta}
-                  </p>
-                  <p className="text-xs text-gray-600 leading-snug">
-                    {data.gem_or_rudraksha_en}
-                  </p>
                 </div>
               </div>
             </div>
@@ -1200,5 +1720,19 @@ export default function InstantRevelationPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function InstantRevelationPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-[#B4872B] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <InstantRevelationContent />
+    </React.Suspense>
   );
 }
