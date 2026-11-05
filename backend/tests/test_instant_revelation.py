@@ -120,3 +120,37 @@ def test_instant_revelation_api_endpoint():
     assert "primary_arrival_reason_en" in data
     assert "past_verifiable_hits" in data
     assert len(data["past_verifiable_hits"]) > 0
+
+
+def test_diversity_of_ultra_shockers_across_different_birth_charts():
+    # Chart A: 1985-03-20 06:00 (Pisces Lagna)
+    req_a = InstantRevelationRequest(
+        birth_date="1985-03-20",
+        birth_time="06:00:00",
+        timezone="Asia/Kolkata",
+        latitude=13.0827,
+        longitude=80.2707,
+        name="Chart A (Pisces)",
+        gender="male",
+    )
+    res_a = InstantRevelationEngine.analyze(req_a)
+
+    # Chart B: 1996-11-15 19:30 (Taurus Lagna)
+    req_b = InstantRevelationRequest(
+        birth_date="1996-11-15",
+        birth_time="19:30:00",
+        timezone="Asia/Kolkata",
+        latitude=13.0827,
+        longitude=80.2707,
+        name="Chart B (Taurus)",
+        gender="female",
+    )
+    res_b = InstantRevelationEngine.analyze(req_b)
+
+    # Confirm that Ultra-Nadi answers are customized and distinctly different
+    assert res_a.vehicle_marker_en != res_b.vehicle_marker_en
+    assert res_a.vehicle_marker_ta != res_b.vehicle_marker_ta
+    assert res_a.spouse_secrets_en != res_b.spouse_secrets_en
+    assert res_a.spouse_secrets_ta != res_b.spouse_secrets_ta
+    assert res_a.childhood_balarishta_en != res_b.childhood_balarishta_en
+    assert res_a.childhood_balarishta_ta != res_b.childhood_balarishta_ta

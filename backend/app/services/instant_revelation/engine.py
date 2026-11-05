@@ -71,6 +71,12 @@ BODY_MARK_MAP = {
     12: {"en": "feet, soles, or ankles", "ta": "பாதம், உள்ளங்கால் அல்லது கணுக்கால் பகுதி"},
 }
 
+SIGN_LORDS = {
+    1: "Mars", 2: "Venus", 3: "Mercury", 4: "Moon",
+    5: "Sun", 6: "Mercury", 7: "Venus", 8: "Mars",
+    9: "Jupiter", 10: "Saturn", 11: "Saturn", 12: "Jupiter",
+}
+
 
 class InstantRevelationEngine:
     """Master engine for synthesizing instant customer arrival revelations."""
@@ -1284,10 +1290,15 @@ class InstantRevelationEngine:
         ascendant_sign: int,
         gender: str,
     ) -> Tuple[str, str]:
-        sp_karaka = "Venus" if gender == "male" else "Mars"
-        sp_sign = planets_dict.get(sp_karaka, {}).get("sign_index", 7)
+        # 7th house and its Lord
+        seventh_sign = ((ascendant_sign + 6 - 1) % 12) + 1
+        seventh_lord = SIGN_LORDS.get(seventh_sign, "Venus")
+        seventh_lord_sign = planets_dict.get(seventh_lord, {}).get("sign_index", seventh_sign)
 
-        # Direction from spouse karaka sign
+        sp_karaka = "Venus" if gender == "male" else "Mars"
+        sp_sign = planets_dict.get(sp_karaka, {}).get("sign_index", seventh_sign)
+
+        # 1. Direction from 7th Lord and Karaka
         dir_map = {
             1: ("East", "கிழக்கு திசை"),
             2: ("South", "தெற்கு திசை"),
@@ -1302,37 +1313,85 @@ class InstantRevelationEngine:
             11: ("West", "மேற்கு திசை"),
             12: ("North", "வடக்கு திசை"),
         }
-        sp_dir_en, sp_dir_ta = dir_map.get(sp_sign, ("East", "கிழக்கு திசை"))
+        sp_dir_en, sp_dir_ta = dir_map.get(seventh_lord_sign, dir_map.get(sp_sign, ("East", "கிழக்கு திசை")))
 
-        # 7th house and Distance
-        seventh_sign = ((ascendant_sign + 6 - 1) % 12) + 1
+        # 2. Distance: Movable/Dual signs or Rahu/Moon = Distant; Fixed signs = Local/Relative
         rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
         moon_sign = planets_dict.get("Moon", {}).get("sign_index", 1)
 
-        is_distant = (rahu_sign == seventh_sign) or (moon_sign == seventh_sign) or (rahu_sign == sp_sign)
+        is_distant = (seventh_sign in (1, 3, 4, 6, 7, 9, 10, 12)) and (
+            (rahu_sign in (seventh_sign, seventh_lord_sign))
+            or (moon_sign in (seventh_sign, seventh_lord_sign))
+            or (((seventh_sign - ascendant_sign) % 12) in (6, 8, 11))
+        )
         if is_distant:
-            dist_en = "Your spouse was born at a noticeable distance—either across district/state borders, or beyond a prominent river/water body."
-            dist_ta = "உங்கள் வாழ்க்கைத் துணை உங்கள் சொந்த ஊரிலிருந்து குறிப்பிட்ட தூரமான பகுதியிலிருந்தோ, நதி/கடல் தாண்டிய இடத்திலிருந்தோ அல்லது வெளி மாவட்டத்திலிருந்தோ அமைந்தவர்."
+            dist_en = "Your spouse was born at a noticeable distance—either across district borders, beyond a major water body/bridge, or from a different regional background."
+            dist_ta = "உங்கள் வாழ்க்கைத் துணை உங்கள் சொந்த ஊரிலிருந்து குறிப்பிட்ட தூரமான பகுதியிலிருந்தோ, நதி/கடல் தாண்டிய மாவட்டத்திலிருந்தோ அல்லது வேறு ஊர் பின்னணியிலிருந்தோ அமைந்தவர்."
         else:
-            dist_en = "Your spouse was born within a local district radius or originated from a familiar family circle."
-            dist_ta = "உங்கள் வாழ்க்கைத் துணை உள்ளூரிலோ அல்லது பழக்கப்பட்ட குடும்ப/நண்பர்கள் வட்டத்திலோ அமைந்தவர்."
+            dist_en = "Your spouse originates within a familiar district radius, often linked to maternal/paternal ancestral connections or known family circles."
+            dist_ta = "உங்கள் வாழ்க்கைத் துணை உள்ளூரிலோ அல்லது தாய்/தந்தை வழிப் பழக்கப்பட்ட உறவினர்/நண்பர்கள் வட்டத்திலோ அமைந்தவர்."
 
-        # In-laws relationship check
+        # 3. Spouse Temperament & Persona tailored by 7th sign element and occupants
+        occupants_7th = [p for p in ["Saturn", "Mars", "Jupiter", "Venus", "Mercury", "Sun", "Rahu", "Ketu", "Moon"] if planets_dict.get(p, {}).get("sign_index") == seventh_sign]
+        primary_7th = occupants_7th[0] if occupants_7th else seventh_lord
+
+        temperament_map = {
+            "Saturn": (
+                "Spouse has a mature, reserved, and highly practical demeanor; they do not openly display affection but possess deep endurance and duty toward household responsibilities.",
+                "வாழ்க்கைத் துணை பக்குவமான, அமைதியான மற்றும் எதார்த்தமான சுபாவம் கொண்டவர்; வெளிப்படையாக உணர்ச்சிகளைக் காட்டாவிட்டாலும், குடும்பப் பொறுப்புகளை உறுதியுடன் சுமப்பவர்."
+            ),
+            "Mars": (
+                "Spouse is bold, outspoken, highly self-respecting, and quick-tempered; they cannot tolerate being dominated or criticized, yet their anger subsides quickly.",
+                "வாழ்க்கைத் துணை தன்மானமும், துணிச்சலும், எதையும் வெளிப்படையாகப் பேசும் குணமும் கொண்டவர்; ஆதிக்கத்தையோ அவமரியாதையையோ சகித்துக் கொள்ள மாட்டார், ஆனால் கோபம் உடனே தணிந்துவிடும்."
+            ),
+            "Jupiter": (
+                "Spouse is principled, God-fearing, dignified, and highly respected; often linked to teaching, finance, legal, or administrative values with strong moral standards.",
+                "வாழ்க்கைத் துணை ஒழுக்கமும், தெய்வ பக்தியும், கௌரவமும் கொண்டவர்; கல்வி, நிதி, நிர்வாகம் அல்லது ஆலோசனைக் குணம் கொண்ட குடும்பப் பின்னணியிலிருந்து அமைந்தவர்."
+            ),
+            "Venus": (
+                "Spouse is fond of aesthetics, neat attire, jewelry/cosmetics, and a comfortable lifestyle; pleasant in social speech with refined culinary and artistic taste.",
+                "வாழ்க்கைத் துணை அழகுணர்ச்சி, சுத்தமான உடை, ஆடை-ஆபரண பிரியம் மற்றும் வசதியான வாழ்க்கையை விரும்புபவர்; இனிமையான பேச்சும், சுவையான சமையல் கைவண்ணமும் கொண்டவர்."
+            ),
+            "Mercury": (
+                "Spouse is youthful in appearance, sharp-witted, humorous, and exceptionally clever with money/accounts; has an aptitude in commerce, IT, or communications.",
+                "வாழ்க்கைத் துணை இளமையான தோற்றம், நகைச்சுவை உணர்வு மற்றும் கணக்கு/பண விவகாரங்களில் மிகுந்த சாமர்த்தியம் கொண்டவர்; தகவல் தொடர்பு, வணிகம் அல்லது கணினி சார்ந்த அறிவுடையவர்."
+            ),
+            "Sun": (
+                "Spouse carries royal self-esteem, pride, and an authoritative presence; they demand high respect from in-laws and cherish their family reputation above all.",
+                "வாழ்க்கைத் துணை கம்பீரமான தோற்றமும், குடும்பப் பெருமையும், தன்மானமும் கொண்டவர்; மற்றவர்களிடம் இருந்து மரியாதையை எதிர்பார்ப்பவர்."
+            ),
+            "Moon": (
+                "Spouse is soft-spoken, deeply emotional, caring, and intuitive, though prone to occasional mood fluctuations and sensitive to family criticism.",
+                "வாழ்க்கைத் துணை மென்மையான சுபாவம், மிகுந்த பாசம் மற்றும் கற்பனைத் திறன் கொண்டவர்; மற்றவர்கள் பேசும் சிறு வார்த்தைகளையும் மனதில் போட்டு வருந்தும் மென்மையான உள்ளம் படைத்தவர்."
+            ),
+            "Rahu": (
+                "Spouse is unconventional, sharp, modern in outlook, and highly ambitious; brings sudden unexpected financial or life changes after wedding.",
+                "வாழ்க்கைத் துணை நவீன சிந்தனையும், சாமர்த்தியமும், பெரிய லட்சியங்களும் கொண்டவர்; திருமணத்திற்குப் பிறகு உங்கள் வாழ்வில் திடீர் திருப்புமுனையை ஏற்படுத்தியவர்."
+            ),
+            "Ketu": (
+                "Spouse is spiritual, minimalist, introverted, and prefers a quiet, simple life without extravagant social show-offs.",
+                "வாழ்க்கைத் துணை ஆன்மீக நாட்டம், எளிமை மற்றும் ஆடம்பரமற்ற அமைதியான வாழ்க்கையை விரும்பும் சுபாவம் கொண்டவர்."
+            ),
+        }
+        temp_en, temp_ta = temperament_map.get(primary_7th, temperament_map["Jupiter"])
+
+        # 4. In-Laws Dynamics
+        # 3rd from Lagna = 9th from 7th (Father-in-law)
+        third_sign = ((ascendant_sign + 2 - 1) % 12) + 1
         sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
         mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
-        ninth_sign = ((ascendant_sign + 8 - 1) % 12) + 1 # 3rd from 7th (Father-in-law)
-        has_inlaw_friction = (sat_sign in (seventh_sign, ninth_sign)) or (mars_sign in (seventh_sign, ninth_sign))
+
+        has_inlaw_friction = (sat_sign in (seventh_sign, third_sign)) or (mars_sign in (seventh_sign, third_sign)) or (rahu_sign in (seventh_sign, third_sign))
 
         if has_inlaw_friction:
-            friction_en = "In the early alliance stages, there was notable pride, stubbornness, or initial objections from the in-laws' side before final consent."
-            friction_ta = "திருமணப் பேச்சுவார்த்தை துவங்கிய காலத்தில், மாமனார் அல்லது மாமியார் வழியில் பிடிவாதம், முட்டுக்கட்டை அல்லது இழுபறி ஏற்பட்டுப் பின்னரே திருமணம் முடிவானது."
+            inlaw_en = "During marriage negotiations, there was noticeable friction, stubbornness regarding property/terms, or prolonged dragging from the in-laws' side before final wedding knots were tied."
+            inlaw_ta = "திருமணப் பேச்சுவார்த்தை துவங்கிய காலத்தில், மாமனார் வழியில் பிடிவாதம், எதிர்பார்ப்புகள் அல்லது பேச்சுவார்த்தையில் இழுபறி ஏற்பட்டுப் பின்னரே திருமணம் கைக்கூடியது."
         else:
-            friction_en = "The in-laws possess respectable traditional values, though their communication style is very conservative."
-            friction_ta = "மாமனார் வழி குடும்பம் நல்ல சமூக அந்தஸ்தும், பாரம்பரிய மதிப்பும் கொண்டவர்கள்."
+            inlaw_en = "The in-laws' household carries respected social standing, though they maintain a reserved, traditional boundary in domestic matters."
+            inlaw_ta = "மாமனார் வழி குடும்பம் நல்ல கௌரவமும் பாரம்பரிய மதிப்பும் கொண்டவர்கள்; தேவையின்றி உங்கள் தனிப்பட்ட விஷயங்களில் தலையிடாத சுபாவம்."
 
-        # Complexion
-        sp_desc_en = f"Spouse arrives from the {sp_dir_en}. {dist_en} Personality is sharp-witted with a determined, unyielding will. {friction_en}"
-        sp_desc_ta = f"வாழ்க்கைத் துணை அமையும் திசை: {sp_dir_ta}. {dist_ta} வாழ்க்கைத் துணை அபார அறிவாற்றலும், தன் கொள்கையில் பிடிவாதமும் கொண்டவர். {friction_ta}"
+        sp_desc_en = f"Spouse direction: {sp_dir_en}. {dist_en} Temperament: {temp_en} In-laws secret: {inlaw_en}"
+        sp_desc_ta = f"வாழ்க்கைத் துணை வந்த திசை: {sp_dir_ta}. {dist_ta} சுபாவம்: {temp_ta} மாமனார் வழி ரகசியம்: {inlaw_ta}"
 
         return sp_desc_en, sp_desc_ta
 
@@ -1346,40 +1405,99 @@ class InstantRevelationEngine:
         ascendant_sign: int,
     ) -> Tuple[str, str]:
         fourth_sign = ((ascendant_sign + 3 - 1) % 12) + 1
+        fourth_lord = SIGN_LORDS.get(fourth_sign, "Moon")
+        fourth_lord_sign = planets_dict.get(fourth_lord, {}).get("sign_index", fourth_sign)
         ven_sign = planets_dict.get("Venus", {}).get("sign_index", 2)
         mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
         sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
+        ketu_sign = planets_dict.get("Ketu", {}).get("sign_index", 7)
+        moon_sign = planets_dict.get("Moon", {}).get("sign_index", 1)
+        jup_sign = planets_dict.get("Jupiter", {}).get("sign_index", 9)
+        merc_sign = planets_dict.get("Mercury", {}).get("sign_index", 3)
 
-        # Color affinity from Venus / 4th house
-        color_map = {
-            1: ("Red, maroon, copper, or vibrant warm shades", "சிவப்பு, மெரூன், செம்பு அல்லது அடர் நிறங்கள்"),
-            2: ("White, pearl silver, or light metallic ivory", "வெள்ளை, வெள்ளி, முத்து போன்ற வெளிர் நிறங்கள்"),
-            3: ("Green, olive, dual-tone, or silver-grey", "பச்சை, ஆலிவ் அல்லது இரட்டை வண்ணக் கலவை"),
-            4: ("Pure white, pearl, or pale sea-blue", "தூய வெள்ளை, முத்து அல்லது வெளிர் நீலம்"),
-            5: ("Gold, bright orange, ruby red, or warm copper", "தங்க நிறம், செம்மஞ்சள் அல்லது மெரூன்"),
-            6: ("Dual-tone, metallic silver-green, or charcoal", "இரட்டை வண்ணம், வெள்ளி அல்லது சாம்பல்"),
-            7: ("White, silver, cream, or pastel tones", "வெள்ளை, சில்வர், கிரீம் அல்லது பளபளப்பான நிறம்"),
-            8: ("Dark red, deep wine, black, or metallic copper", "அடர் சிவப்பு, ஒயின் அல்லது கறுப்பு-செம்பு கலவை"),
-            9: ("Yellow, sandalwood beige, golden cream, or bronze", "மஞ்சள், சந்தன நிறம் அல்லது கோல்டன் கிரீம்"),
-            10: ("Dark navy blue, charcoal black, or deep steel-grey", "கருநீலம், கருப்பு அல்லது ஸ்டீல் கிரே"),
-            11: ("Electric blue, royal navy, or matte black", "அடர் நீலம், ராயல் நேவி அல்லது மேட் பிளாக்"),
-            12: ("Light metallic, sea-foam silver, or pearl white", "வெளிர் சில்வர் அல்லது பவள வெள்ளை"),
+        # 1. Who occupies the 4th house? (Primary Driver)
+        occupants = [p for p in ["Moon", "Venus", "Saturn", "Mars", "Rahu", "Ketu", "Jupiter", "Mercury", "Sun"] if planets_dict.get(p, {}).get("sign_index") == fourth_sign]
+        primary_graha = occupants[0] if occupants else fourth_lord
+
+        # 2. Realistic Indian Vehicle Colors tailored to the Graha & Sign
+        graha_palette = {
+            "Moon": (
+                "Pure Pearl White, Silver Metallic, or Ivory (வெள்ளை / சில்வர் / முத்து நிறம்)",
+                "தூய வெள்ளை, சில்வர் மெட்டாலிக் அல்லது முத்து நிறம்",
+                "comfortable car or smooth commuter scooter (கார் அல்லது மென்மையான இருசக்கர வாகனம்)"
+            ),
+            "Venus": (
+                "Diamond White, Lustrous Silver, or Glossy Pastel with chrome trims",
+                "பளபளப்பான வெள்ளை, டைமண்ட் சில்வர் அல்லது பளபளப்பான வெளிர் நிறம்",
+                "stylish, aesthetically pristine car or premium automatic scooter"
+            ),
+            "Saturn": (
+                "Deep Charcoal Black, Midnight Navy Blue, or Steel Grey (அடர் நீலம் / கருப்பு / ஸ்டீல் கிரே)",
+                "அடர் கருநீலம், ஸ்டீல் கிரே அல்லது அடர் கருப்பு நிறம்",
+                "heavy-duty motorcycle, diesel vehicle, or pre-owned/second-hand vehicle"
+            ),
+            "Mars": (
+                "Sporty Cherry Red, Deep Crimson Maroon, or Bold Metallic",
+                "செர்ரி சிவப்பு, மெரூன் அல்லது சுடர் வண்ணக் கலவை",
+                "high-acceleration, sporty motorcycle (Pulsar/Duke/Apache) or bold performance car"
+            ),
+            "Rahu": (
+                "Phantom Matte Black, Smoke Shadow Grey, or Dual-Tone Dark Palette",
+                "மேட் பிளாக் (Matte Black), சாம்பல் அல்லது நிழல் வண்ணக் கலவை",
+                "modern vehicle with customized accessories, alloy wheels, or dark tints"
+            ),
+            "Ketu": (
+                "Off-White, Cement Grey, or Earthy Tone with subtle trims",
+                "ஆஃப்-ஒயிட் (Off-White), மேட் கிரே அல்லது மண் சாம்பல் நிறம்",
+                "utility commuter two-wheeler or quiet, economical transport"
+            ),
+            "Mercury": (
+                "Metallic Silver-Grey, Dual-Tone, or Platinum Pewter",
+                "சில்வர் கிரே, இரட்டை வண்ணம் (Dual-Tone) அல்லது பிளாட்டினம் சாம்பல்",
+                "lightweight, highly fuel-efficient commuter scooter (Activa/Jupiter/Access) or compact hatchback"
+            ),
+            "Jupiter": (
+                "Sandalwood Beige, Golden Champagne, or Royal White with chrome accents",
+                "சந்தன நிறம், கோல்டன் ஷாம்பெயின் அல்லது ராயல் வெள்ளை நிறம்",
+                "spacious family multi-seater (Innova/Ertiga/Sedan) carrying divine deity sticker/idol"
+            ),
+            "Sun": (
+                "Metallic Copper, Imperial Ruby Red, or Rich Golden Maroon",
+                "மெட்டாலிக் காப்பர், செம்பு அல்லது அரச மெரூன் நிறம்",
+                "commanding presence vehicle with prominent horn and authoritative road stance"
+            ),
         }
-        color_en, color_ta = color_map.get(ven_sign, ("White, silver, or metallic grey", "வெள்ளை, சில்வர் அல்லது சாம்பல்"))
 
-        # Scratch / Hazard tendency
-        third_sign = ((ascendant_sign + 2 - 1) % 12) + 1 # 12th from 4th
-        has_scratch = (mars_sign in (fourth_sign, third_sign)) or (sat_sign in (fourth_sign, third_sign))
+        color_en, color_ta, v_type = graha_palette.get(primary_graha, graha_palette["Venus"])
 
-        if has_scratch:
-            damage_en = "Your vehicle has a noticeable tendency toward left-side scratches, minor bumper abrasions, or recurring tire punctures / battery drain."
-            damage_ta = "உங்கள் வாகனத்தில் இடதுபுறக் கீறல்கள், பம்பரில் சிறு தட்டுப்பாடுகள் அல்லது அடிக்கடி டயர் பஞ்சர் / பேட்டரி இறங்குதல் போன்ற தொந்தரவுகள் ஏற்படுவது வழக்கம்."
+        # 3. Exact Scratch / Damage / Blemish Marker based on Malefic Coordinates to 4th
+        mars_from_4th = ((mars_sign - fourth_sign) % 12) + 1
+        sat_from_4th = ((sat_sign - fourth_sign) % 12) + 1
+        rahu_from_4th = ((rahu_sign - fourth_sign) % 12) + 1
+        ketu_from_4th = ((ketu_sign - fourth_sign) % 12) + 1
+
+        if mars_from_4th in (1, 2, 7): # Mars on front or right side
+            blemish_en = "Your primary vehicle carries a noticeable scratch or brush mark on the front bumper, silencer/exhaust guard, or right-side footpeg from sudden tight traffic stops."
+            blemish_ta = "உங்கள் முதன்மை வாகனத்தில் முன் பம்பர், சைலன்சர் உறை அல்லது வலதுபுற விளிம்பில் டிராஃபிக்கில் உரசிய கீறல் அல்லது தட்டுப்பாடு அடையாளம் உண்டு."
+        elif sat_from_4th in (1, 4, 10): # Saturn on vehicle foundation
+            blemish_en = "Your vehicle has suffered underbody scrapes on high speed-breakers or rough road pits, with a recurring tendency for battery drain or delayed oil/fluid servicing."
+            blemish_ta = "உயரமான வேகத்தடைகளில் அல்லது ரோட்டுப் பள்ளங்களில் வாகனத்தின் அடிப்பகுதி இடிபடுதல், பேட்டரி சார்ஜ் இறங்குதல் அல்லது சர்வீஸ் தாமதம் ஏற்படுவது வழக்கம்."
+        elif rahu_from_4th in (1, 11, 12): # Rahu on left side
+            blemish_en = "There is a history of a grazed left-side mirror or fender dent caused while parked in tight public lots, along with recurring electrical sensor/indicator bulb glitches."
+            blemish_ta = "கூட்டமான பார்க்கிங்கில் நிறுத்தியபோது இடது பக்க கண்ணாடி அல்லது ஃபெண்டரில் ஏற்பட்ட சிறு தட்டுப்பாடு; அவ்வப்போது எலெக்ட்ரிக்கல் இண்டிகேட்டர் பல்பு போவதுண்டு."
+        elif ketu_from_4th in (1, 8, 12): # Ketu on wheels / starting
+            blemish_en = "Recurring annoyance with tire punctures, slow valve leaks, or sudden starting hesitation immediately after a water-wash or heavy rain."
+            blemish_ta = "அடிக்கடி டயர் காற்று இறங்குதல்/பஞ்சர் ஆவது, அல்லது வாட்டர் வாஷ்/மழைக்குப் பிறகு வாகனம் ஸ்டார்ட் ஆவதில் தற்காலிக சுணக்கம் ஏற்படுவது வழக்கம்."
+        elif merc_sign == fourth_sign or fourth_lord == "Mercury":
+            blemish_en = "Front visor vibration, loose rear-view mirror mount, or minor squeak in the front brake lever/cable."
+            blemish_ta = "முன் வைஸர் அதிர்வு, ரியர்-வியூ மிரர் தளர்வு அல்லது பிரேக் கேபிளில் சிறு ஒலி ஏற்படுவது இயல்பு."
         else:
-            damage_en = "Your vehicle operates with steady endurance, provided electrical sensors and fluid levels are routinely checked."
-            damage_ta = "வாகனம் உறுதியாகவும் சீராகவும் இயங்கும்; முறையான ஆயில் மற்றும் பேட்டரி பராமரிப்பு நலம் தரும்."
+            blemish_en = "The exterior body is maintained with pride, though minor gravel chips or hairline scratches mark the lower wheel arches."
+            blemish_ta = "வாகனம் நேர்த்தியாகப் பராமரிக்கப்படுகிறது; சக்கரத்தின் கீழ் விளிம்பில் சிறு கல் சிதறல் கீறல்கள் தவிர பெரிய தட்டுப்பாடுகள் இருக்காது."
 
-        v_en = f"You are naturally drawn to vehicles in {color_en}. Conveyance trait: {damage_en}"
-        v_ta = f"நீங்கள் இயற்கையாக விரும்பும் அல்லது இயக்கும் வாகன நிறம்: {color_ta}. வாகன அம்சம்: {damage_ta}"
+        v_en = f"You primarily operate or are naturally drawn to vehicles in {color_en} ({v_type}). Conveyance signature: {blemish_en}"
+        v_ta = f"நீங்கள் இயற்கையாக இயக்கும் அல்லது விரும்பும் வாகன நிறம்: {color_ta} ({v_type}). வாகன நேரடி அடையாளம்: {blemish_ta}"
 
         return v_en, v_ta
 
@@ -1393,38 +1511,55 @@ class InstantRevelationEngine:
         ascendant_sign: int,
     ) -> Tuple[str, str]:
         ninth_sign = ((ascendant_sign + 8 - 1) % 12) + 1
+        ninth_lord = SIGN_LORDS.get(ninth_sign, "Sun")
         sun_sign = planets_dict.get("Sun", {}).get("sign_index", 1)
         sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
         rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
         ketu_sign = planets_dict.get("Ketu", {}).get("sign_index", 7)
 
-        # Affliction on 9th house or Sun
-        is_rift = (
-            (sat_sign in (ninth_sign, sun_sign))
-            or (rahu_sign in (ninth_sign, sun_sign))
-            or (ketu_sign in (ninth_sign, sun_sign))
-            or (((sat_sign - sun_sign) % 12) in (6, 7))
-        )
-
-        if is_rift:
+        # Dynamic nuance based on which graha afflicts the 9th house or Sun
+        if sat_sign == ninth_sign or sat_sign == sun_sign or ketu_sign == ninth_sign:
+            # Distress sale & appreciation regret
             rift_en = (
-                "In your paternal ancestral lineage (father's or grandfather's generation), there was a valuable piece of "
-                "agricultural land, garden plot, or ancestral property with an old well that became entangled in a painful partition dispute "
-                "with paternal uncles/relatives, or was liquidated under distress with lingering family regret."
+                "In your paternal ancestral lineage (father's or grandfather's generation), an old ancestral tiled house "
+                "or fertile agricultural land was liquidated under financial distress or sold for a trivial price. "
+                "Subsequently, that exact property appreciated enormously, leaving lingering regret and bitterness among family elders."
             )
             rift_ta = (
-                "உங்கள் தந்தை அல்லது பாட்டனார் காலத்தில், கிணறு அல்லது தோட்டம் இருந்த ஒரு பூர்வீக நிலத்தில் பங்காளிகளுடன் "
-                "(சித்தப்பா/பெரியப்பா வழி) பாகப்பிரிவினை சர்ச்சை அல்லது நெருக்கடியில் குறைந்த விலைக்கு விற்றுவிட்டு ஏங்கிய "
-                "ஒரு கசப்பான வரலாறு உண்டு."
+                "உங்கள் தந்தை அல்லது பாட்டனார் காலத்தில், பூர்வீகத்தில் இருந்த பழைய வீடு அல்லது தோட்டம் குடும்ப நெருக்கடியால் "
+                "மிகக் குறைந்த விலைக்கு விற்கப்பட்டது. பின்னர் அந்த இடத்தின் மதிப்பு பல மடங்கு உயர்ந்ததைக் கண்டு, முன்னோர்கள் "
+                "வாழ்நாள் முழுவதும் ஏங்கிய ஒரு கசப்பான வரலாறு உண்டு."
+            )
+        elif mars_sign == ninth_sign or mars_sign == sun_sign:
+            # Boundary ridge / irrigation water / pathway rift
+            rift_en = (
+                "In your paternal ancestral roots, there was an intense, heated dispute with paternal uncles (pangalis) "
+                "concerning an ancestral pathway, land boundary ridge (varappu), or water well irrigation rights that caused deep family estrangement."
+            )
+            rift_ta = (
+                "உங்கள் தந்தை வழி பூர்வீகத்தில், பங்காளிகளுடன் (சித்தப்பா/பெரியப்பா வழி) நிலத்தின் எல்லை வரப்பு, பொதுப்பாதை "
+                "அல்லது கிணற்றுப் பாசன நீர் தொடர்பாக கடுமையான வாக்குவாதம் ஏற்பட்டு, உறவுகள் பிரிந்த வரலாறு உண்டு."
+            )
+        elif rahu_sign == ninth_sign or rahu_sign == sun_sign:
+            # Legal / Patta / Documentation ambiguity
+            rift_en = (
+                "Your paternal ancestral property faced legal ambiguity, missing patta/deed documentation, or delayed partition "
+                "due to an unresolved commitment made by an ancestor, stalling family asset division for years."
+            )
+            rift_ta = (
+                "பூர்வீகச் சொத்தில் பட்டா மாற்றம், பத்திர ஆவணக் குழப்பம் அல்லது முன்னோர் கொடுத்த வாய்மொழி வாக்குறுதியால் "
+                "பாகப்பிரிவினை பல ஆண்டுகள் முடங்கி, இழுபறியான நிலை நிலவியது."
             )
         else:
+            # Respectable standing with ancestral temple / Kuladeivam asset
             rift_en = (
-                "Your paternal lineage held proud, respectable community standing and landed property in their native place, "
-                "which was peacefully divided across ancestral successions."
+                "Your paternal lineage held respectable community standing and landed property in their native soil. "
+                "However, there is an unresolved ancestral promise regarding Kuladeivam temple worship or a shared family heirloom."
             )
             rift_ta = (
-                "தந்தை வழி முன்னோர்கள் ஊர் மதிப்பும் நிலபுலன்களும் கொண்டவர்கள்; தலைமுறை மாற்றங்களில் பாகப்பிரிவினை மூலம் "
-                "சொத்துக்கள் அமைதியாகப் பகிர்ந்து கொள்ளப்பட்டன."
+                "தந்தை வழி முன்னோர்கள் ஊர் மதிப்பும் நிலபுலன்களும் கொண்டவர்கள்; சொத்துக்கள் பகிரப்பட்டாலும், பூர்வீகக் குலதெய்வ "
+                "வழிபாடு அல்லது பொதுச் சொத்துப் பராமரிப்பில் பங்காளிகளிடையே இன்னும் ஒரு தீராத மனக்கசப்பு மிச்சமிருக்கிறது."
             )
 
         return rift_en, rift_ta
@@ -1440,25 +1575,65 @@ class InstantRevelationEngine:
     ) -> Tuple[str, str]:
         ketu_sign = planets_dict.get("Ketu", {}).get("sign_index", 7)
         jup_sign = planets_dict.get("Jupiter", {}).get("sign_index", 9)
+        moon_sign = planets_dict.get("Moon", {}).get("sign_index", 1)
+        mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
+        sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
+
         diff = ((ketu_sign - jup_sign) % 12) + 1
-
         danger_ages_map = {
-            1: [1, 2], 2: [2, 3], 3: [3, 4], 4: [4, 5],
-            5: [5, 6], 6: [6, 7], 7: [7, 8], 8: [8, 9],
-            9: [9, 10], 10: [10, 11], 11: [11, 12], 12: [12, 13],
+            1: 2, 2: 3, 3: 4, 4: 5,
+            5: 6, 6: 7, 7: 8, 8: 9,
+            9: 10, 10: 11, 11: 12, 12: 1,
         }
-        ages = danger_ages_map.get(diff, [3, 7])
-        min_age, max_age = ages[0], ages[-1]
+        age = danger_ages_map.get(diff, 4)
 
-        b_en = (
-            f"Between ages {min_age} and {max_age}: You survived a critical childhood health scare—a dangerous high fever, "
-            "severe respiratory convulsion, a sudden high fall, or an encounter with water/fire that caused intense panic to your parents."
-        )
-        b_ta = (
-            f"சிறுவயதில் சுமார் {min_age} முதல் {max_age} வயதுக்குள்: நீங்கள் ஒரு கடுமையான பாலாரிஷ்ட கண்டத்தைத் தாண்டி வந்துள்ளீர்கள். "
-            "தீவிர காய்ச்சல், மூச்சுத்திணறல், கீழே விழுந்து தலையில் பலத்த அடி அல்லது நீர்/நெருப்பு கண்டத்திலிருந்து பெற்றோர் பதறித் துடித்து உங்களைக் காப்பாற்றிய ஒரு சம்பவம் உண்டு."
-        )
+        # Elemental Tattva determination based on Moon & afflicting Grahas
+        # 0=Fire, 1=Earth, 2=Air, 3=Water
+        moon_element = (moon_sign - 1) % 4
+
+        if moon_element == 0 or mars_sign in (moon_sign, ascendant_sign):
+            # Fire / Scalding burn / Boiling liquid / High heat convulsion
+            b_en = (
+                f"Around age {age} (or within the first {age + 1} years): You miraculously survived a dangerous fire or scald scare—"
+                "boiling milk, hot water, or hot oil spilled on you, or an acute, delirious high fever that threw your parents into a state of panic."
+            )
+            b_ta = (
+                f"சுமார் {age} வயதில் (அல்லது முதல் {age + 1} வயதுக்குள்): நீங்கள் ஒரு கடுமையான நெருப்பு/சூடு கண்டத்திலிருந்து தப்பினீர்கள்—"
+                "கொதிக்கும் வெந்நீர், சூடான பால் அல்லது எண்ணெய் உடலில் பட்டு ஏற்பட்ட தீக்காயம் அல்லது உடலை வதைத்த அதீத உஷ்ணக் காய்ச்சலால் பெற்றோர் பதறித் துடித்த சம்பவம் உண்டு."
+            )
+        elif moon_element == 3 or sat_sign in (moon_sign, ascendant_sign):
+            # Water / Pond / Well / Drowning
+            b_en = (
+                f"Around age {age} (or within the first {age + 1} years): You survived a terrifying near-drowning water hazard—"
+                "accidentally falling into a domestic water sump, well, river, or bathing pond, rescued in the nick of time by divine grace."
+            )
+            b_ta = (
+                f"சுமார் {age} வயதில் (அல்லது முதல் {age + 1} வயதுக்குள்): நீங்கள் ஒரு தீவிரமான தண்ணீர் கண்டத்திலிருந்து உயிர் தப்பினீர்கள்—"
+                "தண்ணீர் தொட்டி, கிணறு, குளம் அல்லது ஆற்றுநீரில் தவறி விழுந்து நீரில் மூழ்கும் பேராபத்திலிருந்து கடைசி வினாடியில் காப்பாற்றப்பட்டீர்கள்."
+            )
+        elif moon_element == 2 or rahu_sign in (moon_sign, ascendant_sign):
+            # Air / High Fall / Head impact / Staircase
+            b_en = (
+                f"Around age {age} (or within the first {age + 1} years): You survived a severe high fall—"
+                "tumbling head-first from a staircase, terrace, cot, or tree branch, suffering a sharp head/forehead laceration that required immediate stitches or bandaging."
+            )
+            b_ta = (
+                f"சுமார் {age} வயதில் (அல்லது முதல் {age + 1} வயதுக்குள்): நீங்கள் உயரமான இடத்திலிருந்து கீழே விழுந்த மாபெரும் கண்டத்திலிருந்து தப்பினீர்கள்—"
+                "மாடிப்படி, கட்டில், சுவர் அல்லது மரத்திலிருந்து தலைகீழாகக் கீழே விழுந்து, நெற்றி அல்லது தலையில் பலத்த காயமடைந்து தையல்/கட்டு போடும் நிலை ஏற்பட்டது."
+            )
+        else:
+            # Poison / Wrong Medicine / Insect / Dog bite / Convulsion
+            b_en = (
+                f"Around age {age} (or within the first {age + 1} years): You survived an acute medical emergency—"
+                "a toxic insect/dog bite, severe allergic reaction to medicine/food, or severe respiratory choking that required emergency hospital admission."
+            )
+            b_ta = (
+                f"சுமார் {age} வயதில் (அல்லது முதல் {age + 1} வயதுக்குள்): நீங்கள் ஒரு தீவிர விஷக்கடி அல்லது மருத்துவ ஒவ்வாமை கண்டத்திலிருந்து மீண்டீர்கள்—"
+                "விஷப் பூச்சி/நாய்க்கடி, தவறான மருந்து ஒவ்வாமை அல்லது திடீர் மூச்சுத்திணறல் ஏற்பட்டு அவசர சிகிச்சைப் பிரிவில் சேர்க்கப்பட்டுப் பிழைத்தீர்கள்."
+            )
 
         return b_en, b_ta
+
 
 
