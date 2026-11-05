@@ -1500,28 +1500,28 @@ export async function calculateFullHoroscopeSuite(
 
 
 
-  // 2. Calculate Vimshottari Dasa (complete 5 levels: Maha -> Antar -> Pratyantar -> Sookshma -> Prana)
-
+  // 2. Calculate Vimshottari Dasa (compact 3-level hierarchy: Maha -> Antar -> Pratyantar; Sookshma & Prana dynamically expanded on demand)
   const todayIso = new Date().toISOString().split("T")[0];
-
   const dasaPromise = calculateDasa({
-
     ...baseBirth,
-
-    depth: 5,
-
+    depth: 3,
     ayanamsa: form.ayanamsaId,
-
     house_system: form.houseSystemId,
-
     target_date: todayIso,
-
-  }).catch((err) => {
-
-    console.warn("Dasa calculation failed:", err);
-
-    return undefined;
-
+  }).catch(async (err) => {
+    console.warn("Dasa calculation failed with standard params, attempting fallback:", err);
+    try {
+      return await calculateDasa({
+        ...baseBirth,
+        depth: 3,
+        ayanamsa: form.ayanamsaId,
+        house_system: 0,
+        target_date: todayIso,
+      });
+    } catch (fallbackErr) {
+      console.error("Dasa fallback calculation also failed:", fallbackErr);
+      return undefined;
+    }
   });
 
 

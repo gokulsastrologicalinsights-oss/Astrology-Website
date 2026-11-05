@@ -48,6 +48,7 @@ import {
   calculateVedicYogas,
   calculateVargaD1D9,
   calculateShodashvarga,
+  calculateDasa,
   calculateDoshas,
   calculateShadbala,
   calculateMedicalAstrology,
@@ -439,6 +440,8 @@ function HoroscopeResultsContent() {
   const [isCalculatingExtensions, setIsCalculatingExtensions] = useState(false);
   const [isCalculatingLegacyDoshas, setIsCalculatingLegacyDoshas] = useState(false);
   const calculatedLegacyDoshasRef = useRef<Set<string>>(new Set());
+  const [isCalculatingLegacyDasa, setIsCalculatingLegacyDasa] = useState(false);
+  const calculatedLegacyDasaRef = useRef<Set<string>>(new Set());
 
   const handleCalculateVedicExtensions = async () => {
     if (!result || isCalculatingExtensions) return;
@@ -717,6 +720,60 @@ function HoroscopeResultsContent() {
                 setIsCalculatingLegacyDoshas(false);
               });
           }
+
+          // Auto-heal missing Dasa hierarchy from legacy or failed calculation snapshots
+          const existingDasaTree = calc.dasa?.dasa_tree;
+          if (
+            (!existingDasaTree || existingDasaTree.length === 0) &&
+            item.id &&
+            !calculatedLegacyDasaRef.current.has(item.id)
+          ) {
+            calculatedLegacyDasaRef.current.add(item.id);
+            setIsCalculatingLegacyDasa(true);
+            calculateDasa({
+              birth_date: item.birth_date,
+              birth_time: item.birth_time,
+              timezone: item.timezone,
+              latitude: item.latitude,
+              longitude: item.longitude,
+              depth: 3,
+              ayanamsa: item.ayanamsa_id ?? 0,
+              house_system: item.house_system_id ?? 0,
+              target_date: new Date().toISOString().split("T")[0],
+            })
+              .then((dasaRes) => {
+                if (!dasaRes || !dasaRes.dasa_tree || dasaRes.dasa_tree.length === 0) return;
+                setResult((prev) => {
+                  if (!prev) return null;
+                  const updated: FullHoroscopeResult = {
+                    ...prev,
+                    dasa: dasaRes,
+                  };
+                  saveActiveCalculation(updated);
+
+                  const idempotencyKey =
+                    updated.idempotencyKey ||
+                    (updated as any).calculation_result?.idempotency_key ||
+                    `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                  const snapshot = prepareCalculationSnapshot(updated, idempotencyKey);
+                  fetch(`/api/horoscopes/${item.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ calculation_result: snapshot }),
+                  }).catch((persistErr) => {
+                    console.warn("Failed to persist healed dasa snapshot to database:", persistErr);
+                  });
+
+                  return updated;
+                });
+              })
+              .catch((e) => {
+                console.warn("Auto-calculation of Dasa failed:", e);
+              })
+              .finally(() => {
+                setIsCalculatingLegacyDasa(false);
+              });
+          }
         })
         .catch((err) => {
           setLoadError(err.message || "Failed to load saved horoscope.");
@@ -726,6 +783,58 @@ function HoroscopeResultsContent() {
         });
     }
   }, [idParam]);
+
+  // Auto-heal missing Dasa for active in-memory or guest calculations
+  const calculatedSessionDasaRef = useRef(false);
+  useEffect(() => {
+    if (
+      result &&
+      (!result.dasa || !result.dasa.dasa_tree || result.dasa.dasa_tree.length === 0) &&
+      result.clientInputs?.birthDate &&
+      result.clientInputs?.birthTime &&
+      !calculatedSessionDasaRef.current
+    ) {
+      calculatedSessionDasaRef.current = true;
+      calculateDasa({
+        birth_date: result.clientInputs.birthDate,
+        birth_time: result.clientInputs.birthTime,
+        timezone: result.clientInputs.timezone || "Asia/Kolkata",
+        latitude: result.clientInputs.latitude || 13.0827,
+        longitude: result.clientInputs.longitude || 80.2707,
+        depth: 3,
+        ayanamsa: result.clientInputs.ayanamsaId ?? 0,
+        house_system: result.clientInputs.houseSystemId ?? 0,
+        target_date: new Date().toISOString().split("T")[0],
+      })
+        .then((dasaRes) => {
+          if (!dasaRes || !dasaRes.dasa_tree || dasaRes.dasa_tree.length === 0) return;
+          setResult((prev) => {
+            if (!prev) return null;
+            const updated: FullHoroscopeResult = {
+              ...prev,
+              dasa: dasaRes,
+            };
+            saveActiveCalculation(updated);
+            if (prev.savedId) {
+              const idempotencyKey =
+                prev.idempotencyKey ||
+                (prev as any).calculation_result?.idempotency_key ||
+                `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+              const snapshot = prepareCalculationSnapshot(updated, idempotencyKey);
+              fetch(`/api/horoscopes/${prev.savedId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ calculation_result: snapshot }),
+              }).catch((e) => console.warn("Failed to persist healed dasa:", e));
+            }
+            return updated;
+          });
+        })
+        .catch((e) => {
+          console.warn("Session auto-heal of Dasa failed:", e);
+        });
+    }
+  }, [result]);
 
   useEffect(() => {
     const pageTitle = result?.clientInputs?.fullName

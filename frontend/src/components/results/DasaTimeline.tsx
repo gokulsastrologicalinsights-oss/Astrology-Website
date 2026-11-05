@@ -12,7 +12,7 @@ import {
 } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getLordName, getGrahaShort } from "@/lib/translations";
-import { analyzeKpEvents } from "@/lib/api";
+import { analyzeKpEvents, calculateDasa } from "@/lib/api";
 import {
   jdToCalendarDateTime,
   calculateCalendarAge,
@@ -28,6 +28,7 @@ import {
   PlanetContext,
 } from "@/lib/benefit-bhavas";
 import {
+  Loader2,
   Clock,
   Calendar,
   Sparkles,
@@ -394,6 +395,21 @@ export function DasaTimeline({
 }: DasaTimelineProps) {
   const { language, t } = useLanguage();
 
+  const [internalDasa, setInternalDasa] = useState<DasaResponse | undefined>(dasa);
+  const [isCalculatingInternalDasa, setIsCalculatingInternalDasa] = useState(false);
+
+  useEffect(() => {
+    if (dasa && dasa.dasa_tree && dasa.dasa_tree.length > 0) {
+      setInternalDasa(dasa);
+    }
+  }, [dasa]);
+
+  const activeDasa = useMemo(() => {
+    if (dasa && dasa.dasa_tree && dasa.dasa_tree.length > 0) return dasa;
+    if (internalDasa && internalDasa.dasa_tree && internalDasa.dasa_tree.length > 0) return internalDasa;
+    return undefined;
+  }, [dasa, internalDasa]);
+
   // KP Event Predictions Integration state
   const [internalKpAnalysis, setInternalKpAnalysis] = useState<KpEventAnalysisResponse | null>(null);
 
@@ -403,7 +419,7 @@ export function DasaTimeline({
       setInternalKpAnalysis(kpEventAnalysis);
       return;
     }
-    if (!kp || !dasa?.dasa_tree || dasa.dasa_tree.length === 0) return;
+    if (!kp || !activeDasa?.dasa_tree || activeDasa.dasa_tree.length === 0) return;
 
     let isMounted = true;
     const periods: Array<{
@@ -413,7 +429,7 @@ export function DasaTimeline({
       end_date: string;
     }> = [];
 
-    for (const md of dasa.dasa_tree) {
+    for (const md of (activeDasa?.dasa_tree || [])) {
       if (md.sub_periods && md.sub_periods.length > 0) {
         for (const bd of md.sub_periods) {
           periods.push({
@@ -474,35 +490,69 @@ export function DasaTimeline({
     return buildPlanetContexts(horoscope.planets, horoscope.ascendant, horoscope.houses);
   }, [horoscope]);
 
-  // Resolve birth date & time from props or dasa metadata or first node
+  // Resolve birth date & time from props or activeDasa metadata or first node
   const resolvedBirthDate = useMemo(() => {
     if (propBirthDate) return propBirthDate;
-    if (dasa?.birth_dasa_balance?.birth_date) return dasa.birth_dasa_balance.birth_date;
-    if (dasa?.metadata?.birth_utc_iso) {
-      return dasa.metadata.birth_utc_iso.split("T")[0];
+    if (activeDasa?.birth_dasa_balance?.birth_date) return activeDasa.birth_dasa_balance.birth_date;
+    if (activeDasa?.metadata?.birth_utc_iso) {
+      return activeDasa.metadata.birth_utc_iso.split("T")[0];
     }
-    if (dasa?.dasa_tree && dasa.dasa_tree.length > 0) {
-      const dt = jdToCalendarDateTime(dasa.dasa_tree[0].start_jd);
+    if (activeDasa?.dasa_tree && activeDasa.dasa_tree.length > 0) {
+      const dt = jdToCalendarDateTime(activeDasa.dasa_tree[0].start_jd);
       if (dt) return dt.dateStr;
     }
     return "";
-  }, [propBirthDate, dasa]);
+  }, [propBirthDate, activeDasa]);
 
   const resolvedBirthTime = useMemo(() => {
     if (propBirthTime) return propBirthTime;
-    if (dasa?.birth_dasa_balance?.birth_time) return dasa.birth_dasa_balance.birth_time;
-    if (dasa?.metadata?.birth_utc_iso) {
-      const parts = dasa.metadata.birth_utc_iso.split("T");
+    if (activeDasa?.birth_dasa_balance?.birth_time) return activeDasa.birth_dasa_balance.birth_time;
+    if (activeDasa?.metadata?.birth_utc_iso) {
+      const parts = activeDasa.metadata.birth_utc_iso.split("T");
       if (parts[1]) return parts[1].slice(0, 8);
     }
     return "—";
-  }, [propBirthTime, dasa]);
+  }, [propBirthTime, activeDasa]);
 
   const resolvedTimezone = useMemo(() => {
-    return propTimezone || dasa?.metadata?.local_timezone || "Asia/Kolkata";
-  }, [propTimezone, dasa]);
+    return propTimezone || activeDasa?.metadata?.local_timezone || "Asia/Kolkata";
+  }, [propTimezone, activeDasa]);
 
-  const utcOffsetHours = dasa?.metadata?.utc_offset_hours || 0;
+  const utcOffsetHours = activeDasa?.metadata?.utc_offset_hours || dasa?.metadata?.utc_offset_hours || 0;
+
+  // Auto-heal / fallback fetch for missing Dasa periods
+  useEffect(() => {
+    if (
+      (!activeDasa || !activeDasa.dasa_tree || activeDasa.dasa_tree.length === 0) &&
+      resolvedBirthDate &&
+      !isCalculatingInternalDasa
+    ) {
+      const bTime = (resolvedBirthTime && resolvedBirthTime !== "—") ? resolvedBirthTime : "12:00:00";
+      setIsCalculatingInternalDasa(true);
+      calculateDasa({
+        birth_date: resolvedBirthDate,
+        birth_time: bTime,
+        timezone: resolvedTimezone || "Asia/Kolkata",
+        latitude: horoscope?.metadata?.coordinates?.latitude || 13.0827,
+        longitude: horoscope?.metadata?.coordinates?.longitude || 80.2707,
+        depth: 3,
+        ayanamsa: horoscope?.metadata?.ayanamsa_id ?? 0,
+        house_system: horoscope?.metadata?.house_system_id ?? 0,
+        target_date: getTodayIsoString(),
+      })
+        .then((res) => {
+          if (res && res.dasa_tree && res.dasa_tree.length > 0) {
+            setInternalDasa(res);
+          }
+        })
+        .catch((err) => {
+          console.warn("DasaTimeline fallback calculation failed:", err);
+        })
+        .finally(() => {
+          setIsCalculatingInternalDasa(false);
+        });
+    }
+  }, [activeDasa, resolvedBirthDate, resolvedBirthTime, resolvedTimezone, horoscope, isCalculatingInternalDasa]);
 
   // Selected date for active period detection:
   // Defaults to today's local date ("on that particular date we opened")
@@ -515,12 +565,12 @@ export function DasaTimeline({
 
   // Compute active hierarchy and person's age on selected date
   const { activeHierarchy, selectedDateAge, targetJd } = useMemo(() => {
-    if (!dasa?.dasa_tree || dasa.dasa_tree.length === 0 || !selectedDate) {
+    if (!activeDasa?.dasa_tree || activeDasa.dasa_tree.length === 0 || !selectedDate) {
       return { activeHierarchy: null, selectedDateAge: null, targetJd: 0 };
     }
 
     const tJd = dateToJd(selectedDate);
-    const tree = dasa.dasa_tree;
+    const tree = activeDasa.dasa_tree;
     const startJd = tree[0].start_jd;
     const endJd = tree[tree.length - 1].end_jd;
 
@@ -539,26 +589,39 @@ export function DasaTimeline({
     }
 
     return { activeHierarchy: hierarchy, selectedDateAge: ageStr, targetJd: tJd };
-  }, [dasa, selectedDate, resolvedBirthDate, language, utcOffsetHours]);
+  }, [activeDasa, selectedDate, resolvedBirthDate, language, utcOffsetHours]);
 
   // State 1: Expand/collapse state for each Mahadasha chart card
   // By default, all Mahadasha cards are open so charts are shown side by side
   const [expandedMahaKeys, setExpandedMahaKeys] = useState<Record<number, boolean>>(() => {
     const map: Record<number, boolean> = {};
-    if (dasa?.dasa_tree) {
-      dasa.dasa_tree.forEach((_, idx) => {
+    if (activeDasa?.dasa_tree) {
+      activeDasa.dasa_tree.forEach((_, idx) => {
         map[idx] = true;
       });
     }
     return map;
   });
 
+  // Ensure Mahadasha cards are opened when activeDasa loads asynchronously
+  useEffect(() => {
+    if (!activeDasa?.dasa_tree) return;
+    setExpandedMahaKeys((prev) => {
+      if (Object.keys(prev).length > 0) return prev;
+      const map: Record<number, boolean> = {};
+      activeDasa.dasa_tree.forEach((_, idx) => {
+        map[idx] = true;
+      });
+      return map;
+    });
+  }, [activeDasa]);
+
   // State 2: Expand/collapse state for Bhukti and deeper rows
   // On initial mount, auto-expand the active path (active Bhukti + active Antharam) for today's opening date
   const [expandedRowKeys, setExpandedRowKeys] = useState<Record<string, boolean>>(() => {
-    if (dasa?.dasa_tree) {
+    if (activeDasa?.dasa_tree) {
       const tJd = dateToJd(defaultTargetDate);
-      return getActivePathExpandedKeys(dasa.dasa_tree, tJd, utcOffsetHours, resolvedBirthDate, 3);
+      return getActivePathExpandedKeys(activeDasa.dasa_tree, tJd, utcOffsetHours, resolvedBirthDate, 3);
     }
     return {};
   });
@@ -566,21 +629,21 @@ export function DasaTimeline({
   // Whenever targetJd or dasa changes (e.g. date picker changed or new horoscope loaded),
   // automatically ensure the active path for that date is expanded and active Mahadasha card is open
   useEffect(() => {
-    if (!dasa?.dasa_tree || targetJd <= 0) return;
+    if (!activeDasa?.dasa_tree || targetJd <= 0) return;
     const activeKeys = getActivePathExpandedKeys(
-      dasa.dasa_tree,
+      activeDasa.dasa_tree,
       targetJd,
       utcOffsetHours,
       resolvedBirthDate,
       3
     );
     setExpandedRowKeys((prev) => ({ ...prev, ...activeKeys }));
-    dasa.dasa_tree.forEach((m, mIdx) => {
+    activeDasa.dasa_tree.forEach((m, mIdx) => {
       if (targetJd >= m.start_jd && targetJd < m.end_jd) {
         setExpandedMahaKeys((prev) => ({ ...prev, [mIdx]: true }));
       }
     });
-  }, [targetJd, dasa, utcOffsetHours, resolvedBirthDate]);
+  }, [targetJd, activeDasa, utcOffsetHours, resolvedBirthDate]);
 
   const toggleMaha = (idx: number) => {
     setExpandedMahaKeys((prev) => ({ ...prev, [idx]: !prev[idx] }));
@@ -591,9 +654,9 @@ export function DasaTimeline({
   };
 
   const expandAllMahadashas = () => {
-    if (!dasa?.dasa_tree) return;
+    if (!activeDasa?.dasa_tree) return;
     const map: Record<number, boolean> = {};
-    dasa.dasa_tree.forEach((_, idx) => {
+    activeDasa.dasa_tree.forEach((_, idx) => {
       map[idx] = true;
     });
     setExpandedMahaKeys(map);
@@ -601,10 +664,10 @@ export function DasaTimeline({
   };
 
   const expandToAntharam = () => {
-    if (!dasa?.dasa_tree) return;
+    if (!activeDasa?.dasa_tree) return;
     const mahaMap: Record<number, boolean> = {};
     const rowMap: Record<string, boolean> = {};
-    dasa.dasa_tree.forEach((m, mIdx) => {
+    activeDasa.dasa_tree.forEach((m, mIdx) => {
       mahaMap[mIdx] = true;
       const bChildren =
         m.sub_periods && m.sub_periods.length > 0
@@ -619,7 +682,7 @@ export function DasaTimeline({
   };
 
   const expandAllFiveLevels = () => {
-    if (!dasa?.dasa_tree) return;
+    if (!activeDasa?.dasa_tree) return;
     const mahaMap: Record<number, boolean> = {};
     const rowMap: Record<string, boolean> = {};
 
@@ -639,7 +702,7 @@ export function DasaTimeline({
       });
     };
 
-    dasa.dasa_tree.forEach((m, mIdx) => {
+    activeDasa.dasa_tree.forEach((m, mIdx) => {
       mahaMap[mIdx] = true;
       const bList =
         m.sub_periods && m.sub_periods.length > 0
@@ -657,16 +720,16 @@ export function DasaTimeline({
   };
 
   const expandActivePath = () => {
-    if (!dasa?.dasa_tree || targetJd <= 0) return;
+    if (!activeDasa?.dasa_tree || targetJd <= 0) return;
     const activeKeys = getActivePathExpandedKeys(
-      dasa.dasa_tree,
+      activeDasa.dasa_tree,
       targetJd,
       utcOffsetHours,
       resolvedBirthDate,
       5
     );
     setExpandedRowKeys((prev) => ({ ...prev, ...activeKeys }));
-    dasa.dasa_tree.forEach((m, mIdx) => {
+    activeDasa.dasa_tree.forEach((m, mIdx) => {
       if (targetJd >= m.start_jd && targetJd < m.end_jd) {
         setExpandedMahaKeys((prev) => ({ ...prev, [mIdx]: true }));
       }
@@ -675,11 +738,11 @@ export function DasaTimeline({
 
   // Derive or extract authoritative Birth Dasa Balance
   const birthBalance = useMemo(() => {
-    if (dasa?.birth_dasa_balance) {
-      return dasa.birth_dasa_balance;
+    if (activeDasa?.birth_dasa_balance) {
+      return activeDasa.birth_dasa_balance;
     }
-    if (!dasa?.dasa_tree || dasa.dasa_tree.length === 0) return null;
-    const firstMaha = dasa.dasa_tree[0];
+    if (!activeDasa?.dasa_tree || activeDasa.dasa_tree.length === 0) return null;
+    const firstMaha = activeDasa.dasa_tree[0];
     const firstBhukti =
       firstMaha.sub_periods && firstMaha.sub_periods.length > 0
         ? firstMaha.sub_periods[0]
@@ -691,10 +754,10 @@ export function DasaTimeline({
     return {
       birth_date: resolvedBirthDate,
       birth_time: resolvedBirthTime,
-      moon_sidereal_deg: dasa.moon_sidereal_deg,
-      nakshatra_name: dasa.nakshatra?.name || "—",
-      nakshatra_pada: dasa.nakshatra?.pada || 1,
-      nakshatra_lord: dasa.nakshatra?.lord || firstMaha.lord,
+      moon_sidereal_deg: activeDasa.moon_sidereal_deg,
+      nakshatra_name: activeDasa.nakshatra?.name || "—",
+      nakshatra_pada: activeDasa.nakshatra?.pada || 1,
+      nakshatra_lord: activeDasa.nakshatra?.lord || firstMaha.lord,
       starting_mahadasha_lord: firstMaha.lord,
       mahadasha_full_duration: {
         years: Math.round(firstMaha.duration_years),
@@ -718,7 +781,7 @@ export function DasaTimeline({
         days: Math.round(((firstMaha.duration_years % 1) * 365.25) % 30.4375),
         total_days: remDays,
         total_years: firstMaha.duration_years,
-        formatted: dasa.birth_balance_formatted,
+        formatted: activeDasa.birth_balance_formatted,
       },
       starting_bhukti_lord: firstBhukti?.lord,
       starting_bhukti_remaining: firstBhukti
@@ -738,9 +801,20 @@ export function DasaTimeline({
       ),
       next_dasa_transition_jd: firstMaha.end_jd,
     } as BirthDasaBalance;
-  }, [dasa, resolvedBirthDate, resolvedBirthTime, utcOffsetHours]);
+  }, [activeDasa, resolvedBirthDate, resolvedBirthTime, utcOffsetHours]);
 
-  if (!dasa || !dasa.dasa_tree || dasa.dasa_tree.length === 0) {
+  if (isCalculatingInternalDasa) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-[#D9DEE7] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-[#B8862B]" />
+        <span className="text-xs text-[#8190A6]">
+          {language === "ta" ? "தசா காலங்கள் கணக்கிடப்படுகின்றன..." : "Calculating Dasa periods..."}
+        </span>
+      </div>
+    );
+  }
+
+  if (!activeDasa || !activeDasa.dasa_tree || activeDasa.dasa_tree.length === 0) {
     return (
       <div className="p-8 text-center bg-white rounded-2xl border border-[#D9DEE7] text-xs text-[#8190A6]">
         {t.dasaNoPeriodsAvailable || "No Dasa periods available."}
@@ -1092,7 +1166,7 @@ export function DasaTimeline({
       {/* 3. Side-by-Side Dasa Charts Grid (Reference Screenshot Layout) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 items-start">
-        {dasa.dasa_tree.map((mahaNode, mahaIdx) => (
+        {activeDasa.dasa_tree.map((mahaNode, mahaIdx) => (
           <MahadashaCard
             key={`maha-${mahaIdx}`}
             mahaNode={mahaNode}
