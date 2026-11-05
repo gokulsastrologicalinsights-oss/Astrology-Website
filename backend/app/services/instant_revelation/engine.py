@@ -295,6 +295,30 @@ class InstantRevelationEngine:
         )
 
         # ------------------------------------------------------------------
+        # THE 4 ULTRA-PRECISION NADI SHOCKERS (Option B)
+        # ------------------------------------------------------------------
+        spouse_en, spouse_ta = cls._synthesize_spouse_secrets(
+            planets_dict=planets_dict,
+            ascendant_sign=ascendant_sign,
+            gender=gender,
+        )
+
+        vehicle_en, vehicle_ta = cls._synthesize_vehicle_marker(
+            planets_dict=planets_dict,
+            ascendant_sign=ascendant_sign,
+        )
+
+        land_rift_en, land_rift_ta = cls._synthesize_ancestral_land_rift(
+            planets_dict=planets_dict,
+            ascendant_sign=ascendant_sign,
+        )
+
+        balarishta_en, balarishta_ta = cls._synthesize_childhood_balarishta(
+            planets_dict=planets_dict,
+            ascendant_sign=ascendant_sign,
+        )
+
+        # ------------------------------------------------------------------
         # FAST 10-SECOND GLANCE TELEPROMPTER
         # ------------------------------------------------------------------
         door_en_clean = bnn_res.birth_environment.door_facing_en.replace("Facing ", "")
@@ -357,6 +381,14 @@ class InstantRevelationEngine:
             medical_organ_vulnerability_en=med_en,
             medical_organ_vulnerability_ta=med_ta,
             vulnerable_organs=vulnerable_organs,
+            spouse_secrets_en=spouse_en,
+            spouse_secrets_ta=spouse_ta,
+            vehicle_marker_en=vehicle_en,
+            vehicle_marker_ta=vehicle_ta,
+            ancestral_land_rift_en=land_rift_en,
+            ancestral_land_rift_ta=land_rift_ta,
+            childhood_balarishta_en=balarishta_en,
+            childhood_balarishta_ta=balarishta_ta,
         )
 
     # ----------------------------------------------------------------------
@@ -1241,4 +1273,192 @@ class InstantRevelationEngine:
         ta_desc = f"ரோக ஸ்தானமான 6-ஆம் பாவக ரீதியாக {ta_organs} சார்ந்த பகுதிகளில் உபாதைகள் ஏற்பட வாய்ப்புள்ளது. முறையான உணவுப் பழக்கமும், முன்னெச்சரிக்கையும் அவசியம்."
 
         return en_desc, ta_desc, organs_list
+
+    # ----------------------------------------------------------------------
+    # Helper 6: Synthesize Spouse & In-Laws Secrets (Option B)
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_spouse_secrets(
+        cls,
+        planets_dict: Dict[str, Dict[str, Any]],
+        ascendant_sign: int,
+        gender: str,
+    ) -> Tuple[str, str]:
+        sp_karaka = "Venus" if gender == "male" else "Mars"
+        sp_sign = planets_dict.get(sp_karaka, {}).get("sign_index", 7)
+
+        # Direction from spouse karaka sign
+        dir_map = {
+            1: ("East", "கிழக்கு திசை"),
+            2: ("South", "தெற்கு திசை"),
+            3: ("West", "மேற்கு திசை"),
+            4: ("North", "வடக்கு திசை"),
+            5: ("East", "கிழக்கு திசை"),
+            6: ("South", "தெற்கு திசை"),
+            7: ("West", "மேற்கு திசை"),
+            8: ("North", "வடக்கு திசை"),
+            9: ("East", "கிழக்கு திசை"),
+            10: ("South", "தெற்கு திசை"),
+            11: ("West", "மேற்கு திசை"),
+            12: ("North", "வடக்கு திசை"),
+        }
+        sp_dir_en, sp_dir_ta = dir_map.get(sp_sign, ("East", "கிழக்கு திசை"))
+
+        # 7th house and Distance
+        seventh_sign = ((ascendant_sign + 6 - 1) % 12) + 1
+        rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
+        moon_sign = planets_dict.get("Moon", {}).get("sign_index", 1)
+
+        is_distant = (rahu_sign == seventh_sign) or (moon_sign == seventh_sign) or (rahu_sign == sp_sign)
+        if is_distant:
+            dist_en = "Your spouse was born at a noticeable distance—either across district/state borders, or beyond a prominent river/water body."
+            dist_ta = "உங்கள் வாழ்க்கைத் துணை உங்கள் சொந்த ஊரிலிருந்து குறிப்பிட்ட தூரமான பகுதியிலிருந்தோ, நதி/கடல் தாண்டிய இடத்திலிருந்தோ அல்லது வெளி மாவட்டத்திலிருந்தோ அமைந்தவர்."
+        else:
+            dist_en = "Your spouse was born within a local district radius or originated from a familiar family circle."
+            dist_ta = "உங்கள் வாழ்க்கைத் துணை உள்ளூரிலோ அல்லது பழக்கப்பட்ட குடும்ப/நண்பர்கள் வட்டத்திலோ அமைந்தவர்."
+
+        # In-laws relationship check
+        sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
+        ninth_sign = ((ascendant_sign + 8 - 1) % 12) + 1 # 3rd from 7th (Father-in-law)
+        has_inlaw_friction = (sat_sign in (seventh_sign, ninth_sign)) or (mars_sign in (seventh_sign, ninth_sign))
+
+        if has_inlaw_friction:
+            friction_en = "In the early alliance stages, there was notable pride, stubbornness, or initial objections from the in-laws' side before final consent."
+            friction_ta = "திருமணப் பேச்சுவார்த்தை துவங்கிய காலத்தில், மாமனார் அல்லது மாமியார் வழியில் பிடிவாதம், முட்டுக்கட்டை அல்லது இழுபறி ஏற்பட்டுப் பின்னரே திருமணம் முடிவானது."
+        else:
+            friction_en = "The in-laws possess respectable traditional values, though their communication style is very conservative."
+            friction_ta = "மாமனார் வழி குடும்பம் நல்ல சமூக அந்தஸ்தும், பாரம்பரிய மதிப்பும் கொண்டவர்கள்."
+
+        # Complexion
+        sp_desc_en = f"Spouse arrives from the {sp_dir_en}. {dist_en} Personality is sharp-witted with a determined, unyielding will. {friction_en}"
+        sp_desc_ta = f"வாழ்க்கைத் துணை அமையும் திசை: {sp_dir_ta}. {dist_ta} வாழ்க்கைத் துணை அபார அறிவாற்றலும், தன் கொள்கையில் பிடிவாதமும் கொண்டவர். {friction_ta}"
+
+        return sp_desc_en, sp_desc_ta
+
+    # ----------------------------------------------------------------------
+    # Helper 7: Synthesize Vehicle & Conveyance Marker (Option B)
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_vehicle_marker(
+        cls,
+        planets_dict: Dict[str, Dict[str, Any]],
+        ascendant_sign: int,
+    ) -> Tuple[str, str]:
+        fourth_sign = ((ascendant_sign + 3 - 1) % 12) + 1
+        ven_sign = planets_dict.get("Venus", {}).get("sign_index", 2)
+        mars_sign = planets_dict.get("Mars", {}).get("sign_index", 1)
+        sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+
+        # Color affinity from Venus / 4th house
+        color_map = {
+            1: ("Red, maroon, copper, or vibrant warm shades", "சிவப்பு, மெரூன், செம்பு அல்லது அடர் நிறங்கள்"),
+            2: ("White, pearl silver, or light metallic ivory", "வெள்ளை, வெள்ளி, முத்து போன்ற வெளிர் நிறங்கள்"),
+            3: ("Green, olive, dual-tone, or silver-grey", "பச்சை, ஆலிவ் அல்லது இரட்டை வண்ணக் கலவை"),
+            4: ("Pure white, pearl, or pale sea-blue", "தூய வெள்ளை, முத்து அல்லது வெளிர் நீலம்"),
+            5: ("Gold, bright orange, ruby red, or warm copper", "தங்க நிறம், செம்மஞ்சள் அல்லது மெரூன்"),
+            6: ("Dual-tone, metallic silver-green, or charcoal", "இரட்டை வண்ணம், வெள்ளி அல்லது சாம்பல்"),
+            7: ("White, silver, cream, or pastel tones", "வெள்ளை, சில்வர், கிரீம் அல்லது பளபளப்பான நிறம்"),
+            8: ("Dark red, deep wine, black, or metallic copper", "அடர் சிவப்பு, ஒயின் அல்லது கறுப்பு-செம்பு கலவை"),
+            9: ("Yellow, sandalwood beige, golden cream, or bronze", "மஞ்சள், சந்தன நிறம் அல்லது கோல்டன் கிரீம்"),
+            10: ("Dark navy blue, charcoal black, or deep steel-grey", "கருநீலம், கருப்பு அல்லது ஸ்டீல் கிரே"),
+            11: ("Electric blue, royal navy, or matte black", "அடர் நீலம், ராயல் நேவி அல்லது மேட் பிளாக்"),
+            12: ("Light metallic, sea-foam silver, or pearl white", "வெளிர் சில்வர் அல்லது பவள வெள்ளை"),
+        }
+        color_en, color_ta = color_map.get(ven_sign, ("White, silver, or metallic grey", "வெள்ளை, சில்வர் அல்லது சாம்பல்"))
+
+        # Scratch / Hazard tendency
+        third_sign = ((ascendant_sign + 2 - 1) % 12) + 1 # 12th from 4th
+        has_scratch = (mars_sign in (fourth_sign, third_sign)) or (sat_sign in (fourth_sign, third_sign))
+
+        if has_scratch:
+            damage_en = "Your vehicle has a noticeable tendency toward left-side scratches, minor bumper abrasions, or recurring tire punctures / battery drain."
+            damage_ta = "உங்கள் வாகனத்தில் இடதுபுறக் கீறல்கள், பம்பரில் சிறு தட்டுப்பாடுகள் அல்லது அடிக்கடி டயர் பஞ்சர் / பேட்டரி இறங்குதல் போன்ற தொந்தரவுகள் ஏற்படுவது வழக்கம்."
+        else:
+            damage_en = "Your vehicle operates with steady endurance, provided electrical sensors and fluid levels are routinely checked."
+            damage_ta = "வாகனம் உறுதியாகவும் சீராகவும் இயங்கும்; முறையான ஆயில் மற்றும் பேட்டரி பராமரிப்பு நலம் தரும்."
+
+        v_en = f"You are naturally drawn to vehicles in {color_en}. Conveyance trait: {damage_en}"
+        v_ta = f"நீங்கள் இயற்கையாக விரும்பும் அல்லது இயக்கும் வாகன நிறம்: {color_ta}. வாகன அம்சம்: {damage_ta}"
+
+        return v_en, v_ta
+
+    # ----------------------------------------------------------------------
+    # Helper 8: Synthesize Ancestral Property & Paternal Land Rift (Option B)
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_ancestral_land_rift(
+        cls,
+        planets_dict: Dict[str, Dict[str, Any]],
+        ascendant_sign: int,
+    ) -> Tuple[str, str]:
+        ninth_sign = ((ascendant_sign + 8 - 1) % 12) + 1
+        sun_sign = planets_dict.get("Sun", {}).get("sign_index", 1)
+        sat_sign = planets_dict.get("Saturn", {}).get("sign_index", 10)
+        rahu_sign = planets_dict.get("Rahu", {}).get("sign_index", 1)
+        ketu_sign = planets_dict.get("Ketu", {}).get("sign_index", 7)
+
+        # Affliction on 9th house or Sun
+        is_rift = (
+            (sat_sign in (ninth_sign, sun_sign))
+            or (rahu_sign in (ninth_sign, sun_sign))
+            or (ketu_sign in (ninth_sign, sun_sign))
+            or (((sat_sign - sun_sign) % 12) in (6, 7))
+        )
+
+        if is_rift:
+            rift_en = (
+                "In your paternal ancestral lineage (father's or grandfather's generation), there was a valuable piece of "
+                "agricultural land, garden plot, or ancestral property with an old well that became entangled in a painful partition dispute "
+                "with paternal uncles/relatives, or was liquidated under distress with lingering family regret."
+            )
+            rift_ta = (
+                "உங்கள் தந்தை அல்லது பாட்டனார் காலத்தில், கிணறு அல்லது தோட்டம் இருந்த ஒரு பூர்வீக நிலத்தில் பங்காளிகளுடன் "
+                "(சித்தப்பா/பெரியப்பா வழி) பாகப்பிரிவினை சர்ச்சை அல்லது நெருக்கடியில் குறைந்த விலைக்கு விற்றுவிட்டு ஏங்கிய "
+                "ஒரு கசப்பான வரலாறு உண்டு."
+            )
+        else:
+            rift_en = (
+                "Your paternal lineage held proud, respectable community standing and landed property in their native place, "
+                "which was peacefully divided across ancestral successions."
+            )
+            rift_ta = (
+                "தந்தை வழி முன்னோர்கள் ஊர் மதிப்பும் நிலபுலன்களும் கொண்டவர்கள்; தலைமுறை மாற்றங்களில் பாகப்பிரிவினை மூலம் "
+                "சொத்துக்கள் அமைதியாகப் பகிர்ந்து கொள்ளப்பட்டன."
+            )
+
+        return rift_en, rift_ta
+
+    # ----------------------------------------------------------------------
+    # Helper 9: Synthesize Childhood Balarishta Escape (Option B)
+    # ----------------------------------------------------------------------
+    @classmethod
+    def _synthesize_childhood_balarishta(
+        cls,
+        planets_dict: Dict[str, Dict[str, Any]],
+        ascendant_sign: int,
+    ) -> Tuple[str, str]:
+        ketu_sign = planets_dict.get("Ketu", {}).get("sign_index", 7)
+        jup_sign = planets_dict.get("Jupiter", {}).get("sign_index", 9)
+        diff = ((ketu_sign - jup_sign) % 12) + 1
+
+        danger_ages_map = {
+            1: [1, 2], 2: [2, 3], 3: [3, 4], 4: [4, 5],
+            5: [5, 6], 6: [6, 7], 7: [7, 8], 8: [8, 9],
+            9: [9, 10], 10: [10, 11], 11: [11, 12], 12: [12, 13],
+        }
+        ages = danger_ages_map.get(diff, [3, 7])
+        min_age, max_age = ages[0], ages[-1]
+
+        b_en = (
+            f"Between ages {min_age} and {max_age}: You survived a critical childhood health scare—a dangerous high fever, "
+            "severe respiratory convulsion, a sudden high fall, or an encounter with water/fire that caused intense panic to your parents."
+        )
+        b_ta = (
+            f"சிறுவயதில் சுமார் {min_age} முதல் {max_age} வயதுக்குள்: நீங்கள் ஒரு கடுமையான பாலாரிஷ்ட கண்டத்தைத் தாண்டி வந்துள்ளீர்கள். "
+            "தீவிர காய்ச்சல், மூச்சுத்திணறல், கீழே விழுந்து தலையில் பலத்த அடி அல்லது நீர்/நெருப்பு கண்டத்திலிருந்து பெற்றோர் பதறித் துடித்து உங்களைக் காப்பாற்றிய ஒரு சம்பவம் உண்டு."
+        )
+
+        return b_en, b_ta
+
 

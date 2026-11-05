@@ -35,6 +35,10 @@ import {
   Users,
   Activity,
   ShieldAlert,
+  Heart,
+  Car,
+  Landmark,
+  Shield,
 } from "lucide-react";
 
 const MAJOR_TN_CITIES = [
@@ -187,6 +191,20 @@ export default function InstantRevelationPage() {
     lines.push(`[5. MEDICAL VULNERABILITY]:`);
     lines.push(`  EN: "${data.medical_organ_vulnerability_en}"`);
     lines.push(`  TA: "${data.medical_organ_vulnerability_ta}"`);
+
+    lines.push(`\n--- THE 4 ULTRA-PRECISION NADI SHOCKERS (OPTION B) ---`);
+    lines.push(`[1. SPOUSE & IN-LAWS]:`);
+    lines.push(`  EN: "${data.spouse_secrets_en}"`);
+    lines.push(`  TA: "${data.spouse_secrets_ta}"`);
+    lines.push(`[2. VEHICLE COLOR & SCRATCH MARKER]:`);
+    lines.push(`  EN: "${data.vehicle_marker_en}"`);
+    lines.push(`  TA: "${data.vehicle_marker_ta}"`);
+    lines.push(`[3. ANCESTRAL LAND & WELL DISPUTE]:`);
+    lines.push(`  EN: "${data.ancestral_land_rift_en}"`);
+    lines.push(`  TA: "${data.ancestral_land_rift_ta}"`);
+    lines.push(`[4. CHILDHOOD BALARISHTA ESCAPE]:`);
+    lines.push(`  EN: "${data.childhood_balarishta_en}"`);
+    lines.push(`  TA: "${data.childhood_balarishta_ta}"`);
 
     lines.push(`\n--- 4. EXACT FUTURE WINDOWS ---`);
     data.future_windows.forEach((w) => {
@@ -881,6 +899,134 @@ export default function InstantRevelationPage() {
                   {(scriptLanguage === "en" || scriptLanguage === "both") && (
                     <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-slate-900/70 p-3 rounded-lg border border-slate-700">
                       "{data.medical_organ_vulnerability_en}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ULTRA-PRECISION NADI SHOCKERS (4 அதிநுட்ப பிருகு நாடி ரகசியங்கள் - Option B) */}
+            <div className="bg-gradient-to-br from-[#1F1610] via-[#2A1810] to-[#140E0A] text-white rounded-2xl shadow-xl border-2 border-orange-400/60 p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-orange-900/60 gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-orange-400/20 rounded-xl border border-orange-400/30">
+                    <Sparkles className="w-6 h-6 text-orange-300 animate-spin" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-orange-300 uppercase tracking-widest block">
+                      Ultra-Precision Nadi Secrets • அதிநுட்ப பிருகு நாடி ரகசியங்கள்
+                    </span>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <span>4 அதிநுட்ப நாடி ரகசிய வாக்குகள் (Instant Jaw-Droppers)</span>
+                    </h3>
+                  </div>
+                </div>
+                <span className="text-xs bg-orange-400/10 text-orange-200 border border-orange-400/40 px-3 py-1 rounded-full font-mono self-start sm:self-auto">
+                  Classical Nadi Palm-Leaf Precision
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* 1. Spouse & In-Laws Secrets */}
+                <div className="bg-stone-900/80 border border-orange-900/40 rounded-xl p-5 hover:border-pink-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-pink-400" />
+                      <span className="text-xs font-bold text-pink-300 uppercase tracking-wider">
+                        1. களத்திரம் & மாமனார் வழி ரகசியங்கள் (Spouse & In-Laws)
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded border border-pink-500/30">
+                      களத்திர காரகன் & 7-ம் பாவம்
+                    </span>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-black/40 p-3 rounded-lg border border-pink-900/30">
+                      "{data.spouse_secrets_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-black/40 p-3 rounded-lg border border-pink-900/30">
+                      "{data.spouse_secrets_en}"
+                    </p>
+                  )}
+                </div>
+
+                {/* 2. Vehicle & Conveyance Marker */}
+                <div className="bg-stone-900/80 border border-orange-900/40 rounded-xl p-5 hover:border-cyan-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Car className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                        2. வாகன நிறம் & பழுது அடையாளம் (Vehicle Marker)
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30">
+                      சுக்கிரன் & 4-ம் அதிபதி
+                    </span>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-black/40 p-3 rounded-lg border border-cyan-900/30">
+                      "{data.vehicle_marker_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-black/40 p-3 rounded-lg border border-cyan-900/30">
+                      "{data.vehicle_marker_en}"
+                    </p>
+                  )}
+                </div>
+
+                {/* 3. Ancestral Land & Well Dispute */}
+                <div className="bg-stone-900/80 border border-orange-900/40 rounded-xl p-5 hover:border-amber-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Landmark className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                        3. பூர்வீக சொத்து & தந்தை வழி சிக்கல் (Ancestral Land / Well)
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">
+                      சூரியன் - செவ்வாய் நாடி
+                    </span>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-black/40 p-3 rounded-lg border border-amber-900/30">
+                      "{data.ancestral_land_rift_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-black/40 p-3 rounded-lg border border-amber-900/30">
+                      "{data.ancestral_land_rift_en}"
+                    </p>
+                  )}
+                </div>
+
+                {/* 4. Childhood Balarishta Escape */}
+                <div className="bg-stone-900/80 border border-orange-900/40 rounded-xl p-5 hover:border-emerald-400/50 transition">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                        4. பாலாரிஷ்டம் - சிறுவயது கண்டம் (Childhood Balarishta)
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+                      மரண கண்டத்திலிருந்து தப்பிய வயது
+                    </span>
+                  </div>
+
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed mb-2 bg-black/40 p-3 rounded-lg border border-emerald-900/30">
+                      "{data.childhood_balarishta_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-black/40 p-3 rounded-lg border border-emerald-900/30">
+                      "{data.childhood_balarishta_en}"
                     </p>
                   )}
                 </div>

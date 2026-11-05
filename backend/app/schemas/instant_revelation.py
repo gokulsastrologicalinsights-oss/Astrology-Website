@@ -117,6 +117,23 @@ class InstantRevelationResponse(BaseModel):
     medical_organ_vulnerability_ta: str = Field(..., description="உடல்நலக் கோளாறு & பலவீனமான உறுப்பு எச்சரிக்கை (தமிழ்)")
     vulnerable_organs: List[str] = Field(default_factory=list, description="Specific anatomical organs at risk")
 
+    # The 4 Ultra-Precision Nadi Shockers (Option B)
+    # 1. Spouse & In-Laws Secrets
+    spouse_secrets_en: str = Field(..., description="Spouse origin, complexion, and in-laws clues in English")
+    spouse_secrets_ta: str = Field(..., description="களத்திரம், திசை, மாமனார் வழி ரகசியக் குறிப்புகள் (தமிழ்)")
+
+    # 2. Vehicle & Conveyance Marker
+    vehicle_marker_en: str = Field(..., description="Preferred vehicle color and scratch/defect markers in English")
+    vehicle_marker_ta: str = Field(..., description="வாகன நிறம், பழுது மற்றும் கீறல் அடையாளம் (தமிழ்)")
+
+    # 3. Ancestral Property & Paternal Land Rift
+    ancestral_land_rift_en: str = Field(..., description="Ancestral property, agricultural land, and well dispute clues in English")
+    ancestral_land_rift_ta: str = Field(..., description="பூர்வீக சொத்து, விவசாய நிலம், கிணறு மற்றும் தந்தை வழி சிக்கல் (தமிழ்)")
+
+    # 4. Childhood Balarishta Escape
+    childhood_balarishta_en: str = Field(..., description="Childhood critical illness or high fever escape in English")
+    childhood_balarishta_ta: str = Field(..., description="பாலாரிஷ்டம் - சிறுவயதில் தப்பிய கண்டம் மற்றும் தீவிர காய்ச்சல் (தமிழ்)")
+
     # Fast 10-Second Executive Teleprompter (Bullet points for instant speaking)
     quick_glance_teleprompter_en: List[str] = Field(default_factory=list, description="Fast bulleted teleprompter points in English")
     quick_glance_teleprompter_ta: List[str] = Field(default_factory=list, description="நொடிப் பொழுதில் பார்த்து பேசக்கூடிய குறிப்புகள் (தமிழ்)")

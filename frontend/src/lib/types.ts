@@ -6999,4 +6999,12 @@ export interface InstantRevelationResponse {
   medical_organ_vulnerability_en: string;
   medical_organ_vulnerability_ta: string;
   vulnerable_organs: string[];
+  spouse_secrets_en: string;
+  spouse_secrets_ta: string;
+  vehicle_marker_en: string;
+  vehicle_marker_ta: string;
+  ancestral_land_rift_en: string;
+  ancestral_land_rift_ta: string;
+  childhood_balarishta_en: string;
+  childhood_balarishta_ta: string;
 }

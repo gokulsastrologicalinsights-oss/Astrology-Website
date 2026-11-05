@@ -81,6 +81,23 @@ def test_instant_revelation_engine_direct():
     assert len(res.medical_organ_vulnerability_ta) > 0
     assert len(res.vulnerable_organs) > 0
 
+    # The 4 Ultra-Precision Nadi Shockers (Option B)
+    # 1. Spouse & In-Laws Secrets
+    assert len(res.spouse_secrets_en) > 0
+    assert len(res.spouse_secrets_ta) > 0
+
+    # 2. Vehicle & Conveyance Marker
+    assert len(res.vehicle_marker_en) > 0
+    assert len(res.vehicle_marker_ta) > 0
+
+    # 3. Ancestral Land Rift
+    assert len(res.ancestral_land_rift_en) > 0
+    assert len(res.ancestral_land_rift_ta) > 0
+
+    # 4. Childhood Balarishta
+    assert len(res.childhood_balarishta_en) > 0
+    assert len(res.childhood_balarishta_ta) > 0
+
     # Quick Glance Teleprompter
     assert len(res.quick_glance_teleprompter_en) == 5
     assert len(res.quick_glance_teleprompter_ta) == 5
