@@ -110,7 +110,53 @@ WEEKDAY_LORDS: tuple[str, ...] = (
     "Sun",       # Sunday
 )
 
+# ---------------------------------------------------------------------------
+# KP Reader 1 Core Constants (Prof. K. S. Krishnamurti)
+# ---------------------------------------------------------------------------
+
+#: Year of coincidence of the Sayana and Nirayana Zodiacs (291 A.D. / VP291).
+KP_COINCIDENCE_YEAR: int = 291
+
+#: Precession rate per year followed by Prof. K. S. Krishnamurti (Newcomb's figure).
+NEWCOMB_PRECESSION_RATE_ARCSEC: float = 50.2388475
+NEWCOMB_PRECESSION_RATE_DEG: float = NEWCOMB_PRECESSION_RATE_ARCSEC / 3600.0
+
+#: Navamsa span (3° 20' = 200 arc-minutes). 108 Navamsas in the 360° Zodiac.
+NAVAMSA_SPAN_DEG: float = 10.0 / 3.0
+NAVAMSA_SPAN_ARCMIN: float = 200.0
+
 
 def star_lord_of_index(idx: int) -> str:
     """Return the Vimshottari star-lord of nakshatra ``idx`` (0..26)."""
     return NAKSHATRA_LORDS_BASE[idx % 9]
+
+# ---------------------------------------------------------------------------
+# KP Reader 2 Core Classifications (Prof. K. S. Krishnamurti)
+# ---------------------------------------------------------------------------
+from .reader2 import (
+    POSITIVE_SIGNS,
+    NEGATIVE_SIGNS,
+    NORTHERN_SIGNS,
+    SOUTHERN_SIGNS,
+    EQUINOCTIAL_SIGNS,
+    TROPICAL_SIGNS,
+    FIERY_SIGNS,
+    EARTHY_SIGNS,
+    AIRY_SIGNS,
+    WATERY_SIGNS,
+    MOVABLE_SIGNS,
+    FIXED_SIGNS,
+    COMMON_SIGNS,
+    FRUITFUL_SIGNS,
+    SEMI_FRUITFUL_SIGNS,
+    BARREN_SIGNS,
+    MUTE_SIGNS,
+    VOICE_SIGNS,
+    VIOLENT_SIGNS,
+    HUMAN_SIGNS,
+    BESTIAL_SIGNS,
+    DUAL_SIGNS,
+    BICORPORAL_SIGNS,
+    SHORT_ASCENSION_SIGNS_NORTH,
+    LONG_ASCENSION_SIGNS_NORTH,
+)

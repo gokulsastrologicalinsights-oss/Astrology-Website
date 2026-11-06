@@ -48,9 +48,14 @@ import {
   KakshaAlertsResponse,
   BrighuNaadiRequest,
   BrighuNaadiResponse,
+  BrighuPrashnaRequest,
+  BrighuPrashnaResponse,
   NatchathiraDeepAnalysisResult,
   KnRaoAdvancedResearchResponse,
   ConsolidatedKakshyaResponse,
+  KpMonthlyPredictionRequest,
+  KpMonthlyPredictionResponse,
+  AvailableMonthItem,
 
   BirthInput,
 
@@ -109,6 +114,9 @@ import {
   HoraryKpRequest,
 
   HoraryKpResponse,
+  HoraryTopicInfo,
+  InstantHoraryPredictionRequest,
+  InstantHoraryPredictionResponse,
 
   SaveKpChartPayload,
 
@@ -1041,6 +1049,25 @@ export async function calculateKp(req: KpRequest): Promise<KpResponse> {
  * 5b. Authentic KP Horary Prashna calculation (POST /api/v1/horoscope/kp/horary)
 
  */
+
+/**
+ * 5b-2. Retrieve supported KP Horary Prashna Topics (GET /api/v1/horoscope/kp/horary-predict/topics)
+ */
+export async function getHoraryPredictionTopics(): Promise<HoraryTopicInfo[]> {
+  return request<HoraryTopicInfo[]>("/api/v1/horoscope/kp/horary-predict/topics");
+}
+
+/**
+ * 5b-3. Feature 3: Instant KP Horary / Prashna (1-249) Automated Event Predictor (POST /api/v1/horoscope/kp/horary-predict)
+ */
+export async function predictInstantHorary(
+  req: InstantHoraryPredictionRequest
+): Promise<InstantHoraryPredictionResponse> {
+  return request<InstantHoraryPredictionResponse>("/api/v1/horoscope/kp/horary-predict", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
 
 export async function calculateHoraryKp(req: HoraryKpRequest): Promise<HoraryKpResponse> {
 
@@ -5257,6 +5284,16 @@ export async function getBrighuNaadiAnalysis(
   });
 }
 
+export async function getBrighuPrashnaAnalysis(
+  req: BrighuPrashnaRequest
+): Promise<BrighuPrashnaResponse> {
+  return request<BrighuPrashnaResponse>("/api/v1/vedic/brighu-naadi/prashna", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+
 
 // ===========================================================================
 // K.N. Rao Advanced Astrological Research Engine API
@@ -5331,6 +5368,162 @@ export async function analyzeInstantRevelation(
 ): Promise<InstantRevelationResponse> {
   return request<InstantRevelationResponse>("/api/v1/instant-revelation/analyze", {
     method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+
+// ===========================================================================
+// Feature 1: Automated Multi-Year Life Timeline Predictor (Life Roadmap)
+// ===========================================================================
+
+import type {
+  LifeDomainInfo,
+  LifeRoadmapRequest,
+  LifeRoadmapResponse,
+} from "./types";
+
+export async function getLifeRoadmapDomains(): Promise<LifeDomainInfo[]> {
+  return request<LifeDomainInfo[]>("/api/v1/kp-prediction/life-roadmap/domains", {
+    method: "GET",
+  });
+}
+
+export async function generateLifeRoadmap(
+  req: LifeRoadmapRequest,
+  token?: string
+): Promise<LifeRoadmapResponse> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return request<LifeRoadmapResponse>("/api/v1/kp-prediction/life-roadmap", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(req),
+  });
+}
+
+
+// ===========================================================================
+// Feature 2: Automated KP Predictive Narrative Engine API
+// ===========================================================================
+
+import type {
+  KpNarrativeRequest,
+  KpNarrativeResponse,
+  KpNarrativePdfRequest,
+  SaveKpNarrativeRequest,
+  SavedKpNarrativeListResponse,
+} from "./types";
+
+export async function generateKpNarrative(
+  req: KpNarrativeRequest,
+  token?: string
+): Promise<KpNarrativeResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<KpNarrativeResponse>("/api/v1/kp-narrative/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function downloadKpNarrativePdf(
+  req: KpNarrativePdfRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  const url = `${API_BASE_URL}/api/v1/kp-narrative/pdf`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `PDF generation failed with HTTP ${response.status}`);
+  }
+  return response.blob();
+}
+
+export async function saveKpNarrative(
+  req: SaveKpNarrativeRequest,
+  token?: string
+): Promise<{ status: string; id: string; message: string }> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<{ status: string; id: string; message: string }>("/api/v1/kp-narrative/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function listSavedKpNarratives(
+  token?: string
+): Promise<SavedKpNarrativeListResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<SavedKpNarrativeListResponse>("/api/v1/kp-narrative/saved", {
+    method: "GET",
+    headers: authHeaders,
+  });
+}
+
+export async function getSavedKpNarrative(
+  recordId: string,
+  token?: string
+): Promise<Record<string, any>> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<Record<string, any>>(`/api/v1/kp-narrative/saved/${recordId}`, {
+    method: "GET",
+    headers: authHeaders,
+  });
+}
+
+export async function deleteSavedKpNarrative(
+  recordId: string,
+  token?: string
+): Promise<{ status: string; message: string }> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<{ status: string; message: string }>(`/api/v1/kp-narrative/saved/${recordId}`, {
+    method: "DELETE",
+    headers: authHeaders,
+  });
+}
+
+
+// ==========================================
+// KP Monthly & Period Predictive Event Timing
+// ==========================================
+
+export async function getAvailableKpMonths(): Promise<{ months: AvailableMonthItem[] }> {
+  return request<{ months: AvailableMonthItem[] }>(`/api/v1/kp/timing/available-months`, {
+    method: "GET",
+  });
+}
+
+export async function getKpMonthlyPrediction(
+  req: KpMonthlyPredictionRequest,
+  token?: string
+): Promise<KpMonthlyPredictionResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<KpMonthlyPredictionResponse>(`/api/v1/kp/timing/monthly-prediction`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
     body: JSON.stringify(req),
   });
 }

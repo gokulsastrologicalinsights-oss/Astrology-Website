@@ -36,6 +36,7 @@ from app.services.pdf_report_engine import (
     generate_marriage_compatibility_pdf_bytes,
 )
 from app.services.auth_service import get_current_user, get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.kp_engine.kp_chart_repository import get_kp_chart
 
 logger = logging.getLogger("gai.api.pdf_reports")
@@ -87,22 +88,13 @@ async def generate_pdf_report_endpoint(
                     detail="Authentication token required to access saved horoscopes.",
                 )
             clean_id = _validate_uuid(request.saved_horoscope_id)
-            supabase = get_supabase_client()
-            if not supabase:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Database service unavailable. Database configuration missing.",
-                )
             is_admin = current_user.get("role") == "admin"
-            horoscope_row: Optional[Dict[str, Any]] = None
-            try:
-                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                if resp.data and len(resp.data) > 0:
-                    row = resp.data[0]
-                    if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                        horoscope_row = row
-            except Exception as err:
-                logger.warning("Database error fetching saved horoscope %s: %s", clean_id, err)
+            horoscope_row = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=current_user["id"],
+                is_admin=is_admin,
+                include_calculation_result=False,
+            )
 
             if not horoscope_row:
                 raise HTTPException(
@@ -218,19 +210,16 @@ async def generate_single_page_pdf_endpoint(
 
         if request.saved_horoscope_id:
             clean_id = _validate_uuid(request.saved_horoscope_id)
-            supabase = get_supabase_client()
-            if not supabase:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Database service unavailable.",
-                )
             is_admin = current_user.get("role") == "admin" if current_user else False
-            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-            if not resp.data:
-                raise HTTPException(status_code=404, detail="Saved horoscope not found.")
-            row = resp.data[0]
-            if not is_admin and current_user and str(row.get("user_id")) != str(current_user.get("id")):
-                raise HTTPException(status_code=403, detail="Unauthorized access to saved horoscope.")
+            user_id = current_user.get("id") if current_user else ""
+            row = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=user_id,
+                is_admin=is_admin,
+                include_calculation_result=False,
+            )
+            if not row:
+                raise HTTPException(status_code=404, detail="Saved horoscope not found or unauthorized.")
 
             from datetime import date as d_cls, time as t_cls
             b_date = row["birth_date"]
@@ -471,13 +460,16 @@ async def generate_shodashvarga_pdf_endpoint(
         birth_input: Optional[BirthInput] = None
         if request.saved_horoscope_id:
             clean_id = _validate_uuid(request.saved_horoscope_id)
-            supabase = get_supabase_client()
-            if not supabase:
-                raise HTTPException(status_code=503, detail="Database service unavailable.")
-            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-            if not resp.data:
+            is_admin = current_user.get("role") == "admin" if current_user else False
+            user_id = current_user.get("id") if current_user else ""
+            row = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=user_id,
+                is_admin=is_admin,
+                include_calculation_result=False,
+            )
+            if not row:
                 raise HTTPException(status_code=404, detail="Saved horoscope not found.")
-            row = resp.data[0]
             from datetime import date as d_cls, time as t_cls
             b_date = d_cls.fromisoformat(row["birth_date"]) if isinstance(row["birth_date"], str) else row["birth_date"]
             parts = row["birth_time"].split(":")
@@ -594,7 +586,7 @@ async def generate_marriage_compatibility_pdf_endpoint(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="Database service unavailable. Database configuration missing.",
                 )
-            resp = supabase.table("saved_marriage_reports").select("*").eq("id", clean_id).execute()
+            resp = supabase.table("saved_marriage_reports").select("id, report_data").eq("id", clean_id).execute()
             if resp.data and len(resp.data) > 0:
                 row = resp.data[0]
                 report_data = row.get("report_data")

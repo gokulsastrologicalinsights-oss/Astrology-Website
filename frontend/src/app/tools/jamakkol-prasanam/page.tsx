@@ -10,6 +10,7 @@ import {
   HousePlacementItem,
 } from "@/lib/types";
 import { calculateJamakkolPrasanam } from "@/lib/api";
+import { IslamicRuqyahGuidance } from "@/components/remedies/IslamicRuqyahGuidance";
 import {
   Compass,
   Clock,
@@ -1906,6 +1907,16 @@ function JamakkolPrasanamInner() {
                             </div>
                           </div>
                         )}
+
+                        {/* Islamic Legal Stance & Authentic Sunnah Ruqyah Cure (அஷ்ஷெய்க் பின் பாஸ்) */}
+                        <div className="pt-2 border-t border-slate-100">
+                          <IslamicRuqyahGuidance
+                            initialOpen={
+                              result.classical_rules.evil_spirits_black_magic_analysis.black_magic_present ||
+                              result.classical_rules.evil_spirits_black_magic_analysis.querent_under_evil_spirits
+                            }
+                          />
+                        </div>
                       </div>
                     )}
 

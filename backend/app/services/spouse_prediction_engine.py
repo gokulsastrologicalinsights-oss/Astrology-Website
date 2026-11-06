@@ -35,6 +35,17 @@ from app.schemas.spouse_prediction import (
     SpouseRemedies,
     SpousePredictionRequest,
     SpousePredictionResponse,
+    SivadasanRaviSpouseInsights,
+    KpReader4SpouseInsights,
+)
+from app.services.kp_service import calculate_kp_chart
+from app.services.kp_engine.reader4 import (
+    lookup_spouse_appearance_reader4,
+    evaluate_career_spouse_reader4,
+    evaluate_punarphoo_reader4,
+    evaluate_mars_dosha_reader4,
+    evaluate_marriage_promise_reader4,
+    calculate_sign_distance,
 )
 from app.services.timezone_utils import resolve_birth_datetime
 from app.services.ephemeris import (
@@ -472,6 +483,357 @@ def check_parashari_aspect(planet_name: str, planet_sign: int, target_sign: int)
 
 class SpousePredictionService:
     """Production service for Life Partner & Spouse Nature, Character & Type Prediction."""
+
+    @classmethod
+    def _build_kp_reader4_insights(cls, birth: BirthInput) -> Optional[KpReader4SpouseInsights]:
+        try:
+            from app.services.kp_engine.vedic import star_name
+            kp_res = calculate_kp_chart(birth=birth)
+            if not kp_res or not kp_res.cuspal_analysis or len(kp_res.cuspal_analysis) < 7:
+                return None
+
+            c7 = kp_res.cuspal_analysis[6]  # 7th cusp
+            c4 = kp_res.cuspal_analysis[3]  # 4th cusp
+            csl_planet = c7.sub_lord
+
+            planet_map = {p.planet.title(): p for p in kp_res.planetary_positions}
+            csl_pos = planet_map.get(csl_planet.title())
+            csl_sign = csl_pos.sign_name if csl_pos else c7.sign_name
+
+            appearance = lookup_spouse_appearance_reader4(
+                csl_planet=csl_planet,
+                csl_sign=csl_sign,
+            )
+
+            c4_planet = c4.sub_lord.title()
+            signified_by_c4: List[int] = []
+            for h_entry in kp_res.house_significators:
+                if c4_planet in h_entry.all_significators:
+                    signified_by_c4.append(h_entry.house)
+
+            career_res = evaluate_career_spouse_reader4(
+                fourth_csl_planet=c4_planet,
+                fourth_csl_signifies=signified_by_c4,
+                is_mars_involved=(c4_planet == 'Mars' or 'Mars' in [c4.star_lord, c4.sign_lord]),
+            )
+
+            sat_pos = planet_map.get('Saturn')
+            moon_pos = planet_map.get('Moon')
+            if sat_pos and moon_pos:
+                dist = calculate_sign_distance(sat_pos.sign_name, moon_pos.sign_name)
+                sat_aspect = dist in {3, 7, 10}
+                punarphoo_res = evaluate_punarphoo_reader4(
+                    saturn_sign=sat_pos.sign_name,
+                    moon_sign=moon_pos.sign_name,
+                    saturn_star=star_name(sat_pos.longitude),
+                    moon_star=star_name(moon_pos.longitude),
+                    saturn_sub=sat_pos.sub_lord,
+                    moon_sub=moon_pos.sub_lord,
+                    saturn_house=1,
+                    moon_house=1,
+                    saturn_aspects_moon=sat_aspect,
+                )
+            else:
+                punarphoo_res = None
+
+            mars_pos = planet_map.get('Mars')
+            ven_pos = planet_map.get('Venus')
+            lagna_sign = kp_res.cuspal_analysis[0].sign_name
+
+            signified_by_c7: List[int] = []
+            for h_entry in kp_res.house_significators:
+                if csl_planet.title() in h_entry.all_significators:
+                    signified_by_c7.append(h_entry.house)
+
+            c7_sig_6_10_12 = any(h in {6, 10, 12} for h in signified_by_c7)
+
+            if mars_pos and moon_pos and ven_pos:
+                mars_res = evaluate_mars_dosha_reader4(
+                    mars_sign=mars_pos.sign_name,
+                    lagna_sign=lagna_sign,
+                    moon_sign=moon_pos.sign_name,
+                    venus_sign=ven_pos.sign_name,
+                    seventh_csl_signifies_6_10_12=c7_sig_6_10_12,
+                )
+            else:
+                mars_res = None
+
+            promise_res = evaluate_marriage_promise_reader4(
+                seventh_csl_planet=csl_planet,
+                seventh_csl_signifies=signified_by_c7,
+                is_saturn_connected=(csl_planet.title() == 'Saturn' or (c7.star_lord == 'Saturn')),
+            )
+
+            return KpReader4SpouseInsights(
+                seventh_csl_planet=csl_planet,
+                seventh_csl_sign=csl_sign,
+                stature=appearance.stature,
+                complexion_and_face=appearance.complexion_and_face,
+                temperament=appearance.temperament,
+                vocational_and_lifestyle_traits=appearance.vocational_and_lifestyle_traits,
+                cautionary_notes=appearance.cautionary_notes,
+                career_spouse_promised=career_res.will_marry_career_spouse,
+                career_spouse_vocation=career_res.spouse_vocation_type,
+                career_spouse_explanation=career_res.explanation,
+                punarphoo_detected=punarphoo_res.is_punarphoo_present if punarphoo_res else False,
+                punarphoo_severity=punarphoo_res.severity if punarphoo_res else 'None',
+                punarphoo_advice=punarphoo_res.kp_counsel if punarphoo_res else '',
+                mars_dosha_verdict=mars_res.shastric_verdict if mars_res else 'Not calculated',
+                mars_dosha_kp_ruling=mars_res.kp_cuspal_override if mars_res else '',
+                marriage_promise_verdict=promise_res.verdict,
+            )
+        except Exception:
+            return None
+
+    @staticmethod
+    def _build_sivadasan_ravi_insights(
+        gender: str,
+        asc_sign_num: int,
+        seventh_sign_num: int,
+        seventh_lord_name: str,
+        lagna_lord_name: str,
+        planet_positions: Dict[str, Any],
+        aspecting_planets: List[SpousePlanetInfluence],
+        planets_in_7th: List[SpousePlanetInfluence],
+    ) -> SivadasanRaviSpouseInsights:
+        """Evaluates life partner, family, direction, love marriage, and obstruction per Siddhayogi Sivadasan Ravi."""
+        is_male = "female" not in gender.lower()
+        karaka_planet = "Venus" if is_male else "Mars"
+        karaka_sign = planet_positions.get(karaka_planet, {}).get("sign", 1)
+
+        # 1. Single Child / Only Daughter (மனைவி அவள் வீட்டிற்கு ஒரே பெண்ணா?)
+        same_sign_planets = [p for p, data in planet_positions.items() if p != karaka_planet and data.get("sign") == karaka_sign]
+        opposite_sign = ((karaka_sign + 5) % 12) + 1
+        seventh_planets = [p for p, data in planet_positions.items() if data.get("sign") == opposite_sign]
+        second_sign = (karaka_sign % 12) + 1
+        second_planets = [p for p, data in planet_positions.items() if data.get("sign") == second_sign]
+        twelfth_sign = ((karaka_sign - 2) % 12) + 1
+        twelfth_planets = [p for p, data in planet_positions.items() if data.get("sign") == twelfth_sign]
+
+        is_single_child = (len(same_sign_planets) == 0 and len(seventh_planets) == 0 and len(second_planets) == 0 and len(twelfth_planets) == 0)
+
+        if is_single_child:
+            single_en = "High probability of being an only child / single daughter" if is_male else "High probability of being an only child / single son"
+            single_ta = "துணை தன் பெற்றோருக்கு ஒரே பெண் (உடன்பிறப்புகள் இல்லாத நிலை)" if is_male else "துணை தன் பெற்றோருக்கு ஒரே மகன் (உடன்பிறப்புகள் இல்லாத நிலை)"
+            single_desc_en = (
+                f"Sivadasan Ravi Rule: In native's chart, {karaka_planet} has no planets in conjunct (1st), "
+                f"opposite (7th), next (2nd), or 12th houses. This classical signature indicates the spouse "
+                f"is likely the only child, with independent parental inheritance."
+            )
+            single_desc_ta = (
+                f"சித்தயோகி சிவதாசன் ரவி விதி: ஜாதகத்தில் {karaka_planet} நின்ற ராசிக்கு 1, 7, 2, 12-ல் "
+                f"எந்த கிரகமும் இல்லாததால், வரும் துணை தன் வீட்டிற்கு ஒரே வாரிசாக அமைவார்."
+            )
+        else:
+            single_en = "Spouse has siblings"
+            single_ta = "துணைக்கு உடன்பிறப்புகள் உள்ள குடும்பம்"
+            single_desc_en = f"Planets placed adjacent or aspecting {karaka_planet} indicate the spouse has siblings."
+            single_desc_ta = f"{karaka_planet} நின்ற இடத்திற்கு தொடர்பு கிரகங்கள் உள்ளதால் துணைக்கு உடன் பிறந்தவர்கள் இருப்பார்கள்."
+
+        # 2. Family Size (குடும்பம் சிறியதா? பெரியதா?)
+        trines_and_flanks = {
+            karaka_sign,
+            ((karaka_sign + 3) % 12) + 1,
+            ((karaka_sign + 7) % 12) + 1,
+            (karaka_sign % 12) + 1,
+            ((karaka_sign - 2) % 12) + 1,
+        }
+        flank_count = sum(1 for p, d in planet_positions.items() if p != karaka_planet and d.get("sign") in trines_and_flanks)
+        if flank_count >= 3:
+            fam_size = "Large / Joint Family"
+            fam_size_ta = "கூட்டுக் குடும்பம் / பெரிய குடும்பம்"
+            fam_desc_en = f"Dense planetary presence ({flank_count} planets) around {karaka_planet} indicates a large, bustling spouse family."
+            fam_desc_ta = f"{karaka_planet}-க்கு 1, 5, 9, 2, 12-ல் பல கிரகங்கள் உள்ளதால் துணையின் குடும்பம் உறவினர்கள் நிறைந்த பெரிய குடும்பமாகும்."
+        elif flank_count <= 1:
+            fam_size = "Small / Nuclear Family"
+            fam_size_ta = "சிறிய குடும்பம் / தனிக்குடித்தனம்"
+            fam_desc_en = f"Sparse planetary presence around {karaka_planet} indicates a compact nuclear family."
+            fam_desc_ta = f"{karaka_planet}-க்கு அருகே குறைந்த கிரகங்களே உள்ளதால் துணை சிறிய குடும்ப அமைப்பிலிருந்து வருவார்."
+        else:
+            fam_size = "Moderate Sized Family"
+            fam_size_ta = "நடுத்தர குடும்பம்"
+            fam_desc_en = "Moderate family size with balanced close relatives."
+            fam_desc_ta = "நடுத்தர குடும்ப அமைப்பைச் சேர்ந்த வாழ்க்கைத் துணை."
+
+        # 3. Street Orientation (வீடு அமைந்த வீதி)
+        if karaka_sign % 2 == 1:
+            street_en = "East - West"
+            street_ta = "கிழக்கு - மேற்கு வீதி"
+            street_desc_en = "Spouse's ancestral/family house is situated on an East-West facing street (Odd sign orientation)."
+            street_desc_ta = "துணையின் குடும்ப வீடு கிழக்கு-மேற்கு வீதியில் அமைந்திருக்கும் (ஒற்றைப்படை ராசி தத்துவம்)."
+        else:
+            street_en = "North - South"
+            street_ta = "வடக்கு - தெற்கு வீதி"
+            street_desc_en = "Spouse's ancestral/family house is situated on a North-South facing street (Even sign orientation)."
+            street_desc_ta = "துணையின் குடும்ப வீடு வடக்கு-தெற்கு வீதியில் அமைந்திருக்கும் (இரட்டைப்படை ராசி தத்துவம்)."
+
+        # 4. Siblings Count
+        est_siblings = 0 if is_single_child else max(1, min(4, flank_count))
+        sib_desc_en = f"Estimated {est_siblings} co-born(s) based on relational planetary connectivity."
+        sib_desc_ta = f"கிரக தொடர்புகளின்படி துணைக்கு தோராயமாக {est_siblings} உடன் பிறந்தவர்கள் இருப்பார்கள்."
+
+        # 5. Direction of Spouse (அமையும் திசை)
+        DIRECTION_MAP = {
+            1: ("East", "கிழக்கு"),
+            2: ("East", "கிழக்கு"),
+            3: ("South-East", "தென்கிழக்கு"),
+            4: ("South", "தெற்கு"),
+            5: ("South", "தெற்கு"),
+            6: ("South-West", "தென்மேற்கு"),
+            7: ("West", "மேற்கு"),
+            8: ("West", "மேற்கு"),
+            9: ("North-West", "வடமேற்கு"),
+            10: ("North", "வடக்கு"),
+            11: ("North", "வடக்கு"),
+            12: ("North-East", "வடகிழக்கு"),
+        }
+        seventh_lord_sign = planet_positions.get(seventh_lord_name, {}).get("sign", seventh_sign_num)
+        dir_en, dir_ta = DIRECTION_MAP.get(seventh_lord_sign, ("East", "கிழக்கு"))
+        dir_desc_en = f"7th house lord ({seventh_lord_name}) placed in {SIGN_NAMES_EN[seventh_lord_sign]} points to the {dir_en} direction from your native place."
+        dir_desc_ta = f"7-ஆம் அதிபதி {seventh_lord_name} {SIGN_NAMES_TA[seventh_lord_sign]} ராசியில் இருப்பதால் உங்கள் இருப்பிடத்திலிருந்து {dir_ta} திசையில் துணை அமைவார்."
+
+        # 6. Candidate Janma Nakshatras (கணவன் / மனைவியின் ஜென்ம நட்சத்திரம்)
+        PLANET_STARS = {
+            "Sun": (["Krittika", "Uttara Phalguni", "Uttara Ashadha"], ["கிருத்திகை", "உத்திரம்", "உத்திராடம்"]),
+            "Moon": (["Rohini", "Hasta", "Shravana"], ["ரோகிணி", "அஸ்தம்", "திருவோணம்"]),
+            "Mars": (["Mrigashira", "Chitra", "Dhanishta"], ["மிருகசீரிஷம்", "சித்திரை", "அவிட்டம்"]),
+            "Mercury": (["Ashlesha", "Jyeshtha", "Revati"], ["ஆயில்யம்", "கேட்டை", "ரேவதி"]),
+            "Jupiter": (["Punarvasu", "Vishakha", "Purva Bhadrapada"], ["புனர்பூசம்", "விசாகம்", "பூரட்டாதி"]),
+            "Venus": (["Bharani", "Purva Phalguni", "Purva Ashadha"], ["பரணி", "பூரம்", "பூராடம்"]),
+            "Saturn": (["Pushya", "Anuradha", "Uttara Bhadrapada"], ["பூசம்", "அனுஷம்", "உத்திரட்டாதி"]),
+            "Rahu": (["Ardra", "Swati", "Shatabhisha"], ["திருவாதிரை", "சுவாதி", "சதயம்"]),
+            "Ketu": (["Ashwini", "Magha", "Mula"], ["அசுவினி", "மகம்", "மூலம்"]),
+        }
+        cand_stars_en, cand_stars_ta = PLANET_STARS.get(seventh_lord_name, (["Rohini", "Hasta", "Shravana"], ["ரோகிணி", "அஸ்தம்", "திருவோணம்"]))
+        star_desc_en = f"Sivadasan Ravi candidate nakshatras: Stars ruled by 7th Lord {seventh_lord_name} ({', '.join(cand_stars_en)}) commonly match your spouse's birth star."
+        star_desc_ta = f"சித்தயோகி சிவதாசன் ரவி விதி: 7-ஆம் அதிபதி {seventh_lord_name}-ன் நட்சத்திரங்களான ({', '.join(cand_stars_ta)}) உங்கள் துணையின் ஜென்ம நட்சத்திரமாக அமைய அதிக வாய்ப்புள்ளது."
+
+        # 7. Love Marriage Indications (காதல் திருமணம்)
+        budha_sign = planet_positions.get("Mercury", {}).get("sign", 1)
+        ketu_sign = planet_positions.get("Ketu", {}).get("sign", 7)
+        dist_bk = ((ketu_sign - budha_sign) % 12) + 1
+        budha_retro = planet_positions.get("Mercury", {}).get("is_retrograde", False)
+        is_love_trigger = (dist_bk in {1, 5, 9, 2} or (budha_retro and dist_bk == 12))
+
+        guru_sign = planet_positions.get("Jupiter", {}).get("sign", 1)
+        venus_sign = planet_positions.get("Venus", {}).get("sign", 1)
+        benefic_aspect = (((guru_sign - budha_sign) % 12) + 1 in {1, 5, 7, 9}) or (((venus_sign - budha_sign) % 12) + 1 in {1, 7})
+
+        if is_love_trigger and benefic_aspect:
+            love_prob = "High (Love with Fruition)"
+            love_prob_ta = "உயர் சாத்தியம் (வெற்றி பெறும் காதல் திருமணம்)"
+            love_desc_en = "Mercury-Ketu sambandha joined with Jupiter/Venus aspect indicates romantic infatuation culminating in successful marriage."
+            love_desc_ta = "புதன்-கேது சேர்க்கை/பார்வையுடன் குரு அல்லது சுக்கிரனின் சுபத் தொடர்பு உள்ளதால் காதல் திருமணம் இனிதே கைகூடும்."
+        elif is_love_trigger:
+            love_prob = "Moderate (Romantic Inclination)"
+            love_prob_ta = "மிதமான சாத்தியம் (காதல் எண்ணங்கள் உண்டாகும்)"
+            love_desc_en = "Mercury-Ketu alignment triggers romantic inclinations; family consent requires careful navigation."
+            love_desc_ta = "புதன்-கேது தொடர்பால் காதல் ஈர்ப்பு உண்டாகும்; பெரியவர்களின் சம்மதத்துடன் முடிக்க வேண்டும்."
+        else:
+            love_prob = "Arranged / Traditional Match Likely"
+            love_prob_ta = "மரபு வழி நிச்சயிக்கப்பட்ட திருமணம்"
+            love_desc_en = "Conventional matrimonial pathway favored by classical planetary configurations."
+            love_desc_ta = "சாஸ்திர மரபு வழி பெரியோர்களால் நிச்சயிக்கப்பட்ட சுபத் திருமணம் நடைபெறும்."
+
+        # 8. Dual Marriage Risk (இருதார அமைப்பு)
+        females = ["Mercury", "Venus", "Moon"]
+        female_aspects = 0
+        for f_planet in females:
+            f_sign = planet_positions.get(f_planet, {}).get("sign", 1)
+            dist_g = ((f_sign - guru_sign) % 12) + 1
+            if dist_g in {1, 7, 5, 9}:
+                female_aspects += 1
+
+        if female_aspects >= 2:
+            dual_risk = "Caution (Multiple Female Influences)"
+            dual_risk_ta = "கவனம் தேவை (பல பெண் கிரக பார்வை)"
+            dual_desc_en = "Jupiter receives aspects from multiple female planets; lifelong emotional fidelity requires conscious commitment."
+            dual_desc_ta = "குருவுக்கு ஒன்றுக்கு மேற்பட்ட பெண் கிரக தொடர்பு இருப்பதால் இல்லறத்தில் ஸ்திரத்தன்மையை பேண வேண்டும்."
+        else:
+            dual_risk = "None (Single Marital Commitment)"
+            dual_risk_ta = "தோஷமில்லை (ஏக தார யோகம்)"
+            dual_desc_en = "Single, devoted lifelong marital union confirmed."
+            dual_desc_ta = "ஒருவனுக்கு ஒருத்தி என்ற உன்னதமான ஏக தார திருமண யோகம்."
+
+        # 9. 4-Point Obstruction Rule (திருமணத்தடை ஆய்வு)
+        lagna_lord_sign = planet_positions.get(lagna_lord_name, {}).get("sign", asc_sign_num)
+        mars_sign = planet_positions.get("Mars", {}).get("sign", 1)
+
+        c1 = ((seventh_lord_sign - lagna_lord_sign) % 12) + 1 in {4, 6, 8, 10}
+        c2 = (((venus_sign - guru_sign) % 12) + 1 in {4, 6, 8, 10}) if is_male else (((mars_sign - venus_sign) % 12) + 1 in {4, 6, 8, 10})
+        c3 = ((ketu_sign - seventh_lord_sign) % 12) + 1 in {1, 5, 9, 2}
+        c4 = (((ketu_sign - venus_sign) % 12) + 1 in {1, 5, 9, 2}) if is_male else (((ketu_sign - mars_sign) % 12) + 1 in {1, 5, 9, 2})
+
+        obs_score = sum([c1, c2, c3, c4])
+        if obs_score >= 3:
+            obs_verdict = "Significant Obstruction (3+ conditions met)"
+            obs_verdict_ta = "கடுமையான திருமணத்தடை (3-க்கும் மேற்பட்ட விதிகளால்)"
+            obs_desc_en = (
+                f"Sivadasan Ravi 4-point obstruction test flags {obs_score}/4 factors (Lagna lord 4/6/8/10 from 7th lord, "
+                f"Karaka in Kendra/Dusthana from Jiva, Ketu in trine/2nd from 7th lord or Karaka). Remedial prayers required."
+            )
+            obs_desc_ta = (
+                f"சித்தயோகி சிவதாசன் ரவி திருமணத்தடை விதிகளில் 4-க்கு {obs_score} விதிகள் பொருந்தி வருவதால் "
+                f"திருமணத்தில் தாமதமும் தடைகளும் ஏற்படலாம். ஆண்டாள் கல்யாணம் மற்றும் திருமுறை பரிகாரங்கள் அவசியம்."
+            )
+        elif obs_score == 2:
+            obs_verdict = "Moderate Delay (2 conditions met)"
+            obs_verdict_ta = "மிதமான காலதாமதம் (2 விதிகளால்)"
+            obs_desc_en = "Mild timing delay indicated; marriage fructifies during favorable Dasa-Bhukthi or Guru Balam."
+            obs_desc_ta = "மிதமான காலதாமதம் உண்டாகலாம்; அனுகூலமான தசா-புக்தி அல்லது குரு பலம் வரும் காலத்தில் சுபமாக நடக்கும்."
+        else:
+            obs_verdict = "No Major Obstruction (Smooth Marriage Path)"
+            obs_verdict_ta = "விசேஷ தடைகள் இல்லை (சுமுக திருமணம்)"
+            obs_desc_en = "No classical obstruction patterns detected. Marriage unfolds smoothly in its natural season."
+            obs_desc_ta = "திருமணத்திற்கு எவ்வித சாஸ்திர தடைகளும் இல்லை. உரிய காலத்தில் நல்லபடியாக கை கூடும்."
+
+        sacred_remedies = [
+            "ஆண்டாள் கல்யாணம் - வாரணம் ஆயிரம் (நாச்சியார் திருமொழி) பாராயணம்",
+            "ஸ்ரீ நெல்லையப்பர் - காந்திமதியம்மன் கோவில் (திருநெல்வேலி) தரிசனம்",
+            "குடும்பத்தில் ஒற்றுமை நிலவ நாலாயிர திவ்ய பிரபந்த 'நெடுமாற்கடிமை' பாசுரம் பாராயணம்",
+            "திருமுறைத் திருமணம் - திருஞானசம்பந்தர் 'மண்ணில் நல்லவண்ணம் வாழலாம்' தேவாரம்",
+        ]
+
+        return SivadasanRaviSpouseInsights(
+            is_single_child=is_single_child,
+            single_child_status_en=single_en,
+            single_child_status_ta=single_ta,
+            single_child_analysis_en=single_desc_en,
+            single_child_analysis_ta=single_desc_ta,
+            family_size=fam_size,
+            family_size_ta=fam_size_ta,
+            family_size_analysis_en=fam_desc_en,
+            family_size_analysis_ta=fam_desc_ta,
+            street_orientation_en=street_en,
+            street_orientation_ta=street_ta,
+            street_orientation_analysis_en=street_desc_en,
+            street_orientation_analysis_ta=street_desc_ta,
+            estimated_siblings_count=est_siblings,
+            siblings_analysis_en=sib_desc_en,
+            siblings_analysis_ta=sib_desc_ta,
+            spouse_direction_en=dir_en,
+            spouse_direction_ta=dir_ta,
+            spouse_direction_analysis_en=dir_desc_en,
+            spouse_direction_analysis_ta=dir_desc_ta,
+            candidate_nakshatras_en=cand_stars_en,
+            candidate_nakshatras_ta=cand_stars_ta,
+            candidate_nakshatras_analysis_en=star_desc_en,
+            candidate_nakshatras_analysis_ta=star_desc_ta,
+            love_marriage_probability=love_prob,
+            love_marriage_probability_ta=love_prob_ta,
+            love_marriage_analysis_en=love_desc_en,
+            love_marriage_analysis_ta=love_desc_ta,
+            dual_marriage_risk=dual_risk,
+            dual_marriage_risk_ta=dual_risk_ta,
+            dual_marriage_analysis_en=dual_desc_en,
+            dual_marriage_analysis_ta=dual_desc_ta,
+            marriage_obstruction_verdict=obs_verdict,
+            marriage_obstruction_verdict_ta=obs_verdict_ta,
+            marriage_obstruction_score=obs_score,
+            marriage_obstruction_analysis_en=obs_desc_en,
+            marriage_obstruction_analysis_ta=obs_desc_ta,
+            sacred_remedies_ta=sacred_remedies,
+        )
 
     @classmethod
     def predict_spouse(cls, request: SpousePredictionRequest) -> SpousePredictionResponse:
@@ -990,6 +1352,17 @@ class SpousePredictionService:
             navamsa_d9=navamsa_profile,
             trait_scores=trait_scores,
             remedies=remedies,
+            kp_reader4_insights=cls._build_kp_reader4_insights(birth=birth),
+            sivadasan_ravi_insights=cls._build_sivadasan_ravi_insights(
+                gender=gender,
+                asc_sign_num=asc_sign_idx,
+                seventh_sign_num=seventh_sign_idx,
+                seventh_lord_name=seventh_lord_name,
+                lagna_lord_name=SIGN_LORDS[asc_sign_idx],
+                planet_positions={p.name: {"sign": p.sign_index, "longitude": p.longitude, "is_retrograde": p.is_retrograde} for p in vedic_planets},
+                aspecting_planets=aspecting_planets,
+                planets_in_7th=planets_in_7th,
+            ),
             summary_headline_en=summary_hl_en,
             summary_headline_ta=summary_hl_ta,
             summary_text_en=summary_body_en,

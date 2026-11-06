@@ -323,6 +323,13 @@ function KpEventsPredictionContent() {
               <Compass className="w-4 h-4 text-[#E5B558]" />
               <span>Advanced KP</span>
             </Link>
+            <Link
+              href="/tools/life-roadmap"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-200" />
+              <span>Multi-Year Life Roadmap (1-5 Yrs)</span>
+            </Link>
           </div>
         </div>
       </div>

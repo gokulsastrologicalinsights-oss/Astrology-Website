@@ -146,7 +146,7 @@ function MarriageCompatibilityContent() {
 
   // Results Active Tab
   const [activeTab, setActiveTab] = useState<
-    "charts" | "porutham" | "ashtakoota" | "doshas" | "vedic" | "synastry" | "kp" | "conflicts"
+    "charts" | "porutham" | "sivadasan_ravi" | "ashtakoota" | "doshas" | "vedic" | "synastry" | "kp" | "conflicts"
   >("charts");
 
   // Dual Chart Switchers
@@ -1256,6 +1256,11 @@ function MarriageCompatibilityContent() {
                     labelTa: `10 பொருத்தங்கள் (${response.tamil_porutham?.total_score || 0}/10)`,
                   },
                   {
+                    id: "sivadasan_ravi",
+                    labelEn: "Thiravukol (Sivadasan Ravi)",
+                    labelTa: "திருமண யோக திறவுகோல்",
+                  },
+                  {
                     id: "ashtakoota",
                     labelEn: `Ashtakoota (${response.ashtakoota?.total_points || 0}/36)`,
                     labelTa: `அஷ்டகூடம் (${response.ashtakoota?.total_points || 0}/36)`,
@@ -1623,6 +1628,258 @@ function MarriageCompatibilityContent() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB: SIVADASAN RAVI - THIRUMANA YOGA PORUTHA THIRAVUKOL */}
+                {activeTab === "sivadasan_ravi" && response.sivadasan_ravi_insights && (
+                  <div className="space-y-6">
+                    {/* Header Banner */}
+                    <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-900/10 via-amber-800/5 to-transparent border border-amber-200/80">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                            <BookOpen className="w-3.5 h-3.5 text-amber-700" />
+                            {language === "ta" ? "சித்தயோகி சிவதாசன் ரவி நூல் ஆய்வு" : "Classical Tamil Treatise Synthesis"}
+                          </div>
+                          <h3 className="text-lg font-black text-[#153F6B] mt-1.5">
+                            {language === "ta"
+                              ? response.sivadasan_ravi_insights.treatise_title_ta
+                              : response.sivadasan_ravi_insights.treatise_title_en}
+                          </h3>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            {language === "ta"
+                              ? "ஆசிரியர்: சித்தயோகி சிவதாசன் ரவி | வெளியீடு: ஸ்ரீஆரோமிரா பிரசுரம், தம்மம்பட்டி"
+                              : "Author: Siddhayogi Sivadasan Ravi | Sri Aromira Prasuram, Thammampatti"}
+                          </p>
+                        </div>
+                        <div className="text-right sm:text-right">
+                          <span className="text-xs text-slate-500 font-medium">
+                            {language === "ta" ? "மரபு ஆய்வு நெறிமுறை" : "Canonical Method"}
+                          </span>
+                          <div className="text-sm font-black text-[#B4872B]">
+                            {language === "ta" ? "நாடி & சாஸ்திர விதிகள்" : "Nadi & Sastra Rules"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 1. DASA PORUTHAM & DASA SANDHI */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-[#B4872B]" />
+                          <h4 className="font-bold text-sm sm:text-base text-[#153F6B]">
+                            {language === "ta" ? "1. தசைப் பொருத்தம் & தசா சந்திப்பு" : "1. Dasa Porutham & Dasa Sandhi"}
+                          </h4>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                          response.sivadasan_ravi_insights.dasa_porutham.verdict === "EXCELLENT"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : response.sivadasan_ravi_insights.dasa_porutham.verdict === "MITIGATED_BY_AGE"
+                            ? "bg-blue-50 text-blue-800 border border-blue-200"
+                            : "bg-rose-50 text-rose-800 border border-rose-200"
+                        }`}>
+                          {language === "ta"
+                            ? response.sivadasan_ravi_insights.dasa_porutham.verdict_ta
+                            : response.sivadasan_ravi_insights.dasa_porutham.verdict}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-slate-500 font-medium">
+                            {language === "ta" ? "மணமகன் தசை" : "Groom Current Dasa"}:
+                          </span>{" "}
+                          <span className="font-bold text-slate-800">
+                            {response.sivadasan_ravi_insights.dasa_porutham.groom_mahadasha} Mahadasha
+                          </span>
+                        </div>
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-slate-500 font-medium">
+                            {language === "ta" ? "மணமகள் தசை" : "Bride Current Dasa"}:
+                          </span>{" "}
+                          <span className="font-bold text-slate-800">
+                            {response.sivadasan_ravi_insights.dasa_porutham.bride_mahadasha} Mahadasha
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        {(language === "ta"
+                          ? response.sivadasan_ravi_insights.dasa_porutham.findings_ta
+                          : response.sivadasan_ravi_insights.dasa_porutham.findings_en
+                        ).map((finding, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
+                            <Info className="w-4 h-4 text-[#B4872B] shrink-0 mt-0.5" />
+                            <span>{finding}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 2. GOCHARA GURU BALAM */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-[#B4872B]" />
+                          <h4 className="font-bold text-sm sm:text-base text-[#153F6B]">
+                            {language === "ta" ? "2. கோட்சார குரு பலம் (தெய்வ அனுகூலம்)" : "2. Gochara Guru Balam (Divine Grace)"}
+                          </h4>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                          response.sivadasan_ravi_insights.guru_balam.status === "FULL_GURU_BALAM"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : response.sivadasan_ravi_insights.guru_balam.status === "PARTIAL_GURU_BALAM"
+                            ? "bg-blue-50 text-blue-800 border border-blue-200"
+                            : "bg-amber-50 text-amber-800 border border-amber-200"
+                        }`}>
+                          {language === "ta"
+                            ? response.sivadasan_ravi_insights.guru_balam.label_ta
+                            : response.sivadasan_ravi_insights.guru_balam.label_en}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed">
+                        {language === "ta"
+                          ? response.sivadasan_ravi_insights.guru_balam.description_ta
+                          : response.sivadasan_ravi_insights.guru_balam.description_en}
+                      </div>
+                    </div>
+
+                    {/* 3. NADI ASTROLOGY PORUTHAM & NANDI YOGAM */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <HeartHandshake className="w-5 h-5 text-[#B4872B]" />
+                          <h4 className="font-bold text-sm sm:text-base text-[#153F6B]">
+                            {language === "ta" ? "3. நாடி ஜோதிட முறை பொருத்தம் & நந்தியோகம்" : "3. Nadi Porutham & Nandi Yogam"}
+                          </h4>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                          response.sivadasan_ravi_insights.nadi_porutham.verdict === "EXCELLENT"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : response.sivadasan_ravi_insights.nadi_porutham.verdict === "MODERATE"
+                            ? "bg-blue-50 text-blue-800 border border-blue-200"
+                            : "bg-rose-50 text-rose-800 border border-rose-200"
+                        }`}>
+                          {language === "ta"
+                            ? response.sivadasan_ravi_insights.nadi_porutham.verdict_ta
+                            : response.sivadasan_ravi_insights.nadi_porutham.verdict}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed">
+                        {language === "ta"
+                          ? response.sivadasan_ravi_insights.nadi_porutham.summary_ta
+                          : response.sivadasan_ravi_insights.nadi_porutham.summary_en}
+                      </div>
+
+                      {response.sivadasan_ravi_insights.nadi_porutham.has_nandi_yogam && (
+                        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1">
+                          <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                            <AlertTriangle className="w-4 h-4 text-amber-700" />
+                            {language === "ta" ? "நந்தியோகக் குறுக்கீடுகள் (ஆய்வு)" : "Nandi Yogam Obstruction Factors"}
+                          </div>
+                          {(language === "ta"
+                            ? response.sivadasan_ravi_insights.nadi_porutham.nandi_obstacles_ta
+                            : response.sivadasan_ravi_insights.nadi_porutham.nandi_obstacles_en
+                          ).map((obs, idx) => (
+                            <p key={idx} className="text-amber-800">{obs}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 4. IN-LAWS SPECIAL NAKSHATRA AFFLICTIONS & EXEMPTIONS */}
+                    {response.sivadasan_ravi_insights.in_laws_nakshatras.has_special_nakshatra && (
+                      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="w-5 h-5 text-[#B4872B]" />
+                          <h4 className="font-bold text-sm sm:text-base text-[#153F6B]">
+                            {language === "ta"
+                              ? "4. விசேஷ நட்சத்திர மாமனார்/மாமியார் தோஷ ஆய்வு & சாஸ்திர விலக்குகள்"
+                              : "4. Special In-Laws Nakshatra Affliction & Canonical Exemptions"}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-3">
+                          {response.sivadasan_ravi_insights.in_laws_nakshatras.findings.map((f, idx) => (
+                            <div key={idx} className={`p-4 rounded-xl border ${
+                              f.is_exempt
+                                ? "bg-emerald-50/70 border-emerald-200"
+                                : "bg-amber-50/70 border-amber-200"
+                            }`}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="font-bold text-xs text-[#153F6B]">
+                                  {language === "ta" ? f.nakshatra_ta : f.nakshatra_en} - {language === "ta" ? f.relative_ta : f.relative_en}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                  f.is_exempt
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-amber-100 text-amber-800"
+                                }`}>
+                                  {f.is_exempt
+                                    ? (language === "ta" ? "விதிவிலக்கு பொருந்தியது (தோஷமில்லை)" : "Exempt - No Dosha")
+                                    : (language === "ta" ? "தோஷம் உள்ளது (பரிகாரம் தேவை)" : "Dosha Active")}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-700 leading-relaxed">
+                                {language === "ta" ? f.explanation_ta : f.explanation_en}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 5. SACRED THIRUMURAI & WEDDING REMEDIES */}
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50/50 via-white to-slate-50 border border-amber-200/80 shadow-2xs space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-amber-700" />
+                        <h4 className="font-bold text-sm sm:text-base text-[#153F6B]">
+                          {language === "ta"
+                            ? "5. திருமுறைத் திருமணம் & சாஸ்திர பரிகார ஸ்தலம்"
+                            : "5. Sacred Thirumurai & Classical Wedding Remedies"}
+                        </h4>
+                      </div>
+
+                      {/* Parikara Sthalam */}
+                      <div className="p-4 rounded-xl bg-white border border-amber-200/60 shadow-2xs">
+                        <div className="text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">
+                          {language === "ta" ? "முதன்மை பரிகார தலம்" : "Primary Parikara Sthalam"}
+                        </div>
+                        <h5 className="font-bold text-sm text-[#153F6B]">
+                          {language === "ta"
+                            ? response.sivadasan_ravi_insights.classical_remedies.parikara_sthalam.name_ta
+                            : response.sivadasan_ravi_insights.classical_remedies.parikara_sthalam.name_en}
+                        </h5>
+                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                          {language === "ta"
+                            ? response.sivadasan_ravi_insights.classical_remedies.parikara_sthalam.significance_ta
+                            : response.sivadasan_ravi_insights.classical_remedies.parikara_sthalam.significance_en}
+                        </p>
+                      </div>
+
+                      {/* Sacred Hymns */}
+                      <div className="space-y-3">
+                        {response.sivadasan_ravi_insights.classical_remedies.sacred_hymns.map((hymn, idx) => (
+                          <div key={idx} className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-[#153F6B]">
+                                {language === "ta" ? hymn.title_ta : hymn.title_en}
+                              </span>
+                              <span className="text-[11px] text-amber-800 font-medium bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                                {language === "ta" ? hymn.purpose_ta : hymn.purpose_en}
+                              </span>
+                            </div>
+                            <pre className="p-3 rounded-lg bg-amber-50/40 border border-amber-100/80 font-serif text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
+                              {hymn.hymn_ta}
+                            </pre>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

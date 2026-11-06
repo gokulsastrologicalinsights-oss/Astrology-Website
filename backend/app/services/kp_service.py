@@ -144,6 +144,9 @@ def calculate_kp_chart(
                 sub_lord=p.sub_lord,
                 sub_sub_lord=p.sub_sub_lord,
                 kp_number=kp_number_for_longitude(p.longitude),
+                navamsa_sign=p.navamsa_sign,
+                navamsa_lord=p.navamsa_lord,
+                is_vargottama=p.is_vargottama,
             )
         )
 
@@ -163,6 +166,9 @@ def calculate_kp_chart(
                 sub_lord=c.sub_lord,
                 sub_sub_lord=c.sub_sub_lord,
                 promise=promise,
+                navamsa_sign=c.navamsa_sign,
+                navamsa_lord=c.navamsa_lord,
+                is_vargottama=c.is_vargottama,
             )
         )
 
@@ -319,6 +325,50 @@ def calculate_kp_chart(
         ],
     )
 
+    # KP Reader 2: Fortuna (Pars Fortunae) & Foundational Insights
+    from app.services.kp_engine.significators import house_of_longitude
+    from app.services.kp_engine.reader2 import (
+        calculate_kp_fortuna,
+        classify_sign,
+        evaluate_speech_and_fertility,
+        evaluate_astrologer_proficiency,
+    )
+    cusp_lons = [c.longitude for c in chart.cusps]
+    sun_lon = chart.planet_lon.get("Sun", 0.0)
+    moon_lon = chart.planet_lon.get("Moon", 0.0)
+    asc_lon = cusp_lons[0] if cusp_lons else 0.0
+    sun_house = house_of_longitude(sun_lon, cusp_lons)
+    is_day = sun_house in {7, 8, 9, 10, 11, 12}
+    fort_calc = calculate_kp_fortuna(asc_lon, moon_lon, sun_lon, is_day)
+
+    asc_info = point_info(asc_lon)
+    moon_info = point_info(moon_lon)
+    c2_info = point_info(cusp_lons[1]) if len(cusp_lons) > 1 else asc_info
+    c5_info = point_info(cusp_lons[4]) if len(cusp_lons) > 4 else asc_info
+    c11_info = point_info(cusp_lons[10]) if len(cusp_lons) > 10 else asc_info
+
+    speech_fert = evaluate_speech_and_fertility(
+        cusp_2_sign=c2_info.sign,
+        cusp_5_sign=c5_info.sign,
+        cusp_11_sign=c11_info.sign,
+    )
+    merc_info = point_info(chart.planet_lon.get("Mercury", 0.0))
+    astro_apt = evaluate_astrologer_proficiency(
+        mercury_sign=merc_info.sign,
+        moon_sign=moon_info.sign,
+        ascendant_sign=asc_info.sign,
+    )
+    reader2_dict = {
+        "ascendant_classification": classify_sign(asc_info.sign).__dict__,
+        "moon_classification": classify_sign(moon_info.sign).__dict__,
+        "speech_condition": speech_fert.speech_condition,
+        "speech_reasons": speech_fert.speech_reasons,
+        "fertility_promise": speech_fert.fertility_promise,
+        "fertility_reasons": speech_fert.fertility_reasons,
+        "astrology_aptitude_grade": astro_apt.aptitude_grade,
+        "astrology_aptitude_score": astro_apt.score,
+    }
+
     return KpResponse(
         metadata=metadata,
         planetary_positions=planetary_kp_list,
@@ -327,6 +377,8 @@ def calculate_kp_chart(
         house_significators=house_significators_list,
         ruling_planets=ruling_planets,
         dasa_hierarchy=dasa_hierarchy,
+        fortuna=fort_calc.__dict__,
+        reader2_insights=reader2_dict,
     )
 
 

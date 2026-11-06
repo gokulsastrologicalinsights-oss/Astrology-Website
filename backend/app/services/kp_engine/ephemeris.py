@@ -33,8 +33,10 @@ from .vedic import normalize_longitude
 
 AYANAMSA_MODES: dict[str, int] = {
     "lahiri": swe.SIDM_LAHIRI,                    # 1  - Chitrapaksha / IAE 1985
-    "kp": swe.SIDM_KRISHNAMURTI_VP291,            # 45 - modern KP ayanamsa
-    "kp_old": swe.SIDM_KRISHNAMURTI,              # 5  - Krishnamurti's table
+    "kp": swe.SIDM_KRISHNAMURTI_VP291,            # 45 - modern KP ayanamsa (VP291 / Newcomb)
+    "kp_old": swe.SIDM_KRISHNAMURTI,              # 5  - Krishnamurti's historical table
+    "kp_reader1": swe.SIDM_KRISHNAMURTI_VP291,    # KP Reader 1 authentic VP291 Newcomb precession
+    "reader1": swe.SIDM_KRISHNAMURTI_VP291,       # Alias for KP Reader 1
 }
 
 NODES: dict[str, int] = {"mean": swe.MEAN_NODE, "true": swe.TRUE_NODE}

@@ -29,6 +29,12 @@ from app.services.ephemeris import (
 from app.services.dasa_service import calculate_dasa
 from app.services.brighu_naadi.engine import evaluate_brighu_naadi
 from app.services.jamakkol.calculator import calculate_jamakkol_prasanam
+from app.services.instant_revelation.nadiamsa import (
+    calculate_nadiamsa,
+    evaluate_khanda_and_longevity,
+    calculate_deva_keralam_critical_degrees,
+)
+from app.services.instant_revelation.guaranteed_rules import GuaranteedRuleEngine
 
 logger = logging.getLogger(__name__)
 
@@ -250,6 +256,7 @@ class InstantRevelationEngine:
             natal_moon_en=natal_moon_en,
             lagna_sign_ta=lagna_sign_ta,
             lagna_sign_en=lagna_sign_en,
+            jamakkol_res=jamakkol_res,
         )
 
         # ------------------------------------------------------------------
@@ -344,6 +351,26 @@ class InstantRevelationEngine:
         balarishta_en, balarishta_ta = cls._synthesize_childhood_balarishta(
             planets_dict=planets_dict,
             ascendant_sign=ascendant_sign,
+        )
+
+        # ------------------------------------------------------------------
+        # DEVA KERALAM (CHANDRA KALA NADI) 150 NADIAMSAS & LONGEVITY
+        # ------------------------------------------------------------------
+        nadi_info = calculate_nadiamsa(asc_info.degree_in_sign, ascendant_sign)
+        khanda_en, khanda_ta = evaluate_khanda_and_longevity(ascendant_sign, natal_moon_sign)
+        father_crit_deg, mother_crit_deg = calculate_deva_keralam_critical_degrees(planets_dict, ascendant_sign)
+
+        # ------------------------------------------------------------------
+        # BHRIGU NANDI NADI & CLASSICAL RULE VERIFICATION (BNN & CLASSICAL)
+        # ------------------------------------------------------------------
+        guaranteed_shockers, taboos_ta, taboos_en = GuaranteedRuleEngine.evaluate_all(
+            planets_dict=planets_dict,
+            ascendant_sign=ascendant_sign,
+            ascendant_deg=asc_info.degree_in_sign,
+            current_age=native_age,
+            gender=gender,
+            current_md=current_md,
+            current_ad=current_ad,
         )
 
         # ------------------------------------------------------------------
@@ -444,6 +471,20 @@ class InstantRevelationEngine:
             ancestral_land_rift_ta=land_rift_ta,
             childhood_balarishta_en=balarishta_en,
             childhood_balarishta_ta=balarishta_ta,
+            lagna_nadiamsa_number=nadi_info["nadiamsa_number"],
+            lagna_nadiamsa_name=nadi_info["name_en"],
+            lagna_nadiamsa_name_ta=nadi_info["name_ta"],
+            lagna_nadiamsa_half=nadi_info["half_en"],
+            lagna_nadiamsa_half_ta=nadi_info["half_ta"],
+            lagna_nadiamsa_script_en=nadi_info["script_en"],
+            lagna_nadiamsa_script_ta=nadi_info["script_ta"],
+            khanda_nirnaya_longevity_en=khanda_en,
+            khanda_nirnaya_longevity_ta=khanda_ta,
+            father_critical_degree=father_crit_deg,
+            mother_critical_degree=mother_crit_deg,
+            guaranteed_chart_shockers=guaranteed_shockers,
+            remedial_taboos_en=taboos_en,
+            remedial_taboos_ta=taboos_ta,
         )
 
     # ----------------------------------------------------------------------
@@ -467,177 +508,270 @@ class InstantRevelationEngine:
         natal_moon_en: str,
         lagna_sign_ta: str,
         lagna_sign_en: str,
+        jamakkol_res: Optional[Dict[str, Any]] = None,
     ) -> Tuple[List[RevelationBullet], str, str]:
         bullets: List[RevelationBullet] = []
 
-        # 1. Primary Diagnosis Synthesis: Natal Dasa-Bhukti Lords + Age + Jamakkol Prasanam
-        if native_age < 23:
-            primary_en = "Academic Uncertainty, Higher Studies Admission, or Future Career Direction"
-            primary_ta = "கல்வித் தேக்கம், உயர்கல்வி தேர்வு அல்லது எதிர்கால வேலைக்கான வழிகாட்டுதல்"
-            script_en = (
-                "You have arrived today primarily seeking clarity regarding your education, competitive examinations, "
-                "or career direction. There is uncertainty over choosing the right academic stream or securing anticipated marks."
-            )
-            script_ta = (
-                "நீங்கள் இன்று இங்கு வந்துள்ளதன் முதன்மையான நோக்கம், உங்கள் படிப்பு, உயர்கல்வி சேர்க்கை, போட்டித் தேர்வு "
-                "அல்லது எதிர்கால வேலைக்கான வழிகாட்டுதல் பற்றிய கவலையே ஆகும். எந்தத் துறையைத் தேர்ந்தெடுப்பது அல்லது தேர்வில் "
-                "எதிர்பார்த்த வெற்றி கிடைக்குமா என்ற குழப்பம் உங்கள் மனதில் ஓடுகிறது."
-            )
-            proof = f"Native in academic age ({native_age} yrs) under {current_md}-{current_ad} Dasa cycle."
+        # Extract Jamakkol deep structures
+        jamakkol = jamakkol_res or {}
+        pillars = jamakkol.get("three_pillars", {})
+        u_info = pillars.get("udhayam", {})
+        a_info = pillars.get("aarudham", {})
+        k_info = pillars.get("kavippu", {})
 
-        elif (23 <= native_age <= 38) and (
-            current_ad == "Venus"
-            or any(h == 7 for h in ad_houses)
-            or (7 in md_houses and any(h in (2, 7, 11) for h in ad_houses))
-            or (aarudham_house in (7, 5) or kavippu_house == 7)
-        ):
-            primary_en = "Marriage Alliance, Partner Settlement, or Marital Future"
-            primary_ta = "திருமண வரன் தேடுதல், புதிய குடும்ப வாழ்க்கை அல்லது களத்திர அத்தியாயம்"
+        u_sign_ta = u_info.get("sign_name_ta", "உதயம்")
+        a_sign_ta = a_info.get("sign_name_ta", "ஆரூடம்")
+        k_sign_ta = k_info.get("sign_name_ta", "கவிப்பு")
+        u_sign_en = u_info.get("sign_name_en", "Udayam")
+        a_sign_en = a_info.get("sign_name_en", "Aarudham")
+        k_sign_en = k_info.get("sign_name_en", "Kavippu")
+
+        classical = jamakkol.get("classical_rules", {})
+        watch = classical.get("watch_time_relation", {})
+        watch_type = watch.get("relation_type", f"{aarudham_house}th house")
+        watch_res = watch.get("result", "Neutral")
+        watch_desc_ta = watch.get("description_ta", "")
+        watch_desc_en = watch.get("description_en", "")
+
+        k_aff = classical.get("kavippu_afflictions", {})
+        aff_transit = k_aff.get("afflicted_transit_planets", [])
+        aff_jama = k_aff.get("afflicted_jama_grahas", [])
+        all_afflicted = list(dict.fromkeys(aff_transit + aff_jama))
+        aff_ta_names = [PLANET_NAMES_TA.get(p, p) for p in all_afflicted]
+        afflicted_str_ta = (", ".join(aff_ta_names) + " மீது கவிப்பு விழுந்துள்ளது") if aff_ta_names else "கிரக சேர்க்கையின்றி பாவகத்தை நேரடியாக முடக்குகிறது"
+        afflicted_str_en = (f"Kavippu afflicts {', '.join(all_afflicted)}") if all_afflicted else "Kavippu directly paralyzes the house"
+
+        lord_conn = classical.get("lord_connections", {})
+        tenth_lord = lord_conn.get("tenth_lord", "Lord")
+        tenth_lord_bhava = lord_conn.get("tenth_lord_bhava", 10)
+        tenth_lord_ta = PLANET_NAMES_TA.get(tenth_lord, tenth_lord)
+
+        # ------------------------------------------------------------------
+        # PURE JAMAKKOL PRASANAM ARRIVAL REASON SYNTHESIS (ZERO AGE FILTERING)
+        # ------------------------------------------------------------------
+        # Hierarchy:
+        # 1. Kavippu conjunct planet (The exact strangled energy)
+        # 2. Kavippu house from Udhayam (The acute pain/obstruction area)
+        # 3. Aarudham house from Udhayam (The conscious quest/desire)
+        # 4. Udhayam-Aarudham relation (Ease vs friction of fruition)
+
+        has_ven_kav = any(p in all_afflicted for p in ("Venus", "Sukra", "Sukran"))
+        has_sat_kav = any(p in all_afflicted for p in ("Saturn", "Sani"))
+        has_jup_kav = any(p in all_afflicted for p in ("Jupiter", "Guru"))
+        has_mar_kav = any(p in all_afflicted for p in ("Mars", "Sevvai", "Mangal"))
+        has_mer_kav = any(p in all_afflicted for p in ("Mercury", "Budha", "Budhan"))
+        has_sun_kav = any(p in all_afflicted for p in ("Sun", "Surya", "Suryan"))
+        has_moo_kav = any(p in all_afflicted for p in ("Moon", "Chandra", "Chandran"))
+        has_rah_kav = any(p in all_afflicted for p in ("Rahu", "Raahu"))
+        has_ket_kav = any(p in all_afflicted for p in ("Ketu", "Kethu"))
+
+        if has_ven_kav or aarudham_house == 7 or kavippu_house == 7:
+            primary_en = "Marriage Alliance Delay, Marital Friction, or Partnership Deadlock"
+            primary_ta = "திருமண வரன் தாமதம், களத்திர முரண்பாடு அல்லது கூட்டுத் தொழில் முடக்கம்"
             script_en = (
                 "You have arrived today primarily seeking clarity regarding your marriage, finding the right life partner, "
-                "or stepping into a new family chapter. You wish to know when wedding knots will be tied, how the partner will be, "
-                "and whether upcoming proposals will materialize successfully."
+                "or resolving acute friction in your marital/business partnership. You are questioning why finalized proposals "
+                "break down at the eleventh hour and seeking when domestic peace and harmonious union will be established."
             )
             script_ta = (
-                "நீங்கள் இன்று இங்கு வந்துள்ளதன் முதன்மையான நோக்கம், திருமணம், வரன் தேடுதல், புதிய குடும்ப வாழ்க்கை "
-                "அல்லது வாழ்க்கைத் துணை பற்றிய ஆலோசனையே ஆகும். நல்ல வரன் எப்போது அமையும், குடும்பப் பொறுப்புகளைத் "
-                "தொடங்குவதற்கான காலம் கைகூடி வந்துள்ளதா மற்றும் வரக்கூடிய வரன்கள் சுபமாக முடியுமா என்ற சிந்தனை உங்கள் மனதில் பிரதானமாக உள்ளது."
+                "நீங்கள் இன்று இங்கு வந்துள்ளதன் முதன்மையான நோக்கம், திருமணம், வரன் தேடுதல், புதிய குடும்ப அத்தியாயம் "
+                "அல்லது வாழ்க்கைத் துணை/கூட்டாளி உடனான மனப்போராட்டம் பற்றிய ஆலோசனையே ஆகும். பேசப்பட்ட வரன்கள் அல்லது முயற்சிகள் "
+                "கடைசி நேரத்தில் கைநழுவிப் போவது ஏன் மற்றும் எப்போது சுபமுகூர்த்தம் கைகூடும் என்ற தீவிர சிந்தனை உங்கள் மனதில் பிரதானமாக உள்ளது."
             )
-            proof = f"Kalathra Karaka / 7th house active under {current_md}-{current_ad} Dasa for age {native_age} native."
+            proof = f"Jamakkol Aarudham in {aarudham_house}th house / Kavippu in {kavippu_house}th house afflicting Kalathra Karaka ({', '.join(all_afflicted) if all_afflicted else '7th Bhava'})."
+            aarudham_meaning_ta = "களத்திரம், திருமணம், வரன் தேடுதல் மற்றும் கூட்டாண்மை"
+            kavippu_meaning_ta = "களத்திர பாவகத்தில் அல்லது சுக்கிரனில் கவிப்பு விழுந்து திருமண/தாம்பத்திய காரியங்களை முடக்குகிறது"
 
-        elif any(h in (10, 1) for h in ad_houses) or (10 in md_houses) or (aarudham_house in (10, 1) and kavippu_house != 7):
-            primary_en = "Career Growth, Professional Milestone, or Job Transition Direction"
-            primary_ta = "தொழில் உயர்வு, புதிய பொறுப்பு அல்லது வேலை மாற்றத்திற்கான நல்வழி"
+        elif has_sat_kav or aarudham_house in (10, 1) or kavippu_house == 10:
+            primary_en = "Career Stagnation, Job Transition Dilemma, or Professional Deadlock"
+            primary_ta = "தொழில் முடக்கம், புதிய வேலைவாய்ப்புத் தேடல் அல்லது உத்தியோக மந்த நிலை"
             script_en = (
-                "You have arrived today primarily seeking direction on your career, professional next steps, or business expansion. "
-                "You are contemplating whether to undertake a new venture/role or maintain your current position, and looking for "
-                "clarity on achieving long-term status and stable professional growth."
+                "You have arrived today seeking urgent direction on your career, employment stagnation, or business expansion. "
+                "You are trapped in a dilemma: whether to remain in your current role or transition to a new venture. Hard work is "
+                "not yielding commensurate recognition, and you are anxious to restore your professional status."
             )
             script_ta = (
-                "நீங்கள் இன்று இங்கு வந்துள்ளதன் நோக்கம், உங்கள் தொழில் அல்லது வேலையில் அடுத்தகட்ட வளர்ச்சி, "
-                "புதிய பொறுப்பு, புதிய தொழில் முயற்சி அல்லது வேலை மாற்றத்திற்கான நல்வழியை அறிவதே ஆகும். "
-                "தற்போதைய திட்டங்களை விரிவுபடுத்துவதா அல்லது புதிய வாய்ப்பை நோக்கி நகர்வதா என்ற தீவிர யோசனை உங்கள் மனதில் ஓடுகிறது."
+                "நீங்கள் இன்று இங்கு வந்துள்ளதன் முதன்மையான நோக்கம், உங்கள் தொழில், உத்தியோகம் அல்லது வியாபாரத்தில் ஏற்பட்டுள்ள "
+                "மந்த நிலைக்கு வழிகாட்டல் பெறுவதே ஆகும். 'தற்போதைய பணியில் நீடிப்பதா அல்லது புதிய வாய்ப்பை நோக்கி நகர்வதா? "
+                "உழைப்புக்குரிய அங்கீகாரமும் வருமானமும் எப்போது கிடைக்கும்?' என்ற கேள்வி உங்கள் சிந்தனையை முழுமையாக ஆக்கிரமித்துள்ளது."
             )
-            proof = f"Active Dasha Lord ({current_ad}) activating Karma Bhava (10th/1st house) with Jamakkol Aarudham in {aarudham_house}th house."
+            proof = f"Jamakkol Aarudham in {aarudham_house}th house / Kavippu in {kavippu_house}th house afflicting Karma Sthana ({', '.join(all_afflicted) if all_afflicted else '10th Bhava'})."
+            aarudham_meaning_ta = "ஜீவனம், தொழில் உயர்வு, புதிய பொறுப்பு மற்றும் சமூக அந்தஸ்து"
+            kavippu_meaning_ta = "கர்ம பாவகத்தில் அல்லது சனியில் கவிப்பு விழுந்து உத்தியோக முன்னேற்றத்தைத் தாமதப்படுத்துகிறது"
 
-        elif (39 <= native_age <= 48) and (any(h == 7 for h in ad_houses) or (aarudham_house in (7, 5))):
-            primary_en = "Marital Harmony, Relationship Tuning, or Domestic Stability"
-            primary_ta = "தாம்பத்ய அமைதி, குடும்ப ஒற்றுமை மற்றும் வாழ்க்கைத் துணை நலம்"
+        elif has_jup_kav or kavippu_house in (2, 11) or aarudham_house in (2, 11):
+            primary_en = "Frozen Finances, Blocked Cash Flow, and Liquidity Trap"
+            primary_ta = "பணத் தட்டுப்பாடு, வர வேண்டிய பணம் முடக்கம் மற்றும் கடன் அழுத்தம்"
             script_en = (
-                "You have come seeking clarity on marital harmony, domestic balance, and mutual understanding with your spouse. "
-                "Family responsibilities or differing opinions have created subtle strain, and you seek lasting peace."
+                "Your central distress today is financial choking and frozen liquidity. Money rightfully owed to you is "
+                "being withheld without justification, and cash flow is not meeting pressing commitments. You feel that "
+                "people whom you helped generously in the past are now evading your calls."
             )
             script_ta = (
-                "உங்கள் வாழ்க்கைத் துணையுடன் பரஸ்பர புரிதல், குடும்ப அமைதி மற்றும் தாம்பத்ய ஒற்றுமை குறித்த ஆலோசனையே "
-                "உங்கள் வருகையின் நோக்கம். குடும்பச் சுமைகளால் ஏற்பட்ட மன அழுத்தத்தைக் குறைத்து நிம்மதியைக் காண விழைகிறீர்கள்."
+                "இன்று உங்கள் மனதில் உள்ள மிகப்பெரிய பாரம் பண நெருக்கடி மற்றும் முடக்கப்பட்ட தனம் ஆகும். உங்களுக்கு வரவேண்டிய "
+                "நியாயமான தொகை உரிய காலத்தில் கிடைக்காமல் பல வாரங்களாக இழுத்தடிக்கப்படுகிறது. 'கைக்கு எட்டிய பணம் வாய்க்கு எட்டவில்லையே, "
+                "அடுத்தடுத்து வரும் நிதிப் பொறுப்புகளை எப்படிச் சமாளிப்பது?' என்ற பண உளைச்சல் உங்கள் மனதை வாட்டுகிறது."
             )
-            proof = f"Kalathra Bhava (7th house) activated under {current_md}-{current_ad} Dasa for mature native (age {native_age})."
+            proof = f"Jamakkol Kavippu in {kavippu_house}th house (Dhana/Labha Bhava) directly choking financial inflow."
+            aarudham_meaning_ta = "தன வரவு, குடும்ப நிதிச் சுபிட்சம் மற்றும் லாப ஈட்டல்"
+            kavippu_meaning_ta = "தன/லாப ஸ்தானத்தில் கவிப்பு விழுந்து வர வேண்டிய பணத்தை முடக்கி கடன் அழுத்தத்தை உருவாக்குகிறது"
 
-        elif any(h in (2, 11) for h in ad_houses) or (kavippu_house in (2, 11) and any(h in (2, 11) for h in md_houses)):
-            primary_en = "Frozen Finances, Blocked Payments, and Liquidity Trap"
-            primary_ta = "கடுமையான பணத் தட்டுப்பாடு, வர வேண்டிய பணம் முடக்கம் மற்றும் கடன் அழுத்தம்"
-            script_en = (
-                "Your primary agitation today is financial choking. Money that belongs to you and was promised "
-                "weeks ago has been unfairly blocked. You are struggling to meet immediate commitments and feeling "
-                "that people whom you helped in the past are now ignoring your calls."
-            )
-            script_ta = (
-                "இன்று உங்கள் மனதில் உள்ள மிகப்பெரிய பாரம் பண நெருக்கடி மற்றும் முடக்கப்பட்ட தனம் ஆகும். "
-                "உங்களுக்கு வரவேண்டிய நியாயமான பணம் பல வாரங்களாகக் கிடைக்காமல் இழுத்தடிக்கப்படுகிறது. "
-                "முன்பு நீங்கள் வலியச் சென்று உதவி செய்த நபர்கள் கூட, இன்று உங்கள் அழைப்பைத் தவிர்க்கின்றனர். "
-                "கடன் மற்றும் பணத் தேவைகள் உங்கள் கழுத்தை நெரிக்கின்றன."
-            )
-            proof = f"Dhana/Labha Bhavas (2nd/11th house) triggered by active {current_ad} Bhukti."
+        elif has_mar_kav or kavippu_house in (4, 6) or aarudham_house in (4, 6):
+            if kavippu_house == 4 or aarudham_house == 4:
+                primary_en = "Property Dispute, Mother's Health, or Domestic Relocation Deadlock"
+                primary_ta = "சொத்து விவகாரம், தாயாரின் உடல்நலக் குறைவு அல்லது இருப்பிட மாற்றத் தடை"
+                script_en = (
+                    "Your arrival is centered around immovable property, real estate documents, or mother's health. A proposed "
+                    "land purchase, construction, or vehicle matter has encountered unexpected legal or domestic friction, leaving you unsettled."
+                )
+                script_ta = (
+                    "குடும்ப அமைதி, வீடு/நிலம் தொடர்பான சொத்து விவகாரங்கள், தாயாரின் உடல்நலம் அல்லது இருப்பிட மாற்றம் குறித்த கவலையே "
+                    "உங்கள் வருகையின் நோக்கம். நீங்கள் திட்டமிட்ட நிலம்/வீடு விவகாரத்தில் அல்லது வாகன பராமரிப்பில் எதிர்பாரா முட்டுக்கட்டை ஏற்பட்டுள்ளது."
+                )
+                proof = f"Jamakkol Aarudham in {aarudham_house}th / Kavippu in {kavippu_house}th activating Sukha/Matru Bhava."
+                aarudham_meaning_ta = "தாய் நலம், நிலம்/வீடு சொத்துக்கள், வாகனம் மற்றும் மன நிம்மதி"
+                kavippu_meaning_ta = "சுக ஸ்தானத்தில் கவிப்பு விழுந்து பூமி சொத்து மற்றும் குடும்ப அமைதியில் விரயத்தை ஏற்படுத்துகிறது"
+            else:
+                primary_en = "Relentless Debts, Secret Enemies, or Workplace Friction"
+                primary_ta = "தீராத கடன் சுமை, மறைமுக எதிர்ப்புகள் மற்றும் உத்தியோகப் போராட்டம்"
+                script_en = (
+                    "You are under tremendous pressure from cumulative debts, competitive hostility, or workplace litigation. "
+                    "You feel as if unseen forces are resisting your progress, and you desperately need a strategy to defeat adversity."
+                )
+                script_ta = (
+                    "கடன் சுமை, மறைமுக எதிரிகளின் தொல்லை அல்லது உத்தியோகத்தில் ஏற்பட்டுள்ள கடுமையான பணிச்சுமை மற்றும் சட்ட விவகாரங்களே "
+                    "உங்கள் வருகையின் நோக்கம். உங்கள் வளர்ச்சியைப் பொறுத்துக் கொள்ள முடியாதவர்களின் குடைச்சலில் இருந்து விடுபட நல்வழி தேடி வந்துள்ளீர்கள்."
+                )
+                proof = f"Jamakkol Aarudham in {aarudham_house}th / Kavippu in {kavippu_house}th activating Rina-Roga-Sathru Bhava."
+                aarudham_meaning_ta = "கடன் நிவர்த்தி, எதிர்ப்புகளை முறியடித்தல் மற்றும் வழக்குகளில் வெற்றி"
+                kavippu_meaning_ta = "ரோக-சத்ரு ஸ்தானத்தில் கவிப்பு விழுந்து எதிர்ப்புகள் மற்றும் கடன் அழுத்தத்தை அதிகப்படுத்துகிறது"
 
-        elif any(h in (6, 8, 12) for h in ad_houses) or (aarudham_house in (6, 8, 12)):
-            primary_en = "Hidden Enemies, Sudden Health Vulnerability, or Debt Trap"
-            primary_ta = "மறைமுக எதிர்ப்புகள், உடல்நலக் கோளாறு மற்றும் எதிர்பாராத அவப்பெயர் அச்சம்"
-            script_en = (
-                "You are under tremendous psychological pressure from unforeseen obstacles. "
-                "You suspect someone is working against you behind the scenes. Along with debt pressure, "
-                "your sleep is fragmented and physical vitality (digestion/legs) feels completely depleted."
-            )
-            script_ta = (
-                "யாரோ உங்களுக்குப் பின்னால் நின்று சதி செய்வதைப் போன்ற தீவிர மன பயத்துடனும், தீராத "
-                "கடன்/வழக்கு அல்லது உடல் உபாதையுடனும் நீங்கள் வந்துள்ளீர்கள். இரவில் சரியான தூக்கமில்லை; "
-                "வயிற்றுப் பகுதி அல்லது உடல் சோர்வு உங்களை வாட்டுகிறது. எதிர்பாராத இழப்பு அல்லது வீண் பழி "
-                "வந்துவிடுமோ என்ற அச்சம் உங்களை ஆட்டிப்படைக்கிறது."
-            )
-            proof = f"Dusthana activation (6th/8th/12th house) under {current_ad} Bhukti and Jamakkol {aarudham_house}th house."
+        elif kavippu_house in (8, 12) or aarudham_house in (8, 12):
+            if kavippu_house == 8 or aarudham_house == 8:
+                primary_en = "Sudden Scandal Dread, Chronic Anxiety, or Unexpected Crisis"
+                primary_ta = "திடீர் அவப்பெயர் அச்சம், கடுமையான மன உளைச்சல் அல்லது எதிர்பாராத இழப்பு"
+                script_en = (
+                    "You are experiencing immense psychological turbulence. You fear an unexpected scandal, loss of reputation, "
+                    "or legal setback. Sleep is disturbed, and you feel trapped in an unpredictable storm with no immediate exit."
+                )
+                script_ta = (
+                    "எதிர்பாராத இழப்பு, அவப்பெயர் அல்லது வீண் பழி வந்துவிடுமோ என்ற அதீத மன பயத்துடனும், ரகசிய மன உளைச்சலுடனும் வந்துள்ளீர்கள். "
+                    "இரவில் சரியான தூக்கமின்றி, சூழ்நிலைகள் கைமீறிப் போகிறதோ என்ற கலக்கம் உங்கள் மனதில் ஓடிக்கொண்டிருக்கிறது."
+                )
+                proof = f"Jamakkol 8th house (Ashtama/Randhra) triggered by Aarudham ({aarudham_house}th) or Kavippu ({kavippu_house}th)."
+                aarudham_meaning_ta = "திடீர் விபத்து/அவப்பெயர் தவிர்த்தல், ரகசிய சிக்கல்கள் மற்றும் ஆயுள் பாதுகாப்பு"
+                kavippu_meaning_ta = "அஷ்டமத்தில் கவிப்பு விழுந்து சொல்லொணா மன வேதனையையும் திடீர் பயத்தையும் ஊட்டுகிறது"
+            else:
+                primary_en = "Uncontrollable Expenses, Sleep Deprivation, or Relocation Longing"
+                primary_ta = "அதீத வீண் விரயங்கள், தூக்கமின்மை அல்லது தூர தேச மாற்ற ஏக்கம்"
+                script_en = (
+                    "Your resources are leaking unexpectedly, and sleeplessness past midnight has depleted your vitality. "
+                    "You are contemplating whether a long-distance relocation or overseas move will grant you relief from constant pressure."
+                )
+                script_ta = (
+                    "கைமீறிய பண விரயங்கள், மருத்துவச் செலவுகள் அல்லது தூக்கமின்மையால் உங்கள் உடலும் மனமும் சோர்வடைந்துள்ளன. "
+                    "அனைத்தையும் விட்டுவிட்டு வெளிநாடு அல்லது புதிய இடத்திற்கு இடம் பெயர்ந்துவிட்டால் நிம்மதி கிடைக்குமா என்ற ஏக்கம் உள்ளது."
+                )
+                proof = f"Jamakkol 12th house (Vyaya Bhava) triggered by Aarudham ({aarudham_house}th) or Kavippu ({kavippu_house}th)."
+                aarudham_meaning_ta = "விரயக் கட்டுப்பாடு, தூர தேசப் பயணம் மற்றும் ஆன்மீக மன நிம்மதி"
+                kavippu_meaning_ta = "விரய ஸ்தானத்தில் கவிப்பு விழுந்து சேமிப்பைக் கரைத்து தூக்கமின்மையை ஏற்படுத்துகிறது"
 
-        elif any(h == 4 for h in ad_houses):
-            primary_en = "Property Dispute, Mother's Health, or Relocation Deadlock"
-            primary_ta = "சொத்து விவகாரம், தாயாரின் உடல்நலக் குறைவு அல்லது இருப்பிட மாற்றத் தடை"
-            script_en = (
-                "Your arrival is centered around domestic peace, land/property matters, or your mother's health. "
-                "A proposed house construction, purchase, or vehicle transaction has run into documentation issues "
-                "or family friction, leaving you unsettled."
-            )
-            script_ta = (
-                "குடும்ப அமைதி, வீடு/நிலம் தொடர்பான விவகாரங்கள் அல்லது தாயாரின் உடல்நலம் குறித்த கவலையே "
-                "உங்கள் வருகையின் நோக்கம். நீங்கள் நினைத்த வீடு மாற்றம் அல்லது சொத்து வாங்குதல் விவகாரத்தில் "
-                "சட்டச்சிக்கல் அல்லது உறவினர்களின் முட்டுக்கட்டை ஏற்பட்டுள்ளது."
-            )
-            proof = f"Sukha Bhava (4th house) activated under {current_ad} Bhukti."
+        elif aarudham_house in (5, 9) or kavippu_house in (5, 9):
+            if aarudham_house == 5 or kavippu_house == 5:
+                primary_en = "Progeny Delay or Deep Anxiety Over Children's Future"
+                primary_ta = "புத்திர பாக்கிய தாமதம் அல்லது பிள்ளைகளின் எதிர்கால முன்னேற்றக் கவலை"
+                script_en = (
+                    "Your arrival is centered around children—either a delay in child conception requiring divine intervention, "
+                    "or deep psychological concern regarding the education, career, and settlement of your offspring."
+                )
+                script_ta = (
+                    "புத்திர பாக்கியம் அமைவதில் ஏற்பட்டுள்ள காலதாமதம் அல்லது உங்கள் பிள்ளைகளின் படிப்பு, எதிர்கால நல்வாழ்வு, "
+                    "சுபகாரியங்கள் குறித்த தீவிர கவலையே உங்கள் வருகையின் பிரதான நோக்கம். இதற்கான தெய்விக பரிகாரம் தேடி வந்துள்ளீர்கள்."
+                )
+                proof = f"Jamakkol 5th house (Putra Bhava) active via Aarudham ({aarudham_house}th) / Kavippu ({kavippu_house}th)."
+                aarudham_meaning_ta = "புத்திர பாக்கியம், பிள்ளைகளின் நல்வாழ்வு, பூர்வீக புண்ணியம்"
+                kavippu_meaning_ta = "புத்திர ஸ்தானத்தில் கவிப்பு விழுந்து வம்ச விருத்தி அல்லது பிள்ளைகள் வழியில் கவலையைத் தருகிறது"
+            else:
+                primary_en = "Father's Well-being, Ancestral Fortunes, or Foreign Travel Prospects"
+                primary_ta = "தந்தை நலம், பூர்வீக பாக்கியம் அல்லது வெளிநாட்டுப் பிரயாண விவகாரம்"
+                script_en = (
+                    "You have arrived seeking clarity regarding your father's health, ancestral property inheritances, "
+                    "or long-distance foreign educational/work visas that have been stalled in documentation."
+                )
+                script_ta = (
+                    "தந்தையின் உடல்நலம், குலதெய்வ அருள், உயர்கல்வி அல்லது நீண்ட தூர வெளிநாட்டுப் பயண முயற்சிகளில் ஏற்பட்டுள்ள "
+                    "இழுபறிக்குத் தீர்வு காணவே வந்துள்ளீர்கள். 'தடைபட்ட பாக்கியங்கள் எப்போது திறக்கும்?' என்ற எதிர்பார்ப்பு உள்ளது."
+                )
+                proof = f"Jamakkol 9th house (Bhagya Bhava) active via Aarudham ({aarudham_house}th) / Kavippu ({kavippu_house}th)."
+                aarudham_meaning_ta = "பாக்கியம், தந்தை நலம், உயர்கல்வி மற்றும் வெளிநாட்டுப் பயணம்"
+                kavippu_meaning_ta = "பாக்கிய ஸ்தானத்தில் கவிப்பு விழுந்து தந்தை வழி அல்லது தெய்வ அனுக்கிரகத்தில் தடையை ஏற்படுத்துகிறது"
 
-        elif (23 <= native_age <= 48) and any(h == 5 for h in ad_houses):
-            primary_en = "Progeny Delay or Children's Future Settlement"
-            primary_ta = "புத்திர பாக்கிய தாமதம் அல்லது பிள்ளைகளின் எதிர்காலக் கவலை"
+        elif aarudham_house == 3 or kavippu_house == 3:
+            primary_en = "New Venture Initiative, Sibling Friction, or Stalled Contract"
+            primary_ta = "புதிய முயற்சி, இளைய சகோதர முரண்பாடு அல்லது ஒப்பந்தத் தடை"
             script_en = (
-                "Your arrival is primarily centered around progeny matters—either a delay in childbirth "
-                "requiring medical/spiritual solutions, or deep anxiety regarding the settlement of your growing children."
+                "You have come seeking direction on a bold new initiative, partnership agreement, or friction with a sibling. "
+                "You are ready to take bold action but worried about whether legal papers will hold firmly."
             )
             script_ta = (
-                "புத்திர பாக்கியம் அமைவதில் ஏற்பட்டுள்ள காலதாமதம் அல்லது பிள்ளைகளின் படிப்பு/எதிர்காலம் "
-                "குறித்த தீவிர கவலையே உங்கள் வருகையின் நோக்கம். இதற்கான நல்வழி பிறக்குமா என்ற ஏக்கத்துடன் வந்துள்ளீர்கள்."
+                "நீங்கள் தொடங்கவிருக்கும் புதிய முயற்சி, தைரியமான ஒப்பந்தம் அல்லது இளைய சகோதரருடனான கருத்து வேறுபாடு பற்றிய "
+                "ஆலோசனையே உங்கள் நோக்கம். உங்கள் முயற்சிக்கு உரிய வெற்றி கிடைக்குமா என்ற பரிசீலனை உங்கள் மனதில் உள்ளது."
             )
-            proof = f"Putra Bhava (5th house) activated under {current_ad} Bhukti for age {native_age}."
+            proof = f"Jamakkol 3rd house (Bhratru/Vikrama) active via Aarudham ({aarudham_house}th) / Kavippu ({kavippu_house}th)."
+            aarudham_meaning_ta = "விடாமுயற்சி, ஒப்பந்தங்கள், தைரியம் மற்றும் சகோதர நலன்"
+            kavippu_meaning_ta = "தைரிய ஸ்தானத்தில் கவிப்பு விழுந்து முடிவெடுப்பதில் தயக்கத்தை உருவாக்குகிறது"
 
         else:
-            primary_en = "Family Harmony, Children's Settlement, and Long-Term Stability"
-            primary_ta = "குடும்ப அமைதி, நல்வாழ்வு மற்றும் எதிர்காலத்திற்கான வழிகாட்டுதல்"
+            primary_en = "Personal Vitality, Identity Revival, and Next Life Chapter"
+            primary_ta = "சுய கௌரவம், உடல் நலம் மற்றும் வாழ்வின் புதிய அத்தியாயத்திற்கான வழிகாட்டல்"
             script_en = (
-                "You have arrived today seeking broad guidance on overall life stability, domestic peace, "
-                "and ensuring the long-term protection and settlement of your household."
+                "You have arrived today seeking a complete recalibration of your life trajectory, personal wellness, and peace of mind. "
+                "You feel a transitional phase unfolding and want unequivocal confirmation on the right path forward."
             )
             script_ta = (
-                "குடும்பத்தில் உள்ளவர்களின் மன அமைதி, பிள்ளைகளின் சுபகாரியங்கள் மற்றும் எதிர்கால வாழ்க்கை "
-                "நல்வழியில் அமைய வேண்டும் என்ற பொதுவான நலனை நாடியே நீங்கள் இன்று வந்துள்ளீர்கள்."
+                "உங்கள் சுய கௌரவம், உடல் ஆரோக்கியம் மற்றும் வாழ்வின் அடுத்த கட்டத்தை நோக்கிய தெளிவான வழிகாட்டலை நாடியே நீங்கள் வந்துள்ளீர்கள். "
+                "குழப்பங்கள் நீங்கி, எந்தப் பாதையைத் தேர்ந்தெடுத்தால் முழுமையான அமைதியும் வெற்றியும் கிட்டும் என்ற ஏக்கத்துடன் ஆலோசிக்க வந்துள்ளீர்கள்."
             )
-            proof = f"Native age {native_age} under {current_md}-{current_ad} Dasa cycle."
+            proof = f"Jamakkol Udhayam-Aarudham alignment in {aarudham_house}th house with 10th Lord {tenth_lord} in {tenth_lord_bhava}th house."
+            aarudham_meaning_ta = "சுய ஆளுமை, தலைமை, ஆரோக்கியம் மற்றும் வாழ்வியல் முன்னேற்றம்"
+            kavippu_meaning_ta = f"கவிப்பு {kavippu_house}-ம் பாவகத்தில் அமர்ந்து வாழ்வின் வேகத்தைக் கட்டுப்படுத்துகிறது"
+
+        # Construct the 3-Tier Jamakkol Verification Checklist
+        chk = [
+            f"[✓] நிலை 1 (ஆரூட பாவக சிந்தனை): உதயம் {u_sign_ta} லிருந்து ஆரூடம் {a_sign_ta} ({aarudham_house}-ம் பாவம்). ஜாதகரின் உள்மன விருப்பம் '{aarudham_meaning_ta}' சார்ந்தது.",
+            f"[✓] நிலை 2 (கவிப்பு முடக்க அடையாளம்): கவிப்பு {k_sign_ta} ({kavippu_house}-ம் பாவம்) {afflicted_str_ta}. ஜாதகரின் தீவிர மனப்போராட்டம்: {kavippu_meaning_ta}.",
+            f"[✓] நிலை 3 (உதயம்-ஆரூட கோண விடை & 10-ம் அதிபதி உறுதி): {watch_desc_ta if watch_desc_ta else f'உதயத்திற்கு ஆரூடம் {aarudham_house}-ல் அமைந்துள்ளது ({watch_res}).'} உதயத்திற்கு 10-ம் அதிபதி {tenth_lord_ta} {tenth_lord_bhava}-ம் பாவகத்தில் அமர்ந்து வினாவின் தன்மையை 1001% உறுதி செய்கிறார்.",
+        ]
 
         bullets.append(RevelationBullet(
             id="mind-01",
             category="mind_reading",
             shock_factor="EXTREME",
-            headline_en="Core Mind Reading: Why You Sat Down Today",
-            headline_ta="உங்களின் முதன்மையான வருகை நோக்கம்",
+            headline_en="Core Mind Reading: Why You Sat Down Today (Triple Jamakkol Verified)",
+            headline_ta="உங்களின் முதன்மையான வருகை நோக்கம் & மனப்போராட்டம் (3-அடுக்கு ஜாமக்கோள் உறுதி)",
             script_en=script_en,
             script_ta=script_ta,
             astrological_proof=proof,
+            checklist=chk,
             nature="danger",
         ))
 
         # 2. Secondary Indicator: Transit Moon Condition
         if chandra_lagna_offset == 8:
-            chandrashtama_en = (
-                "Furthermore, right now you are passing through Chandrashtama (transit Moon in your 8th house). "
-                "Your thoughts are running in circles, you feel an inexplicable dread, and you feel that no one understands you."
-            )
-            chandrashtama_ta = (
-                "மேலும், தற்சமயம் உங்களுக்கு 'சந்திராஷ்டமம்' (உங்கள் ராசிக்கு 8-ல் சந்திரன்) நிலவுகிறது. "
-                "இதனால் எதிலும் பிடிப்பின்மை, மன உளைச்சல் மற்றும் நீங்கள் சொல்வதை எவரும் புரிந்துகொள்ளவில்லை என்ற "
-                "ஆதங்கம் உங்கள் மனதில் கொந்தளிக்கிறது."
-            )
             bullets.append(RevelationBullet(
                 id="mind-02",
                 category="mind_reading",
                 shock_factor="HIGH",
                 headline_en="Mental Cross-Section: Chandrashtama Alert",
                 headline_ta="மன உளைச்சல்: சந்திராஷ்டம நிலை",
-                script_en=chandrashtama_en,
-                script_ta=chandrashtama_ta,
+                script_en="Furthermore, right now you are passing through Chandrashtama (transit Moon in your 8th house). Your thoughts are running in circles, you feel an inexplicable dread, and you feel that no one understands you.",
+                script_ta="மேலும், தற்சமயம் உங்களுக்கு 'சந்திராஷ்டமம்' (உங்கள் ராசிக்கு 8-ல் சந்திரன்) நிலவுகிறது. இதனால் எதிலும் பிடிப்பின்மை, மன உளைச்சல் மற்றும் நீங்கள் சொல்வதை எவரும் புரிந்துகொள்ளவில்லை என்ற ஆதங்கம் உங்கள் மனதில் கொந்தளிக்கிறது.",
                 astrological_proof=f"Transit Moon currently in 8th house from natal Moon ({natal_moon_en} / {natal_moon_ta}).",
+                checklist=[
+                    f"[✓] நிலை 1: கோச்சார சந்திரன் பிறந்த ராசிக்கு 8-ஆம் பாவத்தில் (சந்திராஷ்டமம்) சஞ்சரிக்கிறார்.",
+                    f"[✓] நிலை 2: மனோகாரகன் சந்திரன் மறைவு பெற்றதால் கடந்த 48 மணிநேரமாக தூக்கமின்மையும் பதற்றமும் நிலவுகிறது.",
+                    f"[✓] நிலை 3: முக்கிய முடிவுகளை இன்று தள்ளிப்போடுவது உசிதம் என்று சாஸ்திரம் எச்சரிக்கிறது.",
+                ],
                 nature="danger",
             ))
         elif chandra_lagna_offset in (6, 12):
@@ -649,7 +783,12 @@ class InstantRevelationEngine:
                 headline_ta="தூக்கமின்மை மற்றும் திடீர் விரயங்கள்",
                 script_en="Over the last 72 hours, money has slipped through your hands unexpectedly, and sleep has eluded you past 2:30 AM.",
                 script_ta="கடந்த 3 நாட்களாக எதிர்பாராத வீண் விரயங்கள் ஏற்பட்டுள்ளன; அதிகாலை 2:30 மணி வரை தூக்கம் வராமல் தவிக்கிறீர்கள்.",
-                astrological_proof=f"Transit Moon activating 6th/12th Dusthana from Natal Moon.",
+                astrological_proof="Transit Moon activating 6th/12th Dusthana from Natal Moon.",
+                checklist=[
+                    f"[✓] நிலை 1: கோச்சார சந்திரன் பிறந்த ராசிக்கு {chandra_lagna_offset}-ஆம் மறைவு ஸ்தானத்தில் உள்ளார்.",
+                    f"[✓] நிலை 2: தன விரயமும் அலைச்சலும் அதிகரித்துள்ளன.",
+                    f"[✓] நிலை 3: மன அமைதிக்கு தியானம் அல்லது குலதெய்வ வழிபாடு அவசியம்.",
+                ],
                 nature="danger",
             ))
 
@@ -663,6 +802,11 @@ class InstantRevelationEngine:
             script_en=f"You are actively running {current_md} Dasa with {current_ad} Bhukti and {current_pd} Anthara. Whatever promises are made to you are dragging until the very last minute.",
             script_ta=f"தற்போது உங்களுக்கு {current_dasa_ta} நடக்கிறது. எவர் உங்களுக்கு வாக்குறுதி கொடுத்தாலும், அது கடைசி நிமிடம் வரை இழுத்தடித்துதான் நடக்கும் நிலை உள்ளது.",
             astrological_proof=f"Native natal dasha timing: {current_md}-{current_ad}-{current_pd}.",
+            checklist=[
+                f"[✓] நிலை 1: மகா தசா நாதர்: {PLANET_NAMES_TA.get(current_md, current_md)} தசை.",
+                f"[✓] நிலை 2: அந்தர/புக்தி நாதர்: {PLANET_NAMES_TA.get(current_ad, current_ad)} புக்தி.",
+                f"[✓] நிலை 3: கர்ம வினையின் பலனை அனுபவிக்கும் காலம் இதுவாகும்.",
+            ],
             nature="neutral",
         ))
 

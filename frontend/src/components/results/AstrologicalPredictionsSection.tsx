@@ -62,6 +62,7 @@ const QUICK_FILTER_PILLS = [
   { id: "all", label_en: "All Topics (230+)", label_ta: "அனைத்தும் (230+)", icon: Sparkles },
   { id: "bphs_classics", label_en: "Parashara Hora (BPHS)", label_ta: "பராசர ஹோரா சாஸ்திரம்", icon: ScrollText, isHighlight: true },
   { id: "saravali_classics", label_en: "Saravali Classics", label_ta: "சாராவளி நூற்பலன்கள்", icon: BookOpen, isHighlight: true },
+  { id: "deva_keralam_classics", label_en: "Deva Keralam (Nadi)", label_ta: "தேவ கேரளம் (சந்திர கலா நாடி)", icon: BookOpen, isHighlight: true },
   { id: "sexuality_intimacy", label_en: "Sexual Topics & Intimacy", label_ta: "தாம்பத்தியம் & காமம்", icon: Flame, isHighlight: true },
   { id: "longevity_death", label_en: "Longevity & Death", label_ta: "ஆயுள் & மரண அமைப்பு", icon: ShieldAlert, isHighlight: true },
   { id: "event_timing", label_en: "Event Timing (KP)", label_ta: "நிகழ்வு காலக் கணிப்பு (KP)", icon: Clock, isHighlight: true },
@@ -89,7 +90,7 @@ export interface PredictionSubPill {
 }
 
 export interface PredictionDomainConfig {
-  id: "all" | "bphs_domain" | "saravali_domain" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "saravali_domain" | "advanced_engine";
+  id: "all" | "bphs_domain" | "saravali_domain" | "deva_keralam_domain" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "saravali_domain" | "advanced_engine";
   label_en: string;
   label_ta: string;
   icon: any;
@@ -144,6 +145,22 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
       { id: "saravali_stri_jataka", label_en: "Stri Jataka (Female)", label_ta: "ஸ்திரீ ஜாதகம்", slug: "saravali_stri_jataka", icon: Heart },
       { id: "saravali_longevity_death", label_en: "Longevity & Death", label_ta: "ஆயுள் & அரிஷ்ட பங்கம்", slug: "saravali_longevity_death", icon: ShieldAlert },
       { id: "saravali_ashtakavarga", label_en: "Ashtakavarga Bindus", label_ta: "அஷ்டகவர்க்க பரல்கள்", slug: "saravali_ashtakavarga", icon: Layers },
+    ],
+  },
+  {
+    id: "deva_keralam_domain",
+    label_en: "Deva Keralam (Nadi)",
+    label_ta: "தேவ கேரளம் (சந்திர கலா நாடி)",
+    icon: BookOpen,
+    colorClass: "text-emerald-950 bg-emerald-50/90 border-emerald-300 hover:bg-emerald-100",
+    activeColorClass: "bg-gradient-to-r from-emerald-800 via-teal-900 to-emerald-950 text-white shadow-sm ring-2 ring-emerald-400/50",
+    subPills: [
+      { id: "all", label_en: "All Deva Keralam Rules", label_ta: "அனைத்து தேவ கேரள விதிகள்", icon: BookOpen },
+      { id: "deva_keralam_nadiamsas", label_en: "150 Nadiamsas", label_ta: "150 நாடியம்ச பலன்கள்", slug: "deva_keralam_nadiamsas", icon: Sparkles },
+      { id: "deva_keralam_raja_yogas", label_en: "Sovereign & Koorma Yogas", label_ta: "ராஜ & கூர்ம யோகங்கள்", slug: "deva_keralam_raja_yogas", icon: Crown },
+      { id: "deva_keralam_gochara_navamsa", label_en: "Navamsa Dispositor Transits", label_ta: "நவாம்ச கோசார விதிகள்", slug: "deva_keralam_gochara_navamsa", icon: Clock },
+      { id: "deva_keralam_karma_remedies", label_en: "Karma-Vipaka Remedies", label_ta: "கர்ம விபாக பரிகாரங்கள்", slug: "deva_keralam_karma_remedies", icon: Flame },
+      { id: "deva_keralam_bhava_phala", label_en: "Bhava Phala & Longevity", label_ta: "பாவ பலன்கள் & ஆயுள்", slug: "deva_keralam_bhava_phala", icon: Layers },
     ],
   },
   {
@@ -283,7 +300,7 @@ export function AstrologicalPredictionsSection({
   // Filter & Selection state
   // Primary Life Domain state
   const [activeDomain, setActiveDomain] = useState<
-    "all" | "bphs_domain" | "saravali_domain" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine"
+    "all" | "bphs_domain" | "saravali_domain" | "deva_keralam_domain" | "marriage_domain" | "career_wealth_domain" | "personality_stars_domain" | "life_events_domain" | "advanced_engine"
   >("all");
 
   // Domain sub-pill filter
@@ -507,6 +524,7 @@ export function AstrologicalPredictionsSection({
       events: matched.filter((r) => eventsSlugs.has(r.category_slug) || eventsSlugs.has(r.subcategory || "")).length,
       bphs: matched.filter((r) => r.category_slug?.startsWith("bphs_") || r.rule_id?.startsWith("RULE-BPHS") || r.source_reference?.toLowerCase().includes("parashara")).length,
       saravali: matched.filter((r) => r.category_slug === "saravali_classics" || r.rule_id?.startsWith("RULE-SARAVALI") || r.source_reference?.toLowerCase().includes("saravali")).length,
+      deva_keralam: matched.filter((r) => r.category_slug === "deva_keralam_classics" || r.rule_id?.startsWith("RULE-DK") || r.source_reference?.toLowerCase().includes("deva keralam")).length,
     };
   }, [evaluationResults]);
 
@@ -577,6 +595,12 @@ export function AstrologicalPredictionsSection({
         list = list.filter((r) => r.subcategory === activeSubFilter || r.category_slug === activeSubFilter);
       } else {
         list = list.filter((r) => r.category_slug === "saravali_classics" || r.rule_id?.startsWith("RULE-SARAVALI") || r.source_reference?.toLowerCase().includes("saravali"));
+      }
+    } else if (activeDomain === "deva_keralam_domain") {
+      if (activeSubFilter !== "all") {
+        list = list.filter((r) => r.subcategory === activeSubFilter || r.category_slug === activeSubFilter);
+      } else {
+        list = list.filter((r) => r.category_slug === "deva_keralam_classics" || r.rule_id?.startsWith("RULE-DK") || r.source_reference?.toLowerCase().includes("deva keralam"));
       }
     } else if (activeDomain === "advanced_engine") {
       if (activeCategoryFilter === "brighu_naadi") {
@@ -1047,6 +1071,8 @@ export function AstrologicalPredictionsSection({
                 ? domainCounts.events
                 : domain.id === "saravali_domain"
                 ? domainCounts.saravali
+                : domain.id === "deva_keralam_domain"
+                ? domainCounts.deva_keralam
                 : null;
 
             return (

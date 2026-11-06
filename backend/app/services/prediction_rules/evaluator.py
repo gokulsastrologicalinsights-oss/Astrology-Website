@@ -950,7 +950,7 @@ class AstrologicalRuleEvaluator:
 
         # 10. Lagna Sign Condition
         elif cond_type == "lagna_sign":
-            target_sign = node.get("sign")
+            target_sign = node.get("sign") if node.get("sign") is not None else node.get("signs")
             chart = node.get("chart", default_scope).lower()
             lagna_sign = ctx.d1_lagna_sign if chart == "d1" else ctx.d9_lagna_sign
 

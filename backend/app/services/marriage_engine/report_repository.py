@@ -231,7 +231,7 @@ def list_marriage_reports(
 
     if supabase:
         try:
-            query = supabase.table("saved_marriage_compatibility_reports").select("*")
+            query = supabase.table("saved_marriage_compatibility_reports").select("id, user_id, display_number, boy_name, girl_name, boy_birth_date, girl_birth_date, compatibility_score, porutham_count, is_favorable, created_at, updated_at")
             if not is_admin:
                 query = query.eq("user_id", clean_user_id)
 

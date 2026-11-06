@@ -41,6 +41,7 @@ from app.services.marriage_engine.models import (
     PLANETARY_NATURAL_FRIENDSHIP,
     TAMIL_VASYA_MAP,
     EKA_NAKSHATRA_AUSPICIOUS,
+    NAKSHATRA_RAJJU_DIRECTION,
 )
 
 # Canonical 9 Navatara Names
@@ -994,6 +995,22 @@ def calculate_rasi_core(
             desc_ta = (
                 "மீனம்-மேஷம் ராசிகளுக்கு அதிபதிகளான குரு மற்றும் செவ்வாய் பரஸ்பர மித்திரர்கள் என்பதால் துவித்வாதச தோஷம் நீங்கி மத்திம பொருத்தம் ஆகிறது."
             )
+        # Exception 3: Subha Dvidwadasa (Bride Rasi is Even and Groom is 12th)
+        elif distance == 12 and (bride_rasi_idx % 2 == 0):
+            status = PoruthamStatus.PASS
+            grade = PoruthamGrade.MADHYAMA
+            score = 0.5
+            is_favorable = True
+            warnings.append("Dvidwadasa (12th) mitigated because Bride sign is an Even (female) sign (Subha Dvidwadasa).")
+            desc_en = (
+                f"Dvidwadasa placement mitigated under classical Tamil authority (Thirumana Yoga Porutha Thiravukol): "
+                f"Bride's sign ({bride_sign_en}) is an Even sign, rendering the 12th relationship non-afflicting. "
+                f"Classified as Madhyama."
+            )
+            desc_ta = (
+                f"மணமகள் ராசி இரட்டைப்படை ராசியாக ({bride_sign_ta}) இருந்து மணமகன் ராசி 12-வதாக அமைவதால் "
+                f"துவித்வாதச தோஷமில்லை (சுப துவித்வாதசம் - சித்தயோகி சிவதாசன் ரவி விதி). மத்திம பொருத்தம் ஆகிறது."
+            )
         else:
             status = PoruthamStatus.FAIL
             grade = PoruthamGrade.ADHAMA
@@ -1009,7 +1026,7 @@ def calculate_rasi_core(
             )
     elif distance in (6, 8):
         # Shadashtaka (6/8)
-        # Exception: Friendly Shadashtaka (Aries-Scorpio ruled by Mars; Taurus-Libra ruled by Venus)
+        # Exception 1: Friendly Shadashtaka (Aries-Scorpio ruled by Mars; Taurus-Libra ruled by Venus)
         if {groom_rasi_idx, bride_rasi_idx} in ({1, 8}, {2, 7}):
             status = PoruthamStatus.PASS
             grade = PoruthamGrade.MADHYAMA
@@ -1023,6 +1040,26 @@ def calculate_rasi_core(
             desc_ta = (
                 f"இரு ராசிகளும் ({groom_sign_ta} மற்றும் {bride_sign_ta}) ஒரே அதிபதியால் ({g_lord}) ஆளப்படுவதால் "
                 f"(மைத்ர சஷ்டாஷ்டகம்) தோஷம் நீங்கி மத்திம பொருத்தம் ஆகிறது."
+            )
+        # Exception 2: Subha Shashtashtaka (Siddhayogi Sivadasan Ravi canonical rule)
+        # - Bride Rasi is Odd (Male) and Groom Rasi is 6th from Bride
+        # - Bride Rasi is Even (Female) and Groom Rasi is 8th from Bride
+        elif (distance == 6 and bride_rasi_idx % 2 == 1) or (distance == 8 and bride_rasi_idx % 2 == 0):
+            status = PoruthamStatus.PASS
+            grade = PoruthamGrade.MADHYAMA
+            score = 0.5
+            is_favorable = True
+            subha_type_en = "Bride Odd + Groom 6th" if distance == 6 else "Bride Even + Groom 8th"
+            subha_type_ta = "பெண் ராசி ஒற்றைப்படை + ஆண் ராசி 6-வது" if distance == 6 else "பெண் ராசி இரட்டைப்படை + ஆண் ராசி 8-வது"
+            warnings.append(f"Shadashtaka (6/8) recognized as Subha Shashtashtaka ({subha_type_en}) under Sivadasan Ravi authority.")
+            desc_en = (
+                f"Shadashtaka (6/8) is mitigated as Subha Shashtashtaka ({subha_type_en}). As expounded in "
+                f"'Thirumana Yoga Porutha Thiravukol', when the bride's sign polarity matches the axis requirement, "
+                f"the 6/8 affliction is neutralized, conferring matrimonial stability. Classified as Madhyama."
+            )
+            desc_ta = (
+                f"ராசிகள் 6/8-ல் அமைந்தாலும், {subha_type_ta} என்ற அமைப்பில் வருவதால் இது சுப சஷ்டாஷ்டகம் ஆகிறது "
+                f"(சித்தயோகி சிவதாசன் ரவி - திருமண யோக பொருத்த திறவுகோல்). தோஷம் நீங்கி மத்திம பொருத்தம் ஆகிறது."
             )
         else:
             status = PoruthamStatus.FAIL
@@ -1379,19 +1416,36 @@ def calculate_vasya_core(
             f"தம்பதியரிடையே அளவற்ற அன்பும், ஈர்ப்பும், அன்யோன்யமும் நிறைந்திருக்கும்."
         )
         vasya_type = "Mutual Vasya"
-    elif g_attracts_b or b_attracts_g:
+    elif b_attracts_g:
+        # Bride attracts Groom (Classical Tamil authority: Uthama)
+        status = PoruthamStatus.PASS
+        grade = PoruthamGrade.UTHAMA
+        score = 1.0
+        is_favorable = True
+        desc_en = (
+            f"Bride's Rasi ({bride_sign_en}) exerts magnetic attraction (Vasya) over Groom's Rasi ({groom_sign_en}). "
+            f"According to Siddhayogi Sivadasan Ravi's 'Thirumana Yoga Porutha Thiravukol', the groom being attracted "
+            f"to the bride is Uthama (Best), ensuring he remains devoted, loyal, and attached to his wife."
+        )
+        desc_ta = (
+            f"பெண் ராசிக்கு ({bride_sign_ta}) ஆண் ராசி ({groom_sign_ta}) வசியமாவதால் வசியப் பொருத்தம் உத்தமம் "
+            f"(சித்தயோகி சிவதாசன் ரவி விதி). கணவன் மனைவி சொல்லுக்கு இணங்கி, அவள் மீது மாறாத அன்பு கொண்டிருப்பான்."
+        )
+        vasya_type = "Bride Attracts Groom (Uthama)"
+    elif g_attracts_b:
+        # Groom attracts Bride (Madhyama)
         status = PoruthamStatus.PASS
         grade = PoruthamGrade.MADHYAMA
         score = 0.75
         is_favorable = True
         desc_en = (
-            f"One-way Vasya present between {groom_sign_en} and {bride_sign_en}. "
-            f"Natural attraction and marital devotion are active."
+            f"Groom's Rasi ({groom_sign_en}) exerts magnetic attraction over Bride's Rasi ({bride_sign_en}). "
+            f"Classified as Madhyama in traditional Tamil matching."
         )
         desc_ta = (
-            f"இருவருள் ஒருவருக்கு வசியம் உள்ளதால் ({groom_sign_ta} - {bride_sign_ta}) வசியப் பொருத்தம் மத்திமமாக அமைகிறது."
+            f"ஆண் ராசிக்குப் ({groom_sign_ta}) பெண் ராசி ({bride_sign_ta}) வசியமாவதால் வசியப் பொருத்தம் மத்திமமாக அமைகிறது."
         )
-        vasya_type = "One-Way Vasya"
+        vasya_type = "Groom Attracts Bride (Madhyama)"
     else:
         status = PoruthamStatus.FAIL
         grade = PoruthamGrade.ADHAMA
@@ -1496,22 +1550,50 @@ def calculate_rajju_core(
 
     warnings: List[str] = []
 
+    groom_dir = NAKSHATRA_RAJJU_DIRECTION.get(groom_star_idx, "Central")
+    bride_dir = NAKSHATRA_RAJJU_DIRECTION.get(bride_star_idx, "Central")
+    is_arohana_avarohana_mitigated = (
+        groom_rajju != RajjuType.SHIRO
+        and {groom_dir, bride_dir} == {"Arohana", "Avarohana"}
+    )
+
     if groom_rajju != bride_rajju:
         status = PoruthamStatus.PASS
         grade = PoruthamGrade.UTHAMA
         score = 1.0
         is_favorable = True
         desc_en = (
-            f"Different Rajjus: Groom belongs to {groom_rajju.value} Rajju and Bride belongs to {bride_rajju.value} Rajju. "
+            f"Different Rajjus: Groom belongs to {groom_rajju.value} Rajju ({groom_dir}) and Bride belongs to {bride_rajju.value} Rajju ({bride_dir}). "
             f"The vital life cords are independent, protecting Mangalya Bhagya and conferring long married life. "
             f"Rajju Porutham is fully satisfied."
         )
         desc_ta = (
-            f"இருவரும் வெவ்வேறு ரஜ்ஜுவில் (மணமகன்: {groom_rajju_ta}, மணமகள்: {bride_rajju_ta}) "
+            f"இருவரும் வெவ்வேறு ரஜ்ஜுவில் (மணமகன்: {groom_rajju_ta} [{groom_dir}], மணமகள்: {bride_rajju_ta} [{bride_dir}]) "
             f"அமைந்துள்ளதால் ரஜ்ஜுப் பொருத்தம் உத்தமம். மாங்கல்ய பலமும், தம்பதியருக்கு தீர்க்காயுளும் உண்டாகும்."
         )
+    elif is_arohana_avarohana_mitigated:
+        # Same Rajju BUT Arohana (Ascending) vs Avarohana (Descending) polarity exception
+        # Classical Source: Siddhayogi Sivadasan Ravi - Thirumana Yoga Porutha Thiravukol
+        status = PoruthamStatus.PASS
+        grade = PoruthamGrade.MADHYAMA
+        score = 0.5
+        is_favorable = True
+        warnings.append(
+            f"Same Rajju ({groom_rajju.value}) mitigated: Groom is {groom_dir} and Bride is {bride_dir}. "
+            f"Arohana-Avarohana polarity balances the vital cord conflict under classical Tamil authority."
+        )
+        desc_en = (
+            f"Same Rajju detected ({groom_rajju.value}), but mitigated by Arohana-Avarohana directional polarity. "
+            f"Groom's star is {groom_dir} and Bride's star is {bride_dir}. As documented in Siddhayogi Sivadasan Ravi's "
+            f"'Thirumana Yoga Porutha Thiravukol', opposite vital-cord motion harmonizes the energy and permits marriage."
+        )
+        desc_ta = (
+            f"இருவரும் ஒரே ரஜ்ஜுவில் ({groom_rajju_ta}) அமைந்திருந்தாலும், ஒருவர் ஏறுவரிசையிலும் ({groom_dir}) "
+            f"மற்றொருவர் இறங்குவரிசையிலும் ({bride_dir}) உள்ளதால் ரஜ்ஜு தோஷம் சமன் செய்யப்படுகிறது "
+            f"(சித்தயோகி சிவதாசன் ரவி - திருமண யோக பொருத்த திறவுகோல் விதிவிலக்கு). திருமணத்திற்கு சாஸ்திர சம்மதம் உண்டு."
+        )
     else:
-        # Same Rajju -> Rajju Dosha (Rajju Thatu)
+        # Same Rajju with same direction or Shiro Rajju -> Unmitigated Rajju Dosha (Rajju Thatu)
         status = PoruthamStatus.FAIL
         grade = PoruthamGrade.VARJYA
         score = 0.0

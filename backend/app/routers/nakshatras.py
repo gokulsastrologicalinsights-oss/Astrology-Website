@@ -23,6 +23,7 @@ from app.services.nakshatra_engine import (
     analyze_saved_chart_nakshatras,
 )
 from app.services.auth_service import get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.ephemeris import calculate_full_horoscope
 
 router = APIRouter(prefix="/api/v1/nakshatras", tags=["Nakshatra Shastra"])
@@ -147,9 +148,8 @@ def analyze_chart_nakshatras_endpoint(req: ChartAnalysisRequest) -> Dict[str, An
         supabase = get_supabase_client()
         if supabase:
             try:
-                res = supabase.table("saved_horoscopes").select("*").eq("id", req.saved_horoscope_id.strip()).execute()
-                if res.data and len(res.data) > 0:
-                    row = res.data[0]
+                row = get_cached_saved_horoscope(req.saved_horoscope_id.strip(), user_id="", is_admin=True, include_calculation_result=True)
+                if row:
                     b_date = b_date or row.get("birth_date")
                     calc_res = row.get("calculation_result") or {}
                     # Check if already cached
@@ -199,10 +199,9 @@ def get_saved_horoscope_nakshatra_analysis(horoscope_id: str) -> Dict[str, Any]:
 
     clean_id = horoscope_id.strip()
     try:
-        res = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-        if not res.data or len(res.data) == 0:
+        row = get_cached_saved_horoscope(clean_id, user_id="", is_admin=True, include_calculation_result=True)
+        if not row:
             raise HTTPException(status_code=404, detail="Saved horoscope not found.")
-        row = res.data[0]
         calc_res = row.get("calculation_result") or {}
 
         # If already stored, return it

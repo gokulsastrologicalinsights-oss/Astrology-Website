@@ -50,6 +50,7 @@ from app.services.auth_service import (
     get_supabase_client,
     security,
 )
+from app.services.horoscope_cache import get_cached_saved_horoscope
 
 router = APIRouter(prefix="/api/v1/rules", tags=["Rule Engine"])
 
@@ -132,14 +133,12 @@ async def evaluate_rules(
             )
 
         clean_id = request.saved_horoscope_id.strip()
-        res = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-        if not res.data or len(res.data) == 0:
+        row = get_cached_saved_horoscope(clean_id, user_id="", is_admin=True, include_calculation_result=True)
+        if not row:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Saved horoscope '{clean_id}' not found.",
             )
-
-        row = res.data[0]
         # Authorization check: verify token if present, or enforce user matches
         if credentials and credentials.credentials:
             current_user = await get_current_user(credentials)
@@ -341,15 +340,13 @@ def test_rule_against_horoscope(
 
     horoscope_data = request.horoscope
     if request.saved_horoscope_id:
-        supabase = get_supabase_client()
-        if supabase:
-            res = supabase.table("saved_horoscopes").select("*").eq("id", request.saved_horoscope_id.strip()).execute()
-            if res.data and len(res.data) > 0:
-                calc_res = res.data[0].get("calculation_result") or {}
-                if "horoscope" in calc_res:
-                    horoscope_data = HoroscopeResponse(**calc_res["horoscope"])
-                else:
-                    horoscope_data = HoroscopeResponse(**calc_res)
+        row = get_cached_saved_horoscope(request.saved_horoscope_id.strip(), user_id="", is_admin=True, include_calculation_result=True)
+        if row:
+            calc_res = row.get("calculation_result") or {}
+            if "horoscope" in calc_res:
+                horoscope_data = HoroscopeResponse(**calc_res["horoscope"])
+            else:
+                horoscope_data = HoroscopeResponse(**calc_res)
 
     if not horoscope_data:
         raise HTTPException(

@@ -355,7 +355,11 @@ GAI-Astrology-Website/
 │       ├── xalen-vedic/                # Vedic nakshatra, ayanamsa, dasa primitives
 │       └── xalen-python/               # PyO3 Python bindings (compiled to xalen module)
 │
-├── docs/                               # Architecture, Migration & Audit Documentation
+├── docs/                               # Architecture, Shastric Knowledge Bases & Audit Documentation
+│   ├── KP_ASTROLOGY_BEGINNERS_ENCYCLOPEDIA_SUBRAMANIAM_VOL1_VOL2.md # Sothidamamani K. Subramaniam KP Encyclopedia
+│   ├── BNN_ASTROLOGY_NOTES_PANKAJJ_K_DUAA.md # Bhrigu Nandi Nadi Compendium
+│   ├── DEVA_KERALAM_CHANDRA_KALA_NADI_BOOK_1_TAMIL_NOTES.md # Deva Keralam Nadi Compendiums
+│   ├── MEDICAL_ASTROLOGY_CHART_MATCHING_AND_REMEDIES.md # Medical Astrology & Remedies
 │   ├── marriage-compatibility/         # Marriage engine specifications and rule register
 │   └── migrations/                     # Consolidated staging database SQL packages
 └── scripts/                            # Standalone administrative and audit scripts

@@ -30,6 +30,7 @@ import {
 import { PersonalizedRemedySection } from "@/components/remedies/PersonalizedRemedySection";
 import { PilgrimageCircuitView } from "@/components/remedies/PilgrimageCircuitView";
 import { SannuRitualsExplorer } from "@/components/remedies/SannuRitualsExplorer";
+import { IslamicRuqyahGuidance } from "@/components/remedies/IslamicRuqyahGuidance";
 import {
   Flame,
   Compass,
@@ -49,6 +50,7 @@ import {
   ShieldCheck,
   ChevronRight,
   Info,
+  Moon,
 } from "lucide-react";
 
 const LAGNA_OPTIONS = [
@@ -68,6 +70,7 @@ const LAGNA_OPTIONS = [
 
 const GRAHA_OPTIONS = [
   { value: "all", label_en: "All Planets", label_ta: "அனைத்து கிரகங்கள்" },
+  { value: "universal", label_en: "Universal / Spiritual Cures", label_ta: "பொதுவான / ஆன்மீக நிவாரணங்கள்" },
   { value: "sun", label_en: "Sun (Surya)", label_ta: "சூரியன்" },
   { value: "moon", label_en: "Moon (Chandra)", label_ta: "சந்திரன்" },
   { value: "mars", label_en: "Mars (Chevvai)", label_ta: "செவ்வாய்" },
@@ -88,9 +91,10 @@ function RemediesHubContent() {
   // Active tab state
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<
-    "analysis" | "taxonomy" | "catalog" | "temples" | "pilgrimage" | "eligibility" | "sources" | "rituals"
+    "analysis" | "taxonomy" | "catalog" | "temples" | "pilgrimage" | "eligibility" | "sources" | "rituals" | "ruqyah"
   >(() => {
     if (tabParam === "rituals") return "rituals";
+    if (tabParam === "ruqyah") return "ruqyah";
     return horoscopeId ? "analysis" : "taxonomy";
   });
 
@@ -448,6 +452,26 @@ function RemediesHubContent() {
               Active
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("ruqyah")}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === "ruqyah"
+              ? "bg-white text-emerald-950 shadow-2xs border border-emerald-300 ring-2 ring-emerald-100"
+              : "text-[#52667E] hover:text-[#102A4C]"
+          }`}
+        >
+          <Moon className="w-4 h-4 text-emerald-600" />
+          <span>
+            {language === "ta"
+              ? "ஷரீஆ ருக்யா & சட்ட விளக்கம்"
+              : "Islamic Ruqyah & Rulings"}
+          </span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-900 font-bold">
+            Ibn Baz
+          </span>
         </button>
 
         <button
@@ -926,6 +950,8 @@ function RemediesHubContent() {
                 <option value="charity">Charity / Daan</option>
                 <option value="fasting">Fasting / Vratam</option>
                 <option value="temple">Temple Visit</option>
+                <option value="ruqyah">{language === "ta" ? "ஷரீஆ ருக்யா (இஸ்லாமிய நிவாரணம்)" : "Islamic Ruqyah Shariyyah"}</option>
+                <option value="ritual">{language === "ta" ? "ஹோமம் / சாந்தி சடங்கு" : "Homam / Ritual"}</option>
               </select>
             </div>
 
@@ -1411,6 +1437,12 @@ function RemediesHubContent() {
       {/* ========================================================================= */}
       {/* TAB: Sannu Ahmed Vedic Rituals & Remedies Explorer */}
       {/* ========================================================================= */}
+      {!loading && activeTab === "ruqyah" && (
+        <div className="w-full space-y-6">
+          <IslamicRuqyahGuidance initialOpen={true} />
+        </div>
+      )}
+
       {!loading && activeTab === "rituals" && (
         <SannuRitualsExplorer
           initialDiagnostic={analysisResult?.sannu_rituals_diagnostic || undefined}

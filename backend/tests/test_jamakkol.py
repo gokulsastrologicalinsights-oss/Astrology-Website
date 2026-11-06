@@ -212,6 +212,13 @@ def test_jamakkol_specialized_domain_analyses():
     assert "querent_under_evil_spirits" in es
     assert "perpetrator_profile" in es
     assert "haunted_residence_mandi_in_4th" in es
+    assert "islamic_legal_guidance_and_ruqyah" in es
+    islamic = es["islamic_legal_guidance_and_ruqyah"]
+    assert "sunnah_ruqyah_cure" in islamic
+    assert "authentic_hadith_cautions" in islamic
+    assert len(islamic["authentic_hadith_cautions"]) >= 3
+    assert "daily_protective_fortress" in islamic
+    assert "disenchantment_protocol" in islamic
 
     # Verify natural vs unnatural death analysis
     assert "natural_unnatural_death_analysis" in rules

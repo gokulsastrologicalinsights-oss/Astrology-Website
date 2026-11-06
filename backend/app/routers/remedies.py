@@ -54,6 +54,7 @@ from app.services.remedy_engine.rudraksha_advisory import RudrakshaAdvisoryEngin
 from app.services.remedy_engine.sannu_rituals_engine import SannuRitualsEngine
 from datetime import date
 from app.services.auth_service import get_current_user, get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.ephemeris import calculate_full_horoscope
 from app.services.dasa_service import calculate_dasa
 from app.schemas.common import BirthInput
@@ -220,18 +221,12 @@ async def get_saved_horoscope_remedy_analysis(
     """Consumes saved horoscope calculation output and performs rule-based diagnostic analysis without recalculating positions."""
     clean_id = _validate_uuid(horoscope_id)
     is_admin = current_user.get("role") == "admin"
-    supabase = get_supabase_client()
-
-    horoscope_row: Optional[Dict[str, Any]] = None
-    if supabase:
-        try:
-            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-            if resp.data and len(resp.data) > 0:
-                row = resp.data[0]
-                if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                    horoscope_row = row
-        except Exception as err:
-            logger.warning(f"Database error fetching saved horoscope {clean_id}: {err}")
+    horoscope_row = get_cached_saved_horoscope(
+        clean_id=clean_id,
+        user_id=current_user.get("id", ""),
+        is_admin=is_admin,
+        include_calculation_result=True,
+    )
 
     if not horoscope_row:
         raise HTTPException(
@@ -500,15 +495,12 @@ async def get_personalized_pilgrimage_circuit(
     # Case 2: Saved horoscope ID
     elif request.horoscope_id:
         clean_id = _validate_uuid(request.horoscope_id)
-        supabase = get_supabase_client()
-        row = None
-        if supabase:
-            try:
-                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                if resp.data:
-                    row = resp.data[0]
-            except Exception as err:
-                logger.warning(f"Error fetching horoscope {clean_id}: {err}")
+        row = get_cached_saved_horoscope(
+            clean_id=clean_id,
+            user_id="",
+            is_admin=True,
+            include_calculation_result=True,
+        )
         if row:
             calc_res = row.get("calculation_result") or {}
             chart_data = calc_res.get("horoscope")
@@ -605,15 +597,12 @@ async def get_gemstone_advisory(
 
     if not lagna_sign and request.horoscope_id:
         clean_id = _validate_uuid(request.horoscope_id)
-        supabase = get_supabase_client()
-        row = None
-        if supabase:
-            try:
-                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                if resp.data:
-                    row = resp.data[0]
-            except Exception as err:
-                logger.warning(f"Error fetching horoscope {clean_id}: {err}")
+        row = get_cached_saved_horoscope(
+            clean_id=clean_id,
+            user_id="",
+            is_admin=True,
+            include_calculation_result=True,
+        )
         if row:
             calc_res = row.get("calculation_result") or {}
             horo = calc_res.get("horoscope") or {}
@@ -837,16 +826,15 @@ async def analyze_chart_karma_and_rituals(
     # 1. If horoscope_id provided, fetch saved calculation
     if request.horoscope_id:
         clean_id = _validate_uuid(request.horoscope_id)
-        supabase = get_supabase_client()
-        if supabase:
-            try:
-                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                if resp.data and len(resp.data) > 0:
-                    row = resp.data[0]
-                    calc_res = row.get("calculation_result") or {}
-                    chart_data = calc_res.get("horoscope") or {}
-            except Exception as err:
-                logger.warning(f"Error fetching horoscope {clean_id}: {err}")
+        row = get_cached_saved_horoscope(
+            clean_id=clean_id,
+            user_id="",
+            is_admin=True,
+            include_calculation_result=True,
+        )
+        if row:
+            calc_res = row.get("calculation_result") or {}
+            chart_data = calc_res.get("horoscope") or {}
 
     # 2. Or if chart_snapshot provided
     if not chart_data and request.chart_snapshot:

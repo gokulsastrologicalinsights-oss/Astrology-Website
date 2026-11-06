@@ -159,6 +159,77 @@ class SpouseRemedies(BaseModel):
     practical_advice_ta: str
 
 
+class SivadasanRaviSpouseInsights(BaseModel):
+    """Spouse & marriage predictions from Siddhayogi Sivadasan Ravi's 'Thirumana Yoga Porutha Thiravukol'."""
+    is_single_child: bool
+    single_child_status_en: str
+    single_child_status_ta: str
+    single_child_analysis_en: str
+    single_child_analysis_ta: str
+
+    family_size: str
+    family_size_ta: str
+    family_size_analysis_en: str
+    family_size_analysis_ta: str
+
+    street_orientation_en: str
+    street_orientation_ta: str
+    street_orientation_analysis_en: str
+    street_orientation_analysis_ta: str
+
+    estimated_siblings_count: int
+    siblings_analysis_en: str
+    siblings_analysis_ta: str
+
+    spouse_direction_en: str
+    spouse_direction_ta: str
+    spouse_direction_analysis_en: str
+    spouse_direction_analysis_ta: str
+
+    candidate_nakshatras_en: List[str]
+    candidate_nakshatras_ta: List[str]
+    candidate_nakshatras_analysis_en: str
+    candidate_nakshatras_analysis_ta: str
+
+    love_marriage_probability: str
+    love_marriage_probability_ta: str
+    love_marriage_analysis_en: str
+    love_marriage_analysis_ta: str
+
+    dual_marriage_risk: str
+    dual_marriage_risk_ta: str
+    dual_marriage_analysis_en: str
+    dual_marriage_analysis_ta: str
+
+    marriage_obstruction_verdict: str
+    marriage_obstruction_verdict_ta: str
+    marriage_obstruction_score: int
+    marriage_obstruction_analysis_en: str
+    marriage_obstruction_analysis_ta: str
+
+    sacred_remedies_ta: List[str] = Field(default_factory=list)
+
+
+class KpReader4SpouseInsights(BaseModel):
+    """Authentic KP Reader 4 (Prof. K.S. Krishnamurti) life partner insights."""
+    seventh_csl_planet: str = Field(..., description="Sub-Lord of 7th Cusp (Primary Arbiter of Spouse)")
+    seventh_csl_sign: str = Field(..., description="Zodiac sign occupied by 7th Cusp Sub-Lord")
+    stature: str = Field(..., description="Stature and physical frame per KP Reader 4 Chapter 29")
+    complexion_and_face: str = Field(..., description="Facial structure, hair, and complexion")
+    temperament: str = Field(..., description="Moral, emotional, and psychological temperament")
+    vocational_and_lifestyle_traits: str = Field(..., description="Vocational habits and lifestyle")
+    cautionary_notes: Optional[str] = Field(None, description="Special cautions from Prof. Krishnamurti")
+    career_spouse_promised: bool = Field(..., description="Whether native marries a career woman / working partner per 4th CSL")
+    career_spouse_vocation: str = Field(..., description="Vocation category of working spouse")
+    career_spouse_explanation: str = Field(..., description="Explanation based on 4th CSL signifying 4, 8, 12")
+    punarphoo_detected: bool = Field(..., description="Whether Saturn-Moon impediment exists")
+    punarphoo_severity: str = Field(..., description="Punarphoo severity level")
+    punarphoo_advice: str = Field(..., description="Actionable counsel for wedding negotiation")
+    mars_dosha_verdict: str = Field(..., description="Mars Dosha shastric verdict with pariharas")
+    mars_dosha_kp_ruling: str = Field(..., description="KP Cuspal Sub-Lord override ruling")
+    marriage_promise_verdict: str = Field(..., description="Marriage promise timeline per 7th CSL")
+
+
 class SpousePredictionRequest(BaseModel):
     """Request payload for life partner and spouse prediction."""
     birth: BirthInput
@@ -183,6 +254,8 @@ class SpousePredictionResponse(BaseModel):
     navamsa_d9: NavamsaD9SpouseProfile
     trait_scores: SpouseTraitScores
     remedies: SpouseRemedies
+    sivadasan_ravi_insights: Optional[SivadasanRaviSpouseInsights] = None
+    kp_reader4_insights: Optional[KpReader4SpouseInsights] = None
 
     summary_headline_en: str
     summary_headline_ta: str

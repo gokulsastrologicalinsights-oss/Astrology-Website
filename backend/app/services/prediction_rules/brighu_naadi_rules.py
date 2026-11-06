@@ -1061,4 +1061,252 @@ BRIGHU_NAADI_PREDICTION_RULES: List[AstrologicalRuleDefinition] = [
         limitations_ta="முன்னோர் வழிபாட்டு நாட்களான அமாவாசை மற்றும் திதி நாட்களில் தவறாமல் தர்ப்பணம் செய்ய வேண்டும்.",
         severity=SeverityLevel.MIXED,
     ),
+    # =======================================================================
+    # PANKAJJ K DUAA BNN COMPENDIUM RULES
+    # =======================================================================
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-CANCER-01",
+        version=1,
+        name_en="BNN Saturn-Rahu Conjunction: Cellular Mutation & Cancer / Tumor Susceptibility",
+        name_ta="BNN சனி - ராகு சேர்க்கை: பிரேத ஆத்மா யோகம் & புற்றுநோய் / கட்டி பாதிப்பு எச்சரிக்கை",
+        category_slug="health_vitality",
+        subcategory="chronic_diseases",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Saturn", "Rahu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Diagnosis: Saturn and Rahu uniting in any chart produces Pret Atma Yoga and "
+            "vulnerability to the evil eye. In medical diagnosis, their conjunction governs abnormal cellular "
+            "mutations, cysts, or malignant tumor/cancer vulnerabilities. In career, breakthroughs and immense success "
+            "accelerate after 30 years of age. Remedy: Donate bidis to sweepers, offer mustard oil on Shivling, "
+            "and recite the Mahamrityunjaya Mantra."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN மருத்துவ விதி: சனியும் ராகுவும் இணைவது பிரேத ஆத்மா யோகத்தையும் கண் திருஷ்டியையும் தரும். "
+            "மருத்துவ ரீதியாக இது செல்களின் பிறழ்வு, கட்டிகள் மற்றும் புற்றுநோய் அபாயத்தை உணர்த்துகிறது. "
+            "தொழிலில் 30 வயதுக்கு பிறகே பெரும் வளர்ச்சியும் தன லாபமும் கிட்டும். பரிகாரம்: தூய்மைப் பணியாளர்களுக்கு பீடி தானம், "
+            "சிவபெருமானுக்கு நல்லெண்ணெய் தீபம் மற்றும் மகா மிருத்யுஞ்சய மந்திர ஜெபம்."
+        ),
+        astrological_principle_en="Saturn (decay/darkness) conjoined with Rahu (uncontrollable growth/poison) triggers anomalous cellular pathology.",
+        astrological_principle_ta="சனி (தேய்வு/மறைவு) மற்றும் ராகு (விஷம்/அபரிமித பெருக்கம்) சேர்க்கை செல்களில் தீவிர கட்டிகளை உருவாக்குகிறது.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, Medical Astrology & Saturn-Rahu Combinations",
+        limitations_en="Mitigated when aspected by Jupiter or when native engages in aviation, photography, or tech.",
+        limitations_ta="குருவின் சுபப் பார்வை பெறும்போது அல்லது விமானம், புகைப்படத் துறையில் பணியாற்றும் போது பாதிப்பு குறையும்.",
+        severity=SeverityLevel.UNFAVORABLE,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-BEROZGARI-01",
+        version=1,
+        name_en="BNN Saturn-Ketu Conjunction: Berozgari (Unemployment) Yoga & Post-30 Awakening",
+        name_ta="BNN சனி - கேது சேர்க்கை: வேலையின்மை யோகம் & 30 வயதுக்கு பின் கேது வழி தொழில் யோகம்",
+        category_slug="career_profession",
+        subcategory="job_prospects",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Saturn", "Ketu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Principle: Saturn conjoined with Ketu is classically termed 'Berozgari Yog' (Unemployment Yoga). "
+            "Conventional corporate jobs will face abrupt terminations or discontent. The native must strictly adopt professions "
+            "governed by Ketu: Astrology, Law/Advocacy, Software Engineering, Medicine/Surgery, Pharmaceuticals, or Spiritual Ashrams. "
+            "Financial earnings surge only after 30 years of age. Remedy: Donate yellow bananas, feed biscuits to stray dogs, and avoid giving loans."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN விதி: சனியும் கேதுவும் இணைவது 'வேலையின்மை யோகம்' (Berozgari) எனப்படும். "
+            "வழக்கமான தனியார் பணிகளில் தடைகளும் ஏமாற்றங்களும் வரலாம். ஜாதகர் கண்டிப்பாக கேதுவின் துறைகளான ஜோதிடம், சட்டம், சாப்ட்வேர், "
+            "மருத்துவம், மருந்தகம் அல்லது ஆன்மீகப் பணிகளை மட்டுமே செய்ய வேண்டும்; 30 வயதுக்கு பிறகே வருமானம் உயரும். "
+            "பரிகாரம்: தெரு நாய்களுக்கு பிஸ்கட் கொடுத்தல், வாழைப்பழம் தானம் மற்றும் கடன் கொடுப்பதை தவிர்த்தல்."
+        ),
+        astrological_principle_en="Saturn (Karma) terminated by Ketu (Moksha/Scissors) requires spiritualization of livelihood to generate wealth.",
+        astrological_principle_ta="சனி (தொழில்) கேதுவால் (துண்டித்தல்) தடைபடுவதால் ஆன்மீகம், சட்டம் அல்லது சாப்ட்வேர் வழி தொழில் மட்டுமே நிலைக்கும்.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, Saturn-Ketu & Daridra Yog",
+        limitations_en="Native flourishes rapidly if pursuing software development, occult astrology, or surgery.",
+        limitations_ta="சாப்ட்வேர், ஜோதிடம் அல்லது அறுவை சிகிச்சைத் துறையை தேர்வு செய்தால் பெரும் வெற்றியடைவர்.",
+        severity=SeverityLevel.MIXED,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-LOAN-MARS-KETU",
+        version=1,
+        name_en="BNN Mars-Ketu Conjunction: Strict Loan Prohibition & Surgery Precaution",
+        name_ta="BNN செவ்வாய் - கேது சேர்க்கை: கடன் தடை எச்சரிக்கை & அறுவை சிகிச்சை முன்னெச்சரிக்கை",
+        category_slug="finances_wealth",
+        subcategory="wealth_acquisition",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Mars", "Ketu"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Golden Rule: Whenever Mars and Ketu are interconnected, the native is strictly advised "
+            "NEVER to take or extend any financial loan in life, as borrowed debts lead to catastrophic entrapment. "
+            "Mars represents blood and muscles, while Ketu is the surgical blade; native is prone to blood infections, "
+            "surgical incisions, or dental root canals. Spouse or younger brother thrives in law, medicine, or chemistry. "
+            "Remedy: Keep a solid square silver piece in pocket and recite Sundar Kand."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN பொன்விதி: செவ்வாயும் கேதுவும் இணையும் ஜாதகர்கள் ஆயுளில் எக்காலத்திலும் கடன் வாங்கவோ கொடுக்கவோ கூடாது; "
+            "அவ்வாறு செய்தால் பெரும் நிதிச் சிக்கலில் சிக்குவர். செவ்வாய் (ரத்தம்) மற்றும் கேது (அறுவை கத்தி) இணைவதால் ரத்தத் தொற்று, "
+            "அறுவை சிகிச்சை அல்லது பல் சிகிச்சை ஏற்படலாம். கணவன் அல்லது தம்பி சட்டம், மருத்துவம் அல்லது வேதியியல் துறையில் பிரகாசிப்பார். "
+            "பரிகாரம்: வெள்ளிக் கட்டியை பாக்கெட்டில் வைத்திருத்தல் மற்றும் சுந்தர காண்ட பாராயணம்."
+        ),
+        astrological_principle_en="Mars (Karza/Debt/Agni) severed by Ketu (Scissors/Kenchi) creates irrecoverable financial lacerations.",
+        astrological_principle_ta="செவ்வாய் (கடன்/ரத்தம்) கேதுவுடன் இணையும் போது கடன் சுமை விடுபட முடியாத பெரும் இழப்பைத் தரும்.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, Mars-Ketu Combinations & Debt Rules",
+        limitations_en="If Mars is exalted in Capricorn, surgical talents transform into exceptional surgical surgeon career.",
+        limitations_ta="செவ்வாய் மகரத்தில் உச்சமடைந்தால் ஜாதகர் கைதேர்ந்த அறுவை சிகிச்சை நிபுணராக திகழ்வார்.",
+        severity=SeverityLevel.UNFAVORABLE,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-SISTERS-DISCORD",
+        version=1,
+        name_en="BNN Moon-Venus Conjunction: Sisterly Discord & Real Estate Loan Burden",
+        name_ta="BNN சந்திரன் - சுக்கிரன் சேர்க்கை: சகோதரிகளுக்குள் ஒற்றுமையின்மை & வீட்டுக் கடன் சுமை",
+        category_slug="family_relations",
+        subcategory="family_harmony",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Moon", "Venus"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Specific Rule: Moon conjoined with Venus signifies discord among sisters (Moon + Venus = sisters "
+            "cannot harmonize and frequently quarrel). The native often takes a substantial loan for house or property purchase. "
+            "If Moon and Venus are conjoined within 3 degrees difference, beware of social defamation or misunderstandings caused by women. "
+            "Remedy: Feed grass to cows daily, respect mother, and perform Shiva Abhishekam with curd."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN சிறப்பு விதி: சந்திரனும் சுக்கிரனும் இணைந்தால் சகோதரிகளுக்குள் (அக்கா-தங்கை) கடுமையான கருத்து வேறுபாடுகள் ஏற்படும். "
+            "வீடு அல்லது நிலம் வாங்குவதற்காக பெரும் கடன் சுமையை சுமக்க நேரிடும். இந்த இரு கிரகங்களும் 3 பாகைக்குள் இணைந்தால் பெண்கள் வழி அவப்பெயர் எச்சரிக்கை. "
+            "பரிகாரம்: பசுவுக்கு புல் கொடுத்தல் மற்றும் சிவபெருமானுக்கு தயிர் அபிஷேகம் செய்தல்."
+        ),
+        astrological_principle_en="Moon (Mother/Mind/Fluids) and Venus (Spouse/Luxury/Beauty) create emotional friction and financial commitments for shelter.",
+        astrological_principle_ta="சந்திரனும் சுக்கிரனும் இணையும் போது குடும்ப பெண்களிடையே ஈகோ மோதல்களும் வீட்டின் மீது கடனும் உண்டாகின்றன.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, Moon-Venus Combinations & Siblings Rules",
+        limitations_en="Mitigated when Jupiter casts its benefic trinal aspect upon Venus and Moon.",
+        limitations_ta="குருவின் பார்வை இருப்பின் சகோதரிகளுக்கு இடையேயான மனக்கசப்புகள் குறையும்.",
+        severity=SeverityLevel.MIXED,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-BROTHERS-DISCORD",
+        version=1,
+        name_en="BNN Mars-Saturn Conjunction: Fraternal Discord & Accidents / Blood Pressure Precaution",
+        name_ta="BNN செவ்வாய் - சனி சேர்க்கை: சகோதர ஒற்றுமையின்மை & விபத்து / ரத்த அழுத்த எச்சரிக்கை",
+        category_slug="family_relations",
+        subcategory="family_harmony",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Mars", "Saturn"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Fraternal Maxim: Mars conjoined with Saturn causes sharp discord among brothers (brothers will not get along). "
+            "Physical health-wise, the native is vulnerable to bodily accidents, fluctuating blood pressure, and affected hemoglobin levels. "
+            "Professionally, this combination is highly auspicious for civil or mechanical engineering, police, military, and real estate brokerage. "
+            "Remedy: Offer savory food distributions, walk barefoot on green grass, and feed crows."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN விதி: செவ்வாயும் சனியும் இணைந்தால் சகோதரர்களுக்குள் (அண்ணன்-தம்பி) ஒற்றுமை குறையும். "
+            "ஆரோக்கியத்தில் விபத்துக்கள், ரத்த அழுத்த மாறுபாடுகள் மற்றும் ஹீமோகுளோபின் குறைவு ஏற்படலாம். "
+            "தொழில் ரீதியாக இது சிவில்/மெக்கானிக்கல் என்ஜினியரிங், காவல்துறை மற்றும் ரியல் எஸ்டேட் தொழிலுக்கு உன்னதமானது. "
+            "பரிகாரம்: காரமான சிற்றுண்டிகள் தானம் செய்தல், வெறும் காலில் புல் தரை நடைபயிற்சி மற்றும் காகத்திற்கு உணவிடல்."
+        ),
+        astrological_principle_en="Mars (Agni/Bhratru) and Saturn (Vata/Shrama) produce fraternal tension while channeling dynamic technical energy.",
+        astrological_principle_ta="செவ்வாயும் சனியும் எதிரெதிர் தத்துவங்கள் என்பதால் சகோதர மோதலையும் கடின உழைப்பு சார்ந்த எந்திரவியல் வெற்றியையும் தருகின்றன.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, Mars-Saturn Combinations & Siblings Rules",
+        limitations_en="Harmonious if brothers maintain independent residences and separate business affairs.",
+        limitations_ta="சகோதரர்கள் தனித்தனியாக தனிக்குடித்தனம் இருக்கும் போது பாதிப்புகள் நீங்கும்.",
+        severity=SeverityLevel.MIXED,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-PROP-COLONIZER",
+        version=1,
+        name_en="BNN Venus-Mars Conjunction: Real Estate Colonizer Yoga & Maximal Property Holdings",
+        name_ta="BNN சுக்கிரன் - செவ்வாய் சேர்க்கை: ரியல் எஸ்டேட் காலனைசர் யோகம் & அதிக நிலபுலன்கள்",
+        category_slug="property_assets",
+        subcategory="real_estate",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_conjunction",
+            "planets": ["Venus", "Mars"],
+            "same_sign_only": True,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Real Estate Axiom: Venus conjoined with Mars produces the 'Colonizer Yoga'. The native will acquire "
+            "maximal landed property, commercial layouts, and modern architecture. In personal life, this signifies passionate romance "
+            "and strong marital attachment, provided Ketu does not intervene between them. If Ketu intervenes, marital counseling is required. "
+            "Remedy: Offer curd abhishekam to Lord Shiva and maintain transparent land documentation."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN சொத்து விதி: சுக்கிரனும் செவ்வாயும் இணைவது 'காலனைசர் யோகம்' எனப்படும். "
+            "ஜாதகர் மிகப்பெரிய நிலங்கள், வீட்டுமனைகள் மற்றும் ரியல் எஸ்டேட் சொத்துக்களை சொந்தமாக்கிக் கொள்வார். "
+            "கேதுவின் குறுக்கீடு இல்லாத வரை இல்லற வாழ்வில் தீவிர அன்பும் காதலும் நிறைந்திருக்கும். "
+            "பரிகாரம்: சிவபெருமானுக்கு தயிர் அபிஷேகம் மற்றும் தூய்மையான சொத்து ஆவணப் பராமரிப்பு."
+        ),
+        astrological_principle_en="Venus (Bhoga/Prosperity) uniting with Mars (Bhumi/Land) produces massive accumulation of real estate assets.",
+        astrological_principle_ta="சுக்கிரன் (செல்வம்) மற்றும் செவ்வாய் (பூமி காரகன்) இணைவு நிலபுலன்களை பலமடங்கு பெருக்குகிறது.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, Property Yogas & Venus-Mars Combinations",
+        limitations_en="If Ketu is situated between Venus and Mars degrees, property litigation and relationship friction arise.",
+        limitations_ta="செவ்வாய்-சுக்கிரன் பாகைகளுக்கு நடுவில் கேது நின்றால் நிலத்தில் வில்லங்கமும் திருமண முறிவும் வரலாம்.",
+        severity=SeverityLevel.FAVORABLE,
+    ),
+    AstrologicalRuleDefinition(
+        rule_id="RULE-BNN-PKD-SUN-11TH-DIET",
+        version=1,
+        name_en="BNN Sun in 11th House: Strict Vegetarian Mandate for Progeny Well-Being",
+        name_ta="BNN 11-ஆம் வீட்டில் சூரியன்: வம்சவிருத்திக்கான கடுமையான அசைவ உணவுத் தவிர்ப்பு விதி",
+        category_slug="children_family",
+        subcategory="progeny_prospects",
+        astrology_system=AstrologySystem.VEDIC,
+        chart_scope=ChartScope.D1,
+        calculation_mode="thirukanitha",
+        condition_tree={
+            "condition_type": "planet_in_house",
+            "planet": "Sun",
+            "house": 11,
+            "chart": "d1",
+        },
+        interpretation_en=(
+            "Pankajj K Duaa BNN Sacred Dietary Injunction: When Sun is situated in the 11th House, the native must strictly avoid "
+            "consuming non-vegetarian food. According to BNN tenets, consuming meat when Sun occupies the 11th house is karmically equated "
+            "to tormenting one's own children and inflicting suffering on them. Upholding pure vegetarianism ensures abundant revenue from government, "
+            "copper trade, and paternal prosperity."
+        ),
+        interpretation_ta=(
+            "பங்கஜ் கே துவா BNN உணவு சாஸ்திர விதி: 11-ஆம் வீட்டில் சூரியன் அமர்ந்திருக்கும் ஜாதகர்கள் கண்டிப்பாக அசைவ உணவை தவிர்க்க வேண்டும். "
+            "11-ல் சூரியன் இருக்கும் போது அசைவம் உண்பது தனது சொந்த பிள்ளைகளை வதைப்பதற்கு ஒப்பான கர்ம வினையைத் தரும் என BNN எச்சரிக்கிறது. "
+            "தூய சைவ உணவை கடைப்பிடிப்பதன் மூலம் பிள்ளைகளுக்கு நல்வாழ்வும், அரசு மற்றும் தந்தையின் வழி பெரும் தன லாபமும் உண்டாகும்."
+        ),
+        astrological_principle_en="11th House represents fulfillment and elder siblings/progeny gains; Sun's sattvic solar fire here is polluted by tamasic flesh foods.",
+        astrological_principle_ta="11-ஆம் இடத்து சூரியனின் சாத்வீக ஆற்றல் அசைவ உணவால் பாதிக்கப்பட்டு பிள்ளைகளின் சுப பலனை கெடுக்கும்.",
+        source_reference="BNN Astrology Notes by Pankajj K Duaa, 11th House Sun Injunctions",
+        limitations_en="Fulfillment of wishes accelerates once native maintains a sattvic dietary lifestyle.",
+        limitations_ta="சாத்வீக உணவு முறையை ஏற்றுக்கொண்டால் சகல ஆசைகளும் உடனடியாக நிறைவேறும்.",
+        severity=SeverityLevel.UNFAVORABLE,
+    ),
 ]

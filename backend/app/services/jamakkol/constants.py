@@ -695,3 +695,186 @@ APPROACHING_PLANET_MUHURTA_SIGNIFICATIONS: Dict[str, Dict[str, Any]] = {
         "auspicious_for": ["Spiritual Initiation", "Astrology", "Medical Treatment"],
     },
 }
+
+
+# ==============================================================================
+# Islamic Legal Guidance & Shariah Ruqyah on Astrology & Witchcraft
+# Source: "சூனியம் மற்றும் சோதிடம் குறித்த இஸ்லாமிய சட்ட விளக்கம்"
+# Author: Grand Mufti Sheikh Abdul Aziz ibn Abdullah ibn Baz (ரஹிமஹுல்லாஹ்)
+# Ministry of Islamic Affairs, Endowments, Da'wah and Guidance, Riyadh
+# ==============================================================================
+ISLAMIC_LEGAL_GUIDANCE_AND_RUQYAH: Dict[str, Any] = {
+    "source_title_ta": "சூனியம் மற்றும் சோதிடம் குறித்த இஸ்லாமிய சட்ட விளக்கம்",
+    "source_title_en": "Islamic Legal Clarification Regarding Black Magic (Sihr) and Astrology/Soothsaying (Jothidam)",
+    "author_ta": "அஷ்ஷெய்க் அப்துல் அஸீஸ் இப்னு அப்தில்லாஹ் பின் பாஸ் (ரஹிமஹுல்லாஹ்) - முன்னாள் சவூதி அரேபிய தலைமை முஃப்தி",
+    "author_en": "Grand Mufti Sheikh Abdul Aziz ibn Abdullah ibn Baz (Rahimahullah) - Former Grand Mufti of Saudi Arabia",
+    "publisher_ta": "இஸ்லாமிய விவகாரங்கள், அவ்காப், அழைப்பு மற்றும் வழிகாட்டல் அமைச்சகம், ரியாத்",
+    "publisher_en": "Ministry of Islamic Affairs, Endowments, Da'wah and Guidance, Riyadh, KSA",
+    "core_verdict_ta": (
+        "இஸ்லாமிய ஷரீஆவின் அடிப்படை விதிகளின்படி ஜோதிடம், குறி சொல்லுதல், மறைவானவற்றை அறிவதாக வாதிடும் மந்திரவாதிகளிடம் செல்லுதல் மற்றும் "
+        "சூனியம் (செய்வினை) செய்தல் அல்லது செய்யக் கோருதல் யாவும் மாபெரும் பாவங்களாகும் (குஃப்ர் / ஷிர்க்). "
+        "மறைவான ஞானம் ('இல்முல் ஃகைப்') அல்லாஹ் ஒருவனுக்கு மட்டுமே உரியது (ஸூறா அந்-நம்ல் 27:65). "
+        "ஆயினும் சூனியம், கண் திருஷ்டி அல்லது துஷ்ட சக்திகளால் பாதிக்கப்பட்டோர் மார்க்க வரம்புக்குட்பட்டு "
+        "அல்குர்ஆன் ஆயத்துக்கள் மற்றும் சுன்னத்தான திக்ருகள் (ருக்யா ஷரீஆ) மூலம் பூரண நிவாரணம் பெற மார்க்கத்தில் அனுமதி உண்டு."
+    ),
+    "core_verdict_en": (
+        "Under Islamic Shariah, fortune-telling, astrology (claiming knowledge of the unseen / 'Ilm al-Ghayb), and black magic (Sihr) "
+        "are categorized among the seven fatal, destructive sins (Al-Mubiqat). The unseen belongs exclusively to Allah (Surah An-Naml 27:65). "
+        "However, those afflicted by witchcraft, evil eye, or demonic distress are provided authentic, Shariah-compliant spiritual healing "
+        "through the Holy Quran, Prophetic supplications, and lote-leaf water treatment (Ruqyah Shariyyah)."
+    ),
+    "authentic_hadith_cautions": [
+        {
+            "arabic": "مَنْ أَتَى عَرَّافًا فَسَأَلَهُ عَنْ شَيْءٍ لَمْ تُقْبَلْ لَهُ صَلَاةٌ أَرْبَعِينَ لَيْلَةً",
+            "tamil": "யார் (சோதிடன்) குறி சொல்பவனிடம் சென்று ஏதேனும் ஒன்றைப் பற்றி விசாரித்தால் அவனுடைய நாற்பது நாட்களின் தொழுகைகள் ஏற்றுக் கொள்ளப்படமாட்டாது. (ஸஹீஹ் முஸ்லிம்)",
+            "english": "Whoever visits a fortune teller or astrologer and asks him about anything, his prayer will not be accepted for forty nights. (Sahih Muslim)",
+            "source": "Sahih Muslim 2230",
+        },
+        {
+            "arabic": "مَنْ أَتَى كَاهِنًا أَوْ عَرَّافًا فَصَدَّقَهُ بِمَا يَقُولُ فَقَدْ كَفَرَ بِمَا أُنْزِلَ عَلَى مُحَمَّدٍ",
+            "tamil": "யார் ஒருவர் குறி சொல்பவரிடமோ அல்லது சோதிடனிடமோ சென்று அவர் கூறுவதை நம்பி உண்மைப்படுத்தினால், முஹம்மத் (ஸல்) அவர்களின் மீது இறக்கியருளப்பட்டதை நிராகரித்தவராவார். (அபூதாவூத், அஹ்மத், ஹாக்கிம்)",
+            "english": "Whoever visits a soothsayer or an astrologer and believes in what he says has disbelieved in that which was revealed to Muhammad (peace be upon him). (Sunan Abu Dawud, Musnad Ahmad, Al-Hakim)",
+            "source": "Abu Dawud 3904, Musnad Ahmad 9536",
+        },
+        {
+            "arabic": "لَيْسَ مِنَّا مَنْ تَطَيَّرَ أَوْ تُطُيِّرَ لَهُ أَوْ تَكَهَّنَ أَوْ تُكُهِّنَ لَهُ أَوْ سَحَرَ أَوْ سُحِرَ لَهُ",
+            "tamil": "சகுனம் பார்ப்பவரும் தனக்கு பார்க்குமாறு சொல்பவரும், சோதிடம் பார்ப்பவரும் பார்த்து விடுமாறு சொல்பவரும், சூனியம் செய்பவரும் சூனியம் செய்யுமாறு வேண்டுபவரும் எங்களைச் சார்ந்தவரல்ல. (பஸ்ஸார்)",
+            "english": "He is not of us who seeks omens or has omens sought for him, or who tells fortunes or has his fortune told, or who practices sorcery or has sorcery practiced for him. (Musnad Al-Bazzar)",
+            "source": "Musnad Al-Bazzar / Tabarani",
+        },
+    ],
+    "impermissible_treatments": {
+        "title_ta": "விலக்கப்பட்ட சிகிச்சை முறைகள் (நுஷ்ரா & ஷைத்தானிய பித்தலாட்டங்கள்)",
+        "title_en": "Strictly Forbidden Treatments (Nushrah & Occult Practices)",
+        "items_ta": [
+            "சூனியத்தை அழிக்க மற்றொரு மந்திரவாதியிடம் சென்று மாய மந்திரங்கள் செய்தல் ('நுஷ்ரா' குறித்து நபியவர்களிடம் கேட்கப்பட்ட போது 'அது ஷைத்தானின் செயல்' என பதிலளித்தார்கள் - அபூதாவூத்).",
+            "ஜின்களுக்கு கோழி, ஆடு போன்ற பிராணிகளை அறுத்துப் பலியிடுதல் அல்லது அல்லாஹ் அல்லாதவர்களிடம் நிவாரணம் கோருதல் (அஷ்ஷிர்குல் அக்பர் - பெரும் இணைவைப்பு).",
+            "தாயத்து தகடுகளில் புரியாத எண்கள், குறியீடுகள், மந்திரக் கோடுகள் வரைந்து உடலில் கட்டுதல்.",
+            "நோயாளியிடம் தாய் பெயர், உறவினர் பெயர்களைக் கேட்டு ஜின்களை வரவழைத்து சிகிச்சை செய்தல்.",
+        ],
+        "items_en": [
+            "Consulting another sorcerer to undo magic (When asked about Nushrah, the Prophet pbuh replied: 'It is from the deeds of Satan' - Abu Dawud).",
+            "Sacrificing animals to jinns or invoking unseen spirits (Ash-Shirk al-Akbar - major idolatry).",
+            "Wearing amulets, talismans with occult numerical squares, demonic sigils, or knotted cords.",
+            "Asking for the patient's mother's name to summon jinn or divine hidden matters.",
+        ],
+    },
+    "sunnah_ruqyah_cure": {
+        "title_ta": "ஷரீஆ அனுமதித்த 7 பச்சை இலந்தை இலை ருக்யா சிகிச்சை (அறிஞர் இப்னு பாஸ் வழிகாட்டல்)",
+        "title_en": "Authentic Sunnah Ruqyah: 7 Green Sidr (Lote) Leaves Water Treatment",
+        "description_ta": (
+            "சூனியத்தால் பாதிக்கப்பட்டவர் அல்லது கணவன்-மனைவி தாம்பத்திய உறவில் செய்வினையால் தடைப்பட்டோருக்கு (கட்டுப்பாடு / இஸ்திஹ்லா) "
+            "இப்னுல் கைய்யிம் மற்றும் அஷ்ஷெய்க் இப்னு பாஸ் பரிந்துரைத்த சுன்னத்தான அருமருந்து."
+        ),
+        "description_en": (
+            "Classical Ruqyah endorsed by scholars including Wahb ibn Munabbih, Ibn al-Qayyim, and Sheikh Ibn Baz for nullifying black magic, "
+            "the evil eye, and spells causing marital discord or impotence."
+        ),
+        "step_by_step_ta": [
+            "1. இலந்தை மரத்தின் ஏழு பச்சை இலைகளைப் பறித்து இரு கற்களுக்கிடையே அல்லது உரலில் நன்கு அரைத்துக்கொள்ளவும்.",
+            "2. ஒரு பாத்திரத்தில் குடிப்பதற்கும் குளிப்பதற்கும் போதுமான சுத்தமான நீரை ஊற்றி, அரைத்த இலந்தை விழுதை அதில் கலக்கவும்.",
+            "3. அந்த நீரில் வாய் அருகமைத்து உளூவுடன் பின்வரும் அல்குர்ஆன் ஸூராக்களையும் ஆயத்துக்களையும் நபிகளாரின் துஆக்களையும் ஓதி ஊதவும்:",
+            "   • ஸூறதுல் பாத்திஹா (அல்-ஹம்து ஸூரா)",
+            "   • ஆயதுல் குர்ஸி (ஸூறதுல் பகரா வசனம் 255)",
+            "   • ஸூறதுல் காஃபிரூன் (குல் யா அய்யுஹல் காபிரூன்)",
+            "   • ஸூறதுல் இஹ்லாஸ் (குல்ஹுவல்லாஹு அஹத்) - 3 முறை",
+            "   • ஸூறதுல் பலக் (குல்அஊது பிரப்பில் பலக்) - 3 முறை",
+            "   • ஸூறதுந் நாஸ் (குல்அஊது பிரப்பின்னாஸ்) - 3 முறை",
+            "   • ஸூறா அல்-அஃராப் (7:117-119): 'வஅவ்ஹைனா இலா மூஸா அன் அல்கி அஸாக ஃபஇஃதா ஹிய தல்ஃகஃபு மா யஃபிகூன், ஃப வகஅல்ஹக்கு வபதல மா கானூ யஃமலூன்...'",
+            "   • ஸூறா யூனுஸ் (10:79-82): 'மா ஜிஃதும் பிஹிஸ்ஸிஹ்ரு இன்னல்லாஹ ஸயுப்திலுஹூ இன்னல்லாஹ லா யுஸ்லிஹு அமலல் முப்ஸிதீன்...'",
+            "   • ஸூறா தாஹா (20:65-69): 'இன்னமா ஸனஊ கைது ஸாஹிரின், வலா யுஃப்லிஹுஸ் ஸாஹிரு ஹைது அதா...'",
+            "   • நபிமொழி துஆ (3 முறை): 'அல்லாஹும்ம ரப்பன் நாஸி, அத்ஹிபில் பஃஸ, வஷ்ஃபி அன்தஷ் ஷாஃபி, லா ஷிஃபாஅ இல்லா ஷிஃபாஉக, ஷிஃபாஅன் லா யுஃகாதிரு ஸகமா'",
+            "   • ஜிப்ரீல் (அலை) துஆ (3 முறை): 'பிஸ்மில்லாஹி அர்கீக மின் குல்லி ஷைய்இன் யுஃதீக, வமின் ஷர்ரி குல்லி நப்ஸின் அவ் அய்னின் ஹாஸிதின், அல்லாஹு யஷ்பீக, பிஸ்மில்லாஹி அர்கீக'",
+            "4. ஓதிய நீரிலிருந்து மூன்று மிடர்கள் குடித்துவிட்டு, எஞ்சிய நீரைக் கொண்டு உடல் முழுவதும் குளிக்க வேண்டும்.",
+            "5. நோய் குணமாகும் வரை பல நாட்கள் இதனைத் தொடரலாம்; அல்லாஹ்வின் அருளால் பூரண குணம் கிடைக்கும்.",
+        ],
+        "step_by_step_en": [
+            "1. Pick 7 green leaves of the Sidr (Lote tree / Ziziphus) and crush them finely between stones or a pestle.",
+            "2. Pour clean water sufficient for drinking and bathing into a vessel, and mix the crushed leaves.",
+            "3. Bring the water close to the mouth and recite the following with ritual purity (Wudu):",
+            "   • Surah Al-Fatihah",
+            "   • Ayatul Kursi (Surah Al-Baqarah: 255)",
+            "   • Surah Al-Kafirun (109)",
+            "   • Surah Al-Ikhlas (112), Surah Al-Falaq (113), Surah An-Nas (114) - 3 times each",
+            "   • Surah Al-A'raf (7:117-119): Moses' staff destroying Pharaoh's magic",
+            "   • Surah Yunus (10:79-82): 'What you have brought is sorcery; indeed, Allah will make it void'",
+            "   • Surah Ta-Ha (20:65-69): 'The magician will never succeed wherever he may come from'",
+            "   • Prophetic Dua (3x): 'Allahumma Rabban-naas, adh-hibil-ba's, washfi Antash-Shaafee, laa shifaa'a illa shifaa'uk, shifaa'an laa yughadiru saqama'",
+            "   • Jibril's Ruqyah (3x): 'Bismillahi arqeeka min kulli shay'in yu'dheeka, wa min sharri kulli nafsin aw 'aynin hasidin, Allahu yashfeeka, bismillahi arqeeka'",
+            "4. Drink 3 sips of the water, then wash and bathe (ghusl) with the rest.",
+            "5. Repeat daily until symptoms and afflictions disappear completely by Allah's will.",
+        ],
+    },
+    "daily_protective_fortress": {
+        "title_ta": "தினசரி தற்காப்பு அரண் (துஷ்ட சக்திகள் நெருங்காமல் இருக்க)",
+        "title_en": "Daily Spiritual Shield (Protection Against Devils & Evil Eye)",
+        "adhkar_ta": [
+            {
+                "name": "ஆயதுல் குர்ஸி (ஸூறா அல்-பகரா 255)",
+                "when": "ஒவ்வொரு தொழுகைக்குப் பின்னும், இரவில் படுக்கைக்குச் செல்லும் முன்",
+                "benefit": "படுக்கையில் ஓதினால் விடியும் வரை அல்லாஹ்வின் பாதுகாப்பாளர் உடனிருந்து ஷைத்தான் நெருங்காமல் பாதுகாப்பார்.",
+            },
+            {
+                "name": "மூன்று குல் ஸூராக்கள் (இஹ்லாஸ், பலக், நாஸ்)",
+                "when": "ஃபஜ்ர் மற்றும் மஃக்ரிப் தொழுகைக்குப் பின் தலா 3 முறை",
+                "benefit": "அனைத்துவிதமான கெடுதிகள், கண் திருஷ்டி மற்றும் பொறாமையிலிருந்து முழுமையான பாதுகாப்பு.",
+            },
+            {
+                "name": "ஸூறதுல் பகராவின் இறுதி இரு வசனங்கள் (2:285-286)",
+                "when": "தினமும் இரவில் தூங்கும் முன்",
+                "benefit": "யார் ஓரிரவில் இதனை ஓதுகிறாரோ அதுவே அவரது தற்காப்பிற்குப் போதுமானதாகும்.",
+            },
+            {
+                "name": "பிஸ்மில்லாஹில்லதீ லா யளுர்ரு...",
+                "when": "காலையிலும் மாலையிலும் 3 முறை",
+                "benefit": "'வானிலும் பூமியிலும் உள்ள எப்பொருளும் எவ்விதத் தீங்கும் செய்ய முடியாது' - நபிமொழி.",
+            },
+            {
+                "name": "அஊது பிகலிமாதில்லாஹித்தாம்மாதி...",
+                "when": "வெளியில் தங்கும் போது அல்லது பயணத்தின் போது",
+                "benefit": "அந்த இடத்திலிருந்து புறப்படும் வரை எந்தவொரு தீங்கும் அணுகாது.",
+            },
+        ],
+        "adhkar_en": [
+            {
+                "name": "Ayatul Kursi (Surah Al-Baqarah 2:255)",
+                "when": "After each fard prayer and before going to sleep",
+                "benefit": "A guardian angel from Allah protects you through the night and no devil can approach until dawn.",
+            },
+            {
+                "name": "The Three Quls (Al-Ikhlas, Al-Falaq, An-Nas)",
+                "when": "3 times after Fajr and 3 times after Maghrib",
+                "benefit": "Universal shield against witchcraft, envious eyes (Hasad), and unseen harms.",
+            },
+            {
+                "name": "Last 2 Verses of Surah Al-Baqarah (2:285-286)",
+                "when": "Every night before sleeping",
+                "benefit": "Whoever recites them at night, they suffice him against every evil.",
+            },
+            {
+                "name": "Bismillaahil-ladhee laa yadurru ma'as-mihi...",
+                "when": "3 times every morning and evening",
+                "benefit": "Nothing in the heavens or earth can cause harm when this name is invoked.",
+            },
+            {
+                "name": "A'oodhu bi kalimaat-Illaahit-taammaati...",
+                "when": "When stopping at any dwelling or traveling",
+                "benefit": "Protection from all creatures and unseen harms until departure.",
+            },
+        ],
+    },
+    "disenchantment_protocol": {
+        "title_ta": "செய்வினை முடிச்சுகளைக் கண்டறிந்து அழிக்கும் முறை",
+        "title_en": "Locating and Dissolving Physical Charms & Knotted Cords",
+        "details_ta": (
+            "சூனியத்திற்கான மிகப்பயனுள்ள சிகிச்சை என்னவெனில், சூனியம் வைக்கப்பட்ட இடத்தை கண்டறிய முயற்சித்தல். "
+            "அவ்வாறு முடிச்சிடப்பட்ட நூல்கள், ஆணிகள் அல்லது தாயத்துக்களை வெளியே எடுத்து முடிச்சுகளை அவிழ்த்து அழித்துவிட்டால் "
+            "சூனியம் உடனடியாக முறிந்துவிடும் (நபியவர்களுக்கு லபீத் இப்னு அஃஸம் செய்த சூனியம் கிணற்றிலிருந்து எடுக்கப்பட்டு முடிச்சுகள் அவிழ்க்கப்பட்ட முறை)."
+        ),
+        "details_en": (
+            "The most decisive cure for black magic is locating the physical talisman, knotted cords, or pinned needles, "
+            "untying all knots while reciting the Mu'awwidhat, and burning or destroying them completely. "
+            "This was the exact manner in which the spell cast on the Prophet (pbuh) was dismantled from the well of Dharwan."
+        ),
+    },
+}

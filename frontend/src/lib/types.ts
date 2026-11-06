@@ -664,6 +664,101 @@ export interface HoraryKpResponse {
   dasa_hierarchy?: KpDasaBalance;
 }
 
+export interface HoraryTopicInfo {
+  id: string;
+  name_en: string;
+  name_ta: string;
+  sample_query_en: string;
+  sample_query_ta: string;
+  category: string;
+  primary_cusp: number;
+  supporting_houses: number[];
+  denying_houses: number[];
+  icon?: string;
+}
+
+export interface InstantHoraryPredictionRequest {
+  horary_number: number;
+  question_topic: string;
+  question_text?: string;
+  question_date?: string;
+  question_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
+  ayanamsa?: number;
+}
+
+export interface TimingWindow {
+  dasha_mahadasha: string;
+  dasha_bhukti: string;
+  dasha_antara: string;
+  dasha_window_start: string;
+  dasha_window_end: string;
+  moon_transit_star: string;
+  moon_transit_star_ta: string;
+  moon_transit_sign: string;
+  moon_transit_sign_ta: string;
+  moon_transit_lord: string;
+  moon_transit_lord_ta: string;
+  moon_transit_start: string;
+  moon_transit_end: string;
+  summary_en: string;
+  summary_ta: string;
+}
+
+export interface AstrologicalExplanation {
+  summary_en: string;
+  summary_ta: string;
+  primary_cusp_analysis_en: string;
+  primary_cusp_analysis_ta: string;
+  csl_connection_en: string;
+  csl_connection_ta: string;
+  ruling_planets_en: string;
+  ruling_planets_ta: string;
+  timing_explanation_en: string;
+  timing_explanation_ta: string;
+}
+
+export interface InstantHoraryPredictionResponse {
+  horary_number: number;
+  horary_division: HoraryDivisionDetail;
+  question_topic: string;
+  question_text: string;
+  query_timestamp: string;
+  location_name: string;
+  primary_cusp: number;
+  primary_cusp_name_en: string;
+  primary_cusp_name_ta: string;
+  supporting_houses: number[];
+  denying_houses: number[];
+  cusp_sub_lord: string;
+  cusp_sub_lord_ta: string;
+  cusp_star_lord: string;
+  cusp_star_lord_ta: string;
+  cusp_sub_sub_lord?: string;
+  cusp_longitude: number;
+  csl_signified_houses: number[];
+  supporting_hits: number[];
+  denying_hits: number[];
+  is_csl_retrograde: boolean;
+  is_star_lord_retrograde: boolean;
+  outcome: 'YES' | 'DELAYED' | 'NO';
+  outcome_label_en: string;
+  outcome_label_ta: string;
+  outcome_badge: 'success' | 'warning' | 'danger';
+  confidence_score: number;
+  ruling_planets: string[];
+  rp_matching_planets: string[];
+  rp_agreement: boolean;
+  timing: TimingWindow;
+  explanation: AstrologicalExplanation;
+  ascendant_degree: number;
+  planetary_positions: PlanetaryKpPosition[];
+  cuspal_analysis: KpCuspDetail[];
+}
+
 export interface SavedKpChartRecord {
   id: string;
   user_id: string;
@@ -4076,6 +4171,25 @@ export interface SpousePredictionRequest {
   gender?: "male" | "female" | "other";
 }
 
+export interface KpReader4SpouseInsights {
+  seventh_csl_planet: string;
+  seventh_csl_sign: string;
+  stature: string;
+  complexion_and_face: string;
+  temperament: string;
+  vocational_and_lifestyle_traits: string;
+  cautionary_notes?: string | null;
+  career_spouse_promised: boolean;
+  career_spouse_vocation: string;
+  career_spouse_explanation: string;
+  punarphoo_detected: boolean;
+  punarphoo_severity: string;
+  punarphoo_advice: string;
+  mars_dosha_verdict: string;
+  mars_dosha_kp_ruling: string;
+  marriage_promise_verdict: string;
+}
+
 export interface SpousePredictionResponse {
   native_gender: string;
   ascendant_sign: string;
@@ -4093,6 +4207,8 @@ export interface SpousePredictionResponse {
   navamsa_d9: NavamsaD9SpouseProfile;
   trait_scores: SpouseTraitScores;
   remedies: SpouseRemedies;
+  sivadasan_ravi_insights?: SivadasanRaviSpouseInsights;
+  kp_reader4_insights?: KpReader4SpouseInsights;
 
   summary_headline_en: string;
   summary_headline_ta: string;
@@ -4269,6 +4385,136 @@ export interface FinalAssessmentSummary {
   reproducibility_fingerprint: string;
 }
 
+
+export interface SivadasanRaviMarriageInsights {
+  treatise_title_ta: string;
+  treatise_title_en: string;
+  author: string;
+  publisher: string;
+  dasa_porutham: {
+    verdict: string;
+    verdict_ta: string;
+    score: number;
+    is_eka_dasa: boolean;
+    eka_dasa_afflicted: boolean;
+    groom_mahadasha: string;
+    bride_mahadasha: string;
+    transition_diff_days: number;
+    is_dasa_transition_close: boolean;
+    dasa_transition_afflicted: boolean;
+    findings_en: string[];
+    findings_ta: string[];
+  };
+  guru_balam: {
+    status: string;
+    score: number;
+    label_en: string;
+    label_ta: string;
+    transit_jupiter_sign_en: string;
+    transit_jupiter_sign_ta: string;
+    groom_house_from_moon: number;
+    bride_house_from_moon: number;
+    groom_has_balam: boolean;
+    bride_has_balam: boolean;
+    description_en: string;
+    description_ta: string;
+  };
+  nadi_porutham: {
+    verdict: string;
+    verdict_ta: string;
+    score: number;
+    groom_guru_sign: string;
+    groom_shukra_sign: string;
+    bride_shukra_sign: string;
+    bride_sevvai_sign: string;
+    is_shukra_harmonic: boolean;
+    is_soul_harmonic: boolean;
+    has_nandi_yogam: boolean;
+    nandi_obstacles_en: string[];
+    nandi_obstacles_ta: string[];
+    summary_en: string;
+    summary_ta: string;
+  };
+  in_laws_nakshatras: {
+    has_special_nakshatra: boolean;
+    findings: Array<{
+      nakshatra_en: string;
+      nakshatra_ta: string;
+      relative_en: string;
+      relative_ta: string;
+      is_exempt: boolean;
+      status: string;
+      explanation_en: string;
+      explanation_ta: string;
+    }>;
+  };
+  classical_remedies: {
+    parikara_sthalam: {
+      name_en: string;
+      name_ta: string;
+      significance_en: string;
+      significance_ta: string;
+    };
+    sacred_hymns: Array<{
+      title_en: string;
+      title_ta: string;
+      hymn_ta: string;
+      purpose_en: string;
+      purpose_ta: string;
+    }>;
+  };
+}
+
+export interface SivadasanRaviSpouseInsights {
+  is_single_child: boolean;
+  single_child_status_en: string;
+  single_child_status_ta: string;
+  single_child_analysis_en: string;
+  single_child_analysis_ta: string;
+
+  family_size: string;
+  family_size_ta: string;
+  family_size_analysis_en: string;
+  family_size_analysis_ta: string;
+
+  street_orientation_en: string;
+  street_orientation_ta: string;
+  street_orientation_analysis_en: string;
+  street_orientation_analysis_ta: string;
+
+  estimated_siblings_count: number;
+  siblings_analysis_en: string;
+  siblings_analysis_ta: string;
+
+  spouse_direction_en: string;
+  spouse_direction_ta: string;
+  spouse_direction_analysis_en: string;
+  spouse_direction_analysis_ta: string;
+
+  candidate_nakshatras_en: string[];
+  candidate_nakshatras_ta: string[];
+  candidate_nakshatras_analysis_en: string;
+  candidate_nakshatras_analysis_ta: string;
+
+  love_marriage_probability: string;
+  love_marriage_probability_ta: string;
+  love_marriage_analysis_en: string;
+  love_marriage_analysis_ta: string;
+
+  dual_marriage_risk: string;
+  dual_marriage_risk_ta: string;
+  dual_marriage_analysis_en: string;
+  dual_marriage_analysis_ta: string;
+
+  marriage_obstruction_verdict: string;
+  marriage_obstruction_verdict_ta: string;
+  marriage_obstruction_score: number;
+  marriage_obstruction_analysis_en: string;
+  marriage_obstruction_analysis_ta: string;
+
+  sacred_remedies_ta: string[];
+}
+
 export interface MarriageCompatibilityResponse {
   metadata: CalculationMetadata;
   groom_profile: PersonProfileSummary;
@@ -4285,6 +4531,7 @@ export interface MarriageCompatibilityResponse {
   bride_chart?: any;
   groom_d9_chart?: any;
   bride_d9_chart?: any;
+  sivadasan_ravi_insights?: SivadasanRaviMarriageInsights;
   final_assessment: FinalAssessmentSummary;
 }
 
@@ -6528,6 +6775,77 @@ export interface BrighuNaadiResponse {
     explanation_en: string;
     explanation_ta: string;
   };
+  pankajj_duaa_compendium?: {
+    metadata: {
+      title: string;
+      title_ta: string;
+      author: string;
+      traditions: string[];
+      summary_en: string;
+      summary_ta: string;
+    };
+    rashi_mobility_summary: {
+      char_movable_count: number;
+      char_planets: string[];
+      sthir_fixed_count: number;
+      sthir_planets: string[];
+      upaye_dual_count: number;
+      upaye_planets: string[];
+    };
+    naadi_house_qualities: Record<string, { house: number; status: string; status_ta: string }>;
+    medical_astrology: {
+      life_significator: {
+        prime_planet: string;
+        is_afflicted: boolean;
+        house: number;
+        evaluation_en: string;
+        evaluation_ta: string;
+      };
+      organ_afflictions: Array<{
+        house: number;
+        planets: string[];
+        organ_en: string;
+        organ_ta: string;
+        warning_en: string;
+        warning_ta: string;
+      }>;
+      cancer_yoga: {
+        is_active: boolean;
+        title_en: string;
+        title_ta: string;
+        explanation_en: string;
+        explanation_ta: string;
+      };
+    };
+    matched_pairs: Array<{
+      pair: string;
+      degree_difference: number;
+      sign: number;
+      reading_en: string;
+      reading_ta: string;
+    }>;
+    matched_yogas: Array<{
+      yoga_name: string;
+      yoga_name_ta: string;
+      is_favorable: boolean;
+      description_en: string;
+      description_ta: string;
+    }>;
+    degree_border_alerts: Array<{
+      planet: string;
+      degree: number;
+      shift_en: string;
+      shift_ta: string;
+    }>;
+    prescribed_remedies: Array<{
+      planet: string;
+      rudraksha: string;
+      deities: string;
+      mantra: string;
+      key_remedies: string[];
+    }>;
+    general_life_maxims: Array<{ rule: string; maxim: string }>;
+  };
 }
 
 export interface NatchathiraMatchedRule {
@@ -6943,6 +7261,7 @@ export interface RevelationBullet {
   astrological_proof: string;
   calendar_period?: string | null;
   nature?: "danger" | "breakthrough" | "neutral" | "identity" | string | null;
+  checklist?: string[];
 }
 
 export interface FutureTimelineWindow {
@@ -7007,4 +7326,447 @@ export interface InstantRevelationResponse {
   ancestral_land_rift_ta: string;
   childhood_balarishta_en: string;
   childhood_balarishta_ta: string;
+
+  // Deva Keralam (Chandra Kala Nadi) 150 Nadiamsas & Longevity Engine
+  lagna_nadiamsa_number: number;
+  lagna_nadiamsa_name: string;
+  lagna_nadiamsa_name_ta: string;
+  lagna_nadiamsa_half: string;
+  lagna_nadiamsa_half_ta: string;
+  lagna_nadiamsa_script_en: string;
+  lagna_nadiamsa_script_ta: string;
+  khanda_nirnaya_longevity_en: string;
+  khanda_nirnaya_longevity_ta: string;
+  father_critical_degree: string;
+  mother_critical_degree: string;
+
+  // 101% Guaranteed Chart Shockers (BNN & Deva Keralam Condition-Verified)
+  guaranteed_chart_shockers: RevelationBullet[];
+  remedial_taboos_en: string[];
+  remedial_taboos_ta: string[];
+}
+
+export interface BrighuPrashnaRequest {
+  birth_date?: string; // YYYY-MM-DD
+  completed_age?: number; // 0 to 107
+  query_date?: string; // YYYY-MM-DD
+  query_category?: string; // "general" | "business" | "career" | "education" | "marriage" | "health"
+  querent_order?: number; // 1 or 2
+}
+
+export interface BrighuPrashnaResponse {
+  book_title: string;
+  author: string;
+  completed_age: number;
+  formula_applied: string;
+  prediction_number: number;
+  sub_category_key?: string;
+  guru_mantra: string;
+  sanskrit_sloka?: string;
+  yoga_name_en: string;
+  yoga_name_ta: string;
+  core_prophecy_en: string;
+  core_prophecy_ta: string;
+  career_and_finance_en: string;
+  career_and_finance_ta: string;
+  family_and_relationships_en: string;
+  family_and_relationships_ta: string;
+  health_and_cautions_en: string;
+  health_and_cautions_ta: string;
+  past_karma_cause_en?: string;
+  past_karma_cause_ta?: string;
+  prescribed_remedy_en: string;
+  prescribed_remedy_ta: string;
+  relief_timeline_en: string;
+  relief_timeline_ta: string;
+}
+
+// ==========================================
+// Feature 1: Automated Multi-Year Life Timeline Predictor (Life Roadmap)
+// ==========================================
+
+export interface LifeDomainInfo {
+  id: string;
+  name: string;
+  name_ta: string;
+  icon: string;
+  color: string;
+  description: string;
+  events: string[];
+}
+
+export interface HouseEvidence {
+  house: number;
+  level: string;
+  weight: number;
+  contributing_lord?: string;
+}
+
+export interface ScoredMilestone {
+  event_name: string;
+  domain_id: string;
+  domain_name: string;
+  domain_name_ta: string;
+  is_caution_type: boolean;
+  probability_level: "HIGH" | "MODERATE" | "CAUTION" | "LOW";
+  status_label: string;
+  color: "green" | "orange" | "red";
+  grade: "STRONG" | "MODERATE" | "WEAK";
+  support_score: number;
+  denial_score: number;
+  coverage: number;
+  supporting_houses: HouseEvidence[];
+  denying_houses: HouseEvidence[];
+  denied: boolean;
+  hint: string;
+  retrograde_note?: string;
+  csl_adjustment?: string;
+}
+
+export interface DomainScorecard {
+  domain_id: string;
+  domain_name: string;
+  domain_name_ta: string;
+  icon: string;
+  color: string;
+  summary_label: string;
+  status_color: "green" | "orange" | "red";
+  green_count: number;
+  orange_count: number;
+  red_count: number;
+  caution_alert_count: number;
+  peak_window_period?: string;
+  peak_window_dates?: string;
+  peak_window_event?: string;
+  summary_text: string;
+}
+
+export interface RoadmapPeriodItem {
+  period_key: string;
+  mahadasha_lord: string;
+  bhukti_lord: string;
+  antara_lord?: string;
+  start_date: string;
+  end_date: string;
+  start_display: string;
+  end_display: string;
+  duration_days: number;
+  is_running: boolean;
+  primary_status: "green" | "orange" | "red" | "neutral";
+  domain_highlights: Record<string, string>;
+  top_milestones: ScoredMilestone[];
+  all_milestones: ScoredMilestone[];
+}
+
+export interface LifeRoadmapRequest {
+  horoscope_id?: string;
+  birth_date?: string;
+  birth_time?: string;
+  timezone?: string;
+  latitude?: number;
+  longitude?: number;
+  place_name?: string;
+  customer_name?: string;
+  horizon_years?: number;
+  start_date?: string;
+  filter_domain?: string;
+  min_probability?: string;
+  ayanamsa_id?: number;
+}
+
+export interface LifeRoadmapOverallSummary {
+  total_dba_periods: number;
+  total_evaluated_events: number;
+  high_probability_count: number;
+  moderate_count: number;
+  caution_alerts_count: number;
+  running_period_key?: string;
+  most_favorable_domain?: string;
+  executive_verdict: string;
+}
+
+export interface LifeRoadmapResponse {
+  customer_name?: string;
+  lagna?: string;
+  moon_sign?: string;
+  nakshatra?: string;
+  current_date: string;
+  start_date: string;
+  end_date: string;
+  horizon_years: number;
+  running_period_key?: string;
+  overall_summary: LifeRoadmapOverallSummary;
+  domain_scorecards: DomainScorecard[];
+  chronological_periods: RoadmapPeriodItem[];
+  upcoming_key_milestones: ScoredMilestone[];
+  executive_roadmap_markdown: string;
+}
+
+
+// ==============================================================================
+// Feature 2: Automated KP Predictive Narrative Engine (English & Tamil)
+// ==============================================================================
+
+export interface CuspalPromiseItem {
+  cusp: number;
+  domain_en: string;
+  domain_ta: string;
+  cusp_sub_lord: string;
+  star_lord: string;
+  sub_sub_lord: string;
+  signified_houses: number[];
+  supporting_houses: number[];
+  challenging_houses: number[];
+  verdict: "strongly_promised" | "delayed_fruition" | "denied_or_caution";
+  verdict_label_en: string;
+  verdict_label_ta: string;
+  summary_en: string;
+  summary_ta: string;
+  plain_narrative_en: string;
+  plain_narrative_ta: string;
+  practical_takeaway_en: string;
+  practical_takeaway_ta: string;
+}
+
+export interface NatalPromiseSection {
+  overall_synthesis_en: string;
+  overall_synthesis_ta: string;
+  items: CuspalPromiseItem[];
+  strong_promises_count: number;
+  delayed_count: number;
+  caution_count: number;
+}
+
+export interface DashaPeriodDetail {
+  level: number;
+  level_name_en: string;
+  level_name_ta: string;
+  lord: string;
+  lord_ta: string;
+  star_lord: string;
+  star_lord_ta: string;
+  sub_lord: string;
+  sub_lord_ta: string;
+  start_date: string;
+  end_date: string;
+  duration_formatted: string;
+  signified_houses: number[];
+}
+
+export interface RunningDashaImpactSection {
+  mahadasha: DashaPeriodDetail;
+  bhukti: DashaPeriodDetail;
+  antara: DashaPeriodDetail;
+  phase_title_en: string;
+  phase_title_ta: string;
+  phase_theme_en: string;
+  phase_theme_ta: string;
+  career_impact_en: string;
+  career_impact_ta: string;
+  finance_impact_en: string;
+  finance_impact_ta: string;
+  relationship_impact_en: string;
+  relationship_impact_ta: string;
+  health_impact_en: string;
+  health_impact_ta: string;
+  favorable_score: number;
+}
+
+export interface MilestoneWindowItem {
+  id: string;
+  domain: "career" | "finance" | "matrimony";
+  domain_label_en: string;
+  domain_label_ta: string;
+  window_title_en: string;
+  window_title_ta: string;
+  start_date: string;
+  end_date: string;
+  active_dba: string;
+  status: "Golden Opportunity" | "Favorable Window" | "Caution Period";
+  status_ta: string;
+  headline_en: string;
+  headline_ta: string;
+  plain_narrative_en: string;
+  plain_narrative_ta: string;
+  action_plan_en: string[];
+  action_plan_ta: string[];
+}
+
+export interface RemedialAdviceSection {
+  dos_en: string[];
+  dos_ta: string[];
+  donts_en: string[];
+  donts_ta: string[];
+  deity_prayer_en: string;
+  deity_prayer_ta: string;
+  charity_action_en: string;
+  charity_action_ta: string;
+  lifestyle_guidance_en: string;
+  lifestyle_guidance_ta: string;
+  lucky_day_color_en: string;
+  lucky_day_color_ta: string;
+}
+
+export interface PersonDetails {
+  name: string;
+  birth_date: string;
+  birth_time: string;
+  place: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  gender: string;
+  lagna: string;
+  lagna_ta: string;
+  moon_sign: string;
+  moon_sign_ta: string;
+  nakshatra: string;
+  nakshatra_ta: string;
+  current_age: string;
+}
+
+export interface KpNarrativeResponse {
+  report_id: string;
+  generated_at: string;
+  target_date: string;
+  person_details: PersonDetails;
+  natal_promise: NatalPromiseSection;
+  running_dasha: RunningDashaImpactSection;
+  milestone_windows: MilestoneWindowItem[];
+  remedies: RemedialAdviceSection;
+  disclaimer_en: string;
+  disclaimer_ta: string;
+}
+
+export interface KpNarrativeRequest {
+  birth_input?: BirthInput;
+  saved_horoscope_id?: string;
+  person_name?: string;
+  gender?: string;
+  target_date?: string;
+  ayanamsa_id?: number;
+  language?: string;
+  months_ahead?: number;
+}
+
+export interface KpNarrativePdfRequest extends KpNarrativeRequest {
+  precalculated_data?: KpNarrativeResponse;
+}
+
+export interface SaveKpNarrativeRequest {
+  title: string;
+  person_name: string;
+  saved_horoscope_id?: string;
+  birth_date: string;
+  birth_time: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  gender: string;
+  language: string;
+  report_data: KpNarrativeResponse;
+}
+
+export interface SavedKpNarrativeItem {
+  id: string;
+  user_id?: string;
+  title: string;
+  person_name: string;
+  saved_horoscope_id?: string;
+  birth_date: string;
+  birth_time: string;
+  language: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedKpNarrativeListResponse {
+  total: number;
+  items: SavedKpNarrativeItem[];
+}
+
+
+export interface KpMonthlyPredictionRequest {
+  birth?: BirthInput;
+  saved_horoscope_id?: string;
+  year: number;
+  month: number;
+  ayanamsa_id?: number;
+}
+
+export interface KpDbaSummary {
+  mahadasha: string;
+  mahadasha_ta: string;
+  antardasha: string;
+  antardasha_ta: string;
+  pratyantardasha: string;
+  pratyantardasha_ta: string;
+  sookshmadasha?: string;
+  sookshmadasha_ta?: string;
+  pranadasha?: string;
+  pranadasha_ta?: string;
+  period_start: string;
+  period_end: string;
+  active_date: string;
+}
+
+export interface KpTransitSunSummary {
+  month_name: string;
+  month_name_ta: string;
+  start_sign: string;
+  start_sign_ta: string;
+  end_sign: string;
+  end_sign_ta: string;
+  activated_stars: string[];
+  activated_stars_ta: string[];
+  summary_ta: string;
+}
+
+export interface KpMonthlyEventItem {
+  event_id: string;
+  title_en: string;
+  title_ta: string;
+  category: string;
+  icon: string;
+  status: "GUARANTEED" | "HIGHLY_FAVORABLE" | "MODERATE" | "CAUTION";
+  status_label_ta: string;
+  probability_score: number;
+  trigger_window_dates: string;
+  summary_verdict_ta: string;
+  detailed_analysis_ta: string;
+  cuspal_promise_ta: string;
+  dasha_bhukti_role_ta: string;
+  transit_trigger_ta: string;
+  actionable_remedy_ta: string;
+  primary_houses: number[];
+  supporting_houses: number[];
+  negating_houses: number[];
+  significator_planets: string[];
+}
+
+export interface KpMonthlyPredictionResponse {
+  year: number;
+  month: number;
+  month_label: string;
+  month_label_ta: string;
+  native_name: string;
+  dasha_hierarchy: KpDbaSummary;
+  transit_sun: KpTransitSunSummary;
+  guaranteed_events: KpMonthlyEventItem[];
+  favorable_events: KpMonthlyEventItem[];
+  moderate_events: KpMonthlyEventItem[];
+  caution_events: KpMonthlyEventItem[];
+  all_events: KpMonthlyEventItem[];
+  overall_month_summary_ta: string;
+  generated_at: string;
+}
+
+export interface AvailableMonthItem {
+  year: number;
+  month: number;
+  label_en: string;
+  label_ta: string;
+  is_current: boolean;
+  is_next: boolean;
+  tag_ta: string;
 }

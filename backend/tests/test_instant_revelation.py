@@ -98,6 +98,33 @@ def test_instant_revelation_engine_direct():
     assert len(res.childhood_balarishta_en) > 0
     assert len(res.childhood_balarishta_ta) > 0
 
+    # Deva Keralam 150 Nadiamsa & Longevity Engine
+    assert 1 <= res.lagna_nadiamsa_number <= 150
+    assert len(res.lagna_nadiamsa_name) > 0
+    assert len(res.lagna_nadiamsa_name_ta) > 0
+    assert "ardha" in res.lagna_nadiamsa_half.lower()
+    assert len(res.khanda_nirnaya_longevity_ta) > 0
+    assert len(res.father_critical_degree) > 0
+    assert len(res.mother_critical_degree) > 0
+
+    # 101% Guaranteed Chart Shockers
+    assert len(res.guaranteed_chart_shockers) >= 1
+    for shocker in res.guaranteed_chart_shockers:
+        assert shocker.shock_factor in ("EXTREME", "HIGH", "MODERATE")
+        assert len(shocker.astrological_proof) > 0
+        assert len(shocker.script_ta) > 0
+        assert len(shocker.script_en) > 0
+        assert len(shocker.checklist) == 3
+        for item in shocker.checklist:
+            assert "[✓]" in item
+
+    # Mind Reader checklist verification
+    mind_01 = next((b for b in res.arrival_reason_bullets if b.id == "mind-01"), None)
+    assert mind_01 is not None
+    assert len(mind_01.checklist) == 3
+    for chk_item in mind_01.checklist:
+        assert "[✓]" in chk_item
+
     # Quick Glance Teleprompter
     assert len(res.quick_glance_teleprompter_en) == 5
     assert len(res.quick_glance_teleprompter_ta) == 5

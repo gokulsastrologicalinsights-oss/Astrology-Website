@@ -60,6 +60,7 @@ from app.services.marriage_engine.composite_assessment import (
     COMPOSITE_DISCLAIMER_EN,
     COMPOSITE_DISCLAIMER_TA,
 )
+from app.services.marriage_engine.sivadasan_ravi_engine import run_sivadasan_ravi_marriage_insights
 
 logger = logging.getLogger("gai.marriage_service")
 
@@ -524,6 +525,8 @@ def run_marriage_compatibility_analysis(
     groom_d9_chart_dict = _build_chart_render_payload(groom_chart, is_navamsa=True)
     bride_d9_chart_dict = _build_chart_render_payload(bride_chart, is_navamsa=True)
 
+    sivadasan_ravi_res = run_sivadasan_ravi_marriage_insights(groom_chart, bride_chart)
+
     return MarriageCompatibilityResponse(
         metadata=meta,
         groom_profile=groom_prof,
@@ -540,5 +543,6 @@ def run_marriage_compatibility_analysis(
         bride_chart=bride_chart_dict,
         groom_d9_chart=groom_d9_chart_dict,
         bride_d9_chart=bride_d9_chart_dict,
+        sivadasan_ravi_insights=sivadasan_ravi_res,
         final_assessment=fin_legacy,
     )

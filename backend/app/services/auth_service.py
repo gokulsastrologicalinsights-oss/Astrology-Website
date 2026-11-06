@@ -4,12 +4,18 @@ Validates Supabase Auth tokens and enforces Row-Level / Role-Based authorization
 """
 
 import os
-from typing import Optional, Dict, Any
+import time
+import hashlib
+from typing import Optional, Dict, Any, Tuple
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 
 security = HTTPBearer(auto_error=False)
+
+# In-memory authentication cache: token_hash -> (expiry_timestamp, user_dict)
+_AUTH_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_AUTH_CACHE_TTL_SECONDS = 60.0  # 60 seconds TTL eliminates duplicate auth roundtrips
 
 
 def get_supabase_client():
@@ -43,6 +49,17 @@ async def get_current_user(
         )
 
     token = credentials.credentials
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    now = time.time()
+
+    # Fast in-memory check to prevent redundant Supabase Auth & PostgREST requests
+    if token_hash in _AUTH_CACHE:
+        cache_time, cached_user = _AUTH_CACHE[token_hash]
+        if now - cache_time < _AUTH_CACHE_TTL_SECONDS:
+            return cached_user
+        else:
+            del _AUTH_CACHE[token_hash]
+
     supabase = get_supabase_client()
 
     # If Supabase client is configured, verify via Supabase Auth
@@ -67,7 +84,7 @@ async def get_current_user(
             )
 
             profile = profile_res.data or {}
-            return {
+            resolved_user = {
                 "id": user_id,
                 "email": user_response.user.email,
                 "username": profile.get("username", "user"),
@@ -75,6 +92,14 @@ async def get_current_user(
                 "role": profile.get("role", "user"),
                 "must_change_password": profile.get("must_change_password", False),
             }
+
+            # Store in cache (cap cache size to 500 active sessions)
+            if len(_AUTH_CACHE) >= 500:
+                oldest_k = min(_AUTH_CACHE.keys(), key=lambda k: _AUTH_CACHE[k][0])
+                del _AUTH_CACHE[oldest_k]
+            _AUTH_CACHE[token_hash] = (now, resolved_user)
+
+            return resolved_user
         except HTTPException:
             raise
         except Exception as exc:

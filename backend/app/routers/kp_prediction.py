@@ -23,7 +23,17 @@ from app.schemas.kp_prediction import (
     KpEventPromiseResult,
     RulingPlanetsInfo,
 )
+from app.schemas.life_roadmap import (
+    LifeRoadmapRequest,
+    LifeRoadmapResponse,
+    LifeDomainInfo,
+)
+from app.services.life_roadmap_service import (
+    generate_life_roadmap,
+    get_all_domains_info,
+)
 from app.services.auth_service import get_current_user, get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.dasa_service import _convert_node
 from app.services.ephemeris import calculate_full_horoscope
 from app.services.kp_service import calculate_kp_chart
@@ -106,34 +116,30 @@ def scan_kp_prediction(
 
     # If horoscope_id provided, retrieve from database with ownership verification
     if req.horoscope_id:
-        clean_hid = _validate_uuid(req.horoscope_id)
-        supabase = get_supabase_client()
-        if not supabase:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database service unavailable to fetch saved horoscope.",
-            )
-
         try:
-            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_hid).execute()
-            if resp.data and len(resp.data) > 0:
-                row = resp.data[0]
-                # Enforce ownership check
-                is_admin = current_user and current_user.get("role") == "admin"
-                if current_user and not is_admin and str(row.get("user_id")) != str(current_user["id"]):
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Saved horoscope not found or unauthorized.",
-                    )
-                horoscope_row = row
-                birth_date_str = str(row["birth_date"])
-                birth_time_str = str(row["birth_time"])
-                tz_str = str(row.get("timezone", "Asia/Kolkata"))
-                lat = float(row["latitude"])
-                lon = float(row["longitude"])
-                place_name = str(row.get("birthplace", "Birth Place"))
-                customer_name = str(row.get("person_name", "Native"))
-                saved_chart_ayanamsa = int(row.get("ayanamsa_id", DEFAULT_AYANAMSA_ID))
+            clean_hid = _validate_uuid(req.horoscope_id)
+            is_admin = current_user and current_user.get("role") == "admin"
+            user_id = current_user["id"] if current_user else ""
+            row = get_cached_saved_horoscope(
+                clean_id=clean_hid,
+                user_id=user_id,
+                is_admin=is_admin,
+                include_calculation_result=True,
+            )
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Saved horoscope not found or unauthorized.",
+                )
+            horoscope_row = row
+            birth_date_str = str(row["birth_date"])
+            birth_time_str = str(row["birth_time"])
+            tz_str = str(row.get("timezone", "Asia/Kolkata"))
+            lat = float(row["latitude"])
+            lon = float(row["longitude"])
+            place_name = str(row.get("birthplace", "Birth Place"))
+            customer_name = str(row.get("person_name", "Native"))
+            saved_chart_ayanamsa = int(row.get("ayanamsa_id", DEFAULT_AYANAMSA_ID))
         except HTTPException:
             raise
         except Exception as e:
@@ -362,3 +368,28 @@ def scan_kp_prediction(
     response_obj.report_markdown = generate_kp_prediction_report_markdown(response_obj)
 
     return response_obj
+
+
+@router.get("/life-roadmap/domains", summary="List the 5 major Life Domains and tracked events", response_model=List[LifeDomainInfo])
+def get_life_roadmap_domains() -> List[LifeDomainInfo]:
+    """Returns the 5 major Life Domains tracked by the multi-year timeline predictor."""
+    return get_all_domains_info()
+
+
+@router.post("/life-roadmap", response_model=LifeRoadmapResponse, summary="Automated Multi-Year Life Timeline Predictor (Life Roadmap)")
+def evaluate_life_roadmap(
+    req: LifeRoadmapRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> LifeRoadmapResponse:
+    """Evaluates birth chart across 1, 3, or 5 years across all major life domains simultaneously."""
+    try:
+        return generate_life_roadmap(req, current_user=current_user)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
+    except Exception as exc:
+        logger.exception(f"Life roadmap evaluation failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Life roadmap evaluation failed: {str(exc)}",
+        )
+

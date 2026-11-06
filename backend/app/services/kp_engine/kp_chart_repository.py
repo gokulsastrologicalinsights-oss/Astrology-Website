@@ -99,7 +99,7 @@ def list_kp_charts(
 
     if supabase:
         try:
-            query = supabase.table("saved_kp_charts").select("*")
+            query = supabase.table("saved_kp_charts").select("id, user_id, display_number, title, chart_type, person_name, birth_date, birth_time, birthplace, horary_number, kp_ayanamsa_id, created_at, updated_at")
             if not is_admin:
                 query = query.eq("user_id", user_id)
             if chart_type:

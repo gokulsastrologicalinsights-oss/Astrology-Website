@@ -70,6 +70,26 @@ export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionPr
 
   return (
     <div className="space-y-4">
+      {/* KP Period Timing Banner */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+        <div>
+          <div className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+            <span>✨ KP நடப்பு காலக்கட்ட பலன் & நிகழ்வு நிர்ணயிப்பான்</span>
+          </div>
+          <div className="text-sm font-semibold text-slate-800 mt-0.5">
+            {language === "ta"
+              ? "நடப்பு நவம்பர் / டிசம்பர் மாதத்தில் எது கண்டிப்பாக நடந்து தீரும் என்ற KP துல்லிய கணிப்பு"
+              : "High-certainty KP event timing analysis for current and upcoming months"}
+          </div>
+        </div>
+        <Link
+          href={`/tools/kp-monthly-predictions${savedHoroscopeId ? `?id=${savedHoroscopeId}` : ""}`}
+          className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow transition-all whitespace-nowrap"
+        >
+          {language === "ta" ? "மாத பலன்களைக் காண்க →" : "View Monthly Timing →"}
+        </Link>
+      </div>
+
       {/* Sub Tabs */}
       <div className="flex border-b border-[#E2DCD5] gap-2 overflow-x-auto pb-1">
         <button

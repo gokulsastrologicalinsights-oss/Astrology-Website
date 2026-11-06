@@ -4885,6 +4885,10 @@ INITIAL_RULES_CATALOGUE.extend(SARAVALI_RULES)
 from app.services.prediction_rules.bphs_classical_rules import BPHS_CLASSICAL_RULES
 INITIAL_RULES_CATALOGUE.extend(BPHS_CLASSICAL_RULES)
 
+# Append Deva Keralam (Chandra Kala Nadi) Volume 3 Classical Rules (Sage Venkatesa)
+from app.services.prediction_rules.deva_keralam_rules import DEVA_KERALAM_RULES
+INITIAL_RULES_CATALOGUE.extend(DEVA_KERALAM_RULES)
+
 
 class RulesRegistry:
     """In-memory and database-backed rule repository."""

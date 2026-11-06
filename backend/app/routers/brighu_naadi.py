@@ -5,9 +5,15 @@ Jeeva Karaka (Jupiter) & Karma Karaka (Saturn) diagnostics, and exact event mile
 """
 
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.brighu_naadi import BrighuNaadiRequest, BrighuNaadiResponse
+from app.schemas.brighu_naadi import (
+    BrighuNaadiRequest,
+    BrighuNaadiResponse,
+    BrighuPrashnaRequest,
+    BrighuPrashnaResponse,
+)
 from app.services.ephemeris import calculate_full_horoscope
 from app.services.brighu_naadi.engine import evaluate_brighu_naadi
+from app.services.brighu_naadi.prashna_engine import evaluate_brighu_prashna
 
 router = APIRouter(prefix="/api/v1/vedic/brighu-naadi", tags=["Brighu Naadi"])
 
@@ -78,3 +84,22 @@ def calculate_brighu_naadi_endpoint(request: BrighuNaadiRequest) -> BrighuNaadiR
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Brighu Naadi calculation error: {str(e)}",
         )
+
+
+@router.post("/prashna", response_model=BrighuPrashnaResponse, summary="Evaluate Brighu Prashna Nadi Oracle")
+def calculate_brighu_prashna_endpoint(request: BrighuPrashnaRequest) -> BrighuPrashnaResponse:
+    """Calculates R. G. Rao's Brighu Prashna Nadi prophecy (107 predictions).
+
+    Uses the classical formula:
+    Remainder = 107 - Completed Age.
+    Matches the exact classical Sanskrit sutra, Yoga/Amsha, career, finance, domestic peace,
+    poorva karma cause, and prescribed temple/deity remedies.
+    """
+    try:
+        return evaluate_brighu_prashna(request)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Brighu Prashna calculation error: {str(e)}",
+        )
+

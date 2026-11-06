@@ -43,7 +43,9 @@ from app.services.brighu_naadi.registry import (
     BNN_20_GOLDEN_RULES,
     BNN_SATURN_SIGN_CAREERS,
     BNN_PLANETARY_INDUSTRIES,
+    evaluate_pankajj_duaa_compendium,
 )
+
 
 SIGN_NAMES_EN = [
     "Aries", "Taurus", "Gemini", "Cancer",
@@ -795,6 +797,12 @@ def evaluate_brighu_naadi(
             "source_ref": r["source_ref"],
         })
 
+    pankajj_duaa_eval = evaluate_pankajj_duaa_compendium(
+        planets_data=planets_data,
+        ascendant_sign=ascendant_sign,
+        gender=gender,
+    )
+
     return BrighuNaadiResponse(
         treatise_metadata=BRIGHU_NAADI_METADATA,
         bnn_research_metadata=BHRIGU_NANDI_NADI_RESEARCH_METADATA,
@@ -807,4 +815,5 @@ def evaluate_brighu_naadi(
         bnn_directional_groups=bnn_directional_groups,
         bnn_20_rules_evaluations=bnn_20_evaluations,
         rahu_ketu_axis_career_outside=rahu_ketu_outside_obj,
+        pankajj_duaa_compendium=pankajj_duaa_eval,
     )

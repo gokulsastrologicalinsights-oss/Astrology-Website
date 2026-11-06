@@ -204,7 +204,7 @@ NAKSHATRA_NADI: Dict[int, NadiType] = {
     14: NadiType.ANTYA, 15: NadiType.ANTYA, 20: NadiType.ANTYA, 21: NadiType.ANTYA, 26: NadiType.ANTYA,
 }
 
-# Canonical 5 Rajju (Pancha Rajju) Classification (Kalaprakasika Ch. 12)
+# Canonical 5 Rajju (Pancha Rajju) Classification (Kalaprakasika Ch. 12 & Thirumana Yoga Porutha Thiravukol)
 NAKSHATRA_RAJJU: Dict[int, RajjuType] = {
     # Shiro Rajju (Head / Sirasu) - 3 stars
     4: RajjuType.SHIRO, 13: RajjuType.SHIRO, 22: RajjuType.SHIRO,
@@ -220,6 +220,25 @@ NAKSHATRA_RAJJU: Dict[int, RajjuType] = {
     # Pada Rajju (Foot / Padam) - 6 stars
     0: RajjuType.PADA, 8: RajjuType.PADA, 9: RajjuType.PADA,
     17: RajjuType.PADA, 18: RajjuType.PADA, 26: RajjuType.PADA,
+}
+
+# Rajju Direction: Arohana (Ascending / ஏறு வரிசை) vs Avarohana (Descending / இறங்கு வரிசை)
+# Source: Siddhayogi Sivadasan Ravi - Thirumana Yoga Porutha Thiravukol Ch. Rajju Porutham
+NAKSHATRA_RAJJU_DIRECTION: Dict[int, str] = {
+    # Pada Rajju
+    0: "Arohana", 9: "Arohana", 18: "Arohana",
+    8: "Avarohana", 17: "Avarohana", 26: "Avarohana",
+    # Kati Rajju
+    1: "Arohana", 10: "Arohana", 19: "Arohana",
+    7: "Avarohana", 16: "Avarohana", 25: "Avarohana",
+    # Udara Rajju
+    2: "Arohana", 11: "Arohana", 20: "Arohana",
+    6: "Avarohana", 15: "Avarohana", 24: "Avarohana",
+    # Kantha Rajju
+    3: "Arohana", 12: "Arohana", 21: "Arohana",
+    5: "Avarohana", 14: "Avarohana", 23: "Avarohana",
+    # Shiro Rajju (Central / Symmetrical)
+    4: "Central", 13: "Central", 22: "Central",
 }
 
 # 14 Yoni Animals (index 0 to 26 mapped to animal string)
@@ -445,8 +464,12 @@ LAGNA_PLANETARY_NATURE: Dict[str, Dict[str, Any]] = {
     },
 }
 
-# Classical Tamil Vasya Map (Kalaprakasika Ch. 12 Slokas 26-28)
+# Classical Tamil Vasya Map (Kalaprakasika Ch. 12 Slokas 26-28 & Siddhayogi Sivadasan Ravi)
 # Rasi Index (1-12) mapped to list of attracted Rasi indices (1-12)
+# Rule 1: Exalted sign's 1st own house is vashya (e.g. Pisces -> Taurus, Libra -> Capricorn)
+# Rule 2: Debilitated sign's 2nd own house is vashya (e.g. Cancer -> Scorpio)
+# Rule 3: 1st own sign attracts 2nd own sign (e.g. Taurus -> Libra, Gemini -> Virgo)
+# Rule 4: Debilitation of single-lord planet (Sun/Moon) is vashya to its own house
 TAMIL_VASYA_MAP: Dict[int, List[int]] = {
     1: [5, 8],     # Aries -> Leo, Scorpio
     2: [4, 7],     # Taurus -> Cancer, Libra
@@ -459,7 +482,7 @@ TAMIL_VASYA_MAP: Dict[int, List[int]] = {
     9: [12],       # Sagittarius -> Pisces
     10: [1, 11],   # Capricorn -> Aries, Aquarius
     11: [1],       # Aquarius -> Aries
-    12: [10],      # Pisces -> Capricorn
+    12: [10, 2],   # Pisces -> Capricorn, Taurus (Sivadasan Ravi canonical derivation)
 }
 
 # Auspicious Eka Nakshatras (Kalaprakasika Ch. 12 Sloka 4) - permitted for same star matching (0-indexed)

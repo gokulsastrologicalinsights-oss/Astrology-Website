@@ -376,16 +376,8 @@ def calculate_medical_astrology_endpoint(request: MedicalAstrologyRequest) -> Me
         # If saved_horoscope_id is supplied, look up chart details
         if request.saved_horoscope_id:
             clean_id = request.saved_horoscope_id.strip()
-            row = None
-            try:
-                from app.services.auth_service import get_supabase_client
-                supabase = get_supabase_client()
-                if supabase:
-                    res = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                    if res.data and len(res.data) > 0:
-                        row = res.data[0]
-            except Exception:
-                pass
+            from app.services.horoscope_cache import get_cached_saved_horoscope
+            row = get_cached_saved_horoscope(clean_id, user_id="", is_admin=True, include_calculation_result=True)
 
             if not row:
                 import json

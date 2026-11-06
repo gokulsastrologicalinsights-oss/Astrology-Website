@@ -6,6 +6,8 @@ import {
   HoroscopeResponse,
 } from "@/lib/types";
 import { evaluateBrighuNaadiClient } from "@/lib/brighu-naadi-data";
+import { getBrighuPrashnaAnalysis } from "@/lib/api";
+import { BrighuPrashnaResponse } from "@/lib/types";
 import {
   Compass,
   BookOpen,
@@ -43,8 +45,28 @@ export function BrighuNaadiSection({
   language = "en",
 }: BrighuNaadiSectionProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "vastu" | "karakas" | "directions" | "milestones" | "rules" | "bnn_rules"
+    "overview" | "vastu" | "karakas" | "directions" | "milestones" | "rules" | "bnn_rules" | "pankajj_duaa" | "prashna"
   >("overview");
+  const [prashnaAge, setPrashnaAge] = useState<number>(30);
+  const [prashnaCategory, setPrashnaCategory] = useState<string>("general");
+  const [prashnaResult, setPrashnaResult] = useState<BrighuPrashnaResponse | null>(null);
+  const [isPrashnaLoading, setIsPrashnaLoading] = useState<boolean>(false);
+
+  const handleFetchPrashna = async (ageVal: number, catVal: string) => {
+    setIsPrashnaLoading(true);
+    try {
+      const res = await getBrighuPrashnaAnalysis({
+        completed_age: Number(ageVal),
+        query_category: catVal,
+      });
+      setPrashnaResult(res);
+    } catch (e) {
+      console.error("Prashna error:", e);
+    } finally {
+      setIsPrashnaLoading(false);
+    }
+  };
+
 
   // Derive Brighu Naadi analysis: use prop data if provided, else compute offline
   const analysis: BrighuNaadiResponse | null = useMemo(() => {
@@ -80,7 +102,10 @@ export function BrighuNaadiSection({
     bnn_directional_groups,
     bnn_20_rules_evaluations = [],
     rahu_ketu_axis_career_outside,
+    pankajj_duaa_compendium,
   } = analysis;
+
+  const pkd = pankajj_duaa_compendium;
 
   const isTa = language === "ta";
 
@@ -169,6 +194,8 @@ export function BrighuNaadiSection({
           { id: "vastu", label_en: "Birth Vastu & Environment", label_ta: "பிறந்த வாஸ்து & சூழல்", icon: Home },
           { id: "milestones", label_en: "Event Timing Milestones", label_ta: "நிகழ்வு காலக் கணிப்பு", icon: Calendar },
           { id: "rules", label_en: `Classical Yogas (${matched_rules.length})`, label_ta: `நாடி யோகங்கள் (${matched_rules.length})`, icon: Award },
+          { id: "pankajj_duaa", label_en: "Pankajj Duaa BNN Notes", label_ta: "பங்கஜ் துவா BNN சாஸ்திரம்", icon: Shield },
+          { id: "prashna", label_en: "Brighu Prashna Oracle (107)", label_ta: "பிருகு பிரசன்னம் (107 வாக்குகள்)", icon: Flame },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -798,6 +825,585 @@ export function BrighuNaadiSection({
           )}
         </div>
       )}
+
+      {/* 10. TAB 8: PANKAJJ K DUAA BNN COMPENDIUM */}
+      {activeTab === "pankajj_duaa" && pkd && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-900/40 via-orange-950/40 to-stone-900/50 border border-amber-500/30">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-extrabold text-amber-100">
+                  {isTa ? pkd.metadata.title_ta : pkd.metadata.title}
+                </h3>
+              </div>
+              <span className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full font-mono">
+                {pkd.metadata.author}
+              </span>
+            </div>
+            <p className="text-xs text-amber-200/90 leading-relaxed mb-4">
+              {isTa ? pkd.metadata.summary_ta : pkd.metadata.summary_en}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {pkd.metadata.traditions.map((t, i) => (
+                <span key={i} className="text-[11px] bg-black/40 text-amber-300/80 px-2.5 py-0.5 rounded border border-white/10 font-medium">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Rashi Mobility (Gati) Breakdown */}
+          <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <Compass className="w-4 h-4 text-amber-600" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                {isTa ? "ராசி இயக்கத் தத்துவப் பகுப்பாய்வு (Char, Sthir, Upaye)" : "Zodiac Mobility & Movement Tatva (Char, Sthir, Upaye)"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-red-800 dark:text-red-300">
+                    {isTa ? "சர ராசிகள் (1, 4, 7, 10)" : "Char / Movable Signs (1, 4, 7, 10)"}
+                  </span>
+                  <span className="text-xs font-extrabold bg-red-200 dark:bg-red-900/60 text-red-900 dark:text-red-200 px-2 py-0.5 rounded">
+                    {pkd.rashi_mobility_summary.char_movable_count}
+                  </span>
+                </div>
+                <p className="text-[11px] text-red-700 dark:text-red-400">
+                  {pkd.rashi_mobility_summary.char_planets.join(", ") || (isTa ? "கிரகங்கள் இல்லை" : "None")}
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">
+                    {isTa ? "ஸ்திர ராசிகள் (2, 5, 8, 11)" : "Sthir / Fixed Signs (2, 5, 8, 11)"}
+                  </span>
+                  <span className="text-xs font-extrabold bg-blue-200 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200 px-2 py-0.5 rounded">
+                    {pkd.rashi_mobility_summary.sthir_fixed_count}
+                  </span>
+                </div>
+                <p className="text-[11px] text-blue-700 dark:text-blue-400">
+                  {pkd.rashi_mobility_summary.sthir_planets.join(", ") || (isTa ? "கிரகங்கள் இல்லை" : "None")}
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-purple-200 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-950/20">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-purple-800 dark:text-purple-300">
+                    {isTa ? "உபய ராசிகள் (3, 6, 9, 12)" : "Upaye / Dual Signs (3, 6, 9, 12)"}
+                  </span>
+                  <span className="text-xs font-extrabold bg-purple-200 dark:bg-purple-900/60 text-purple-900 dark:text-purple-200 px-2 py-0.5 rounded">
+                    {pkd.rashi_mobility_summary.upaye_dual_count}
+                  </span>
+                </div>
+                <p className="text-[11px] text-purple-700 dark:text-purple-400">
+                  {pkd.rashi_mobility_summary.upaye_planets.join(", ") || (isTa ? "கிரகங்கள் இல்லை" : "None")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Naadi House Quality Table */}
+          <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-amber-600" />
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {isTa ? "நாடி பாவ நிலை பலன் (ராசி சாரா நன்மை/தீமை அட்டவணை)" : "Naadi House Quality Pattern (Irrespective of Rashi)"}
+                </h4>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                {isTa ? "லக்னத்திலிருந்து பாவ நிலை" : "House reckoned from Lagna"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+              {Object.entries(pkd.naadi_house_qualities).map(([planet, q]: [string, any]) => {
+                const isGood = q.status.includes("Good");
+                const isBad = q.status.includes("Very Bad");
+                return (
+                  <div
+                    key={planet}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      isGood
+                        ? "border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20"
+                        : isBad
+                        ? "border-rose-200 dark:border-rose-800/40 bg-rose-50/50 dark:bg-rose-950/20"
+                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                      {planet}
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      {isTa ? `${q.house}-ஆம் பாவம்` : `House ${q.house}`}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded mt-1 inline-block ${
+                        isGood
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+                          : isBad
+                          ? "bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200"
+                          : "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                      }`}
+                    >
+                      {isTa ? q.status_ta : q.status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Medical Astrology & Cancer Yoga */}
+          <div className="p-5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-950/10 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-rose-600" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                {isTa ? "BNN மருத்துவ ஜோதிடம் & ஆரோக்கிய ஆய்வு" : "BNN Medical Astrology & Vitality Assessment"}
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Life Significator */}
+              <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide block mb-1">
+                  {isTa ? "ஜீவ காரகர் ஆரோக்கிய நிலை" : "Prime Life Force Karaka"}
+                </span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">
+                    {pkd.medical_astrology.life_significator.prime_planet} ({isTa ? (gender.toLowerCase() === "female" ? "பெண்களுக்கு சுக்கிரன்" : "ஆண்களுக்கு குரு") : (gender.toLowerCase() === "female" ? "Venus for Females" : "Jupiter for Males")})
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      pkd.medical_astrology.life_significator.is_afflicted
+                        ? "bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200"
+                        : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+                    }`}
+                  >
+                    {pkd.medical_astrology.life_significator.is_afflicted ? (isTa ? "பாதிக்கப்பட்டுள்ளது" : "Afflicted") : (isTa ? "ஆரோக்கிய சுபம்" : "Healthy & Dignified")}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {isTa ? pkd.medical_astrology.life_significator.evaluation_ta : pkd.medical_astrology.life_significator.evaluation_en}
+                </p>
+              </div>
+
+              {/* Cancer Yoga */}
+              <div
+                className={`p-3.5 rounded-lg border ${
+                  pkd.medical_astrology.cancer_yoga.is_active
+                    ? "border-red-300 dark:border-red-800 bg-red-50/70 dark:bg-red-950/30"
+                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                    {isTa ? "சனி - ராகு புற்றுநோய் யோக ஆய்வு" : "Saturn-Rahu Cancer Yoga Check"}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      pkd.medical_astrology.cancer_yoga.is_active
+                        ? "bg-red-600 text-white animate-pulse"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    {pkd.medical_astrology.cancer_yoga.is_active ? (isTa ? "இணைந்துள்ளது" : "Active Link") : (isTa ? "இல்லை" : "Neutral")}
+                  </span>
+                </div>
+                <h5 className="font-bold text-xs text-slate-900 dark:text-white mb-1">
+                  {isTa ? pkd.medical_astrology.cancer_yoga.title_ta : pkd.medical_astrology.cancer_yoga.title_en}
+                </h5>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {isTa ? pkd.medical_astrology.cancer_yoga.explanation_ta : pkd.medical_astrology.cancer_yoga.explanation_en}
+                </p>
+              </div>
+            </div>
+
+            {/* Organ Afflictions by 2+ Enemy Planets */}
+            {pkd.medical_astrology.organ_afflictions.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <span className="text-xs font-bold text-rose-800 dark:text-rose-300 block">
+                  {isTa ? "பகை கிரகங்கள் இணைந்த பாவங்களும் உறுப்பு எச்சரிக்கைகளும் (2+ Enemy Rule):" : "Organ Vulnerability Alerts (2+ Enemy Planets in Single House):"}
+                </span>
+                <div className="space-y-2">
+                  {pkd.medical_astrology.organ_afflictions.map((aff, i) => (
+                    <div key={i} className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                          {isTa ? `${aff.house}-ஆம் பாவம்: ${aff.organ_ta}` : `House ${aff.house}: ${aff.organ_en}`}
+                        </span>
+                        <p className="text-xs text-rose-700 dark:text-rose-400 mt-0.5">
+                          {isTa ? aff.warning_ta : aff.warning_en}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Matched Yogas & Injunctions */}
+          {pkd.matched_yogas.length > 0 && (
+            <div className="p-5 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/20 dark:bg-amber-950/10 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {isTa ? `பங்கஜ் துவா BNN யோகங்கள் & விதிகள் (${pkd.matched_yogas.length})` : `Pankajj Duaa Matched Yogas & Principles (${pkd.matched_yogas.length})`}
+                </h4>
+              </div>
+              <div className="space-y-2.5">
+                {pkd.matched_yogas.map((y, i) => (
+                  <div
+                    key={i}
+                    className={`p-3.5 rounded-lg border ${
+                      y.is_favorable
+                        ? "border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20"
+                        : "border-amber-200 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/20"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <h5 className="font-bold text-xs text-slate-900 dark:text-white">
+                        {isTa ? y.yoga_name_ta : y.yoga_name}
+                      </h5>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          y.is_favorable
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                        }`}
+                      >
+                        {y.is_favorable ? (isTa ? "சுப யோகம்" : "Favorable Yoga") : (isTa ? "எச்சரிக்கை / விதி" : "Caution / Injunction")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      {isTa ? y.description_ta : y.description_en}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Degree Border Alerts */}
+          {pkd.degree_border_alerts.length > 0 && (
+            <div className="p-5 rounded-xl border border-indigo-200 dark:border-indigo-900/40 bg-indigo-50/20 dark:bg-indigo-950/10 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-indigo-600" />
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {isTa ? "பாகை விளிம்பு கிரக மாற்றங்கள் (27°-30° & 0°-3°)" : "Degree Border Shifts (27°-30° & 0°-3°)"}
+                </h4>
+              </div>
+              <div className="space-y-2">
+                {pkd.degree_border_alerts.map((alert, i) => (
+                  <div key={i} className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2.5">
+                    <Navigation className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                        {alert.planet} ({alert.degree.toFixed(2)}°)
+                      </span>
+                      <p className="text-xs text-indigo-900 dark:text-indigo-300 mt-0.5">
+                        {isTa ? alert.shift_ta : alert.shift_en}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Prescribed Remedies & Taboos */}
+          <div className="p-5 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-slate-900 dark:to-amber-950/20 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {isTa ? "பங்கஜ் துவா BNN பரிகாரங்கள், ருத்ராட்சம் & எச்சரிக்கைகள்" : "BNN Prescribed Remedies, Rudrakshas & Sacred Taboos"}
+                </h4>
+              </div>
+            </div>
+
+            {/* Planet-specific remedies */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {pkd.prescribed_remedies.map((rem, i) => (
+                <div key={i} className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-sm text-amber-800 dark:text-amber-400">
+                      {rem.planet} {isTa ? "பரிகாரங்கள்" : "Remedies"}
+                    </span>
+                    <span className="text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 px-2.5 py-0.5 rounded-full">
+                      {rem.rudraksha}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{isTa ? "தெய்வம்: " : "Deity: "}</span>
+                    {rem.deities}
+                  </div>
+                  <div className="text-[11px] font-mono text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/30 p-2 rounded border border-amber-200/50 dark:border-amber-900/40">
+                    {rem.mantra}
+                  </div>
+                  <ul className="space-y-1 pt-1">
+                    {rem.key_remedies.map((kr, ki) => (
+                      <li key={ki} className="text-xs text-slate-700 dark:text-slate-300 flex items-start gap-1.5">
+                        <span className="text-amber-600 font-bold">•</span>
+                        <span>{kr}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* General Life Maxims */}
+            <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-900/40 space-y-2 mt-3">
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 block">
+                {isTa ? "வாழ்வியல் பொன்விதிகள் & எச்சரிக்கைகள் (Universal Life Maxims):" : "BNN Universal Life Maxims & Sacred Taboos:"}
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {pkd.general_life_maxims.map((glm, i) => (
+                  <div key={i} className="p-2.5 rounded-lg bg-amber-50/40 dark:bg-slate-800/40 border border-amber-100 dark:border-slate-700">
+                    <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 block">
+                      {glm.rule}
+                    </span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 block leading-relaxed">
+                      {glm.maxim}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+            {/* 9. TAB 9: BRIGHU PRASHNA NADI ORACLE */}
+      {activeTab === "prashna" && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-red-950/60 via-amber-950/50 to-stone-900/60 border border-red-500/30 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-48 h-48 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-semibold border border-red-500/30 mb-2">
+                  <Flame className="w-3.5 h-3.5 text-red-400" />
+                  <span>{isTa ? "பிருகு பிரசன்ன நாடி வாக்கு ரகசியம்" : "R. G. Rao's Bhrigu Prashna Nadi Oracle"}</span>
+                </div>
+                <h3 className="text-xl font-bold tracking-tight text-amber-100">
+                  {isTa ? "107 புனித பிரசன்ன கணிப்புகள் (Brighu Prashna Nadi)" : "The 107 Classical Horary Predictions"}
+                </h3>
+                <p className="text-xs text-amber-200/80 mt-1 max-w-2xl leading-relaxed">
+                  {isTa
+                    ? "ஆர். ஜி. ராவ் அவர்களின் 'பிருகு பிரசன்ன நாடி' (1994) முறைப்படி ஜாதகரின் பூர்த்தியான வயதை 107 இலிருந்து கழித்து வரும் ரகசிய எண்ணைக் கொண்டு உடனடி கர்ம வினை, தீர்வு மற்றும் சுப பலன் காலம் அறியப்படுகிறது."
+                    : "Per R. G. Rao's foundational treatise (1994), subtracting the completed age from 107 unlocks the native's exact classical prophecy, past life karmic causes, deity remedies, and precision timing of relief."}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-[11px] text-amber-300/80 bg-black/40 px-3 py-1.5 rounded-lg border border-white/10 font-mono block">
+                  Formula: 107 - Completed Age = Remainder
+                </span>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Author: R. G. Rao (Sagar Publications)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Calculation Card */}
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  {isTa ? "ஜாதகரின் பூர்த்தியான வயது (Completed Age):" : "Querent's Completed Age (Years):"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="107"
+                  value={prashnaAge}
+                  onChange={(e) => setPrashnaAge(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 rounded-xl text-sm border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
+                  {isTa ? "107 - வயது = பிரசன்ன எண்: " : "Prediction Remainder: "}
+                  <strong className="text-amber-600 dark:text-amber-400">
+                    {prashnaAge === 0 ? 107 : Math.max(0, 107 - prashnaAge)}
+                  </strong>
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  {isTa ? "கேள்விப் பிரிவு (Query Category):" : "Query Category:"}
+                </label>
+                <select
+                  value={prashnaCategory}
+                  onChange={(e) => setPrashnaCategory(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl text-sm border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="general">{isTa ? "பொதுவான வாழ்வு பலன் (General)" : "General Life & Fortune"}</option>
+                  <option value="career">{isTa ? "உத்தியோகம் / தொழில் (Career / Job)" : "Career & Profession"}</option>
+                  <option value="business">{isTa ? "வியாபாரம் / வர்த்தகம் (Commercial Trade)" : "Business & Trade"}</option>
+                  <option value="marriage">{isTa ? "திருமணம் / இல்லறம் (Marriage & Spouse)" : "Marriage & Relationships"}</option>
+                  <option value="health">{isTa ? "உடல் நலம் / நோய் தீர்வு (Health & Cures)" : "Health & Medical Relief"}</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  onClick={() => handleFetchPrashna(prashnaAge, prashnaCategory)}
+                  disabled={isPrashnaLoading}
+                  className="w-full py-2.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-700 to-orange-700 hover:from-amber-800 hover:to-orange-800 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {isPrashnaLoading ? (
+                    <span>{isTa ? "கணக்கிடப்படுகிறது..." : "Consulting Oracle..."}</span>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-amber-200" />
+                      <span>{isTa ? "நாடி வாக்கு பெறுக" : "Reveal Oracle Prophecy"}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Results Box */}
+          {prashnaResult && (
+            <div className="space-y-4">
+              {/* Sacred Invocations */}
+              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-center">
+                <span className="text-xs font-mono font-bold tracking-wider text-amber-800 dark:text-amber-300 uppercase block">
+                  {prashnaResult.guru_mantra}
+                </span>
+                {prashnaResult.sanskrit_sloka && (
+                  <span className="text-sm font-semibold text-amber-900 dark:text-amber-200 italic mt-1 block">
+                    "{prashnaResult.sanskrit_sloka}"
+                  </span>
+                )}
+              </div>
+
+              {/* Central Prophecy Card */}
+              <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                      {isTa ? "இயங்கும் யோகம் / அம்சம்:" : "Active Yoga / Amsha:"}
+                    </span>
+                    <h4 className="text-lg font-bold text-amber-800 dark:text-amber-300">
+                      {isTa ? prashnaResult.yoga_name_ta : prashnaResult.yoga_name_en}
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-200 dark:border-amber-800 font-mono">
+                      Prediction #{prashnaResult.prediction_number}
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                      {prashnaResult.formula_applied}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Core Prophecy Text */}
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    {isTa ? "பிரசன்ன நாடி வாக்கு (Core Oracle Prophecy):" : "Core Oracle Prophecy:"}
+                  </span>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-serif">
+                    {isTa ? prashnaResult.core_prophecy_ta : prashnaResult.core_prophecy_en}
+                  </p>
+                </div>
+
+                {/* 3 Pillars Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Career & Finance */}
+                  <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-blue-800 dark:text-blue-300 font-bold text-xs">
+                      <Briefcase className="w-3.5 h-3.5" />
+                      <span>{isTa ? "தொழில் & தன யோகம்" : "Career & Finance"}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {isTa ? prashnaResult.career_and_finance_ta : prashnaResult.career_and_finance_en}
+                    </p>
+                  </div>
+
+                  {/* Family & Relationships */}
+                  <div className="p-4 rounded-xl bg-pink-50/50 dark:bg-pink-950/20 border border-pink-100 dark:border-pink-900/30 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-pink-800 dark:text-pink-300 font-bold text-xs">
+                      <Heart className="w-3.5 h-3.5" />
+                      <span>{isTa ? "குடும்பம் & இல்லறம்" : "Family & Household"}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {isTa ? prashnaResult.family_and_relationships_ta : prashnaResult.family_and_relationships_en}
+                    </p>
+                  </div>
+
+                  {/* Health & Cautions */}
+                  <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>{isTa ? "உடல் நலம் & தீர்வு" : "Health & Cures"}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {isTa ? prashnaResult.health_and_cautions_ta : prashnaResult.health_and_cautions_en}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Karmic Cause & Remedy Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  {/* Past Karma Cause */}
+                  {prashnaResult.past_karma_cause_en && (
+                    <div className="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/40 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-purple-800 dark:text-purple-300 font-bold text-xs">
+                        <Flame className="w-3.5 h-3.5 text-purple-500" />
+                        <span>{isTa ? "பூர்வ கர்ம வினை (Poorva Karma Cause):" : "Past Life Karmic Root Cause:"}</span>
+                      </div>
+                      <p className="text-xs text-purple-950 dark:text-purple-200 leading-relaxed">
+                        {isTa ? prashnaResult.past_karma_cause_ta : prashnaResult.past_karma_cause_en}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Prescribed Remedy */}
+                  <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{isTa ? "பரிகார தெய்வம் & பூஜை (Prescribed Remedy):" : "Prescribed Remedy & Deity:"}</span>
+                    </div>
+                    <p className="text-xs text-amber-950 dark:text-amber-200 leading-relaxed font-semibold">
+                      {isTa ? prashnaResult.prescribed_remedy_ta : prashnaResult.prescribed_remedy_en}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Timeline Banner */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-900/20 via-teal-900/20 to-slate-900/20 border border-emerald-500/30 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 block">
+                        {isTa ? "துன்பங்கள் நீங்கி சுப பலன்கள் தொடங்கும் காலம்:" : "Precise Relief & Prosperity Timeline:"}
+                      </span>
+                      <span className="text-xs text-slate-700 dark:text-slate-200 font-medium">
+                        {isTa ? prashnaResult.relief_timeline_ta : prashnaResult.relief_timeline_en}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                    Bhrigu Prashna Nadi
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }

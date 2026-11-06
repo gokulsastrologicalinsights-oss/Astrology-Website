@@ -725,7 +725,49 @@ PREDICTION_CATEGORY_GROUPS: List[CategoryGroup] = [
             ),
         ],
     ),
-
+    CategoryGroup(
+        group_code="deva_keralam_classics",
+        group_name_en="Deva Keralam (Chandra Kala Nadi)",
+        group_name_ta="தேவ கேரளம் (சந்திர கலா நாடி)",
+        display_order=11,
+        subcategories=[
+            SubcategoryItem(
+                slug="deva_keralam_nadiamsas",
+                name_en="150 Nadiamsas Micro-Zodiac Predictions",
+                name_ta="150 நாடியம்ச நுண்பிரிவு பலன்கள்",
+                description_en="Micro-zodiac predictions based on 150 Nadiamsas (12' arc each) across movable, fixed, and dual signs per Deva Keralam Book 1.",
+                description_ta="தேவ கேரளம் முதல் பாகத்தின்படி சர, ஸ்திர, உபய ராசிகளில் 150 நாடியம்சங்களின் (12 கலை அளவு) அடிப்படையில் கூறப்பட்ட நுட்பமான பலன்கள்.",
+            ),
+            SubcategoryItem(
+                slug="deva_keralam_raja_yogas",
+                name_en="Sovereign & Koorma Yogas",
+                name_ta="ராஜ யோகங்கள் மற்றும் கூர்ம யோகம்",
+                description_en="Sovereign combinations including Matanga, Koorma, Rudrasana, and Chakra Yogas from Deva Keralam.",
+                description_ta="மாதங்க யோகம், கூர்ம யோகம், சக்ர யோகம் உள்ளிட்ட அரச யோகங்கள் மற்றும் உயர் பதவிகளைத் தரும் தேவ கேரள யோகங்கள்.",
+            ),
+            SubcategoryItem(
+                slug="deva_keralam_gochara_navamsa",
+                name_en="Saturn Transits over Navamsa Dispositors",
+                name_ta="நவாம்ச அதிபதிகள் மீது சனியின் கோசார விதிகள்",
+                description_en="Timing critical life events, family loss, and prosperity when transit Saturn aspects or enters Navamsa dispositor Rasis.",
+                description_ta="2, 8, 11-ஆம் அதிபதிகளின் நவாம்ச அதிபதி மீது கோசார சனி சஞ்சரிக்கும் காலத்தில் நிகழும் விபத்து, தன நஷ்டம் மற்றும் மரண கண்டக் கால நிர்ணயம்.",
+            ),
+            SubcategoryItem(
+                slug="deva_keralam_karma_remedies",
+                name_en="Karma-Vipaka Diagnostic & Remedial Science",
+                name_ta="கர்ம விபாக சாப ஆய்வு & பரிகார சாஸ்திரம்",
+                description_en="Specific past-life curses causing childlessness and their exact remedies: Setu snanam, Nageswara Pradosha worship, and Santana Gopala Dana.",
+                description_ta="முற்பிறவி சாபங்களால் ஏற்படும் புத்திர தோஷங்கள் மற்றும் அதற்கான ராமேஸ்வர சேது ஸ்நானம், நாகேஸ்வர சிவபூஜை, சந்தான கோபால தான பரிகாரங்கள்.",
+            ),
+            SubcategoryItem(
+                slug="deva_keralam_bhava_phala",
+                name_en="Bhava Indications & Longevity",
+                name_ta="பாவ பலன்கள் மற்றும் ஆயுள் நிர்ணயம்",
+                description_en="Detailed horoscopic manifestations for Taurus, Aquarius, and Sagittarius Ascendants across Purvardha and Uttarardha.",
+                description_ta="ரிஷபம், கும்பம், தனுசு லக்னங்களின் பூர்வார்த்த மற்றும் உத்தரார்த்த பாவ பலன்கள் மற்றும் குடும்பத்தாரின் ஆயுள் சூத்திரங்கள்.",
+            ),
+        ],
+    ),
 ]
 
 

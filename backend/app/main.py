@@ -41,6 +41,8 @@ from app.routers import (
     brighu_naadi,
     kuladeivam,
     instant_revelation,
+    kp_narrative,
+    kp_timing,
 )
 
 
@@ -182,5 +184,9 @@ app.include_router(kuladeivam.router)
 app.include_router(kuladeivam.router, prefix="/api/kuladeivam")
 app.include_router(instant_revelation.router)
 app.include_router(instant_revelation.router, prefix="/api/instant-revelation")
+app.include_router(kp_narrative.router)
+app.include_router(kp_narrative.router, prefix="/api/kp-narrative")
+app.include_router(kp_timing.router)
+app.include_router(kp_timing.router, prefix="/api/kp-timing")
 
 

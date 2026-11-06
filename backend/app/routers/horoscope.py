@@ -33,6 +33,7 @@ from app.services.varga_engine import (
     calculate_shodashvarga_from_horoscope_dict,
 )
 from app.services.auth_service import get_current_user, get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
@@ -113,22 +114,13 @@ async def calculate_varga_d1_d9_endpoint(
                     detail="Authentication token required to access saved horoscopes.",
                 )
             clean_id = _validate_uuid(request.saved_horoscope_id)
-            supabase = get_supabase_client()
-            if not supabase:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Database service unavailable. Database configuration missing.",
-                )
             is_admin = current_user.get("role") == "admin"
-            horoscope_row: Optional[Dict[str, Any]] = None
-            try:
-                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                if resp.data and len(resp.data) > 0:
-                    row = resp.data[0]
-                    if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                        horoscope_row = row
-            except Exception as err:
-                logger.warning(f"Database error fetching saved horoscope {clean_id}: {err}")
+            horoscope_row = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=current_user["id"],
+                is_admin=is_admin,
+                include_calculation_result=True,
+            )
 
             if not horoscope_row:
                 raise HTTPException(
@@ -205,22 +197,13 @@ async def get_saved_horoscope_varga_d1_d9(
 ) -> VargaD1D9Response:
     """Retrieves D1 Rasi and D9 Navamsa charts for a specific saved horoscope."""
     clean_id = _validate_uuid(horoscope_id)
-    supabase = get_supabase_client()
-    if not supabase:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database service unavailable. Database configuration missing.",
-        )
     is_admin = current_user.get("role") == "admin"
-    horoscope_row: Optional[Dict[str, Any]] = None
-    try:
-        resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-        if resp.data and len(resp.data) > 0:
-            row = resp.data[0]
-            if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                horoscope_row = row
-    except Exception as err:
-        logger.warning(f"Database error fetching saved horoscope {clean_id}: {err}")
+    horoscope_row = get_cached_saved_horoscope(
+        clean_id=clean_id,
+        user_id=current_user["id"],
+        is_admin=is_admin,
+        include_calculation_result=True,
+    )
 
     if not horoscope_row:
         raise HTTPException(
@@ -268,22 +251,13 @@ async def calculate_shodashvarga_endpoint(
                     detail="Authentication token required to access saved horoscopes.",
                 )
             clean_id = _validate_uuid(request.saved_horoscope_id)
-            supabase = get_supabase_client()
-            if not supabase:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Database service unavailable. Database configuration missing.",
-                )
             is_admin = current_user.get("role") == "admin"
-            horoscope_row: Optional[Dict[str, Any]] = None
-            try:
-                resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-                if resp.data and len(resp.data) > 0:
-                    row = resp.data[0]
-                    if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                        horoscope_row = row
-            except Exception as err:
-                logger.warning(f"Database error fetching saved horoscope {clean_id}: {err}")
+            horoscope_row = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=current_user["id"],
+                is_admin=is_admin,
+                include_calculation_result=True,
+            )
 
             if not horoscope_row:
                 raise HTTPException(
@@ -352,22 +326,13 @@ async def get_saved_horoscope_shodashvarga_endpoint(
 ) -> ShodashvargaResponse:
     """Fetch or compute all 16 Shodashvarga charts for an authenticated saved horoscope."""
     clean_id = _validate_uuid(horoscope_id)
-    supabase = get_supabase_client()
-    if not supabase:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database service unavailable. Database configuration missing.",
-        )
     is_admin = current_user.get("role") == "admin"
-    horoscope_row: Optional[Dict[str, Any]] = None
-    try:
-        resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-        if resp.data and len(resp.data) > 0:
-            row = resp.data[0]
-            if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                horoscope_row = row
-    except Exception as err:
-        logger.warning(f"Database error fetching saved horoscope {clean_id}: {err}")
+    horoscope_row = get_cached_saved_horoscope(
+        clean_id=clean_id,
+        user_id=current_user["id"],
+        is_admin=is_admin,
+        include_calculation_result=True,
+    )
 
     if not horoscope_row:
         raise HTTPException(

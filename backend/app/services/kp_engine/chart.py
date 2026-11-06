@@ -82,6 +82,9 @@ class PlanetPos:
     pada: int
     speed_deg_day: float
     retrograde: bool
+    navamsa_sign: str = ""
+    navamsa_lord: str = ""
+    is_vargottama: bool = False
 
 
 @dataclass(frozen=True)
@@ -94,6 +97,9 @@ class CuspPos:
     star_lord: str
     sub_lord: str
     sub_sub_lord: str
+    navamsa_sign: str = ""
+    navamsa_lord: str = ""
+    is_vargottama: bool = False
 
 
 @dataclass
@@ -158,6 +164,9 @@ def compute_chart(
                 pada=info.pada,
                 speed_deg_day=speed,
                 retrograde=speed < 0 and name not in ("Rahu", "Ketu"),
+                navamsa_sign=info.navamsa_sign,
+                navamsa_lord=info.navamsa_lord,
+                is_vargottama=info.is_vargottama,
             )
         )
 
@@ -174,6 +183,9 @@ def compute_chart(
                 star_lord=info.star_lord,
                 sub_lord=info.sub_lord,
                 sub_sub_lord=info.sub_sub_lord,
+                navamsa_sign=info.navamsa_sign,
+                navamsa_lord=info.navamsa_lord,
+                is_vargottama=info.is_vargottama,
             )
         )
 

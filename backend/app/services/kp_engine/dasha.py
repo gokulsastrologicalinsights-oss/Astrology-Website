@@ -337,3 +337,11 @@ def format_days(days: float) -> str:
     months, rem = divmod(rem, 365.25 / 12.0)
     days_f, _ = divmod(rem, 1.0)
     return f"{int(years)}y {int(months)}m {days_f:.0f}d"
+
+def dasha_balance_reader1(
+    moon_longitude: float,
+    use_360_day_year: bool = True,
+):
+    """Compute Vimshottari Dasa balance at birth following KP Reader 1 (Prof. KSK)."""
+    from .reader1 import calculate_dasa_balance_reader1
+    return calculate_dasa_balance_reader1(moon_longitude, use_360_day_year=use_360_day_year)

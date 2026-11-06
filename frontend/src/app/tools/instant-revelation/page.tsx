@@ -110,6 +110,8 @@ function InstantRevelationContent() {
   const [data, setData] = useState<InstantRevelationResponse | null>(null);
   const [scriptLanguage, setScriptLanguage] = useState<"ta" | "en" | "both">("both");
   const [copied, setCopied] = useState(false);
+  const [shockerFilter, setShockerFilter] = useState<"all" | "EXTREME" | "HIGH">("all");
+  const [showAllShockers, setShowAllShockers] = useState(false);
 
   // Ensure Chart Data exists (computes or extracts from snapshot)
   const ensureChartData = useCallback(async (profileToUse?: any) => {
@@ -346,6 +348,31 @@ function InstantRevelationContent() {
       lines.push(`  EN: "${m.script_en}"`);
       lines.push(`  TA: "${m.script_ta}"`);
     });
+
+    if (data.lagna_nadiamsa_name) {
+      lines.push(`\n--- DEVA KERALAM (CHANDRA KALA NADI) 150 NADIAMSA & LONGEVITY ---`);
+      lines.push(`Lagna Nadiamsa: #${data.lagna_nadiamsa_number} (${data.lagna_nadiamsa_name_ta} / ${data.lagna_nadiamsa_name}) - ${data.lagna_nadiamsa_half_ta}`);
+      lines.push(`Delineation (TA): "${data.lagna_nadiamsa_script_ta}"`);
+      lines.push(`Delineation (EN): "${data.lagna_nadiamsa_script_en}"`);
+      lines.push(`Longevity Class: ${data.khanda_nirnaya_longevity_ta}`);
+      lines.push(`Father Critical Transit Degree: ${data.father_critical_degree}`);
+      lines.push(`Mother Critical Transit Degree: ${data.mother_critical_degree}`);
+    }
+
+    if (data.guaranteed_chart_shockers && data.guaranteed_chart_shockers.length > 0) {
+      lines.push(`\n--- பிருகு நந்தி நாடி சாஸ்திரக் காரகங்கள் (BNN & CLASSICAL VERIFIED) ---`);
+      data.guaranteed_chart_shockers.forEach((s, idx) => {
+        lines.push(`[${idx + 1}] [${s.shock_factor} SHOCK] ${s.headline_en} / ${s.headline_ta}:`);
+        lines.push(`  TA: "${s.script_ta}"`);
+        lines.push(`  EN: "${s.script_en}"`);
+        lines.push(`  PROOF: ${s.astrological_proof}`);
+      });
+    }
+
+    if (data.remedial_taboos_ta && data.remedial_taboos_ta.length > 0) {
+      lines.push(`\n--- STRICT SHASTRIC TABOOS & DIETARY RESTRICTIONS ---`);
+      data.remedial_taboos_ta.forEach((t) => lines.push(`• ${t}`));
+    }
 
     lines.push(`\n--- THE 5 SHOCK AMPLIFIERS ---`);
     lines.push(`[1. CAREER CALLING]:`);
@@ -1084,6 +1111,25 @@ function InstantRevelationContent() {
                       </p>
                     )}
 
+                    {bullet.checklist && bullet.checklist.length > 0 && (
+                      <div className="mt-3 p-3 rounded-xl bg-rose-50/70 border border-rose-200/80 space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-rose-950 uppercase tracking-wider">
+                          <ShieldCheck className="w-3.5 h-3.5 text-rose-600 flex-shrink-0" />
+                          திரிவித ஜாமக்கோள் சரிபார்ப்பு (3-Tier Jamakkol Verification):
+                        </div>
+                        <div className="space-y-1">
+                          {bullet.checklist.map((item, cIdx) => (
+                            <div key={cIdx} className="flex items-start gap-2 text-xs text-rose-950 leading-snug">
+                              <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-black bg-rose-600 text-white flex-shrink-0">
+                                ✓
+                              </span>
+                              <span className="font-mono text-[11px]">{item.replace("[✓] ", "")}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-500 font-mono">
                       <Compass className="w-3.5 h-3.5 text-rose-500" />
                       <span>சாஸ்திர அடிப்படை (Proof): {bullet.astrological_proof}</span>
@@ -1199,6 +1245,289 @@ function InstantRevelationContent() {
                 ))}
               </div>
             </div>
+
+            {/* =========================================================================
+                DEVA KERALAM (CHANDRA KALA NADI) 150 NADIAMSA & LONGEVITY PLATFORM
+               ========================================================================= */}
+            {data.lagna_nadiamsa_name && (
+              <div className="bg-gradient-to-br from-[#1A1C29] via-[#12131C] to-[#1A1C29] text-white rounded-2xl shadow-xl border-2 border-indigo-400/60 p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-indigo-900/60 gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-500/20 rounded-xl border border-indigo-400/40">
+                      <Compass className="w-6 h-6 text-indigo-300" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-widest block">
+                        Deva Keralam • சந்திர கலா நாடி 150 நாடியம்சம் & ஆயுள் நிர்ணயம்
+                      </span>
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <span>லக்ன நாடியம்சம் #{data.lagna_nadiamsa_number}: {data.lagna_nadiamsa_name_ta} ({data.lagna_nadiamsa_name})</span>
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs bg-indigo-500/20 text-indigo-200 border border-indigo-400/40 px-3 py-1 rounded-full font-semibold">
+                      {data.lagna_nadiamsa_half_ta}
+                    </span>
+                    <span className="text-xs bg-amber-400/10 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full font-mono">
+                      12-Minute Arc Precision
+                    </span>
+                  </div>
+                </div>
+
+                {/* Nadiamsa Delineation Script */}
+                <div className="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-5 space-y-3">
+                  <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider block">
+                    தேவ கேரளம் மூல நூல் வாக்கு பலன் (Nadi Delineation):
+                  </span>
+                  {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                    <p className="text-sm sm:text-base font-serif text-gray-100 leading-relaxed bg-black/40 p-4 rounded-lg border border-indigo-900/40">
+                      "{data.lagna_nadiamsa_script_ta}"
+                    </p>
+                  )}
+                  {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                    <p className="text-xs sm:text-sm font-serif text-gray-300 leading-relaxed bg-black/40 p-3 rounded-lg border border-indigo-900/40">
+                      "{data.lagna_nadiamsa_script_en}"
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Khanda Nirnaya & Longevity */}
+                  <div className="bg-slate-900/80 border border-indigo-900/50 rounded-xl p-4 space-y-2">
+                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-amber-400" />
+                      கண்ட நிர்ணயம் & ஆயுள் தரம் (Longevity Assessment):
+                    </span>
+                    <p className="text-xs sm:text-sm text-gray-200 font-serif leading-relaxed">
+                      {scriptLanguage === "en" ? data.khanda_nirnaya_longevity_en : data.khanda_nirnaya_longevity_ta}
+                    </p>
+                    {scriptLanguage === "both" && (
+                      <p className="text-[11px] text-gray-400 italic">
+                        {data.khanda_nirnaya_longevity_en}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Parent Critical Transit Degrees */}
+                  <div className="bg-slate-900/80 border border-indigo-900/50 rounded-xl p-4 space-y-2.5">
+                    <span className="text-xs font-bold text-rose-300 uppercase tracking-wide flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-400" />
+                      பெற்றோர் கண்ட கோச்சார பாகை (Deva Keralam Transit Criticals):
+                    </span>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="bg-black/30 p-2.5 rounded-lg border border-rose-900/30">
+                        <span className="font-semibold text-rose-300 block">தந்தை கண்ட பாகை (Father Critical Degree):</span>
+                        <span className="text-gray-200 font-mono text-[11px]">{data.father_critical_degree}</span>
+                      </div>
+                      <div className="bg-black/30 p-2.5 rounded-lg border border-rose-900/30">
+                        <span className="font-semibold text-rose-300 block">தாய் கண்ட பாகை (Mother Critical Degree):</span>
+                        <span className="text-gray-200 font-mono text-[11px]">{data.mother_critical_degree}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-400 block italic">
+                      *கோச்சார சனி இப்பாகைக்கோ அல்லது இதன் திரிகோணங்களுக்கோ வரும் காலங்களில் பெற்றோருக்கு ஆரோக்கிய கண்டங்கள் சம்பவிக்கும்.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =========================================================================
+                BHRIGU NANDI NADI & CLASSICAL SHASTRA RULE VERIFICATION
+               ========================================================================= */}
+            {data.guaranteed_chart_shockers && data.guaranteed_chart_shockers.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-xl border-2 border-emerald-500 overflow-hidden">
+                <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-950 text-white px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-emerald-500/20 rounded-xl border border-emerald-400/40">
+                      <ShieldCheck className="w-7 h-7 text-emerald-300" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-widest block">
+                          Bhrigu Nandi Nadi • பிருகு நந்தி நாடி சாஸ்திரக் காரக ஆய்வு
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-400 text-slate-950 animate-pulse">
+                          பாகை உறுதி (VERIFIED)
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <span>ஜாதகத்தில் உறுதிசெய்யப்பட்ட {data.guaranteed_chart_shockers.length} சாஸ்திரக் கூட்டமைப்புகள்</span>
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => setShockerFilter("all")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        shockerFilter === "all" ? "bg-white text-emerald-950 shadow" : "bg-emerald-900/70 text-emerald-100 hover:bg-emerald-900"
+                      }`}
+                    >
+                      அனைத்தும் ({data.guaranteed_chart_shockers.length})
+                    </button>
+                    <button
+                      onClick={() => setShockerFilter("EXTREME")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        shockerFilter === "EXTREME" ? "bg-rose-500 text-white shadow" : "bg-emerald-900/70 text-emerald-100 hover:bg-emerald-900"
+                      }`}
+                    >
+                      அதிதீவிரம் ({data.guaranteed_chart_shockers.filter(s => s.shock_factor === "EXTREME").length})
+                    </button>
+                    <button
+                      onClick={() => setShockerFilter("HIGH")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        shockerFilter === "HIGH" ? "bg-amber-400 text-slate-950 shadow" : "bg-emerald-900/70 text-emerald-100 hover:bg-emerald-900"
+                      }`}
+                    >
+                      உயர் உண்மை ({data.guaranteed_chart_shockers.filter(s => s.shock_factor === "HIGH").length})
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div className="bg-emerald-50 border-l-4 border-emerald-600 p-3.5 rounded-r-xl flex items-center justify-between text-xs text-emerald-950">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>
+                        கீழே உள்ள பலன்கள் பிருகு நந்தி நாடி மற்றும் தேவ கேரளம் சாஸ்திர விதிகளின்படி <b>கிரகங்களின் பாகை சேர்க்கை மற்றும் நவாம்ச பலத்தை</b> அடிப்படையாகக் கொண்டு துல்லியமாக கணிக்கப்பட்டவை.
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-emerald-800 hidden sm:inline">
+                      Strict Degree Orbs
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {data.guaranteed_chart_shockers
+                      .filter(s => shockerFilter === "all" || s.shock_factor === shockerFilter)
+                      .slice(0, showAllShockers ? undefined : 8)
+                      .map((shocker, i) => {
+                        const isExtreme = shocker.shock_factor === "EXTREME";
+                        return (
+                          <div
+                            key={shocker.id || i}
+                            className={`rounded-xl p-5 border-2 transition-all flex flex-col justify-between hover:shadow-md ${
+                              isExtreme
+                                ? "bg-gradient-to-b from-rose-50/50 to-white border-rose-300"
+                                : "bg-gradient-to-b from-amber-50/40 to-white border-amber-300"
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-2.5">
+                                <span
+                                  className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                                    isExtreme
+                                      ? "bg-rose-600 text-white"
+                                      : "bg-amber-500 text-slate-950"
+                                  }`}
+                                >
+                                  {shocker.shock_factor} SHOCK
+                                </span>
+
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                                  சாஸ்திர காரக ஆய்வு
+                                </span>
+                              </div>
+
+                              <h4 className="text-sm sm:text-base font-bold text-[#153F6B] mb-2 leading-snug">
+                                {scriptLanguage === "en" ? shocker.headline_en : shocker.headline_ta}
+                              </h4>
+
+                              {(scriptLanguage === "ta" || scriptLanguage === "both") && (
+                                <p className="text-sm sm:text-base font-serif text-gray-900 leading-relaxed mb-2 bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                                  "{shocker.script_ta}"
+                                </p>
+                              )}
+
+                              {(scriptLanguage === "en" || scriptLanguage === "both") && (
+                                <p className="text-xs sm:text-sm font-serif text-gray-700 leading-relaxed bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                                  "{shocker.script_en}"
+                                </p>
+                              )}
+                            </div>
+
+                            {shocker.checklist && shocker.checklist.length > 0 && (
+                              <div className="mt-3 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 space-y-1.5">
+                                <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-950 uppercase tracking-wider">
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                                  திரிவித சாஸ்திர சரிபார்ப்பு (3-Tier Verification Checklist):
+                                </div>
+                                <div className="space-y-1">
+                                  {shocker.checklist.map((item, cIdx) => (
+                                    <div key={cIdx} className="flex items-start gap-2 text-xs text-emerald-950 leading-snug">
+                                      <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-black bg-emerald-600 text-white flex-shrink-0">
+                                        ✓
+                                      </span>
+                                      <span className="font-mono text-[11px]">{item.replace("[✓] ", "")}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="mt-3 pt-2.5 border-t border-gray-200 flex items-center gap-1.5 text-[10px] text-gray-600 font-mono">
+                              <Compass className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                              <span>சாஸ்திர நிரூபணம் (Proof): {shocker.astrological_proof}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {data.guaranteed_chart_shockers.length > 8 && (
+                    <div className="text-center pt-3">
+                      <button
+                        onClick={() => setShowAllShockers(!showAllShockers)}
+                        className="px-5 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-bold transition cursor-pointer border border-emerald-300"
+                      >
+                        {showAllShockers
+                          ? "சுருக்கமாகப் பார் (Show Less)"
+                          : `அனைத்து ${data.guaranteed_chart_shockers.length} உறுதியான வாக்குகளையும் பார் (View All ${data.guaranteed_chart_shockers.length} Shockers)`}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* =========================================================================
+                STRICT SHASTRIC TABOOS & BEHAVIORAL DIRECTIVES
+               ========================================================================= */}
+            {data.remedial_taboos_ta && data.remedial_taboos_ta.length > 0 && (
+              <div className="bg-gradient-to-r from-red-950 via-rose-900 to-red-950 text-white rounded-2xl shadow-xl border-2 border-rose-400/80 p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-rose-800/80">
+                  <div className="p-2.5 bg-rose-500/20 rounded-xl border border-rose-400/40">
+                    <ShieldAlert className="w-6 h-6 text-rose-300 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-rose-300 uppercase tracking-widest block">
+                      Strict Shastric Taboos • சாஸ்திர கடுமையான விலக்குகள்
+                    </span>
+                    <h3 className="text-lg font-bold text-white">
+                      ஜாதகர் வாழ்நாளில் செய்யக்கூடாத கடுமையான கட்டளைகள் (Do Not Violate)
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                  {data.remedial_taboos_ta.map((taboo, idx) => (
+                    <div key={idx} className="bg-black/40 border border-rose-700/60 p-3.5 rounded-xl flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-rose-100 font-medium leading-relaxed">{taboo}</p>
+                        {scriptLanguage === "both" && data.remedial_taboos_en[idx] && (
+                          <p className="text-rose-300/80 text-xs italic">{data.remedial_taboos_en[idx]}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* THE 5 SHOCK AMPLIFIERS (5 துல்லிய உச்சக்கட்ட உண்மைகள்) */}
             <div className="bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#1E293B] text-white rounded-2xl shadow-xl border-2 border-amber-400/60 p-6 space-y-6">

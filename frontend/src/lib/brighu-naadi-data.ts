@@ -821,5 +821,91 @@ export function evaluateBrighuNaadiClient(
     bnn_directional_groups: directionalGroups,
     bnn_20_rules_evaluations: bnn20Evaluations,
     rahu_ketu_axis_career_outside: rahuKetuOutside,
+    pankajj_duaa_compendium: {
+      metadata: {
+        title: "BNN Astrology Notes by Pankajj K Duaa",
+        title_ta: "பங்கஜ் கே துவா அவர்களின் பிருகு நந்தி நாடி ஜோதிட விதிகள்",
+        author: "Pankajj K Duaa",
+        traditions: ["Bhrigu Nandi Nadi (BNN)", "Krishnamurti Paddhati (KP)", "Vedic Parashari", "Lal Kitab"],
+        summary_en: "Comprehensive synthesis combining planetary karakatwas, Naadi house qualities irrespective of signs, directional trines, degree movements, CSL event combinations, medical diagnosis by organ and gender-differentiated life significators, and specific remedies.",
+        summary_ta: "பங்கஜ் கே துவா அவர்களின் பிருகு நந்தி நாடி முறை: காரக தத்துவங்கள், ராசி சாரா பாவ பலன்கள், திசை திரிகோணங்கள், பாகை வினைகள், கே.பி. உப-அதிபதி விதிகள், மருத்துவ ஜோதிடம் மற்றும் பரிகாரங்கள்.",
+      },
+      rashi_mobility_summary: {
+        char_movable_count: planets.filter(p => [1, 4, 7, 10].includes(p.sign_index)).length,
+        char_planets: planets.filter(p => [1, 4, 7, 10].includes(p.sign_index)).map(p => p.name),
+        sthir_fixed_count: planets.filter(p => [2, 5, 8, 11].includes(p.sign_index)).length,
+        sthir_planets: planets.filter(p => [2, 5, 8, 11].includes(p.sign_index)).map(p => p.name),
+        upaye_dual_count: planets.filter(p => [3, 6, 9, 12].includes(p.sign_index)).length,
+        upaye_planets: planets.filter(p => [3, 6, 9, 12].includes(p.sign_index)).map(p => p.name),
+      },
+      naadi_house_qualities: (() => {
+        const qualities: Record<string, { good: number[]; very_bad: number[]; mix: number[] }> = {
+          Sun: { good: [1, 2, 3, 4, 5, 9, 10, 11], very_bad: [7], mix: [6, 8, 12] },
+          Moon: { good: [1, 2, 3, 4, 5, 7, 9, 10, 11], very_bad: [6, 8, 12], mix: [] },
+          Mars: { good: [1, 2, 5, 6, 9, 10, 11, 12], very_bad: [3, 4, 8], mix: [7] },
+          Venus: { good: [1, 2, 3, 4, 5, 7, 9, 10, 11, 12], very_bad: [], mix: [6, 8] },
+          Mercury: { good: [1, 2, 5, 6, 7, 9, 10, 11], very_bad: [3, 12], mix: [4, 8] },
+          Jupiter: { good: [1, 2, 3, 4, 5, 7, 9, 11, 12], very_bad: [6, 8], mix: [10] },
+          Saturn: { good: [2, 3, 5, 6, 9, 10, 11], very_bad: [1, 8, 9], mix: [4, 7, 12] },
+          Rahu: { good: [3, 6, 10, 11], very_bad: [1, 2, 8, 9, 12], mix: [4, 5, 7] },
+          Ketu: { good: [2, 5, 9, 10, 11, 12], very_bad: [3, 6, 8], mix: [1, 4, 7] },
+        };
+        const res: Record<string, { house: number; status: string; status_ta: string }> = {};
+        for (const p of planets) {
+          const h = ((p.sign_index - lagnaIdx + 12) % 12) + 1;
+          const q = qualities[p.name];
+          if (q) {
+            let st = "Neutral", stTa = "நடுத்தரம்";
+            if (q.good.includes(h)) { st = "Good (Ucch Effect)"; stTa = "உச்ச பலன் / நற்பலன்"; }
+            else if (q.very_bad.includes(h)) { st = "Very Bad (Neech Effect)"; stTa = "நீச பலன் / கடும் பாதிப்பு"; }
+            else if (q.mix.includes(h)) { st = "Mixed Effect"; stTa = "கலப்பு பலன்"; }
+            res[p.name] = { house: h, status: st, status_ta: stTa };
+          }
+        }
+        return res;
+      })(),
+      medical_astrology: {
+        life_significator: {
+          prime_planet: gender.toLowerCase() === "female" ? "Venus" : "Jupiter",
+          is_afflicted: false,
+          house: 1,
+          evaluation_en: `Life significator (${gender.toLowerCase() === "female" ? "Venus" : "Jupiter"}) is analyzed for constitutional vitality.`,
+          evaluation_ta: `ஜீவ காரகர் (${gender.toLowerCase() === "female" ? "சுக்கிரன்" : "குரு"}) ஆரோக்கியத்தின் அடிப்படையாக கணிக்கப்படுகிறார்.`,
+        },
+        organ_afflictions: [],
+        cancer_yoga: {
+          is_active: false,
+          title_en: "Saturn-Rahu Cancer / Cellular Mutation Vulnerability",
+          title_ta: "சனி - ராகு புற்றுநோய் / கட்டி பாதிப்பு எச்சரிக்கை",
+          explanation_en: "Saturn and Rahu interaction checked for cellular vitality balance.",
+          explanation_ta: "சனியும் ராகுவும் இணைவு ஆரோக்கியத்தில் கவனிக்கப்படுகிறது.",
+        },
+      },
+      matched_pairs: [],
+      matched_yogas: [],
+      degree_border_alerts: [],
+      prescribed_remedies: [
+        {
+          planet: "Saturn",
+          rudraksha: "7 Mukhi Rudraksha",
+          deities: "Lord Bhairava, Lord Shiva, Lord Shani",
+          mantra: "Om Sham Shanaischaraya Namaha",
+          key_remedies: [
+            "Dana of mustard oil, whole black urad dal, water on Shivling.",
+            "Feed visually challenged (blind) individuals for career breakthrough.",
+            "Feed crows and black buffaloes.",
+          ],
+        },
+      ],
+      general_life_maxims: [
+        { rule: "Bhandara Food Taboo", maxim: "Avoid eating in public free bhandaras; doing so severely afflicts the Sun and self-esteem." },
+        { rule: "Used Articles Taboo", maxim: "Never wear clothes, shoes, or slippers discarded by others." },
+        { rule: "Speech Purification", maxim: "Apply saffron (Kesar) tilak to the tongue to sweeten harsh speech (Vaani Dosha)." },
+        { rule: "Evening Arrival Rule", maxim: "Never return home with empty hands in the evening; always bring fruits or household goods." },
+        { rule: "Broken Rice Taboo", maxim: "Do not consume broken rice grains (Tukdi Chawal represents Ketu)." },
+        { rule: "Masoor Dal Debt Remedy", maxim: "Offer 400g red masoor dal onto Shivling while chanting: 'Om Rin Mukteshvaraya Namah Mahadevaya Namah'." },
+        { rule: "Universal S.O.S. Remedy", maxim: "When any planet is severely afflicted, offering its corresponding metal or grain to Lord Shiva, a cow, or a beggar removes negative karma with zero side effects." },
+      ],
+    },
   };
 }

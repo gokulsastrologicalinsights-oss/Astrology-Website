@@ -7,7 +7,11 @@ to verified, canonical in-memory registries for development, testing, and offlin
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+import time
+from typing import List, Dict, Any, Optional, Tuple
+
+_REMEDY_CACHE: Dict[str, Tuple[float, Any]] = {}
+_REMEDY_CACHE_TTL = 300.0  # 5 minutes in-memory cache
 from datetime import datetime, timezone
 from app.services.auth_service import get_supabase_client
 from app.services.remedy_engine.taxonomy import VERIFIED_PROBLEM_TAXONOMY, TAXONOMY_BY_SLUG
@@ -16,6 +20,16 @@ logger = logging.getLogger(__name__)
 
 # ─── Canonical Classical Source References ────────────────────────────────────
 VERIFIED_SOURCES: List[Dict[str, Any]] = [
+    {
+        "code": "IBN_BAZ_FATWA_RUQYAH",
+        "title_en": "Islamic Legal Rulings on Magic and Astrology (Sooniyam & Jothidam)",
+        "title_sa": "சூனியம் மற்றும் சோதிடம் குறித்த இஸ்லாமிய சட்ட விளக்கம்",
+        "author": "Grand Mufti Sheikh Abdul Aziz ibn Abdullah ibn Baz (ரஹிமஹுல்லாஹ்)",
+        "tradition": "islamic_shariah_ruqyah",
+        "canonical_status": "authoritative_fatwa",
+        "description": "Authoritative Islamic legal treatise and Sunnah Ruqyah guidance by former Grand Mufti of Saudi Arabia on protection and curative healing from sorcery (Sihr), evil eye, and astrology.",
+        "is_published": True,
+    },
     {
         "code": "BPHS",
         "title_en": "Brihat Parashara Hora Shastra",
@@ -916,7 +930,7 @@ VERIFIED_REMEDIES: List[Dict[str, Any]] = [
     # ─── BPHS Chapter 83 & 84 Canonical Vedic Remedies & Shanti ─────────────
     {
         "code": "REM_BPHS_GRAHA_SHANTI_HOMAM",
-        "graha": None,
+        "graha": "universal",
         "remedy_type": "ritual",
         "name_en": "Maharishi Parashara Canonical Navagraha Shanti Homam",
         "name_ta": "மகரிஷி பராசர நவகிரக சாந்தி ஹோமம்",
@@ -1122,6 +1136,110 @@ VERIFIED_REMEDIES: List[Dict[str, Any]] = [
         "is_published": True,
         "verification_status": "verified",
     },
+    {
+        "code": "REM_ISLAM_RUQYAH_SIDR_01",
+        "graha": "universal",
+        "remedy_type": "ruqyah",
+        "name_en": "Sunnah Ruqyah with 7 Green Sidr (Lote) Leaves Water Treatment",
+        "name_ta": "7 பச்சை இலந்தை இலை ஷரீஆ ருக்யா சிகிச்சை (சூனியம் & செய்வினை நீங்க)",
+        "description_en": "Authoritative Prophetic Ruqyah prescribed by classical scholars and Grand Mufti Sheikh Ibn Baz for breaking black magic, witchcraft, and severe evil eye using 7 crushed green Sidr (lote) leaves in water with Quranic recitations.",
+        "description_ta": "அஷ்ஷெய்க் இப்னு பாஸ் (ரஹ்) மற்றும் முன்னோர்களான ஸலபுஸ்ஸாலிஹீன்கள் வழிகாட்டலில் 7 பச்சை இலந்தை இலைகளை அரைத்து நீரில் கலந்து அல்குர்ஆன் வசனங்களை ஓதி அருந்திக் குளிக்கும் சுன்னத்தான ஷரீஆ ருக்யா நிவாரண முறை.",
+        "deity_en": "Allah Subhanahu Wa Ta'ala (Seeking refuge with the Lord of Mankind)",
+        "deity_ta": "அல்லாஹ் (அகிலங்களை படைத்து பரிபாலிக்கும் ஏகன்)",
+        "sanskrit_text": "وَأَوْحَيْنَا إِلَىٰ مُوسَىٰ أَنْ أَلْقِ عَصَاكَ ۖ فَإِذَا هِيَ تَلْقَفُ مَا يَأْفِكُونَ ۝ فَوَقَعَ الْحَقُّ وَبَطَلَ مَا كَانُوا يَعْمَلُونَ ۝ فَغُلِبُوا هُنَالِكَ وَانقَلَبُوا صَاغِرِينَ",
+        "transliteration_iast": "Wa awhayna ila Musa an alqi 'asaka fa-idha hiya talqafu ma ya'fikoon. Fa-waqa'a al-haqqu wa batala ma kanoo ya'maloon. Fa-ghuliboo hunalika wanqalaboo saghireen.",
+        "transliteration_ta": "வஅவ்ஹைனா இலா மூஸா அன் அல்கி அஸாக ஃபஇஃதா ஹிய தல்ஃகஃபு மா யஃபிகூன், ஃப வகஅல்ஹக்கு வபதல மா கானூ யஃமலூன், ஃபஃகுலிபூ ஹுனாலிக வன் கலபூ ஸாஃகிரீன்.",
+        "meaning_en": "And We inspired to Moses: 'Throw your staff,' and at once it devoured what they were falsifying. So the truth was established, and that which they were doing was made void. And they were vanquished there and were made small. (Surah Al-A'raf 7:117-119)",
+        "meaning_ta": "'உமது கைத்தடியை போடும்' என மூஸாவுக்கு நாம் வஹி அறிவித்தோம். அவர் அதனைக் கீழே போட்டதும் அது அவர்கள் பாம்பாக கற்பனை செய்தவற்றை விழுங்கிவிட்டது. உண்மை தெளிவாகிவிட்டது! அவர்கள் செய்தவை வீணாகிவிட்டன. அவர்கள் அங்கே தோற்கடிக்கப்பட்டு சிறுமையடைந்தார்கள்.",
+        "procedure_en": "1. Take 7 green leaves of the Sidr (lote tree / Ziziphus) and crush them finely between stones. 2. Put into clean water sufficient for drinking and bathing. 3. Recite into the water with ritual purity (Wudu): Surah Al-Fatihah, Ayatul Kursi (2:255), Surah Al-Kafirun, Surah Al-Ikhlas (3x), Surah Al-Falaq (3x), Surah An-Nas (3x), the Moses magic verses (Al-A'raf 7:117-119, Yunus 10:79-82, Ta-Ha 20:65-69), and Prophetic duas ('Allahumma Rabban-naas adhhibil-ba's...' & 'Bismillahi arqeeka...'). 4. Drink 3 sips and bathe (ghusl) with the rest. Repeat daily until full cure is attained.",
+        "procedure_ta": "1. ஏழு பச்சை இலந்தை இலைகளை எடுத்து நன்கு அரைத்து ஒரு பாத்திரத்தில் குளிப்பதற்கும் குடிப்பதற்கும் போதுமான நீரில் இடவும். 2. அந்த நீரில் அல்-ஃபாத்திஹா, ஆயதுல் குர்ஸி, அல்-காஃபிரூன், அல்-இஹ்லாஸ் (3 முறை), அல்-ஃபலக் (3 முறை), அந்-நாஸ் (3 முறை) மற்றும் ஸூறா அல்-அஃராப் (117-119), ஸூறா யூனுஸ் (79-82), ஸூறா தாஹா (65-69) ஆகிய சூனியம் முறிக்கும் வசனங்களையும் நபியவர்களின் துஆக்களையும் ஓதவும். 3. அதில் மூன்று மிடர்கள் அருந்திவிட்டு மீதி நீரால் குளிக்கவும். நோய் குணமாகும் வரை பல நாட்கள் செய்யலாம்.",
+        "japa_count": 3,
+        "timing_recommendation_en": "Morning after Fajr or after Asr prayer, performed in ritual purity (Wudu)",
+        "timing_recommendation_ta": "உளூவுடன் சுத்தமாக இருந்து ஃபஜ்ர் அல்லது அஸர் தொழுகைக்குப் பின் ஓதி சிகிச்சை செய்தல் சிறந்தது",
+        "source_code": "IBN_BAZ_FATWA_RUQYAH",
+        "is_pacification_only": False,
+        "problem_slugs": ["fear_negative_energies", "recurrent_nightmares", "past_life_karmic_burdens", "chronic_health_issues"],
+        "is_published": True,
+        "verification_status": "verified",
+    },
+    {
+        "code": "REM_ISLAM_DAILY_ADHKAR_02",
+        "graha": "universal",
+        "remedy_type": "prayer",
+        "name_en": "Prophetic Fortress of Daily Protective Adhkar (Ayatul Kursi & Mu'awwidhat)",
+        "name_ta": "தினசரி தற்காப்பு அரண் - ஆயதுல் குர்ஸி & முஅவ்விததைன் திக்ருகள்",
+        "description_en": "Daily protective shield from the authentic Sunnah: Ayatul Kursi after obligatory prayers and at bedtime, the 3 Quls (Ikhlas, Falaq, Nas) 3 times morning & evening, and the Prophetic shield against all harms.",
+        "description_ta": "ஒவ்வொரு தொழுகைக்குப் பிறகும், தூங்கும் போதும் ஆயதுல் குர்ஸி ஓதுதல், காலை மற்றும் மாலையில் குல்ஹுவல்லாஹு அஹத், குல்அவூது பிரப்பில் பலக், குல்அவூது பிரப்பிந்நாஸ் ஆகிய மூன்று ஸூராக்களை தலா 3 முறை ஓதி வருதல்.",
+        "deity_en": "Allah (Al-Hafidh - The Supreme Protector)",
+        "deity_ta": "அல்லாஹ் (அல்-ஹஃபீழ் - யாவற்றையும் பாதுகாப்பவன்)",
+        "sanskrit_text": "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ",
+        "transliteration_iast": "Allahu la ilaha illa Huwa, Al-Hayyul-Qayyoom. La ta'khudhuhu sinatuw-wa la nawm. Lahu ma fis-samawati wa ma fil-ard...",
+        "transliteration_ta": "அல்லாஹூ லாஇலாஹ இல்லா ஹுவல் ஹய்யுல் கய்யூம் லா தஃஹுதுஹு ஸினத்துவ்வலா நவம் லஹு மாபிஃஸ் ஸமாவாதி வமாபில் அர்ழி...",
+        "meaning_en": "Allah! There is no deity except Him, the Ever-Living, the Sustainer of all existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth. (Ayatul Kursi 2:255)",
+        "meaning_ta": "அல்லாஹ்வைத் தவிர வணக்கத்திற்குரியவன் வேறு யாருமில்லை. அவன் என்றென்றும் உயிருடன் நிலைத்திருப்பவன். சிறுதூக்கமோ, உறக்கமோ அவனை ஆட்கொள்ளாது...",
+        "procedure_en": "1. Recite Ayatul Kursi after each of the 5 daily obligatory prayers. 2. Recite Ayatul Kursi before going to sleep; an angel will guard you from Allah and no devil will approach until morning. 3. Recite Surahs Ikhlas, Falaq, and Nas 3 times after Fajr and 3 times after Maghrib. 4. Recite 3 times morning and evening: 'Bismillaahil-ladhee laa yadurru ma'asmihi shay'un fil-ardi wa laa fis-samaa'i wa huwas-Samee'ul-'Aleem'.",
+        "procedure_ta": "1. கடமையான 5 நேரத் தொழுகைக்குப் பின் ஆயதுல் குர்ஸியை ஓதவும். 2. தூங்கும் போது ஆயதுல் குர்ஸியை ஓதினால் காலை வரை வானவர் பாதுகாப்பார்; ஷைத்தான் நெருங்க மாட்டான். 3. ஃபஜ்ர் மற்றும் மஃக்ரிப் தொழுகைக்குப் பின் 3 குல் ஸூராக்களை தலா 3 முறை ஓதவும். 4. காலையிலும் மாலையிலும் 3 முறை 'பிஸ்மில்லாஹில்லதீ லா யளுர்ரு மஅஸ்மிஹி ஷைஉன் ஃபில் அர்ழி வலா ஃபிஸ் ஸமாஇ வஹுவஸ் ஸமீஉல் அலீம்' ஓதி வரவும்.",
+        "japa_count": 3,
+        "timing_recommendation_en": "Morning after Fajr, Evening after Maghrib, and before bedtime",
+        "timing_recommendation_ta": "தினமும் காலை ஃபஜ்ருக்குப் பின், மாலை மஃக்ரிபுக்கு பின், மற்றும் இரவில் படுக்கைக்குச் செல்லும் முன்",
+        "source_code": "IBN_BAZ_FATWA_RUQYAH",
+        "is_pacification_only": False,
+        "problem_slugs": ["fear_negative_energies", "recurrent_nightmares", "mental_anxiety_depression"],
+        "is_published": True,
+        "verification_status": "verified",
+    },
+    {
+        "code": "REM_ISLAM_MARITAL_RUQYAH_03",
+        "graha": "universal",
+        "remedy_type": "ruqyah",
+        "name_en": "Islamic Ruqyah for Marital Discord & Separation Sorcery (Sihr At-Tafreeq)",
+        "name_ta": "கணவன்-மனைவி பிரிவினை & தாம்பத்திய சூனிய முறிவு ருக்யா",
+        "description_en": "Specialized Shariah Ruqyah for couples afflicted by sudden marital repulsion, impotence caused by sorcery, or separation spells referenced in Surah Al-Baqarah (2:102), endorsed by Sheikh Ibn Baz.",
+        "description_ta": "கணவன்-மனைவிக்கிடையே காரணமின்றி ஏற்படும் பிரிவு, வெறுப்பு, தாம்பத்திய உறவில் ஏற்படும் செய்வினைத் தடைகளை நீக்க அல்குர்ஆன் மற்றும் ஸுன்னாஹ் வழியிலான விசேஷ ருக்யா சிகிச்சை.",
+        "deity_en": "Allah (Al-Wadood - The Source of All Love and Harmony)",
+        "deity_ta": "அல்லாஹ் (அல்-வதூத் - அன்பையும் நல்லிணக்கத்தையும் பொழிபவன்)",
+        "sanskrit_text": "فَيَتَعَلَّمُونَ مِنْهُمَا مَا يُفَرِّقُونَ بِهِ بَيْنَ الْمَرْءِ وَزَوْجِهِ ۚ وَمَا هُم بِضَارِّينَ بِهِ مِنْ أَحَدٍ إِلَّا بِإِذْنِ اللَّهِ",
+        "transliteration_iast": "Fa-yata'allamoona minhuma ma yufarriqoona bihi baynal-mar'i wa zawjih. Wa ma hum bi-daarreena bihi min ahadin illa bi-idhnillah.",
+        "transliteration_ta": "ஃபயதஅல்லமூன மின்ஹுமா மா யுஃபர்ரிகூன பிஹீ பைனல் மர்இ வ ஸவ்ஜிஹீ, வமா ஹும் பிளார்ரீன பிஹீ மின் அஹதின் இல்லா பிஇத்னில்லாஹ்.",
+        "meaning_en": "They learned from them that by which they cause separation between a man and his wife. But they could not harm anyone through it except by permission of Allah. (Surah Al-Baqarah 2:102)",
+        "meaning_ta": "கணவனுக்கும் மனைவிக்குமிடையில் எதைக்கொண்டு பிரிப்பார்களோ, அதை அவ்விருவரிடமிருந்து கற்றுக் கொண்டார்கள்; மேலும் அல்லாஹ்வின் அனுமதியின்றி அதைக்கொண்டு அவர்கள் ஒருவருக்குமே தீங்கிழைக்கக் கூடியவர்களாக இல்லை.",
+        "procedure_en": "Prepare the 7 Sidr leaves water with Quranic recitations (Surah Al-Baqarah 102 & 255, Surah Yunus 81, Surah Ta-Ha 69, Surah Al-Falaq, Surah An-Nas). Both husband and wife drink 3 sips and bathe with the water. Recite Surah Al-Baqarah in the home continuously. Sincerely seek forgiveness (Tawbah) and avoid consulting occultists or soothsayers.",
+        "procedure_ta": "7 பச்சை இலந்தை இலைகளை அரைத்து நீரில் இட்டு சூனிய முறிவு வசனங்களை ஓதி கணவனும் மனைவியும் 3 மிடர் பருகி மீதி நீரால் குளிக்கவும். வீட்டில் தொடர்ந்து ஸூறா அல்-பகரா ஓதவும். பாவமன்னிப்பு கோரி (தவ்பா) செய்து அல்லாஹ்விடம் இருவருடைய உள்ளங்களில் அன்பை ஏற்படுத்த துஆ செய்யவும்.",
+        "japa_count": 3,
+        "timing_recommendation_en": "Fridays or evenings after Maghrib, continued for 7 to 14 days",
+        "timing_recommendation_ta": "வெள்ளிக்கிழமை அல்லது மாலையில் தொடங்கி தொடர்ந்து 7 முதல் 14 நாட்கள் செய்தல் உத்தமம்",
+        "source_code": "IBN_BAZ_FATWA_RUQYAH",
+        "is_pacification_only": False,
+        "problem_slugs": ["marital_friction_frequent_quarrels", "marriage_delay_recurrent", "fear_negative_energies"],
+        "is_published": True,
+        "verification_status": "verified",
+    },
+    {
+        "code": "REM_ISLAM_JINN_AFFLICTION_04",
+        "graha": "universal",
+        "remedy_type": "ruqyah",
+        "name_en": "Quranic Protection from Jinn Affliction, Sleep Paralysis & Night Terrors",
+        "name_ta": "ஜின் தீண்டுதல், தூக்கக் கலக்கம் & கெட்ட கனவுகளுக்கான குர்ஆன் பாதுகாப்பு",
+        "description_en": "Classical Islamic healing protocol for jinn possession, psychic disturbances, night terrors, and sleep paralysis outlined in Sheikh Ibn Baz's commentary on Surah Al-Baqarah 275 and authentic Hadiths.",
+        "description_ta": "மனித உடலில் ஜின் புகுந்து ஏற்படுத்தும் சோர்வு, பயம், கெட்ட கனவுகள் மற்றும் மனக்குழப்பங்களை நீக்க அல்குர்ஆன் ஆயத்துக்களை ஓதி ஊதும் சுன்னத்தான முறை.",
+        "deity_en": "Allah (Al-Qaahir - The Irresistible Omnipotent)",
+        "deity_ta": "அல்லாஹ் (அல்-காஹிர் - எவரையும் ஆட்கொள்ளும் மகா வல்லமையாளன்)",
+        "sanskrit_text": "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ غَضَبِهِ وَعِقَابِهِ وَشَرِّ عِبَادِهِ وَمِنْ هَمَزَاتِ الشَّيَاطِينِ وَأَنْ يَحْضُرُونِ",
+        "transliteration_iast": "A'oodhu bi kalimaat-Illaahit-taammaati min ghadabihi wa 'iqaabihi wa sharri 'ibaadihi wa min hamazaatish-shayaateeni wa an yahduroon.",
+        "transliteration_ta": "அஊது பிகலிமாதில்லாஹித்தாம்மாதி மின் கதபிஹீ வ இகாபிஹீ வ ஷர்ரி இபாதிஹீ வ மின் ஹமஸாதிஷ் ஷயாதீனி வ அன் யஹ்ளுரூன்.",
+        "meaning_en": "I seek refuge in the perfect words of Allah from His anger, His punishment, the evil of His slaves, and from the whisperings of the devils and their presence.",
+        "meaning_ta": "அல்லாஹ்வின் கோபம், தண்டனை, அவனது படைப்புகளின் தீங்குகள் மற்றும் ஷைத்தான்களின் ஊசலாட்டங்கள், அவை என்னை அணுகுவதை விட்டும் அல்லாஹ்வின் பரிபூரண வார்த்தைகளைக் கொண்டு பாதுகாவல் தேடுகிறேன்.",
+        "procedure_en": "Perform ablution (Wudu) before bed. Dust the bed 3 times reciting Bismillah. Cup the hands together, blow into them while reciting Surah Al-Ikhlas, Surah Al-Falaq, and Surah An-Nas, and wipe over the face and whole body 3 times as the Prophet (pbuh) did. Recite the last 2 verses of Surah Al-Baqarah and Ayatul Kursi.",
+        "procedure_ta": "படுக்கைக்குச் செல்லும் முன் உளூ செய்து கொள்ளவும். படுக்கையை 3 முறை தட்டிவிட்டு பிஸ்மில்லாஹ் கூறவும். கைகளை குவித்து அதில் அல்-இஹ்லாஸ், அல்-ஃபலக், அந்-நாஸ் ஓதி ஊதி முகம் மற்றும் உடலின் முன்பகுதி முழுவதும் 3 முறை தடவிக்கொள்ளவும். ஸூறா பகராவின் கடைசி 2 வசனங்களையும் ஆயதுல் குர்ஸியையும் ஓதவும்.",
+        "japa_count": 3,
+        "timing_recommendation_en": "Every night before sleeping",
+        "timing_recommendation_ta": "தினமும் இரவில் உறங்கச் செல்வதற்கு முன்",
+        "source_code": "IBN_BAZ_FATWA_RUQYAH",
+        "is_pacification_only": False,
+        "problem_slugs": ["recurrent_nightmares", "fear_negative_energies", "mental_anxiety_depression"],
+        "is_published": True,
+        "verification_status": "verified",
+    },
 ]
 
 REMEDIES_BY_CODE: Dict[str, Dict[str, Any]] = {r["code"]: r for r in VERIFIED_REMEDIES}
@@ -1131,6 +1249,12 @@ REMEDIES_BY_CODE: Dict[str, Dict[str, Any]] = {r["code"]: r for r in VERIFIED_RE
 
 def list_problem_taxonomy(category: Optional[str] = None) -> List[Dict[str, Any]]:
     """List problem taxonomy items with dual-mode Supabase and in-memory fallback."""
+    cache_key = f"taxonomy_{category or 'all'}"
+    now = time.time()
+    if cache_key in _REMEDY_CACHE:
+        c_time, c_data = _REMEDY_CACHE[cache_key]
+        if now - c_time < _REMEDY_CACHE_TTL:
+            return c_data
     supabase = get_supabase_client()
     if supabase:
         try:
@@ -1139,6 +1263,7 @@ def list_problem_taxonomy(category: Optional[str] = None) -> List[Dict[str, Any]
                 query = query.eq("category", category)
             res = query.order("display_order").execute()
             if res.data and len(res.data) > 0:
+                _REMEDY_CACHE[cache_key] = (now, res.data)
                 return res.data
         except Exception:
             pass
@@ -1157,6 +1282,7 @@ def get_problem_by_slug(slug: str) -> Optional[Dict[str, Any]]:
         try:
             res = supabase.table("remedies_problem_taxonomy").select("*").eq("slug", slug).execute()
             if res.data and len(res.data) > 0:
+                _REMEDY_CACHE[cache_key] = (now, res.data)
                 return res.data[0]
         except Exception:
             pass
@@ -1170,6 +1296,12 @@ def list_remedies(
     problem_slug: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """List remedies with optional filters."""
+    cache_key = f"remedies_{graha}_{remedy_type}_{problem_slug}"
+    now = time.time()
+    if cache_key in _REMEDY_CACHE:
+        c_time, c_data = _REMEDY_CACHE[cache_key]
+        if now - c_time < _REMEDY_CACHE_TTL:
+            return c_data
     supabase = get_supabase_client()
     if supabase:
         try:
@@ -1238,6 +1370,12 @@ def get_remedy_by_code(code: str) -> Optional[Dict[str, Any]]:
 
 def list_navagraha_temples(graha: Optional[str] = None) -> List[Dict[str, Any]]:
     """List Tamil Navagraha temples."""
+    cache_key = f"temples_{graha or 'all'}"
+    now = time.time()
+    if cache_key in _REMEDY_CACHE:
+        c_time, c_data = _REMEDY_CACHE[cache_key]
+        if now - c_time < _REMEDY_CACHE_TTL:
+            return c_data
     supabase = get_supabase_client()
     if supabase:
         try:
@@ -1246,6 +1384,7 @@ def list_navagraha_temples(graha: Optional[str] = None) -> List[Dict[str, Any]]:
                 query = query.eq("graha", graha)
             res = query.order("code").execute()
             if res.data and len(res.data) > 0:
+                _REMEDY_CACHE[cache_key] = (now, res.data)
                 return res.data
         except Exception:
             pass
@@ -1263,6 +1402,7 @@ def get_temple_by_code(code: str) -> Optional[Dict[str, Any]]:
         try:
             res = supabase.table("navagraha_temples").select("*").eq("code", code).execute()
             if res.data and len(res.data) > 0:
+                _REMEDY_CACHE[cache_key] = (now, res.data)
                 return res.data[0]
         except Exception:
             pass
@@ -1280,7 +1420,9 @@ def list_source_references() -> List[Dict[str, Any]]:
         try:
             res = supabase.table("remedy_source_references").select("*").eq("is_published", True).execute()
             if res.data and len(res.data) > 0:
-                return res.data
+                remote_codes = {r.get("code") for r in res.data}
+                extras = [s for s in VERIFIED_SOURCES if s["code"] not in remote_codes]
+                return res.data + extras
         except Exception:
             pass
 

@@ -54,6 +54,7 @@ from app.services.jamakkol.constants import (
     JEEVA_KARAKA_MAP,
     BLACK_MAGIC_SORCERER_KARAKAS,
     APPROACHING_PLANET_MUHURTA_SIGNIFICATIONS,
+    ISLAMIC_LEGAL_GUIDANCE_AND_RUQYAH,
 )
 
 
@@ -1426,6 +1427,7 @@ def evaluate_classical_jamakkol_rules(
                 else "துஷ்ட சக்தி அல்லது செய்வினை தோஷங்கள் பிரசன்னத்தில் இல்லை."
             )
         ),
+        "islamic_legal_guidance_and_ruqyah": ISLAMIC_LEGAL_GUIDANCE_AND_RUQYAH,
     }
 
     # 22. Natural or Unnatural Death Analysis (இயற்கை மரணம் vs துர்மரணம்)

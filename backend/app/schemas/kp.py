@@ -24,6 +24,9 @@ class PlanetaryKpPosition(BaseModel):
     sub_lord: str
     sub_sub_lord: str
     kp_number: int  # 1-249
+    navamsa_sign: Optional[str] = None
+    navamsa_lord: Optional[str] = None
+    is_vargottama: Optional[bool] = None
 
 
 class KpCuspDetail(BaseModel):
@@ -36,6 +39,9 @@ class KpCuspDetail(BaseModel):
     sub_lord: str
     promise: str  # Positive, Negative, Mixed
     sub_sub_lord: Optional[str] = None
+    navamsa_sign: Optional[str] = None
+    navamsa_lord: Optional[str] = None
+    is_vargottama: Optional[bool] = None
 
 
 class SignificatorStrengthEntry(BaseModel):
@@ -115,6 +121,8 @@ class KpResponse(BaseModel):
     house_significators: Optional[List[HouseSignificatorEntry]] = None
     ruling_planets: Optional[RulingPlanetsDetail] = None
     dasa_hierarchy: Optional[KpDasaBalance] = None
+    fortuna: Optional[Dict[str, Any]] = None
+    reader2_insights: Optional[Dict[str, Any]] = None
 
 
 class HoraryKpRequest(BaseModel):

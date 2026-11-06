@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   HoraryKpRequest,
   HoraryKpResponse,
@@ -233,6 +234,25 @@ export function HoraryPrashnaTab({ language, onSavedRecord }: HoraryPrashnaTabPr
             <Clock className="w-3.5 h-3.5" />
             <span>{language === "ta" ? "தற்போதைய நேரம்" : "Use Current Time"}</span>
           </button>
+        </div>
+
+        {/* Instant Predictor Fast-Action Banner */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-[#FAF2DE] via-[#F8EBD0] to-[#FAF2DE] border border-[#D8BD80]">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-[#B8862B] shrink-0" />
+            <span className="text-xs font-bold text-[#102A4C]">
+              {language === "ta"
+                ? "புதியது: விசா, வேலை நேர்காணல், நீதிமன்ற வழக்கிற்கு உடனடி தீர்ப்பு அட்டை!"
+                : "New: Instant Verdict Card for Visa, Job Interviews, Court Cases and Timing!"}
+            </span>
+          </div>
+          <Link
+            href="/tools/kp-horary-predictor"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#B8862B] hover:bg-[#996515] transition-colors shrink-0 shadow-xs"
+          >
+            <span>{language === "ta" ? "தானியங்கி கணிப்பாளர் திற" : "Open Automated Predictor"}</span>
+            <Sparkles className="w-3 h-3" />
+          </Link>
         </div>
 
         <form onSubmit={handleCalculate} noValidate className="space-y-6">

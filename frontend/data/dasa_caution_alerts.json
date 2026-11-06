@@ -201,5 +201,101 @@
     "severity": "moderate",
     "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
     "sent_at": "2026-11-03T10:58:19.342Z"
+  },
+  {
+    "horoscope_id": "0e04e24c-9396-494d-9815-ea0dab525878",
+    "customer_id": "d35c9cf9-026d-4154-8e69-113574fcc51d",
+    "dasa_lord": "Mars",
+    "bhukti_lord": "Venus",
+    "andhar_lord": "Mercury",
+    "period_start": "2026-11-04",
+    "period_end": "2027-01-03",
+    "severity": "critical",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:05:53.614Z"
+  },
+  {
+    "horoscope_id": "0c0d6996-46a8-42f1-919b-9cd1b6335ddd",
+    "customer_id": "a6ac0f46-3194-46f2-9a00-08013cf2ad1f",
+    "dasa_lord": "Saturn",
+    "bhukti_lord": "Mercury",
+    "andhar_lord": "Mercury",
+    "period_start": "2026-07-30",
+    "period_end": "2026-12-16",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:01.169Z"
+  },
+  {
+    "horoscope_id": "69e94964-7b60-48f0-b806-80564ce3d7ea",
+    "customer_id": "e8222805-fcbd-49db-b2ce-99f079ff3d75",
+    "dasa_lord": "Jupiter",
+    "bhukti_lord": "Mercury",
+    "andhar_lord": "Venus",
+    "period_start": "2026-08-08",
+    "period_end": "2026-12-24",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:02.208Z"
+  },
+  {
+    "horoscope_id": "2e67fd4c-04f8-48bf-9c94-7cfd37e50316",
+    "customer_id": "d1484c54-a57b-4dcd-8d9f-86a0b618b0a9",
+    "dasa_lord": "Jupiter",
+    "bhukti_lord": "Moon",
+    "andhar_lord": "Mercury",
+    "period_start": "2026-09-30",
+    "period_end": "2026-12-08",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:35.334Z"
+  },
+  {
+    "horoscope_id": "b5876ebd-ff89-409d-afc1-493947f4e854",
+    "customer_id": "21441b62-ec7d-4c9a-9377-81944383d4f8",
+    "dasa_lord": "Ketu",
+    "bhukti_lord": "Venus",
+    "andhar_lord": "Venus",
+    "period_start": "2026-10-12",
+    "period_end": "2026-12-22",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:41.115Z"
+  },
+  {
+    "horoscope_id": "38654fb2-d7e2-425f-87da-cd3807188653",
+    "customer_id": "574fdb59-40ab-4b12-934b-11ed3c5a2b80",
+    "dasa_lord": "Mercury",
+    "bhukti_lord": "Jupiter",
+    "andhar_lord": "Moon",
+    "period_start": "2026-10-21",
+    "period_end": "2026-12-29",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:43.208Z"
+  },
+  {
+    "horoscope_id": "a9a9d4be-60b0-47ce-9e78-b963828979aa",
+    "customer_id": "96c67c27-20a0-41c1-af09-fba6df514f78",
+    "dasa_lord": "Mars",
+    "bhukti_lord": "Rahu",
+    "andhar_lord": "Mercury",
+    "period_start": "2026-11-02",
+    "period_end": "2026-12-26",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:44.712Z"
+  },
+  {
+    "horoscope_id": "cfab79a0-5ceb-4d45-a9f3-00abc3b23c78",
+    "customer_id": "6536eea9-4289-4887-8826-5737e1c3fcfe",
+    "dasa_lord": "Sun",
+    "bhukti_lord": "Saturn",
+    "andhar_lord": "Moon",
+    "period_start": "2026-11-02",
+    "period_end": "2026-12-01",
+    "severity": "moderate",
+    "sent_by": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+    "sent_at": "2026-11-06T06:06:46.533Z"
   }
 ]

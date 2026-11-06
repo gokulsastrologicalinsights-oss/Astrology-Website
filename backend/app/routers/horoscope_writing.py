@@ -24,6 +24,7 @@ from app.services.horoscope_writing import (
 )
 from app.services.horoscope_writing.repository import HoroscopeWritingRepository
 from app.services.auth_service import get_current_user, get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 
 logger = logging.getLogger("gai.api.horoscope_writing")
 security = HTTPBearer(auto_error=False)
@@ -68,23 +69,13 @@ def _resolve_birth_parameters(
                 detail="Authentication token required to access saved horoscopes.",
             )
         clean_id = _validate_uuid(saved_id_val)
-        supabase = get_supabase_client()
-        if not supabase:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database service unavailable.",
-            )
-
         is_admin = current_user.get("role") == "admin"
-        horoscope_row = None
-        try:
-            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-            if resp.data and len(resp.data) > 0:
-                row = resp.data[0]
-                if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                    horoscope_row = row
-        except Exception as err:
-            logger.warning("Database error fetching saved horoscope %s: %s", clean_id, err)
+        horoscope_row = get_cached_saved_horoscope(
+            clean_id=clean_id,
+            user_id=current_user["id"],
+            is_admin=is_admin,
+            include_calculation_result=True,
+        )
 
         if not horoscope_row:
             raise HTTPException(

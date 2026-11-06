@@ -1847,3 +1847,25 @@ BNN_PLANETARY_INDUSTRIES: Dict[str, Dict[str, str]] = {
     },
 }
 
+# ===========================================================================
+# 6. Pankajj K Duaa BNN Compendium Re-exports
+# ===========================================================================
+from app.services.brighu_naadi.pankajj_duaa_rules import (
+    BNN_PANKAJJ_DUAA_METADATA,
+    BNN_RASHI_MOBILITY,
+    BNN_VEDIC_UCCH_NEECH,
+    BNN_NAADI_HOUSE_QUALITY,
+    BNN_PANKAJJ_FRIENDSHIP,
+    BNN_ASPECT_WEIGHTS,
+    BNN_DEGREE_RULES,
+    BNN_MEDICAL_ASTROLOGY_RULES,
+    BNN_PLANET_PAIR_COMBINATIONS,
+    BNN_CSL_EVENT_RULES,
+    BNN_YOGAS_CATALOG,
+    BNN_REMEDIES_REGISTRY,
+    BNN_GENERAL_LIFE_REMEDIES,
+    evaluate_pankajj_duaa_compendium,
+)
+
+
+

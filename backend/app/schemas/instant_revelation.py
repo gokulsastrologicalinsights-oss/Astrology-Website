@@ -41,6 +41,7 @@ class RevelationBullet(BaseModel):
     astrological_proof: str = Field(..., description="Mathematical & Shastric derivation backing this revelation")
     calendar_period: Optional[str] = Field(None, description="Exact calendar dates or age window")
     nature: Optional[str] = Field(None, description="danger | breakthrough | neutral | identity")
+    checklist: List[str] = Field(default_factory=list, description="Multi-tiered Shastric verification checks (திரிவித சாஸ்திர சரிபார்ப்பு முறை)")
 
 
 class FutureTimelineWindow(BaseModel):
@@ -133,6 +134,24 @@ class InstantRevelationResponse(BaseModel):
     # 4. Childhood Balarishta Escape
     childhood_balarishta_en: str = Field(..., description="Childhood critical illness or high fever escape in English")
     childhood_balarishta_ta: str = Field(..., description="பாலாரிஷ்டம் - சிறுவயதில் தப்பிய கண்டம் மற்றும் தீவிர காய்ச்சல் (தமிழ்)")
+
+    # Deva Keralam (Chandra Kala Nadi) 150 Nadiamsas & Longevity Engine
+    lagna_nadiamsa_number: int = Field(1, description="Lagna Nadiamsa index 1-150")
+    lagna_nadiamsa_name: str = Field(..., description="Nadiamsa name in English")
+    lagna_nadiamsa_name_ta: str = Field(..., description="நாடியம்சம் பெயர் (தமிழ்)")
+    lagna_nadiamsa_half: str = Field(..., description="Purvardha or Uttarardha in English")
+    lagna_nadiamsa_half_ta: str = Field(..., description="பூர்வார்த்தம் அல்லது உத்தரார்த்தம் (தமிழ்)")
+    lagna_nadiamsa_script_en: str = Field(..., description="Deva Keralam Nadiamsa delineation in English")
+    lagna_nadiamsa_script_ta: str = Field(..., description="தேவ கேரளம் நாடியம்ச வாக்கு பலன் (தமிழ்)")
+    khanda_nirnaya_longevity_en: str = Field(..., description="Khanda Nirnaya and longevity classification in English")
+    khanda_nirnaya_longevity_ta: str = Field(..., description="கண்ட நிர்ணயம் மற்றும் ஆயுள் கணிதம் (தமிழ்)")
+    father_critical_degree: str = Field(..., description="Father critical crisis transit degree (Deva Keralam)")
+    mother_critical_degree: str = Field(..., description="Mother critical crisis transit degree (Deva Keralam)")
+
+    # 101% Guaranteed Chart Shockers (BNN & Deva Keralam Condition-Verified)
+    guaranteed_chart_shockers: List[RevelationBullet] = Field(default_factory=list, description="Strictly verified 101% matched shockers")
+    remedial_taboos_en: List[str] = Field(default_factory=list, description="Strict Shastric Taboos and Behavioral Directives in English")
+    remedial_taboos_ta: List[str] = Field(default_factory=list, description="சாஸ்திர கடுமையான விலக்குகள் மற்றும் உணவு விதிமுறைகள் (தமிழ்)")
 
     # Fast 10-Second Executive Teleprompter (Bullet points for instant speaking)
     quick_glance_teleprompter_en: List[str] = Field(default_factory=list, description="Fast bulleted teleprompter points in English")

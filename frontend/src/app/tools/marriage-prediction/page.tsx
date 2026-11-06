@@ -9,9 +9,12 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   UnifiedMarriageRequest,
   UnifiedMarriageResponse,
+  SpousePredictionRequest,
+  SpousePredictionResponse,
   SavedHoroscopeItem,
 } from "@/lib/types";
-import { predictMarriageEvent, ApiError } from "@/lib/api";
+import { SpouseSivadasanRaviCard } from "@/components/marriage-prediction/SpouseSivadasanRaviCard";
+import { predictMarriageEvent, predictSpouseEvent, ApiError } from "@/lib/api";
 import {
   Heart,
   Compass,
@@ -97,6 +100,9 @@ function MarriagePredictionContent() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiErrorStatus, setApiErrorStatus] = useState<number | null>(null);
   const [response, setResponse] = useState<UnifiedMarriageResponse | null>(null);
+  const [spouseResponse, setSpouseResponse] = useState<SpousePredictionResponse | null>(null);
+  const [gender, setGender] = useState<"male" | "female">("male");
+  const [activeViewMode, setActiveViewMode] = useState<"timing" | "spouse">("timing");
 
   // Section Accordion Toggles
   const [showMetadata, setShowMetadata] = useState<boolean>(false);
@@ -295,8 +301,19 @@ function MarriagePredictionContent() {
 
     try {
       const token = session?.access_token;
-      const data = await predictMarriageEvent(payload, token);
+      const spousePayload: SpousePredictionRequest = {
+        birth: payload.birth,
+        gender: gender,
+      };
+      const [data, sData] = await Promise.all([
+        predictMarriageEvent(payload, token),
+        predictSpouseEvent(spousePayload, token).catch((err) => {
+          console.warn("Spouse prediction call failed:", err);
+          return null;
+        }),
+      ]);
       setResponse(data);
+      if (sData) setSpouseResponse(sData);
 
       // Smooth scroll down to results
       setTimeout(() => {
@@ -636,6 +653,36 @@ function MarriagePredictionContent() {
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Gender Selection */}
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                  {language === "ta" ? "பாலினம்" : "Gender"} <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGender("male")}
+                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                      gender === "male"
+                        ? "bg-[#153F6B] text-white border-[#153F6B]"
+                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {language === "ta" ? "ஆண் (Groom)" : "Male"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender("female")}
+                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                      gender === "female"
+                        ? "bg-[#153F6B] text-white border-[#153F6B]"
+                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {language === "ta" ? "பெண் (Bride)" : "Female"}
+                  </button>
+                </div>
+              </div>
               {/* Date of Birth */}
               <div>
                 <label
@@ -1053,6 +1100,33 @@ function MarriagePredictionContent() {
                 <RefreshCw className="h-3.5 w-3.5" /> Run Another Analysis
               </button>
             </div>
+
+            {/* View Mode Switcher: Timing vs Spouse Profile */}
+            <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setActiveViewMode("timing")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${activeViewMode === "timing" ? "bg-[#153F6B] text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-white/50"}`}
+              >
+                <Calendar className="w-4 h-4" />
+                {language === "ta" ? "திருமண காலக்கட்டம் & KP கணிப்பு" : "Marriage Timing & KP Promise"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveViewMode("spouse")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${activeViewMode === "spouse" ? "bg-[#153F6B] text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-white/50"}`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                {language === "ta" ? "வாழ்க்கைத் துணை & சிவதாசன் ரவி திறவுகோல்" : "Spouse & Sivadasan Ravi Insights"}
+              </button>
+            </div>
+
+            {activeViewMode === "spouse" && spouseResponse && (
+              <SpouseSivadasanRaviCard data={spouseResponse} language={(language === "ta" ? "ta" : "en")} />
+            )}
+
+            {activeViewMode === "timing" && (
+              <div className="space-y-8">
 
             {/* ------------------------------------------------------------- */}
             {/* Section A: Overall Event Verdict                              */}
@@ -1899,6 +1973,8 @@ function MarriagePredictionContent() {
                 </div>
               )}
             </div>
+              </div>
+            )}
           </div>
         )}
       </main>

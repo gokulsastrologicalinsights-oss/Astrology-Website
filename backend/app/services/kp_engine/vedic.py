@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 from .constants import (
+    NAVAMSA_SPAN_DEG,
     NAKSHATRAS,
     SIGN_LORDS,
     SIGNS,
@@ -372,6 +373,30 @@ def sub_sub_sub_sub_lord(lon: float) -> str:
     return sub_sub_sub_sub_info(lon).lord
 
 
+
+# ---------------------------------------------------------------------------
+# Navamsa & Vargottama (KP Reader 1)
+# ---------------------------------------------------------------------------
+
+def navamsa_index(lon: float) -> int:
+    """Index (0..11) of the Navamsa sign for a sidereal longitude (KP Reader 1)."""
+    return int(normalize_longitude(lon) // NAVAMSA_SPAN_DEG) % 12
+
+
+def navamsa_sign(lon: float) -> str:
+    """Navamsa sign name for a sidereal longitude (KP Reader 1)."""
+    return SIGNS[navamsa_index(lon)]
+
+
+def navamsa_lord(lon: float) -> str:
+    """Ruling planet of the Navamsa sign for a sidereal longitude (KP Reader 1)."""
+    return SIGN_LORDS[navamsa_sign(lon)]
+
+
+def is_vargottama(lon: float) -> bool:
+    """Whether a point occupies the same sign in both Rasi and Navamsa (KP Reader 1)."""
+    return sign_index(lon) == navamsa_index(lon)
+
 # ---------------------------------------------------------------------------
 # Convenience aggregate
 # ---------------------------------------------------------------------------
@@ -391,6 +416,9 @@ class PointInfo:
     pada: int
     sub_sub_sub_lord: str = ""
     sub_sub_sub_sub_lord: str = ""
+    navamsa_sign: str = ""
+    navamsa_lord: str = ""
+    is_vargottama: bool = False
 
 
 def point_info(lon: float) -> PointInfo:
@@ -409,4 +437,7 @@ def point_info(lon: float) -> PointInfo:
         pada=pada_info(lon).pada,
         sub_sub_sub_lord=sub_sub_sub_lord(lon),
         sub_sub_sub_sub_lord=sub_sub_sub_sub_lord(lon),
+        navamsa_sign=navamsa_sign(lon),
+        navamsa_lord=navamsa_lord(lon),
+        is_vargottama=is_vargottama(lon),
     )

@@ -31,6 +31,7 @@ from app.schemas.kp_events import (
 from app.schemas.common import BirthInput
 from app.schemas.horoscope import HoroscopeRequest
 from app.services.auth_service import get_current_user, get_supabase_client
+from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.kp_service import calculate_kp_chart
 from app.services.ephemeris import calculate_full_horoscope
 from app.services.dasa_service import _convert_node, generate_vimshottari_hierarchy
@@ -147,23 +148,12 @@ def analyze_saved_horoscope(
     clean_id = _validate_uuid(saved_horoscope_id)
     user_id = current_user["id"]
     is_admin = current_user.get("role") == "admin"
-    supabase = get_supabase_client()
-
-    if not supabase:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database service unavailable. Database configuration missing.",
-        )
-
-    horoscope_row: Optional[Dict[str, Any]] = None
-    try:
-        resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-        if resp.data and len(resp.data) > 0:
-            row = resp.data[0]
-            if is_admin or str(row.get("user_id")) == str(user_id):
-                horoscope_row = row
-    except Exception as err:
-        logger.warning(f"Database query error when fetching saved horoscope {clean_id}: {err}")
+    horoscope_row = get_cached_saved_horoscope(
+        clean_id=clean_id,
+        user_id=str(user_id),
+        is_admin=is_admin,
+        include_calculation_result=True,
+    )
 
     if not horoscope_row:
         raise HTTPException(

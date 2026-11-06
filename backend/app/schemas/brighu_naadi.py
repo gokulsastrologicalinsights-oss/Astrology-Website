@@ -110,3 +110,43 @@ class BrighuNaadiResponse(BaseModel):
     bnn_directional_groups: Optional[Dict[str, List[str]]] = Field(None, description="Planetary distributions across East (Fire), South (Earth), West (Air), North (Water)")
     bnn_20_rules_evaluations: List[Dict[str, Any]] = Field(default_factory=list, description="Evaluation of the 20 Bhrigu Nandi Nadi golden rules")
     rahu_ketu_axis_career_outside: Optional[Dict[str, Any]] = Field(None, description="Rule 10 evaluation: whether Rahu-Ketu axis divides Jupiter and Saturn")
+    pankajj_duaa_compendium: Optional[Dict[str, Any]] = Field(None, description="BNN diagnostic rules, medical astrology, yogas, and remedies from Pankajj K Duaa compendium")
+
+
+
+class BrighuPrashnaRequest(BaseModel):
+    birth_date: Optional[str] = Field(None, description="YYYY-MM-DD of querent")
+    completed_age: Optional[int] = Field(None, description="Completed age in years (0 to 107)")
+    query_date: Optional[str] = Field(None, description="Date of query (YYYY-MM-DD, defaults to current date)")
+    query_category: Optional[str] = Field("general", description="general, business, career, education, marriage, health")
+    querent_order: Optional[int] = Field(1, description="1 for primary querent, 2 for second questioning person")
+
+
+class BrighuPrashnaResponse(BaseModel):
+    book_title: str = Field("Brighu Prashna Nadi", description="Treatise title")
+    author: str = Field("R. G. Rao (Sagar Publications)", description="Author & Publisher")
+    completed_age: int = Field(..., description="Completed years of age at query time")
+    formula_applied: str = Field(..., description="Calculation step: 107 - Completed Age = Remainder")
+    prediction_number: int = Field(..., description="Distinctive prediction number (0 to 107)")
+    sub_category_key: Optional[str] = Field(None, description="Sub-prediction variant key if applicable (e.g. 87&86(3) business)")
+    guru_mantra: str = Field("OM SRI JAGADEESWARAYA NAMAHA", description="Sanctified Guru Mantra recited prior to revelation")
+    sanskrit_sloka: Optional[str] = Field(None, description="Classical Sanskrit aphorism from the palm leaf")
+    yoga_name_en: str = Field(..., description="Governing Yoga / Amsha name in English")
+    yoga_name_ta: str = Field(..., description="இயங்கும் யோகம் / அம்சம் (தமிழ்)")
+    core_prophecy_en: str = Field(..., description="Central oracle prophecy")
+    core_prophecy_ta: str = Field(..., description="முதன்மைக் கணிப்பு உரை (தமிழ்)")
+    career_and_finance_en: str = Field(..., description="Career, profession, trade, and financial outlook")
+    career_and_finance_ta: str = Field(..., description="தொழில், உத்தியோகம் மற்றும் நிதி நிலை")
+    family_and_relationships_en: str = Field(..., description="Parents, spouse, children, and domestic peace")
+    family_and_relationships_ta: str = Field(..., description="குடும்பம், வாழ்க்கைத்துணை, வாரிசு மற்றும் உறவுகள்")
+    health_and_cautions_en: str = Field(..., description="Health status, physical vulnerabilities, and cautions")
+    health_and_cautions_ta: str = Field(..., description="உடல் நலம், நோய்த்தன்மை மற்றும் எச்சரிக்கைகள்")
+    past_karma_cause_en: Optional[str] = Field(None, description="Poorva Karma / Sanchita Karma cause in previous birth")
+    past_karma_cause_ta: Optional[str] = Field(None, description="முற்பிறவி கர்ம வினை மற்றும் காரணங்கள்")
+    prescribed_remedy_en: str = Field(..., description="Specific Pooja, deity, temple darshan, or Dana prescribed")
+    prescribed_remedy_ta: str = Field(..., description="பரிகார தெய்வம், பூஜை, யாத்திரை மற்றும் தானம்")
+    relief_timeline_en: str = Field(..., description="Exact duration until relief manifests (months, pakshas, samvatsaras)")
+    relief_timeline_ta: str = Field(..., description="துன்பங்கள் நீங்கி சுப பலன்கள் தொடங்கும் காலம்")
+
+    pankajj_duaa_compendium: Optional[Dict[str, Any]] = Field(None, description="BNN diagnostic rules, medical astrology, yogas, and remedies from Pankajj K Duaa compendium")
+

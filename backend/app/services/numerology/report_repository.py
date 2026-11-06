@@ -78,7 +78,7 @@ def list_numerology_reports(
     supabase = get_supabase_client()
     if supabase:
         try:
-            query = supabase.table("saved_numerology_reports").select("*")
+            query = supabase.table("saved_numerology_reports").select("id, user_id, display_number, title, report_type, primary_name, birth_date, destiny_number, birth_number, created_at, updated_at")
             if not is_admin:
                 query = query.eq("user_id", user_id)
 
