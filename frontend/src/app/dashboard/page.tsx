@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 import { DasaCautionReminderModal } from "@/components/caution/DasaCautionReminderModal";
-import { DailyTimingsWidget } from "@/components/dashboard/DailyTimingsWidget";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -156,9 +155,6 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
-      {/* Daily Raaghu, Emakandam, Nalla Neram & Punarpoosam Theipirai Panja Patchi Timings */}
-      <DailyTimingsWidget />
 
       {/* Main Layout: Compact Profile Sidebar & Saved Charts */}
       <div className="flex flex-col lg:flex-row items-start gap-6">
