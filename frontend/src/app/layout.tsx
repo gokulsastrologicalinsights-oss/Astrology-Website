@@ -16,14 +16,12 @@ const inter = Inter({
 const notoTamil = Noto_Sans_Tamil({
   variable: "--font-tamil",
   subsets: ["tamil"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
 const cinzel = Cinzel({
   variable: "--font-cinzel",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
   display: "swap",
 });
 
