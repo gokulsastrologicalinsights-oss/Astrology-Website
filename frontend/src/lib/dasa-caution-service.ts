@@ -342,7 +342,7 @@ interface CautionCacheEntry {
 }
 
 const CAUTION_CACHE = new Map<string, CautionCacheEntry>();
-const CACHE_TTL_MS = 180_000; // 3 minutes
+const CACHE_TTL_MS = 14_400_000; // 4 hours (Dasa cautions are daily calculations; invalidated on chart mutations)
 
 export function invalidateCautionCache() {
   CAUTION_CACHE.clear();
@@ -401,10 +401,10 @@ export async function getTodayDasaCautionAlerts(
 
   let queryError: string | null = null;
   try {
-    let query = adminClient
-      .from("saved_horoscopes")
+    let query = (adminClient
+      .from("saved_horoscopes") as any)
       .select(
-        "id, user_id, person_name, birth_date, horoscope:calculation_result->horoscope, dasa:calculation_result->dasa, customer:calculation_result->customer, created_at, updated_at"
+        "id, user_id, person_name, birth_date, planets:calculation_result->horoscope->planets, dasa:calculation_result->dasa, customer:calculation_result->customer, created_at, updated_at"
       )
       .order("created_at", { ascending: false });
     if (!isAdmin) {
@@ -414,10 +414,10 @@ export async function getTodayDasaCautionAlerts(
     if (error) {
       console.warn("[CAUTION SCAN PRIMARY QUERY FAILED]", error.message);
       // Fallback with limit 12 to avoid statement timeout
-      let fallbackQuery = adminClient
-        .from("saved_horoscopes")
+      let fallbackQuery = (adminClient
+        .from("saved_horoscopes") as any)
         .select(
-          "id, user_id, person_name, birth_date, horoscope:calculation_result->horoscope, dasa:calculation_result->dasa, customer:calculation_result->customer, created_at, updated_at"
+          "id, user_id, person_name, birth_date, planets:calculation_result->horoscope->planets, dasa:calculation_result->dasa, customer:calculation_result->customer, created_at, updated_at"
         )
         .order("created_at", { ascending: false });
       if (!isAdmin) {
@@ -503,7 +503,8 @@ export async function getTodayDasaCautionAlerts(
   const alerts: DasaCautionItem[] = [];
 
   for (const record of savedList) {
-    const horoscope: HoroscopeResponse = record.horoscope || record.calculation_result?.horoscope;
+    const rawPlanets = record.planets || record.horoscope?.planets || record.calculation_result?.horoscope?.planets;
+    const horoscope: HoroscopeResponse = (record.horoscope || (rawPlanets ? { planets: rawPlanets } : record.calculation_result?.horoscope)) as any;
     const dasa: DasaResponse = record.dasa || record.calculation_result?.dasa;
     let customerMeta = record.customer || record.calculation_result?.customer || {};
 
@@ -1246,6 +1247,10 @@ export async function getTodayDasaCautionAlerts(
   };
 
   if (!queryError) {
+    if (CAUTION_CACHE.size >= 100) {
+      const oldest = CAUTION_CACHE.keys().next().value;
+      if (oldest) CAUTION_CACHE.delete(oldest);
+    }
     CAUTION_CACHE.set(cacheKey, { timestamp: Date.now(), data: result });
   }
 

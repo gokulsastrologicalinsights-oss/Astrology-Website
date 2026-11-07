@@ -256,6 +256,7 @@ export async function getOrCreateCustomerRecord(
       .single();
 
     if (!error && inserted) {
+      invalidateCustomerCache();
       return { customer: inserted, isNew: true };
     }
   } catch (dbErr) {
@@ -337,11 +338,60 @@ export async function getOrCreateCustomerRecord(
   return { customer: created, isNew: true };
 }
 
+interface CustomerCacheEntry {
+  timestamp: number;
+  data: CustomerRecord[];
+}
+
+const CUSTOMER_CACHE = new Map<string, CustomerCacheEntry>();
+const CUSTOMER_INFLIGHT = new Map<string, Promise<CustomerRecord[]>>();
+const CUSTOMER_CACHE_TTL_MS = 300_000; // 5 minutes
+
+export function invalidateCustomerCache() {
+  CUSTOMER_CACHE.clear();
+  CUSTOMER_INFLIGHT.clear();
+}
+
 /**
  * Retrieves all unique customers for the given user (or all if admin).
  * Synchronizes with saved_horoscopes records to surface legacy profiles.
+ * Optimized with in-memory TTL caching and request deduplication to eliminate repeated PostgREST egress.
  */
 export async function listCustomersForUser(
+  userId: string,
+  isAdmin: boolean = false,
+  searchTerm: string = ""
+): Promise<CustomerRecord[]> {
+  const cacheKey = `${userId}_${isAdmin}_${searchTerm.trim().toLowerCase()}`;
+  const now = Date.now();
+  const cached = CUSTOMER_CACHE.get(cacheKey);
+  if (cached && now - cached.timestamp < CUSTOMER_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  if (CUSTOMER_INFLIGHT.has(cacheKey)) {
+    return CUSTOMER_INFLIGHT.get(cacheKey)!;
+  }
+
+  const inflightPromise = (async () => {
+    try {
+      const res = await _executeListCustomersForUser(userId, isAdmin, searchTerm);
+      if (CUSTOMER_CACHE.size >= 200) {
+        const oldest = CUSTOMER_CACHE.keys().next().value;
+        if (oldest) CUSTOMER_CACHE.delete(oldest);
+      }
+      CUSTOMER_CACHE.set(cacheKey, { timestamp: Date.now(), data: res });
+      return res;
+    } finally {
+      CUSTOMER_INFLIGHT.delete(cacheKey);
+    }
+  })();
+
+  CUSTOMER_INFLIGHT.set(cacheKey, inflightPromise);
+  return inflightPromise;
+}
+
+async function _executeListCustomersForUser(
   userId: string,
   isAdmin: boolean = false,
   searchTerm: string = ""
@@ -351,7 +401,9 @@ export async function listCustomersForUser(
 
   // 1. Fetch from Supabase public.customers if available
   try {
-    let query = adminClient.from("customers").select("*");
+    let query = adminClient
+      .from("customers")
+      .select("id, user_id, full_name, birth_date, country_code, phone_number, normalized_phone, whatsapp_number, created_at, updated_at");
     if (!isAdmin) {
       query = query.eq("user_id", userId);
     }
@@ -483,7 +535,7 @@ export async function updateCustomerContactDetails(
     try {
       const { data: h } = await adminClient
         .from("saved_horoscopes")
-        .select("id, user_id, person_name, birth_date, calculation_result")
+        .select("id, user_id, person_name, birth_date, customer:calculation_result->customer")
         .eq("id", candidateHoroId)
         .maybeSingle();
       if (h) {
@@ -739,6 +791,7 @@ export async function updateCustomerContactDetails(
     // Ignore cache clear error
   }
 
+  invalidateCustomerCache();
   return updatedCustomer!;
 }
 
@@ -843,7 +896,7 @@ export async function getTodayBirthdayCelebrants(
       for (const tm of todayMatches) {
         const { data: detail } = await adminClient
           .from("saved_horoscopes")
-          .select("id, user_id, person_name, birth_date, calculation_result")
+          .select("id, user_id, person_name, birth_date, customer:calculation_result->customer")
           .eq("id", tm.id)
           .maybeSingle();
         if (detail) savedHoroscopes.push(detail);
@@ -856,8 +909,7 @@ export async function getTodayBirthdayCelebrants(
           continue;
         }
 
-        const calc = h.calculation_result || {};
-        const custMeta = calc.customer;
+        const custMeta = (h as any).customer || h.calculation_result?.customer || {};
         const linkedCustId = custMeta?.id || (h as any).customer_id;
 
         // If this horoscope is linked to an existing celebrant in our map

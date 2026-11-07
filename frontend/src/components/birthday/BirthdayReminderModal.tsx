@@ -91,6 +91,27 @@ export function BirthdayReminderModal({
     if (!isAuthenticated) return;
     setLoading(true);
     try {
+      const cacheStorageKey = `birthday_cache_${wishLang}`;
+      const stored = sessionStorage.getItem(cacheStorageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && Date.now() - parsed.timestamp < 1_800_000 && parsed.data) {
+            const data = parsed.data;
+            setCelebrants(data.celebrants || []);
+            setTodayKolkata(data.todayKolkata || "");
+            if (isAuto && data.celebrants && data.celebrants.length > 0) {
+              const sessionKey = `birthday_dismissed_${data.todayKolkata}`;
+              const alreadyDismissed = sessionStorage.getItem(sessionKey);
+              if (!alreadyDismissed) setInternalIsOpen(true);
+            }
+            setLoading(false);
+            return;
+          }
+        } catch {
+          // Ignore parse error
+        }
+      }
       const res = await fetch(`/api/customers/birthdays?lang=${wishLang}`);
       if (res.ok) {
         const data = await res.json();
@@ -104,6 +125,11 @@ export function BirthdayReminderModal({
           if (!alreadyDismissed) {
             setInternalIsOpen(true);
           }
+        }
+        try {
+          sessionStorage.setItem(cacheStorageKey, JSON.stringify({ timestamp: Date.now(), data }));
+        } catch {
+          // Ignore quota
         }
       }
     } catch (err) {
@@ -137,6 +163,10 @@ export function BirthdayReminderModal({
         body: JSON.stringify({ customer_id: customerId }),
       });
       if (res.ok) {
+        try {
+          sessionStorage.removeItem("birthday_cache_ta");
+          sessionStorage.removeItem("birthday_cache_en");
+        } catch {}
         const nowIso = new Date().toISOString();
         setCelebrants((prev) =>
           prev.map((c) =>
@@ -195,6 +225,10 @@ export function BirthdayReminderModal({
             : "Failed to update customer contact."
         );
       }
+      try {
+        sessionStorage.removeItem("birthday_cache_ta");
+        sessionStorage.removeItem("birthday_cache_en");
+      } catch {}
       const updatedCust = data.customer;
       const newWaLink = generateWhatsAppBirthdayLink(
         updatedCust.whatsapp_number,

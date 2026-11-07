@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 # Cache configuration
-_HOROSCOPE_CACHE_TTL_SECONDS = 60.0  # 60s TTL to cover multi-tab loads and sub-engine evaluations
+_HOROSCOPE_CACHE_TTL_SECONDS = 300.0  # 60s TTL to cover multi-tab loads and sub-engine evaluations
 _MAX_CACHE_ENTRIES = 300
 
 # Cache storage: (clean_id, user_id, is_admin, include_calculation_result) -> (timestamp, record_dict)

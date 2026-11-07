@@ -223,17 +223,16 @@ def list_kp_event_analyses(
                     # Enforce application-level user authorization on horoscope metadata
                     h_query = (
                         supabase.table("saved_horoscopes")
-                        .select("id, user_id, person_name, birth_date, display_number, calculation_result")
+                        .select("id, user_id, person_name, birth_date, display_number, asc_sign:calculation_result->horoscope->ascendant->sign_name")
                         .in_("id", list(set(horoscope_ids)))
                     )
                     if not is_admin:
                         h_query = h_query.eq("user_id", user_id)
                     h_res = h_query.execute()
                     for h in (h_res.data or []):
-                        asc_sign = None
-                        calc = h.get("calculation_result") or {}
-                        if isinstance(calc, dict):
-                            asc_sign = calc.get("horoscope", {}).get("ascendant", {}).get("sign_name")
+                        asc_sign = h.get("asc_sign")
+                        if not asc_sign and isinstance(h.get("calculation_result"), dict):
+                            asc_sign = h.get("calculation_result", {}).get("horoscope", {}).get("ascendant", {}).get("sign_name")
                         horo_meta_map[str(h["id"])] = {
                             "person_name": h.get("person_name"),
                             "birth_date": str(h.get("birth_date")),

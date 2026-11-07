@@ -1277,12 +1277,18 @@ def list_problem_taxonomy(category: Optional[str] = None) -> List[Dict[str, Any]
 
 def get_problem_by_slug(slug: str) -> Optional[Dict[str, Any]]:
     """Fetch single problem taxonomy item by slug."""
+    cache_key = f"problem_slug_{slug}"
+    now = time.time()
+    if cache_key in _REMEDY_CACHE:
+        c_time, c_data = _REMEDY_CACHE[cache_key]
+        if now - c_time < _REMEDY_CACHE_TTL:
+            return c_data
     supabase = get_supabase_client()
     if supabase:
         try:
             res = supabase.table("remedies_problem_taxonomy").select("*").eq("slug", slug).execute()
             if res.data and len(res.data) > 0:
-                _REMEDY_CACHE[cache_key] = (now, res.data)
+                _REMEDY_CACHE[cache_key] = (now, res.data[0])
                 return res.data[0]
         except Exception:
             pass

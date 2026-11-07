@@ -118,11 +118,13 @@ def _resolve_partner_chart(
         is_admin = current_user.get("role") == "admin"
         horoscope_row: Optional[Dict[str, Any]] = None
         try:
-            resp = supabase.table("saved_horoscopes").select("*").eq("id", clean_id).execute()
-            if resp.data and len(resp.data) > 0:
-                row = resp.data[0]
-                if is_admin or str(row.get("user_id")) == str(current_user["id"]):
-                    horoscope_row = row
+            from app.services.horoscope_cache import get_cached_saved_horoscope
+            horoscope_row = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=str(current_user.get("id", "")),
+                is_admin=is_admin,
+                include_calculation_result=True,
+            )
         except Exception as err:
             logger.warning(f"Database error fetching saved horoscope {clean_id}: {err}")
 

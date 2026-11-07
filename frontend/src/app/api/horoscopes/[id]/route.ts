@@ -8,6 +8,8 @@ import {
   getOrCreateCustomerRecord,
 } from "@/lib/customer-service";
 import { isHoroscopePinned, removeHoroscopePin } from "@/lib/pinned-horoscopes-service";
+import { invalidateHoroscopesPageCache } from "@/lib/horoscope-page-cache";
+import { invalidateCautionCache } from "@/lib/dasa-caution-service";
 
 /**
  * GET /api/horoscopes/[id]
@@ -67,14 +69,25 @@ export async function GET(
     const adminClient = createAdminClient();
     let customerInfo = record.calculation_result?.customer || null;
     try {
-      const customers = await listCustomersForUser(user.id, true);
-      const matched =
-        customers.find((c) => c.id === customerInfo?.id) ||
-        customers.find(
-          (c) =>
-            c.full_name.trim().toLowerCase() === record.person_name.trim().toLowerCase() &&
-            c.birth_date === record.birth_date
-        );
+      let matched: any = null;
+      if (customerInfo?.id) {
+        const { data: byId } = await adminClient
+          .from("customers")
+          .select("id, user_id, full_name, birth_date, country_code, phone_number, normalized_phone, whatsapp_number")
+          .eq("id", customerInfo.id)
+          .maybeSingle();
+        matched = byId;
+      }
+      if (!matched && record.person_name && record.birth_date) {
+        const { data: byName } = await adminClient
+          .from("customers")
+          .select("id, user_id, full_name, birth_date, country_code, phone_number, normalized_phone, whatsapp_number")
+          .ilike("full_name", record.person_name.trim())
+          .eq("birth_date", record.birth_date)
+          .limit(1)
+          .maybeSingle();
+        matched = byName;
+      }
       if (matched && matched.normalized_phone && !matched.is_legacy_without_phone) {
         customerInfo = matched;
       }
@@ -365,7 +378,7 @@ export async function PUT(
       .update(updatePayload as any)
       .eq("id", id)
       .select(
-        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, calculation_result, created_at, updated_at"
+        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at"
       )
       .single();
 
@@ -377,10 +390,13 @@ export async function PUT(
       );
     }
 
+    invalidateHoroscopesPageCache();
+    invalidateCautionCache();
     return NextResponse.json({
       success: true,
       horoscope: {
         ...updatedRecord,
+        calculation_result: updatedCalculationResult,
         customer: updatedCustomer || updatedCalculationResult.customer || null,
         has_missing_contact: !updatedCustomer && !updatedCalculationResult.customer?.normalized_phone,
       },
@@ -490,7 +506,7 @@ export async function PATCH(
       })
       .eq("id", id)
       .select(
-        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, calculation_result, created_at, updated_at"
+        "id, display_number, person_name, birth_date, birth_time, timezone, birthplace, latitude, longitude, ayanamsa_id, house_system_id, created_at, updated_at"
       )
       .single();
 
@@ -502,9 +518,14 @@ export async function PATCH(
       );
     }
 
+    invalidateHoroscopesPageCache();
+    invalidateCautionCache();
     return NextResponse.json({
       success: true,
-      horoscope: updatedRecord,
+      horoscope: {
+        ...updatedRecord,
+        calculation_result: mergedCalculationResult,
+      },
     });
   } catch (err: any) {
     console.error("PATCH /api/horoscopes/[id] error:", err?.message || err);
@@ -592,6 +613,8 @@ export async function DELETE(
       // Ignore
     }
 
+    invalidateHoroscopesPageCache();
+    invalidateCautionCache();
     return NextResponse.json({
       success: true,
       message: "Horoscope deleted successfully.",

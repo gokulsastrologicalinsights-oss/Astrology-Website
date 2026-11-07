@@ -8,6 +8,12 @@ import {
   listCustomersForUser,
 } from "@/lib/customer-service";
 import { getPinnedHoroscopesForUser } from "@/lib/pinned-horoscopes-service";
+import {
+  getCachedHoroscopesPage,
+  setCachedHoroscopesPage,
+  invalidateHoroscopesPageCache,
+} from "@/lib/horoscope-page-cache";
+import { invalidateCautionCache } from "@/lib/dasa-caution-service";
 
 /**
  * GET /api/horoscopes
@@ -57,6 +63,12 @@ export async function GET(request: NextRequest) {
         { error: "Forbidden: Administrative privileges required to view all records." },
         { status: 403 }
       );
+    }
+
+    const cacheKey = `${user.id}_${isAdmin}_${viewAll}_${page}_${limit}_${search}`;
+    const cachedPage = getCachedHoroscopesPage(cacheKey);
+    if (cachedPage) {
+      return NextResponse.json(cachedPage, { status: 200 });
     }
 
     // Retrieve pinned charts for the current user
@@ -273,7 +285,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       horoscopes: enrichedHoroscopes,
       totalCount,
@@ -281,7 +293,9 @@ export async function GET(request: NextRequest) {
       pageSize: limit,
       totalPages,
       isAdmin,
-    });
+    };
+    setCachedHoroscopesPage(cacheKey, responsePayload);
+    return NextResponse.json(responsePayload, { status: 200 });
   } catch (err: any) {
     console.error("GET /api/horoscopes error:", err);
     return NextResponse.json(
@@ -587,6 +601,8 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (retryRes.data) {
+          invalidateHoroscopesPageCache();
+          invalidateCautionCache();
           return NextResponse.json(
             { success: true, idempotent: false, horoscope: retryRes.data },
             { status: 201 }
@@ -604,6 +620,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    invalidateHoroscopesPageCache();
+    invalidateCautionCache();
     return NextResponse.json(
       { success: true, idempotent: false, horoscope: newRecord },
       { status: 201 }

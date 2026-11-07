@@ -1,3 +1,10 @@
+interface ProfileCacheEntry {
+  timestamp: number;
+  role: string;
+  mustChangePassword: boolean;
+}
+const PROFILE_CACHE = new Map<string, ProfileCacheEntry>();
+const PROFILE_CACHE_TTL_MS = 60_000; // 60s cache to avoid querying Supabase profiles on every request
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { Database } from "@/lib/supabase/types";
@@ -103,14 +110,26 @@ export async function proxy(request: NextRequest) {
 
   if (isPublicPage) {
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("must_change_password")
-        .eq("id", user.id)
-        .single();
+      let mustChange = false;
+      const cached = PROFILE_CACHE.get(user.id);
+      if (cached && Date.now() - cached.timestamp < PROFILE_CACHE_TTL_MS) {
+        mustChange = cached.mustChangePassword;
+      } else {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, must_change_password")
+          .eq("id", user.id)
+          .single();
+        mustChange = profile?.must_change_password || false;
+        PROFILE_CACHE.set(user.id, {
+          timestamp: Date.now(),
+          role: profile?.role || "user",
+          mustChangePassword: mustChange,
+        });
+      }
 
       const redirectUrl = request.nextUrl.clone();
-      if (profile?.must_change_password) {
+      if (mustChange) {
         redirectUrl.pathname = "/update-password";
       } else {
         redirectUrl.pathname = "/dashboard";
@@ -131,15 +150,33 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 5. Authenticated User Role & Privilege Enforcement:
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, must_change_password")
-    .eq("id", user.id)
-    .single();
+  // 5. Authenticated User Role & Privilege Enforcement (with in-memory TTL caching):
+  let role = "user";
+  let mustChangePassword = false;
 
-  const role = profile?.role || "user";
-  const mustChangePassword = profile?.must_change_password || false;
+  const cachedProfile = PROFILE_CACHE.get(user.id);
+  if (cachedProfile && Date.now() - cachedProfile.timestamp < PROFILE_CACHE_TTL_MS) {
+    role = cachedProfile.role;
+    mustChangePassword = cachedProfile.mustChangePassword;
+  } else {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, must_change_password")
+      .eq("id", user.id)
+      .single();
+
+    role = profile?.role || "user";
+    mustChangePassword = profile?.must_change_password || false;
+    if (PROFILE_CACHE.size >= 300) {
+      const oldest = PROFILE_CACHE.keys().next().value;
+      if (oldest) PROFILE_CACHE.delete(oldest);
+    }
+    PROFILE_CACHE.set(user.id, {
+      timestamp: Date.now(),
+      role,
+      mustChangePassword,
+    });
+  }
 
   // A. First-login password change enforcement
   if (mustChangePassword && pathname !== "/update-password") {

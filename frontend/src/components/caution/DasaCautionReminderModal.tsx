@@ -103,6 +103,32 @@ export function DasaCautionReminderModal({
       setLoading(true);
       setFetchError(null);
       try {
+        const cacheStorageKey = `dasa_caution_cache_${messageLang}`;
+        if (!forceFresh) {
+          const stored = sessionStorage.getItem(cacheStorageKey);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              if (parsed && Date.now() - parsed.timestamp < 1_800_000 && parsed.data) {
+                const data = parsed.data;
+                const items: DasaCautionItem[] = data.alerts || [];
+                setAlerts(items);
+                setTodayKolkata(data.todayKolkata || "");
+                const pendingActive = items.filter((a) => a.isActiveNow && !a.alertSent).length;
+                if (onAlertsCountChange) onAlertsCountChange(pendingActive);
+                if (isAuto && autoOpenOnLogin && pendingActive > 0) {
+                  const sessionKey = `dasa_caution_dismissed_${data.todayKolkata}`;
+                  const alreadyDismissed = sessionStorage.getItem(sessionKey);
+                  if (!alreadyDismissed) setInternalIsOpen(true);
+                }
+                setLoading(false);
+                return;
+              }
+            } catch {
+              // Ignore parse error
+            }
+          }
+        }
         const url = `/api/customers/dasa-cautions?lang=${messageLang}${forceFresh ? "&fresh=true" : ""}`;
         const res = await fetch(url);
         if (res.ok) {
@@ -128,6 +154,11 @@ export function DasaCautionReminderModal({
             if (!alreadyDismissed) {
               setInternalIsOpen(true);
             }
+          }
+          try {
+            sessionStorage.setItem(cacheStorageKey, JSON.stringify({ timestamp: Date.now(), data }));
+          } catch {
+            // Ignore quota
           }
         } else {
           const errData = await res.json().catch(() => ({}));
@@ -189,6 +220,10 @@ export function DasaCautionReminderModal({
         }),
       });
       if (res.ok) {
+        try {
+          sessionStorage.removeItem("dasa_caution_cache_ta");
+          sessionStorage.removeItem("dasa_caution_cache_en");
+        } catch {}
         const nowIso = new Date().toISOString();
         const updatedItem = { ...item, alertSent: true, alertSentAt: nowIso };
         setAlerts((prev) => {
@@ -231,6 +266,10 @@ export function DasaCautionReminderModal({
         }),
       });
       if (res.ok) {
+        try {
+          sessionStorage.removeItem("dasa_caution_cache_ta");
+          sessionStorage.removeItem("dasa_caution_cache_en");
+        } catch {}
         const updatedItem = { ...item, alertSent: false, alertSentAt: null };
         setAlerts((prev) => {
           const next = prev.map((a) => (a.id === item.id ? updatedItem : a));
