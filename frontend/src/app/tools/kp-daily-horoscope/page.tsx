@@ -35,6 +35,9 @@ import {
   Info,
   ChevronRight,
   Flame,
+  Copy,
+  Check,
+  Share2,
 } from "lucide-react";
 
 const RASHI_SYMBOLS: Record<number, string> = {
@@ -104,6 +107,88 @@ export default function KpDailyHoroscopePage() {
     if (!horoscopeData || !horoscopeData.predictions) return null;
     return horoscopeData.predictions.find((p) => p.rashi_id === activeRashiId) || horoscopeData.predictions[0];
   }, [horoscopeData, activeRashiId]);
+
+  // Copy-paste summary state
+  const [copied, setCopied] = useState<boolean>(false);
+  const [shareLanguage, setShareLanguage] = useState<"ta" | "en" | "bilingual">("ta");
+
+  // Synchronize initial shareLanguage with site language
+  useEffect(() => {
+    setShareLanguage(isTa ? "ta" : "en");
+  }, [isTa]);
+
+  // Formatted Mini Paragraph text for WhatsApp / Client Sharing
+  const miniParagraphText = useMemo(() => {
+    if (!activePrediction || !horoscopeData) return "";
+
+    const rNameEn = `${activePrediction.rashi_name_en} (${activePrediction.rashi_name_ta})`;
+    const rNameTa = `${activePrediction.rashi_name_ta} (${activePrediction.rashi_name_en})`;
+
+    if (shareLanguage === "ta") {
+      return `✨ கே.பி. தினசரி ராசிபலன்: ${rNameTa}
+📅 தேதி: ${horoscopeData.date} (${horoscopeData.day_of_week_ta})
+📊 இன்றைய சாதக நிலை: ${activePrediction.daily_score}% (${activePrediction.day_sentiment}) ⭐ ${activePrediction.daily_rating_stars}/5
+
+🎯 இன்றைய தாரக மந்திரம்:
+"${activePrediction.brief_statement_ta}"
+
+🌟 சாதகமான வாய்ப்பு: ${activePrediction.peak_highlight_ta}
+⚠️ கவனிக்க வேண்டியவை: ${activePrediction.caution_trap_ta}
+⏳ பொன்னான நேரம்: ${activePrediction.golden_hour_window}
+🛑 கவன நேரம்: ${activePrediction.caution_hour_window}
+🍀 அதிர்ஷ்ட நிறம் & எண்: ${activePrediction.lucky_color_ta} (#${activePrediction.lucky_number}) | திசை: ${activePrediction.lucky_direction_ta}
+🛡️ கே.பி. வழிகாட்டல்: ${activePrediction.daily_remedy_ta}
+
+🔮 Gokul's Astrological Insights | KP 249 Sub-Lord System`;
+    }
+
+    if (shareLanguage === "en") {
+      return `✨ KP Daily Horoscope: ${rNameEn}
+📅 Date: ${horoscopeData.date} (${horoscopeData.day_of_week})
+📊 Day Energy Score: ${activePrediction.daily_score}% (${activePrediction.day_sentiment}) ⭐ ${activePrediction.daily_rating_stars}/5
+
+🎯 Today's Brief Verdict:
+"${activePrediction.brief_statement_en}"
+
+🌟 Peak Opportunity: ${activePrediction.peak_highlight_en}
+⚠️ Caution Trap: ${activePrediction.caution_trap_en}
+⏳ Golden Window: ${activePrediction.golden_hour_window}
+🛑 Caution Window: ${activePrediction.caution_hour_window}
+🍀 Lucky Color & No.: ${activePrediction.lucky_color_en} (#${activePrediction.lucky_number}) | Direction: ${activePrediction.lucky_direction_en}
+🛡️ KP Daily Action: ${activePrediction.daily_remedy_en}
+
+🔮 Gokul's Astrological Insights | KP 249 Sub-Lord System`;
+    }
+
+    // Bilingual format
+    return `✨ KP Daily Horoscope | கே.பி. தினசரி ராசிபலன்: ${rNameTa}
+📅 ${horoscopeData.date} (${horoscopeData.day_of_week} / ${horoscopeData.day_of_week_ta})
+📊 Score: ${activePrediction.daily_score}% (${activePrediction.day_sentiment}) ⭐ ${activePrediction.daily_rating_stars}/5
+
+🎯 Summary / தாரக மந்திரம்:
+"${activePrediction.brief_statement_ta}"
+("${activePrediction.brief_statement_en}")
+
+🌟 Highlight: ${activePrediction.peak_highlight_ta}
+⚠️ Caution: ${activePrediction.caution_trap_ta}
+⏳ Golden Hours / பொன்னான நேரம்: ${activePrediction.golden_hour_window}
+🛑 Caution Hours / கவன நேரம்: ${activePrediction.caution_hour_window}
+🍀 Lucky: ${activePrediction.lucky_color_ta} (#${activePrediction.lucky_number}) | ${activePrediction.lucky_direction_ta}
+🛡️ Remedy: ${activePrediction.daily_remedy_ta}
+
+🔮 Gokul's Astrological Insights`;
+  }, [activePrediction, horoscopeData, shareLanguage]);
+
+  const handleCopy = async () => {
+    if (!miniParagraphText) return;
+    try {
+      await navigator.clipboard.writeText(miniParagraphText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (e) {
+      console.error("Failed to copy text:", e);
+    }
+  };
 
   const getAspectIcon = (code: string) => {
     switch (code) {
@@ -592,6 +677,91 @@ export default function KpDailyHoroscopePage() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* 4. WhatsApp / Client Shareable Mini Summary Card (Copy & Paste Model) */}
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-purple-950/40 rounded-3xl border border-purple-200 dark:border-purple-800/60 p-6 sm:p-7 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-200/60 dark:border-purple-800/60 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-purple-600 text-white shadow-sm">
+                    <Share2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      {isTa ? "வாட்ஸ்அப் / வாடிக்கையாளர் ஒருவரி சுருக்கம் (Copy & Paste)" : "Shareable Mini Paragraph Summary (Copy & Paste)"}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isTa
+                        ? "வாடிக்கையாளர்கள் அல்லது குடும்பத்தினருக்கு பகிர ஒரே கிளிக்கில் நகலெடுக்கக்கூடிய தினசரி அறிக்கை."
+                        : "One-click copy-ready format perfect for WhatsApp, SMS, or client briefings."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Language Format Toggle + Copy Button */}
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setShareLanguage("ta")}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                        shareLanguage === "ta"
+                          ? "bg-purple-600 text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      தமிழ்
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShareLanguage("en")}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                        shareLanguage === "en"
+                          ? "bg-purple-600 text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      English
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShareLanguage("bilingual")}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition ${
+                        shareLanguage === "bilingual"
+                          ? "bg-purple-600 text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      இருமொழி
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-300" />
+                        <span>{isTa ? "நகலெடுக்கப்பட்டது!" : "Copied!"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>{isTa ? "சுருக்கத்தை நகலெடு" : "Copy Summary"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* The Preformatted Text Box */}
+              <div className="relative">
+                <pre className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed shadow-inner overflow-x-auto">
+                  {miniParagraphText}
+                </pre>
               </div>
             </div>
           </div>
