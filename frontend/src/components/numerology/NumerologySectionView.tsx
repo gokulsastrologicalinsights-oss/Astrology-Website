@@ -632,19 +632,6 @@ export function NumerologySectionView() {
             </Link>
 
             <Link
-              href="/numerology/destiny-matrix"
-              className="p-5 rounded-2xl bg-white border border-[#DDE5F0] hover:border-[#3478F6] shadow-xs hover:shadow-sm transition-all flex items-center gap-3.5 group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#FAF2DE] text-[#B8862B] flex items-center justify-center shrink-0">
-                <Sparkles className="w-5 h-5 group-hover:scale-105 transition-transform" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-[#102A4C]">Destiny Matrix</h4>
-                <p className="text-[11px] text-[#52667E]">22 Major Arcana octagram geometry</p>
-              </div>
-            </Link>
-
-            <Link
               href="/numerology/advanced"
               className="p-5 rounded-2xl bg-white border border-[#DDE5F0] hover:border-[#3478F6] shadow-xs hover:shadow-sm transition-all flex items-center gap-3.5 group"
             >

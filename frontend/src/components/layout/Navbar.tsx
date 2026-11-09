@@ -136,6 +136,19 @@ export function Navbar() {
           permission: "kp_astrology",
         },
         {
+          title: language === "ta" ? "அஷ்டகவர்க்கம் & பிரஸ்தாரம்" : "Ashtakavarga & Prastara",
+          href: "/tools/ashtakavarga",
+          icon: Layers,
+          permission: "vedic",
+        },
+        {
+          title: language === "ta" ? "இரட்டை கோச்சாரம் (குரு & சனி)" : "Double Transit (Timing)",
+          href: "/tools/double-transit",
+          icon: Clock,
+          permission: "vedic",
+        },
+
+        {
           title: language === "ta" ? "கே.பி. நிகழ்வு கணிப்பு" : "KP Events & Prediction",
           href: "/tools/kp-events-prediction",
           icon: Sparkles,

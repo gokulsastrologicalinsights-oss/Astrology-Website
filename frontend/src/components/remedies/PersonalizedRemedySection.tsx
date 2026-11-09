@@ -440,7 +440,7 @@ export function PersonalizedRemedySection({
         </div>
       )}
 
-      {/* Sannu Ahmed Vedic Karma & Nakshatra Rituals Diagnostic */}
+      {/* Classical Shastric Vedic Karma & Nakshatra Rituals Diagnostic */}
       {analysis.sannu_rituals_diagnostic && (
         <div className="rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/30 to-purple-50/40 p-5 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -452,11 +452,11 @@ export function PersonalizedRemedySection({
                 <div className="flex items-center gap-2">
                   <h3 className="font-serif text-base font-bold text-[#102A4C]">
                     {language === "ta"
-                      ? "வேத கர்ம பரிசீலனை & நட்சத்திர சடங்கு (சன்னு அஹ்மத்)"
+                      ? "வேத கர்ம பரிசீலனை & நட்சத்திர சாந்தி முறை"
                       : "Vedic Karma & Nakshatra Ritual Diagnostic"}
                   </h3>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                    Sannu Ahmed
+                    Classical Shastric
                   </span>
                 </div>
                 <p className="text-xs text-[#52667E]">
@@ -465,17 +465,7 @@ export function PersonalizedRemedySection({
               </div>
             </div>
 
-            <Link
-              href="/remedies?tab=rituals"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition-colors shrink-0"
-            >
-              <Flame className="w-3.5 h-3.5" />
-              <span>
-                {language === "ta"
-                  ? "முழு சடங்கு களஞ்சியம் திற"
-                  : "Open Rituals Explorer"}
-              </span>
-            </Link>
+            
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

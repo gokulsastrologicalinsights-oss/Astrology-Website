@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { IslamicRuqyahGuidance } from "@/components/remedies/IslamicRuqyahGuidance";
 import {
   getTamilSastraDailyGuidance,
   getTamilSastraMedicalDeities,
@@ -943,10 +942,7 @@ export default function DailySastraPage() {
               </div>
             </div>
 
-            {/* Islamic Spiritual Protection & Ruqyah (அஷ்ஷெய்க் பின் பாஸ்) */}
-            <div className="pt-2">
-              <IslamicRuqyahGuidance initialOpen={false} />
-            </div>
+            
           </div>
         )}
       </div>
