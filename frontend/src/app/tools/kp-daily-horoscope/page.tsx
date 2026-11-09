@@ -124,6 +124,40 @@ export default function KpDailyHoroscopePage() {
     const rNameEn = `${activePrediction.rashi_name_en} (${activePrediction.rashi_name_ta})`;
     const rNameTa = `${activePrediction.rashi_name_ta} (${activePrediction.rashi_name_en})`;
 
+    // Filter single-word Moon Sub-Lord timings
+    const goldenTimes =
+      activePrediction.moon_sub_windows
+        .filter((w) => w.sentiment === "golden")
+        .map((w) => `${w.start_time} - ${w.end_time}`)
+        .join(", ") || activePrediction.golden_hour_window;
+
+    const neutralTimes =
+      activePrediction.moon_sub_windows
+        .filter((w) => w.sentiment === "neutral")
+        .map((w) => `${w.start_time} - ${w.end_time}`)
+        .join(", ");
+
+    const cautionTimes =
+      activePrediction.moon_sub_windows
+        .filter((w) => w.sentiment === "caution")
+        .map((w) => `${w.start_time} - ${w.end_time}`)
+        .join(", ") || activePrediction.caution_hour_window;
+
+    // Full points for all life aspects
+    const aspectsTa = activePrediction.aspects
+      .map(
+        (a) =>
+          `• ${a.aspect_name_tamil} (${a.score}% - ${a.status}):\n  ${a.insight_ta}\n  [வழிகாட்டல்: ${a.key_recommendation_ta}]`
+      )
+      .join("\n\n");
+
+    const aspectsEn = activePrediction.aspects
+      .map(
+        (a) =>
+          `• ${a.aspect_name} (${a.score}% - ${a.status}):\n  ${a.insight_en}\n  [Action: ${a.key_recommendation_en}]`
+      )
+      .join("\n\n");
+
     if (shareLanguage === "ta") {
       return `✨ கே.பி. தினசரி ராசிபலன்: ${rNameTa}
 📅 தேதி: ${horoscopeData.date} (${horoscopeData.day_of_week_ta})
@@ -134,12 +168,19 @@ export default function KpDailyHoroscopePage() {
 
 🌟 சாதகமான வாய்ப்பு: ${activePrediction.peak_highlight_ta}
 ⚠️ கவனிக்க வேண்டியவை: ${activePrediction.caution_trap_ta}
-⏳ பொன்னான நேரம்: ${activePrediction.golden_hour_window}
-🛑 கவன நேரம்: ${activePrediction.caution_hour_window}
+
+📋 அனைத்து அம்சங்களின் விரிவான பலன்கள்:
+${aspectsTa}
+
+⏱️ சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை:
+• Golden: ${goldenTimes}
+• Neutral: ${neutralTimes || "வழக்கமான நேரம்"}
+• Caution: ${cautionTimes}
+
 🍀 அதிர்ஷ்ட நிறம் & எண்: ${activePrediction.lucky_color_ta} (#${activePrediction.lucky_number}) | திசை: ${activePrediction.lucky_direction_ta}
 🛡️ கே.பி. வழிகாட்டல்: ${activePrediction.daily_remedy_ta}
 
-🔮 Gokul's Astrological Insights | KP 249 Sub-Lord System`;
+🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu`;
     }
 
     if (shareLanguage === "en") {
@@ -152,12 +193,19 @@ export default function KpDailyHoroscopePage() {
 
 🌟 Peak Opportunity: ${activePrediction.peak_highlight_en}
 ⚠️ Caution Trap: ${activePrediction.caution_trap_en}
-⏳ Golden Window: ${activePrediction.golden_hour_window}
-🛑 Caution Window: ${activePrediction.caution_hour_window}
+
+📋 In-Depth Life Aspects Breakdown:
+${aspectsEn}
+
+⏱️ Moon's Sub-Lord Hourly Schedule:
+• Golden: ${goldenTimes}
+• Neutral: ${neutralTimes || "Regular hours"}
+• Caution: ${cautionTimes}
+
 🍀 Lucky Color & No.: ${activePrediction.lucky_color_en} (#${activePrediction.lucky_number}) | Direction: ${activePrediction.lucky_direction_en}
 🛡️ KP Daily Action: ${activePrediction.daily_remedy_en}
 
-🔮 Gokul's Astrological Insights | KP 249 Sub-Lord System`;
+🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu`;
     }
 
     // Bilingual format
@@ -171,12 +219,19 @@ export default function KpDailyHoroscopePage() {
 
 🌟 Highlight: ${activePrediction.peak_highlight_ta}
 ⚠️ Caution: ${activePrediction.caution_trap_ta}
-⏳ Golden Hours / பொன்னான நேரம்: ${activePrediction.golden_hour_window}
-🛑 Caution Hours / கவன நேரம்: ${activePrediction.caution_hour_window}
+
+📋 அனைத்து அம்சங்களின் விரிவான பலன்கள் (Aspects in Points):
+${aspectsTa}
+
+⏱️ சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை:
+• Golden: ${goldenTimes}
+• Neutral: ${neutralTimes || "வழக்கமான நேரம்"}
+• Caution: ${cautionTimes}
+
 🍀 Lucky: ${activePrediction.lucky_color_ta} (#${activePrediction.lucky_number}) | ${activePrediction.lucky_direction_ta}
 🛡️ Remedy: ${activePrediction.daily_remedy_ta}
 
-🔮 Gokul's Astrological Insights`;
+🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu`;
   }, [activePrediction, horoscopeData, shareLanguage]);
 
   const handleCopy = async () => {

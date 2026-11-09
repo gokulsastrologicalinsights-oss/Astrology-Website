@@ -40,7 +40,129 @@ from app.services.timezone_utils import resolve_birth_datetime
 
 logger = logging.getLogger(__name__)
 
-# Traditional 9 Vedic Grahas
+MOON_HOUSE_INTERPRETATIONS: Dict[int, Dict[str, str]] = {
+    1: {
+        "title_en": "Moon in 1st House (Janma Rashi)",
+        "title_ta": "1-ம் இடத்தில் சந்திரன் (ஜன்ம ராசி)",
+        "brief_en": "High personal vitality, self-confidence, and independent initiatives take center stage. Favorable for personal planning and leadership.",
+        "brief_ta": "உற்சாகமும் தன்னம்பிக்கையும் கூடும் நாள். சுயமாக சிந்தித்து எடுக்கும் புதிய முடிவுகள் மற்றும் தனிப்பட்ட திட்டங்கள் வெற்றி பெறும்.",
+        "peak_en": "Clarity of vision and inner energy empower you to tackle demanding tasks independently.",
+        "peak_ta": "மனதில் புது உற்சாகம் பிறக்கும்; சுயமாக செயல்பட்டு எடுத்த காரியத்தை வெற்றிகரமாக முடிப்பீர்கள்.",
+        "caution_en": "Avoid impulsive ego reactions when dealing with colleagues.",
+        "caution_ta": "முன்கோபத்தைத் தவிர்த்து நிதானமாகப் பேசுவது சுமுகமான சூழலைத் தரும்.",
+    },
+    2: {
+        "title_en": "Moon in 2nd House (Dhana & Family)",
+        "title_ta": "2-ம் இடத்தில் சந்திரன் (தன & குடும்ப ஸ்தானம்)",
+        "brief_en": "Strong financial inflows, clearance of pending dues, and pleasant interactions with family members.",
+        "brief_ta": "பணப்புழக்கம் சரளமாக இருக்கும்; கொடுக்கல்-வாங்கல் சுமுகமாகும். குடும்பத்தினரிடம் இனிமையான பேச்சு அமைதியைத் தரும்.",
+        "peak_en": "Pending receivables or unexpected monetary gains clear up financial bottlenecks.",
+        "peak_ta": "வர வேண்டிய பழைய பாக்கிகள் வசூலாகும்; நிதி நிலை கணிசமாக உயரும்.",
+        "caution_en": "Weigh your words carefully in domestic conversations to maintain warmth.",
+        "caution_ta": "குடும்ப விவகாரங்களில் அடுத்தவர் மனதை புண்படுத்தாமல் பேசவும்.",
+    },
+    3: {
+        "title_en": "Moon in 3rd House (Courage & Movement)",
+        "title_ta": "3-ம் இடத்தில் சந்திரன் (தைரிய & முயற்சி ஸ்தானம்)",
+        "brief_en": "Favorable for courageous decisions, effective short-distance travel, and successful negotiations.",
+        "brief_ta": "தைரியமும் சுறுசுறுப்பும் கூடும் நாள். குறுகிய தூர பயணங்கள், தகவல் பரிமாற்றம் மற்றும் புதிய முயற்சிகள் அனுகூலமாகும்.",
+        "peak_en": "Written communications, presentations, and phone deals move forward without resistance.",
+        "peak_ta": "பேச்சுவார்த்தைகள் மற்றும் குறுகிய தூர பயணங்களால் புதிய வாய்ப்புகள் திறக்கும்.",
+        "caution_en": "Verify travel documents and schedules to prevent minor commuting rush.",
+        "caution_ta": "பயணங்களின் போது அவசரப்படாமல் முன் கூட்டியே திட்டமிட்டு புறப்படவும்.",
+    },
+    4: {
+        "title_en": "Moon in 4th House (Home & Happiness)",
+        "title_ta": "4-ம் இடத்தில் சந்திரன் (சுக & தாய் ஸ்தானம்)",
+        "brief_en": "Domestic joy, support from maternal figures, and satisfaction regarding residence or vehicle matters.",
+        "brief_ta": "தாய்வழி ஆதரவும் குடும்பத்தில் மன அமைதியும் நிலவும். வீடு, வாகனம் சார்ந்த விவகாரங்கள் சுமுகமாக முடியும்.",
+        "peak_en": "Peaceful atmosphere at home and positive breakthroughs in property or educational tasks.",
+        "peak_ta": "குடும்பத்துடன் நேரம் செலவிடவும், வீட்டு உபயோகப் பொருட்கள் வாங்கவும் உகந்தது.",
+        "caution_en": "Do not let domestic pre-occupations distract you during business meetings.",
+        "caution_ta": "வேலை நேரத்தில் குடும்பக் கவலைகளை ஒதுக்கி வைத்து பணியில் கவனம் செலுத்தவும்.",
+    },
+    5: {
+        "title_en": "Moon in 5th House (Poorva Punya & Intellect)",
+        "title_ta": "5-ம் இடத்தில் சந்திரன் (பூர்வ புண்ணிய ஸ்தானம்)",
+        "brief_en": "Sharp intellect, joyful communication with children/loved ones, and success in creative pursuits.",
+        "brief_ta": "புத்தி கூர்மையும் உள்ளுணர்வும் பளிச்சிடும். கலை, காதல் மற்றும் கல்வி சார்ந்த விஷயங்களில் அனுகூலமான நற்பலன்கள் கிட்டும்.",
+        "peak_en": "Intuitive insights and creative problem-solving lead to well-deserved praise.",
+        "peak_ta": "கலை மற்றும் புதிய சிந்தனைகளில் வெற்றி; பிள்ளைகள் மூலம் நற்செய்தி கிடைக்கும்.",
+        "caution_en": "Avoid highly speculative market gambles; stick to calculated investments.",
+        "caution_ta": "ஊக வணிகம் மற்றும் அவசர முதலீடுகளைத் தவிர்த்து நிதானம் காக்கவும்.",
+    },
+    6: {
+        "title_en": "Moon in 6th House (Victory over Hurdles)",
+        "title_ta": "6-ம் இடத்தில் சந்திரன் (சத்ரு ஜெய ஸ்தானம்)",
+        "brief_en": "Success over workplace competition, loan/debt settlement, and high productivity in routine responsibilities.",
+        "brief_ta": "எதிர்ப்புகளையும் போட்டிகளையும் எளிதில் முறியடிக்கும் நாள். நிலுவைக் கடன்கள் வசூலாகும்; வேலைகளில் சுறுசுறுப்பு கூடும்.",
+        "peak_en": "Crush competitive bottlenecks and resolve complex pending office assignments.",
+        "peak_ta": "போட்டிகள், வழக்குகள் மற்றும் கடன் விவகாரங்களில் சாதகமான தீர்வு கிட்டும்.",
+        "caution_en": "Watch your diet and hydration to prevent mild acidity or fatigue.",
+        "caution_ta": "நேரத்திற்கு சத்தான உணவு உண்ணவும்; அஜீரண கோளாறுகளில் கவனம் தேவை.",
+    },
+    7: {
+        "title_en": "Moon in 7th House (Partnership & Harmony)",
+        "title_ta": "7-ம் இடத்தில் சந்திரன் (களத்திர & கூட்டாண்மை ஸ்தானம்)",
+        "brief_en": "Harmony with life partner, fruitful business client meetings, and mutually rewarding social ties.",
+        "brief_ta": "கணவன்-மனைவி இடையே அன்யோன்யம் கூடும்; வாடிக்கையாளர்கள் மற்றும் கூட்டாளிகளுடன் சுமுக ஒப்பந்தங்கள் ஏற்படும்.",
+        "peak_en": "Collaborative joint ventures and client agreements close smoothly.",
+        "peak_ta": "புதிய வாடிக்கையாளர்கள் அறிமுகமாவார்கள்; கூட்டுத் தொழிலில் நல்ல லாபம் உண்டு.",
+        "caution_en": "Avoid stubbornness; be willing to meet your counterpart halfway.",
+        "caution_ta": "விட்டுக்கொடுத்துச் செல்வது குடும்பத்திலும் தொழிலிலும் ஒற்றுமையை வளர்க்கும்.",
+    },
+    8: {
+        "title_en": "Moon in 8th House (Chandrashtama - Caution)",
+        "title_ta": "8-ம் இடத்தில் சந்திரன் (சந்திராஷ்டமம்)",
+        "brief_en": "Caution day requiring emotional patience and calm focus. Strictly avoid entering arguments or signing risky new contracts.",
+        "brief_ta": "இன்று சந்திராஷ்டமம் உள்ளதால் மன அமைதியும் கூடுதல் விழிப்புணர்வும் அவசியம். புதிய முயற்சிகள், வீண் விவாதங்களைத் தவிர்க்கவும்.",
+        "peak_en": "Excellent day for deep meditation, self-introspection, and clearing back-office clutter.",
+        "peak_ta": "தியானம், அமைதியான பணிகள் மற்றும் ஆன்மீக வழிபாட்டிற்கு உகந்த நன்னாள்.",
+        "caution_en": "Chandrashtama is active: do not lend money, drive cautiously, and defer important signatures.",
+        "caution_ta": "சந்திராஷ்டமம்: கடன் கொடுக்கல் வாங்கல் வேண்டாம்; கவனமாக வாகனம் ஓட்டவும்.",
+    },
+    9: {
+        "title_en": "Moon in 9th House (Bhagya & Fortune)",
+        "title_ta": "9-ம் இடத்தில் சந்திரன் (பாக்கிய ஸ்தானம்)",
+        "brief_en": "Auspicious fortune, guidance from elders or mentors, and rewarding long-distance travel.",
+        "brief_ta": "தந்தையார் மற்றும் பெரியோர்களின் ஆசி கிட்டும். தெய்வீக அனுகூலம், சுப பயணங்கள் மற்றும் புண்ணிய காரியங்களில் மனம் ஈடுபடும்.",
+        "peak_en": "Divine grace smooths out previous difficulties; luck favors higher studies and pilgrimage.",
+        "peak_ta": "தொட்ட காரியங்களில் தெய்வ அருள் துணை நிற்கும்; தொலைதூரப் பயணங்கள் கைகூடும்.",
+        "caution_en": "Honor your moral commitments; avoid taking shortcuts on ethics.",
+        "caution_ta": "பெரியோர்களின் ஆலோசனைகளை அலட்சியம் செய்யாமல் மதித்து நடக்கவும்.",
+    },
+    10: {
+        "title_en": "Moon in 10th House (Career & Honor)",
+        "title_ta": "10-ம் இடத்தில் சந்திரன் (தொழில் & கர்ம ஸ்தானம்)",
+        "brief_en": "Peak professional momentum, leadership commendation from superiors, and career advancement.",
+        "brief_ta": "உத்தியோகத்தில் மதிப்பு, மரியாதை கூடும் பொன்னான நாள். மேலதிகாரிகளின் பாராட்டு மற்றும் தொழில் வளர்ச்சி கைகூடும்.",
+        "peak_en": "High professional standing: take charge of leadership presentations and corporate meetings.",
+        "peak_ta": "வேலையில் புதிய பொறுப்புகள் மற்றும் அங்கீகாரம் தேடி வரும்; செல்வாக்கு உயரும்.",
+        "caution_en": "Do not neglect family commitments while chasing ambitious deadlines.",
+        "caution_ta": "அலுவலக வேலைகளில் மூழ்கி குடும்பத்தினரை புறக்கணிக்க வேண்டாம்.",
+    },
+    11: {
+        "title_en": "Moon in 11th House (Labha & Prosperity)",
+        "title_ta": "11-ம் இடத்தில் சந்திரன் (லாப ஸ்தானம்)",
+        "brief_en": "Outstanding financial gains, realization of cherished goals, and enthusiastic support from friends.",
+        "brief_ta": "தொட்டதெல்லாம் துலங்கும் அதிர்ஷ்டகரமான நாள்! எதிர்பாராத பணவரவு, நட்பு வட்டார ஆதரவு மற்றும் எண்ணங்கள் யாவும் நிறைவேறும்.",
+        "peak_en": "Exceptional gains across multiple streams: projects bear fruit and long-awaited news arrives.",
+        "peak_ta": "பணவரவு பன்மடங்கு பெருகும்; புதிய ஒப்பந்தங்கள் மூலம் எதிர்பாராத லாபம் கிடைக்கும்.",
+        "caution_en": "Invest surplus income wisely rather than spending on ephemeral luxuries.",
+        "caution_ta": "வரும் லாபத்தை பயனுள்ள வழிகளில் சேமிக்கவும்; தேவையற்ற ஆடம்பரத்தை தவிர்க்கவும்.",
+    },
+    12: {
+        "title_en": "Moon in 12th House (Expenditure & Peace)",
+        "title_ta": "12-ம் இடத்தில் சந்திரன் (விரய ஸ்தானம்)",
+        "brief_en": "Subha-vyaya (auspicious expenditures), long journey, and peaceful solitude for spiritual and restful recovery.",
+        "brief_ta": "சுப காரியங்களுக்காகவும் குடும்பத்திற்காகவும் சுப விரயங்கள் ஏற்படும். தூரப் பயணங்கள் மற்றும் ஆன்மீக அமைதிக்கு ஏற்ற நாள்.",
+        "peak_en": "Ideal for charitable donations, research analysis, foreign connections, and restful sleep.",
+        "peak_ta": "சுபச்செலவுகள் ஏற்படும்; ஆன்மீக மற்றும் தர்ம காரியங்களில் மனம் நிறைவு பெறும்.",
+        "caution_en": "Strictly monitor expenses; avoid shopping without a fixed budget checklist.",
+        "caution_ta": "பட்ஜெட் இன்றி செலவு செய்வதைத் தவிர்க்கவும்; பணப்பரிவர்த்தனையில் கவனம் தேவை.",
+    },
+}
+
 PLANET_IDS: Dict[str, int] = {
     "Sun": 0,
     "Moon": 1,
@@ -187,28 +309,116 @@ def _get_planet_signified_houses(
     return signified, star_lord, sub_lord
 
 
-def _score_aspect(
+def _score_aspect_for_rashi(
+    aspect_code: str,
+    moon_house: int,
+    lord_house: int,
+    jup_house: int,
     active_houses: Set[int],
-    benefic_houses: Set[int],
-    malefic_houses: Set[int],
-    base_weight: float = 1.0,
 ) -> Tuple[int, float, str]:
-    """Scores an aspect between 0-100 and computes stars (1.0 to 5.0) and status."""
-    benefic_matches = active_houses.intersection(benefic_houses)
-    malefic_matches = active_houses.intersection(malefic_houses)
+    """Computes realistic, astrologically distinct score for each Rashi aspect."""
+    base = 50.0
 
-    # Base baseline is 50
-    score = 50.0 + (len(benefic_matches) * 16.0) - (len(malefic_matches) * 14.0)
-    score = max(15.0, min(95.0, score * base_weight))
-    final_score = int(round(score))
+    if aspect_code == "career":
+        # Benefic houses: 10, 11, 6, 2. Malefic: 8, 12, 5
+        if moon_house == 10:
+            base += 32.0  # Karma Sthana Moon!
+        elif moon_house == 11:
+            base += 28.0
+        elif moon_house == 6:
+            base += 20.0
+        elif moon_house == 2:
+            base += 16.0
+        elif moon_house == 8:
+            base -= 28.0  # Chandrashtama!
+        elif moon_house == 12:
+            base -= 20.0
+        elif moon_house == 5:
+            base -= 10.0
+        elif moon_house in (1, 3, 7, 9):
+            base += 10.0
 
+        if lord_house in (1, 10, 11, 6):
+            base += 8.0
+        elif lord_house in (8, 12):
+            base -= 8.0
+
+    elif aspect_code == "finance":
+        # Benefic: 2, 11, 6. Malefic: 12, 8, 5
+        if moon_house == 11:
+            base += 35.0  # Labha Sthana Moon!
+        elif moon_house == 2:
+            base += 30.0  # Dhana Sthana Moon!
+        elif moon_house == 6:
+            base += 15.0
+        elif moon_house == 12:
+            base -= 30.0  # Vyaya Sthana Moon!
+        elif moon_house == 8:
+            base -= 25.0  # Chandrashtama!
+        elif moon_house in (1, 5, 9):
+            base += 12.0
+
+        if jup_house in (2, 5, 9, 11):
+            base += 8.0
+        elif jup_house in (6, 8, 12):
+            base -= 6.0
+
+    elif aspect_code == "love":
+        # Benefic: 7, 2, 5, 11. Malefic: 6, 8, 12
+        if moon_house == 7:
+            base += 34.0  # Kalathra Sthana Moon!
+        elif moon_house == 5:
+            base += 28.0  # Romance/Creativity!
+        elif moon_house in (2, 11):
+            base += 18.0
+        elif moon_house in (6, 8):
+            base -= 26.0  # Conflict/Chandrashtama
+        elif moon_house == 12:
+            base -= 16.0
+        elif moon_house in (1, 4):
+            base += 10.0
+
+    elif aspect_code == "health":
+        # Benefic: 1, 11. Malefic: 8, 6, 12
+        if moon_house == 8:
+            base -= 35.0  # Chandrashtama heavy toll on mental peace & health
+        elif moon_house == 6:
+            base -= 24.0  # Roga Sthana
+        elif moon_house == 12:
+            base -= 18.0  # Fatigue/Vyaya
+        elif moon_house == 1:
+            base += 30.0  # High vitality in Janma
+        elif moon_house in (11, 5, 9):
+            base += 20.0
+        else:
+            base += 8.0
+
+        if lord_house in (6, 8, 12):
+            base -= 8.0
+        else:
+            base += 6.0
+
+    elif aspect_code == "travel":
+        # Benefic: 3, 9, 4, 11. Malefic: 8, 12
+        if moon_house in (3, 9):
+            base += 32.0  # Movement / Bhagya
+        elif moon_house in (4, 11):
+            base += 18.0
+        elif moon_house == 8:
+            base -= 24.0
+        elif moon_house == 12:
+            base -= 12.0
+        else:
+            base += 8.0
+
+    final_score = int(max(20.0, min(96.0, round(base))))
     stars = round(1.0 + (final_score / 100.0) * 4.0, 1)
 
-    if final_score >= 78:
+    if final_score >= 76:
         status = "Excellent"
-    elif final_score >= 62:
+    elif final_score >= 60:
         status = "Favorable"
-    elif final_score >= 46:
+    elif final_score >= 45:
         status = "Mixed"
     else:
         status = "Challenging"
@@ -559,6 +769,19 @@ def compute_kp_daily_horoscope(
     for r_idx in rashis_to_calc:
         r_en, r_ta, sign_lord = RASHI_METADATA[r_idx]
 
+        # 1. Rashi-relative key house positions
+        moon_lon = planet_positions["Moon"]
+        moon_sign_idx = int(moon_lon // 30.0) + 1
+        moon_house = ((moon_sign_idx - r_idx) % 12) + 1
+
+        lord_lon = planet_positions.get(sign_lord, moon_lon)
+        lord_sign_idx = int(lord_lon // 30.0) + 1
+        lord_house = ((lord_sign_idx - r_idx) % 12) + 1
+
+        jup_lon = planet_positions.get("Jupiter", 0.0)
+        jup_sign_idx = int(jup_lon // 30.0) + 1
+        jup_house = ((jup_sign_idx - r_idx) % 12) + 1
+
         # Evaluate houses signified by all planets relative to r_idx
         all_active_houses: Set[int] = set()
         planet_signified_map: Dict[str, Set[int]] = {}
@@ -571,7 +794,7 @@ def compute_kp_daily_horoscope(
         # Evaluate the 5 Core Aspects
         # 1. Career (2, 6, 10, 11 vs 5, 8, 12)
         career_active = all_active_houses.intersection({2, 5, 6, 8, 10, 11, 12})
-        c_score, c_stars, c_status = _score_aspect(career_active, {2, 6, 10, 11}, {5, 8, 12})
+        c_score, c_stars, c_status = _score_aspect_for_rashi("career", moon_house, lord_house, jup_house, career_active)
         c_en, c_ta, c_rec_en, c_rec_ta = _build_career_prediction(r_en, r_ta, c_score, c_status, sorted(list(career_active)), moon_sub_noon)
         career_aspect = KpAspectPrediction(
             aspect_code="career",
@@ -589,7 +812,7 @@ def compute_kp_daily_horoscope(
 
         # 2. Finance (2, 6, 11 vs 5, 8, 12)
         finance_active = all_active_houses.intersection({2, 5, 6, 8, 11, 12})
-        f_score, f_stars, f_status = _score_aspect(finance_active, {2, 6, 11}, {5, 8, 12})
+        f_score, f_stars, f_status = _score_aspect_for_rashi("finance", moon_house, lord_house, jup_house, finance_active)
         f_en, f_ta, f_rec_en, f_rec_ta = _build_finance_prediction(r_en, r_ta, f_score, f_status, sorted(list(finance_active)), moon_sub_noon)
         finance_aspect = KpAspectPrediction(
             aspect_code="finance",
@@ -607,7 +830,7 @@ def compute_kp_daily_horoscope(
 
         # 3. Love & Family (2, 5, 7, 11 vs 6, 8, 12)
         love_active = all_active_houses.intersection({2, 5, 6, 7, 8, 11, 12})
-        l_score, l_stars, l_status = _score_aspect(love_active, {2, 5, 7, 11}, {6, 8, 12})
+        l_score, l_stars, l_status = _score_aspect_for_rashi("love", moon_house, lord_house, jup_house, love_active)
         l_en, l_ta, l_rec_en, l_rec_ta = _build_love_prediction(r_en, r_ta, l_score, l_status, sorted(list(love_active)), moon_sub_noon)
         love_aspect = KpAspectPrediction(
             aspect_code="love",
@@ -625,7 +848,7 @@ def compute_kp_daily_horoscope(
 
         # 4. Health & Vitality (1, 11 vs 6, 8, 12)
         health_active = all_active_houses.intersection({1, 6, 8, 11, 12})
-        h_score, h_stars, h_status = _score_aspect(health_active, {1, 11}, {6, 8, 12})
+        h_score, h_stars, h_status = _score_aspect_for_rashi("health", moon_house, lord_house, jup_house, health_active)
         h_en, h_ta, h_rec_en, h_rec_ta = _build_health_prediction(r_en, r_ta, h_score, h_status, sorted(list(health_active)), moon_sub_noon)
         health_aspect = KpAspectPrediction(
             aspect_code="health",
@@ -643,7 +866,7 @@ def compute_kp_daily_horoscope(
 
         # 5. Travel & Studies (3, 4, 9, 11 vs 8, 12)
         travel_active = all_active_houses.intersection({3, 4, 8, 9, 11, 12})
-        t_score, t_stars, t_status = _score_aspect(travel_active, {3, 4, 9, 11}, {8, 12})
+        t_score, t_stars, t_status = _score_aspect_for_rashi("travel", moon_house, lord_house, jup_house, travel_active)
         t_en, t_ta, t_rec_en, t_rec_ta = _build_travel_prediction(r_en, r_ta, t_score, t_status, sorted(list(travel_active)), moon_sub_noon)
         travel_aspect = KpAspectPrediction(
             aspect_code="travel",
@@ -683,35 +906,14 @@ def compute_kp_daily_horoscope(
         golden_str = f"{golden_wins[0].start_time} - {golden_wins[0].end_time}" if golden_wins else "10:30 AM - 12:45 PM"
         caution_str = f"{caution_wins[0].start_time} - {caution_wins[0].end_time}" if caution_wins else "04:30 PM - 06:00 PM"
 
-        # Construct Daily Executive Brief Statement
-        if day_sentiment == "Excellent":
-            brief_en = f"A powerful and high-momentum day for {r_en} natives. Active KP significators strongly boost professional negotiations, financial gains, and recognition."
-            brief_ta = f"{r_ta} ராசிக்கு இன்று புதிய வெற்றிகளையும் பணவரவையும் தரும் சிறப்பான நாள். முக்கிய முயற்சிகளை தைரியமாக முன்னெடுக்கலாம்."
-            peak_en = f"Peak planetary alignment activates houses {c_status} with Moon transit, making the morning window ideal for career and money triumphs."
-            peak_ta = f"சந்திரனின் உப-அதிபதி சாதகமாக இருப்பதால் காலையில் எடுக்கப்படும் நிதி மற்றும் தொழில் முயற்சிகளில் எதிர்பாராத லாபம் கிட்டும்."
-            caution_en = "Avoid complacency; ensure all verbal agreements are formally documented."
-            caution_ta = "அலட்சியத்தைத் தவிர்க்கவும்; நிதி விவகாரங்களை முறையாகக் கையாளவும்."
-        elif day_sentiment == "Favorable":
-            brief_en = f"A constructive and steady day ahead for {r_en}. Tasks flow smoothly with favorable support from peers and financial stability."
-            brief_ta = f"{r_ta} ராசிக்கு இன்று மனநிறைவும் நற்பலன்களும் தரும் சுமுகமான நாள். நிலுவைப் பணிகள் எளிதாக முடியும்."
-            peak_en = f"Harmonious house activations favor strategic meetings, family conversations, and completing pending tasks."
-            peak_ta = f"பணிகள் தடையின்றி நடக்கும்; சுப விசேஷங்கள் மற்றும் குடும்ப உறவுகளில் மகிழ்ச்சி நிலவும்."
-            caution_en = "Be mindful of minor timing delays during the afternoon transit change."
-            caution_ta = "மதிய நேரத்தில் சிறு காலதாமதங்கள் வரலாம்; திட்டமிட்டு செயல்படவும்."
-        elif day_sentiment == "Mixed":
-            brief_en = f"A moderately paced day calling for patience and balanced priorities for {r_en}. Maintain a calm demeanor amid shifting workloads."
-            brief_ta = f"{r_ta} ராசிக்கு இன்று நிதானமும் பொறுமையும் தேவைப்படும் நாள். வரவுக்கு ஏற்ற செலவுகள் இருக்கும்."
-            peak_en = "Creative focus and independent research yield positive breakthroughs."
-            peak_ta = "தனிப்பட்ட பணிகளிலும் சிந்தனைகளிலும் புதிய தெளிவு பிறக்கும்."
-            caution_en = "Refrain from heated arguments or impulsive expenditures during caution hours."
-            caution_ta = "வாக்குவாதங்களை தவிர்க்கவும்; தேவையற்ற விரயங்களில் கவனம் தேவை."
-        else:
-            brief_en = f"A demanding day requiring extra vigilance and tact for {r_en}. Keep expectations realistic and prioritize health and tranquility."
-            brief_ta = f"{r_ta} ராசிக்கு இன்று விழிப்புணர்வுடன் செயல்பட வேண்டிய நாள். புதிய காரியங்களைத் தள்ளிப்போடுவது நல்லது."
-            peak_en = "Good day for quiet introspective tasks, spiritual grounding, and restructuring routine habits."
-            peak_ta = "தியானம், இறை வழிபாடு மற்றும் அன்றாட கடமைகளை அமைதியாக முடிப்பதற்கு உகந்தது."
-            caution_en = f"Vulnerable window active between {caution_str}; strictly defer major investments or signing documents."
-            caution_ta = f"{caution_str} நேரத்தில் முக்கியமான ஒப்பந்தங்கள் மற்றும் புதிய முயற்சிகளைத் தவிர்க்கவும்."
+        # Construct Dynamic, Rashi-Specific Daily Executive Brief Statement
+        m_interp = MOON_HOUSE_INTERPRETATIONS.get(moon_house, MOON_HOUSE_INTERPRETATIONS[1])
+        brief_en = f"{r_en} ({m_interp['title_en']}): {m_interp['brief_en']}"
+        brief_ta = f"{r_ta} ({m_interp['title_ta']}): {m_interp['brief_ta']}"
+        peak_en = m_interp["peak_en"]
+        peak_ta = m_interp["peak_ta"]
+        caution_en = m_interp["caution_en"]
+        caution_ta = m_interp["caution_ta"]
 
         # Lucky attributes based on dominant favorable lord or day lord
         dominant_lord = moon_sub_noon if moon_sub_noon in LUCKY_ATTRIBUTES else day_lord
