@@ -67,6 +67,16 @@ interface AstrologyToolCard {
   // Section 1: Astrology Tools Cards (matching Screenshot 1)
   const astrologyTools: AstrologyToolCard[] = [
     {
+      id: "kp-daily-horoscope",
+      titleTa: "கே.பி. தினசரி ராசிபலன் (249 உப-அதிபதி கோச்சாரம்)",
+      titleEn: "KP Daily Horoscope & Live Transit Forecaster",
+      descriptionTa: "12 ராசிகளுக்கும் சந்திரனின் 249 உப-அதிபதி கோச்சாரம், மணிநேர பொன்னான நேரம், மற்றும் தொழில், தனம், காதல், ஆரோக்கியத்தின் தினசரி ஒருவரி சுருக்கம்.",
+      descriptionEn: "Deterministic KP 249 sub-lord daily predictions for all 12 Rashis: daily brief punchline, hourly golden/caution windows, and aspect scores.",
+      href: "/tools/kp-daily-horoscope",
+      icon: Clock,
+      color: "text-purple-700 border-purple-400 bg-purple-50/90 ring-2 ring-purple-500/40",
+    },
+    {
       id: "kalachakra",
       titleTa: "காலச்சக்கரம்: தற்போதைய தசா-புத்தி மற்றும் கோச்சார ரேடார்",
       titleEn: "KalaChakra: Current Period & Cosmic Weather",

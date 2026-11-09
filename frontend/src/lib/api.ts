@@ -5530,3 +5530,90 @@ export async function getKpMonthlyPrediction(
     body: JSON.stringify(req),
   });
 }
+
+// ==========================================
+// KP Daily Horoscope & Real-time Transits
+// ==========================================
+
+export interface KpAspectPrediction {
+  aspect_code: string;
+  aspect_name: string;
+  aspect_name_tamil: string;
+  score: number;
+  rating_stars: number;
+  status: string;
+  signified_houses: number[];
+  insight_en: string;
+  insight_ta: string;
+  key_recommendation_en: string;
+  key_recommendation_ta: string;
+}
+
+export interface MoonSubLordWindow {
+  start_time: string;
+  end_time: string;
+  star_name: string;
+  star_lord: string;
+  sub_lord: string;
+  sentiment: "golden" | "neutral" | "caution";
+  activated_houses: number[];
+  advice_en: string;
+  advice_ta: string;
+}
+
+export interface RashiDailyPrediction {
+  rashi_id: number;
+  rashi_name_en: string;
+  rashi_name_ta: string;
+  sign_lord: string;
+  daily_score: number;
+  daily_rating_stars: number;
+  day_sentiment: string;
+  brief_statement_en: string;
+  brief_statement_ta: string;
+  peak_highlight_en: string;
+  peak_highlight_ta: string;
+  caution_trap_en: string;
+  caution_trap_ta: string;
+  golden_hour_window: string;
+  caution_hour_window: string;
+  lucky_color_en: string;
+  lucky_color_ta: string;
+  lucky_number: number;
+  lucky_direction_en: string;
+  lucky_direction_ta: string;
+  daily_remedy_en: string;
+  daily_remedy_ta: string;
+  aspects: KpAspectPrediction[];
+  moon_sub_windows: MoonSubLordWindow[];
+}
+
+export interface KpDailyHoroscopeResponse {
+  date: string;
+  day_of_week: string;
+  day_of_week_ta: string;
+  day_lord: string;
+  moon_sign_at_noon: string;
+  moon_star_at_noon: string;
+  moon_sub_lord_at_noon: string;
+  ayanamsa_name: string;
+  total_rashis: number;
+  predictions: RashiDailyPrediction[];
+  calculated_at: string;
+}
+
+export async function getKpDailyHoroscope(params?: {
+  date?: string;
+  timezone?: string;
+  rashi?: string;
+  ayanamsa?: number;
+}): Promise<KpDailyHoroscopeResponse> {
+  const query = new URLSearchParams();
+  if (params?.date) query.set("date", params.date);
+  if (params?.timezone) query.set("timezone", params.timezone);
+  if (params?.rashi) query.set("rashi", params.rashi);
+  if (params?.ayanamsa !== undefined) query.set("ayanamsa", String(params.ayanamsa));
+  const qs = query.toString();
+  return request<KpDailyHoroscopeResponse>(`/api/v1/kp/daily-horoscope${qs ? `?${qs}` : ""}`);
+}
+

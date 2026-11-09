@@ -43,6 +43,7 @@ from app.routers import (
     instant_revelation,
     kp_narrative,
     kp_timing,
+    kp_daily_horoscope,
 )
 
 
@@ -188,5 +189,7 @@ app.include_router(kp_narrative.router)
 app.include_router(kp_narrative.router, prefix="/api/kp-narrative")
 app.include_router(kp_timing.router)
 app.include_router(kp_timing.router, prefix="/api/kp-timing")
+app.include_router(kp_daily_horoscope.router)
+app.include_router(kp_daily_horoscope.legacy_router)
 
 
