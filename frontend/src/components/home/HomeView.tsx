@@ -24,8 +24,11 @@ import {
   Cake,
   Eye,
   CalendarCheck,
+  ShieldAlert,
+  Flame,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
+import { DasaCautionReminderModal } from "@/components/caution/DasaCautionReminderModal";
 
 export function HomeView() {
   const { language, t } = useLanguage();
@@ -33,6 +36,7 @@ export function HomeView() {
   const [recentHoroscopes, setRecentHoroscopes] = useState<SavedHoroscopeItem[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [isBirthdayOpen, setIsBirthdayOpen] = useState(false);
+  const [isCautionOpen, setIsCautionOpen] = useState(false);
 
   // Time-of-day greeting
   const [greeting, setGreeting] = useState("Welcome");
@@ -169,6 +173,22 @@ interface AstrologyToolCard {
       icon: Cake,
       color: "text-amber-600 border-amber-300 bg-amber-50",
     },
+    {
+      id: "caution-alerts",
+      titleTa: "கண்ட கால எச்சரிக்கை",
+      titleEn: "Dasa Caution Alerts",
+      action: () => setIsCautionOpen(true),
+      icon: ShieldAlert,
+      color: "text-rose-600 border-rose-300 bg-rose-50",
+    },
+    {
+      id: "instant-revelation",
+      titleTa: "நேரடி வாக்கு பலகை",
+      titleEn: "Instant Revelation",
+      href: "/tools/instant-revelation",
+      icon: Flame,
+      color: "text-rose-700 border-rose-300 bg-rose-50/70",
+    },
   ];
 
   return (
@@ -222,7 +242,7 @@ interface AstrologyToolCard {
           <div className="flex-1 h-px bg-[#D9DEE7]" />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3 sm:gap-4">
           {astrologyTools.map((card) => {
             const Icon = card.icon;
             return (
@@ -233,10 +253,10 @@ interface AstrologyToolCard {
                   (language === "ta" ? card.descriptionTa : card.descriptionEn) ||
                   (language === "ta" ? card.titleTa : card.titleEn)
                 }
-                className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
+                className="h-28 sm:h-32 rounded-xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-2.5 sm:p-3 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
               >
                 <div
-                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border flex items-center justify-center mb-2 group-hover:scale-105 transition-transform ${card.color}`}
                 >
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
@@ -264,7 +284,7 @@ interface AstrologyToolCard {
           <div className="flex-1 h-px bg-[#D9DEE7]" />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
           {workspaceTools.map((card) => {
             const Icon = card.icon;
             if (card.action) {
@@ -273,10 +293,10 @@ interface AstrologyToolCard {
                   key={card.id}
                   type="button"
                   onClick={card.action}
-                  className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group cursor-pointer"
+                  className="h-28 sm:h-32 rounded-xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-2.5 sm:p-3 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group cursor-pointer"
                 >
                   <div
-                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border flex items-center justify-center mb-2 group-hover:scale-105 transition-transform ${card.color}`}
                   >
                     <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
@@ -294,10 +314,10 @@ interface AstrologyToolCard {
               <Link
                 key={card.id}
                 href={card.href!}
-                className="h-32 sm:h-36 rounded-2xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
+                className="h-28 sm:h-32 rounded-xl bg-white border border-[#D9DEE7] hover:border-[#B4872B] p-2.5 sm:p-3 flex flex-col items-center justify-center text-center shadow-xs hover:shadow-md transition-all group"
               >
                 <div
-                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform ${card.color}`}
+                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border flex items-center justify-center mb-2 group-hover:scale-105 transition-transform ${card.color}`}
                 >
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
@@ -423,10 +443,14 @@ interface AstrologyToolCard {
         </p>
       </div>
 
-      {/* Birthday Reminder Modal */}
+      {/* Modals */}
       <BirthdayReminderModal
         isOpen={isBirthdayOpen}
         onClose={() => setIsBirthdayOpen(false)}
+      />
+      <DasaCautionReminderModal
+        isOpen={isCautionOpen}
+        onClose={() => setIsCautionOpen(false)}
       />
     </div>
   );

@@ -59,7 +59,7 @@ async def get_optional_current_user(
 )
 async def predict_marriage(
     request: UnifiedMarriageRequest,
-    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> UnifiedMarriageResponse:
     """Execute unified marriage prediction pipeline."""
     try:
@@ -86,7 +86,7 @@ async def predict_marriage(
 )
 async def predict_spouse(
     request: SpousePredictionRequest,
-    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> SpousePredictionResponse:
     """Execute life partner and spouse prediction pipeline."""
     try:

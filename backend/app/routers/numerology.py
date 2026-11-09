@@ -6,6 +6,7 @@ Advanced Analysis (Lo Shu / Pinnacles), and Supabase Report Management.
 
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Query
+from starlette.concurrency import run_in_threadpool
 
 from app.schemas.numerology import (
     TraditionalNumerologyRequest,
@@ -1366,7 +1367,7 @@ def delete_report_by_id(
 # ------------------------------------------------------------------------------
 
 @router.get("/reports/{report_id}/pdf")
-def export_saved_report_pdf(
+async def export_saved_report_pdf(
     report_id: str,
     lang: str = Query("en", pattern="^(en|ta)$"),
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -1381,7 +1382,8 @@ def export_saved_report_pdf(
         )
 
     try:
-        pdf_bytes = generate_numerology_pdf_bytes(
+        pdf_bytes = await run_in_threadpool(
+            generate_numerology_pdf_bytes,
             person_name=report["person_name"],
             birth_date=str(report["birth_date"]),
             method=report["method"],

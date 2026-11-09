@@ -262,7 +262,10 @@ def test_saved_horoscope_pdf_authorization_lifecycle():
                 return MockTable([horoscope_a, horoscope_b])
             return MockTable([])
 
-    with patch("app.routers.pdf_reports.get_supabase_client", return_value=MockSupabase()):
+    from app.services.horoscope_cache import invalidate_saved_horoscope_cache
+    invalidate_saved_horoscope_cache()
+
+    with patch("app.services.auth_service.get_supabase_client", return_value=MockSupabase()), patch("app.routers.pdf_reports.get_supabase_client", return_value=MockSupabase()):
         # 1. User A downloads own horoscope A -> 200 OK
         app.dependency_overrides[get_optional_current_user] = lambda: user_a
         r_a_own = client.get("/api/v1/reports/horoscope/pdf/" + id_a)

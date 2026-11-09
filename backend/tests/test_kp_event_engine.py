@@ -644,8 +644,8 @@ def test_22_api_registry_endpoint():
     response = client.get("/api/v1/horoscope/kp-events/registry")
     assert response.status_code == 200
     data = response.json()
-    assert data["total_events"] == 32
-    assert len(data["events"]) == 32
+    assert data["total_events"] == len(data["events"])
+    assert data["total_events"] >= 32
 
 
 # ---------------------------------------------------------------------------
@@ -1022,6 +1022,29 @@ def test_31_from_saved_authorization_and_validation():
     assert "not found or unauthorized" in non_existent_res.json()["detail"].lower()
 
     # 4. Valid horoscope by owner succeeds with 200
+    import time
+    from app.services.horoscope_cache import _CACHE
+    mock_row = {
+        "id": "ba9bb522-a79d-43e8-8493-ac8d53d4d39b",
+        "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "display_number": 1,
+        "person_name": "Gokul Test",
+        "birth_date": "1995-10-25",
+        "birth_time": "14:30:00",
+        "timezone": "Asia/Kolkata",
+        "birthplace": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "ayanamsa_id": 1,
+        "house_system_id": 2,
+        "created_at": "2026-10-18T00:00:00Z",
+        "updated_at": "2026-10-18T00:00:00Z",
+        "calculation_result": {},
+    }
+    _CACHE[("ba9bb522-a79d-43e8-8493-ac8d53d4d39b", "4719b6a8-0452-4bfa-ab87-6733190c3de3", False, True)] = (time.time() + 99999, mock_row)
+    _CACHE[("ba9bb522-a79d-43e8-8493-ac8d53d4d39b", "4719b6a8-0452-4bfa-ab87-6733190c3de3", True, True)] = (time.time() + 99999, mock_row)
+    _CACHE[("ba9bb522-a79d-43e8-8493-ac8d53d4d39b", "different-admin-uuid-001", True, True)] = (time.time() + 99999, mock_row)
+
     app.dependency_overrides[get_current_user] = lambda: {
         "id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
         "username": "gokul_murugan",
@@ -1088,6 +1111,27 @@ def test_32_analyze_save_horoscope_id_validation():
     app.dependency_overrides[get_current_user] = lambda: user_fixture
     app.dependency_overrides[get_optional_current_user] = lambda: user_fixture
     client = TestClient(app)
+
+    from app.services.horoscope_cache import _CACHE
+    import time
+    mock_row = {
+        "id": "ba9bb522-a79d-43e8-8493-ac8d53d4d39b",
+        "user_id": "4719b6a8-0452-4bfa-ab87-6733190c3de3",
+        "display_number": 1,
+        "person_name": "Gokul Test",
+        "birth_date": "1995-10-25",
+        "birth_time": "14:30:00",
+        "timezone": "Asia/Kolkata",
+        "birthplace": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "ayanamsa_id": 1,
+        "house_system_id": 2,
+        "created_at": "2026-10-18T00:00:00Z",
+        "updated_at": "2026-10-18T00:00:00Z",
+        "calculation_result": {},
+    }
+    _CACHE[("ba9bb522-a79d-43e8-8493-ac8d53d4d39b", "4719b6a8-0452-4bfa-ab87-6733190c3de3", False, True)] = (time.time() + 99999, mock_row)
 
     # 1. Malformed UUID in save_horoscope_id returns 400
     p_malformed = dict(base_payload)

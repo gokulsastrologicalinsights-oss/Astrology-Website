@@ -8,7 +8,7 @@ Supports:
 import uuid
 import logging
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, Security, Response, status
+from fastapi import APIRouter, HTTPException, Depends, Security, Response, status, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.concurrency import run_in_threadpool
 
@@ -38,6 +38,13 @@ from app.services.pdf_report_engine import (
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.kp_engine.kp_chart_repository import get_kp_chart
+from app.services.pdf_storage import (
+    generate_pdf_cache_key,
+    get_cached_pdf,
+    store_cached_pdf,
+    upload_pdf_to_supabase_storage,
+    get_supabase_storage_signed_url,
+)
 
 logger = logging.getLogger("gai.api.pdf_reports")
 security = HTTPBearer(auto_error=False)
@@ -76,9 +83,12 @@ async def get_optional_current_user(
 @router.post("/pdf", summary="Generate a 9-page bilingual PDF horoscope report")
 async def generate_pdf_report_endpoint(
     request: HoroscopePdfReportRequest,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> Response:
-    """Generates an approximately 9-page branded English/Tamil PDF horoscope report."""
+    """Generates an approximately 9-page branded English/Tamil PDF horoscope report.
+    Offloaded to worker threadpool and cached to prevent event loop blocking under concurrency.
+    """
     try:
         # Case A: Saved horoscope requested
         if request.saved_horoscope_id:
@@ -155,15 +165,36 @@ async def generate_pdf_report_endpoint(
                 detail="Must provide either birth_input or saved_horoscope_id.",
             )
 
-        pdf_bytes = generate_horoscope_pdf_bytes(report_data)
-
+        # High-concurrency caching & threadpool execution
+        cache_id = request.saved_horoscope_id or f"{report_data.birth_date}_{report_data.birth_time}_{report_data.latitude}_{report_data.longitude}"
+        cache_key = generate_pdf_cache_key(
+            "horoscope_9p",
+            cache_id,
+            report_data.language,
+            f"{report_data.ayanamsa_name}:{report_data.house_system_name}:{report_data.native_name}",
+        )
         filename = f"Horoscope_Report_{report_data.report_id}.pdf"
+
+        cached_entry = get_cached_pdf(cache_key)
+        if cached_entry:
+            pdf_bytes, filename = cached_entry
+        else:
+            pdf_bytes = await run_in_threadpool(generate_horoscope_pdf_bytes, report_data)
+            store_cached_pdf(cache_key, pdf_bytes, filename)
+            if background_tasks:
+                background_tasks.add_task(
+                    upload_pdf_to_supabase_storage,
+                    file_path=f"horoscope/{report_data.language}/{filename}",
+                    pdf_bytes=pdf_bytes,
+                )
+
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
 
@@ -186,6 +217,7 @@ async def generate_pdf_report_endpoint(
 async def download_pdf_by_id_endpoint(
     horoscope_id: str,
     language: str = "en",
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> Response:
     """Download PDF horoscope report for a saved horoscope ID. Requires authentication and ownership."""
@@ -193,7 +225,7 @@ async def download_pdf_by_id_endpoint(
         saved_horoscope_id=horoscope_id,
         language=language,
     )
-    return await generate_pdf_report_endpoint(req, current_user=current_user)
+    return await generate_pdf_report_endpoint(req, background_tasks=background_tasks, current_user=current_user)
 
 
 @router.post("/single-page-pdf", summary="Generate authentic 1-page traditional Tamil horoscope PDF")
@@ -331,9 +363,11 @@ async def download_single_page_pdf_by_id_endpoint(
 @kp_router.post("/pdf", summary="Generate dedicated 6-page bilingual KP Astrology PDF report")
 async def generate_kp_pdf_endpoint(
     request: KpPdfReportRequest,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> Response:
     """Generates a dedicated 6-page branded English/Tamil KP PDF report.
+    Offloaded to worker threadpool and cached to prevent event loop blocking under concurrency.
 
     Supports:
     - Ad-hoc natal KP chart via request.birth_input.
@@ -402,16 +436,37 @@ async def generate_kp_pdf_endpoint(
                 detail="Must provide birth_input, horary_input, or saved_chart_id.",
             )
 
-        pdf_bytes = generate_kp_pdf_bytes(report_data)
-
+        # Cache check & threadpool offload
+        cache_id = request.saved_chart_id or f"{report_data.birth_date}_{report_data.birth_time}_{report_data.latitude}_{report_data.longitude}"
+        cache_key = generate_pdf_cache_key(
+            "kp_6p",
+            cache_id,
+            report_data.language,
+            f"{report_data.chart_type}:{report_data.horary_number}:{report_data.native_name}",
+        )
         chart_label = "Horary" if report_data.chart_type == "horary" else "Natal"
         filename = f"KP_{chart_label}_Report_{report_data.report_id}.pdf"
+
+        cached_entry = get_cached_pdf(cache_key)
+        if cached_entry:
+            pdf_bytes, filename = cached_entry
+        else:
+            pdf_bytes = await run_in_threadpool(generate_kp_pdf_bytes, report_data)
+            store_cached_pdf(cache_key, pdf_bytes, filename)
+            if background_tasks:
+                background_tasks.add_task(
+                    upload_pdf_to_supabase_storage,
+                    file_path=f"kp/{report_data.language}/{filename}",
+                    pdf_bytes=pdf_bytes,
+                )
+
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
 
@@ -434,6 +489,7 @@ async def generate_kp_pdf_endpoint(
 async def download_kp_pdf_by_id_endpoint(
     chart_id: str,
     language: str = "en",
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> Response:
     """Download KP PDF report for a saved chart ID. Requires authentication and ownership."""
@@ -441,7 +497,7 @@ async def download_kp_pdf_by_id_endpoint(
         saved_chart_id=chart_id,
         language=language,
     )
-    return await generate_kp_pdf_endpoint(req, current_user=current_user)
+    return await generate_kp_pdf_endpoint(req, background_tasks=background_tasks, current_user=current_user)
 
 
 # -----------------------------------------------------------------------------
@@ -486,7 +542,7 @@ async def generate_shodashvarga_pdf_endpoint(
         else:
             raise HTTPException(status_code=422, detail="Either birth_input or saved_horoscope_id required.")
 
-        pdf_bytes = generate_shodashvarga_pdf_bytes(request, birth_input)
+        pdf_bytes = await run_in_threadpool(generate_shodashvarga_pdf_bytes, request, birth_input)
         filename = f"Shodashvarga_Book_{request.native_name.replace(' ', '_')}.pdf"
         return Response(
             content=pdf_bytes,
@@ -494,6 +550,7 @@ async def generate_shodashvarga_pdf_endpoint(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
     except HTTPException:
@@ -510,7 +567,7 @@ async def generate_muhurta_certificate_pdf_endpoint(
 ) -> Response:
     """Generates an auspicious ceremonial gold-bordered Muhurta Selection Certificate."""
     try:
-        pdf_bytes = generate_muhurta_certificate_pdf_bytes(request)
+        pdf_bytes = await run_in_threadpool(generate_muhurta_certificate_pdf_bytes, request)
         occ_name = request.occasion.replace(" ", "_")
         filename = f"Muhurta_Certificate_{occ_name}_{request.event_date}.pdf"
         return Response(
@@ -519,6 +576,7 @@ async def generate_muhurta_certificate_pdf_endpoint(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
     except Exception as exc:
@@ -533,7 +591,7 @@ async def generate_pancha_pakshi_pdf_endpoint(
 ) -> Response:
     """Compiles an Agastya Pancha Pakshi 24-Hour Bio-Rhythm dossier detailing all 50 Antara windows and Golden/Padupakshi hours."""
     try:
-        pdf_bytes = generate_pancha_pakshi_pdf_bytes(request)
+        pdf_bytes = await run_in_threadpool(generate_pancha_pakshi_pdf_bytes, request)
         filename = f"Pancha_Pakshi_24Hr_{request.nakshatra}_{request.target_date}.pdf"
         return Response(
             content=pdf_bytes,
@@ -541,6 +599,7 @@ async def generate_pancha_pakshi_pdf_endpoint(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
     except Exception as exc:
@@ -555,7 +614,7 @@ async def generate_gemstone_rudraksha_pdf_endpoint(
 ) -> Response:
     """Compiles a personalized Gemstone & Rudraksha Sanctification Playbook with weight formulas and mantras."""
     try:
-        pdf_bytes = generate_gemstone_rudraksha_playbook_pdf_bytes(request)
+        pdf_bytes = await run_in_threadpool(generate_gemstone_rudraksha_playbook_pdf_bytes, request)
         filename = f"Gemstone_Rudraksha_Playbook_{request.ascendant_sign}.pdf"
         return Response(
             content=pdf_bytes,
@@ -563,6 +622,7 @@ async def generate_gemstone_rudraksha_pdf_endpoint(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
     except Exception as exc:

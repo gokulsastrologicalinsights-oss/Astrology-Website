@@ -96,25 +96,14 @@ def analyze_kp_events(
         # If user is authenticated and save_horoscope_id is provided, persist analysis
         if current_user and request.save_horoscope_id:
             clean_save_id = _validate_uuid(request.save_horoscope_id)
-            supabase = get_supabase_client()
-            if not supabase:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Database service unavailable. Database configuration missing.",
-                )
             is_admin = current_user.get("role") == "admin"
-            try:
-                chk = supabase.table("saved_horoscopes").select("id, user_id").eq("id", clean_save_id)
-                chk_res = chk.execute()
-                if not chk_res.data or (not is_admin and str(chk_res.data[0].get("user_id")) != str(current_user["id"])):
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Saved horoscope not found or unauthorized.",
-                    )
-            except HTTPException:
-                raise
-            except Exception as e:
-                logger.warning(f"Error checking horoscope ownership for save {clean_save_id}: {e}")
+            horo_row = get_cached_saved_horoscope(
+                clean_id=clean_save_id,
+                user_id=str(current_user["id"]),
+                is_admin=is_admin,
+                include_calculation_result=False,
+            )
+            if not horo_row:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Saved horoscope not found or unauthorized.",

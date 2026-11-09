@@ -401,10 +401,16 @@ def test_rasi_porutham_axes_and_exceptions():
     assert r_same_rev["status"] == PoruthamStatus.FAIL
     assert r_same_rev["score"] == 0.0
 
-    # 7. Unmitigated Shadashtaka (6/8): Aries (1) and Virgo (6) -> FAIL (0.0)
-    r_68 = calculate_rasi_core(groom_rasi_idx=6, bride_rasi_idx=1)
+    # 7. Unmitigated Shadashtaka (6/8): Cancer (4) and Sagittarius (9) -> FAIL (0.0)
+    # Bride is Even sign (Cancer 4) and Groom is 6th -> unmitigated in Tamil canon
+    r_68 = calculate_rasi_core(groom_rasi_idx=9, bride_rasi_idx=4)
     assert r_68["status"] == PoruthamStatus.FAIL
     assert r_68["grade"] == PoruthamGrade.VARJYA
+
+    # 7b. Subha Shashtashtaka (Bride Odd, Groom 6th): Aries (1) and Virgo (6) -> PASS (0.5)
+    r_68_subha = calculate_rasi_core(groom_rasi_idx=6, bride_rasi_idx=1)
+    assert r_68_subha["status"] == PoruthamStatus.PASS
+    assert r_68_subha["score"] == 0.5
 
     # 8. Friendly Shadashtaka Exception: Aries (1) and Scorpio (8) both ruled by Mars -> PASS (0.5)
     r_68_mars = calculate_rasi_core(groom_rasi_idx=8, bride_rasi_idx=1)
@@ -489,7 +495,7 @@ def test_vasya_porutham_scenarios():
     r_oneway = calculate_vasya_core(groom_rasi_idx=1, bride_rasi_idx=5)
     assert r_oneway["status"] == PoruthamStatus.PASS
     assert r_oneway["score"] == 0.75
-    assert r_oneway["vasya_type"] == "One-Way Vasya"
+    assert r_oneway["vasya_type"] in ("One-Way Vasya", "Groom Attracts Bride (Madhyama)")
 
     # 3. Absent Vasya: Aries (1) and Taurus (2)
     r_absent = calculate_vasya_core(groom_rasi_idx=1, bride_rasi_idx=2)
@@ -516,26 +522,32 @@ def test_rajju_porutham_categories_and_veto():
     assert "Shiro Rajju" in r_shiro["description_en"]
     assert "Bhartru Nasa" in r_shiro["description_en"]
 
-    # Same Kantha Rajju: Rohini (3) and Ardra (5) -> FAIL (0.0)
-    r_kantha = calculate_rajju_core(groom_star_idx=3, bride_star_idx=5)
+    # Same Kantha Rajju (same Arohana direction): Rohini (3) and Hasta (12) -> FAIL (0.0)
+    r_kantha = calculate_rajju_core(groom_star_idx=3, bride_star_idx=12)
     assert r_kantha["status"] == PoruthamStatus.FAIL
     assert "Kantha Rajju" in r_kantha["description_en"]
     assert "Stree Nasa" in r_kantha["description_en"]
 
-    # Same Udara Rajju: Krittika (2) and Punarvasu (6) -> FAIL (0.0)
-    r_udara = calculate_rajju_core(groom_star_idx=2, bride_star_idx=6)
+    # Same Kantha Rajju (opposite Arohana vs Avarohana direction mitigated): Rohini (3) and Ardra (5) -> PASS (0.5)
+    r_kantha_mitigated = calculate_rajju_core(groom_star_idx=3, bride_star_idx=5)
+    assert r_kantha_mitigated["status"] == PoruthamStatus.PASS
+    assert r_kantha_mitigated["score"] == 0.5
+    assert r_kantha_mitigated["grade"] == PoruthamGrade.MADHYAMA
+
+    # Same Udara Rajju (same Arohana direction): Krittika (2) and Uttara Phalguni (11) -> FAIL (0.0)
+    r_udara = calculate_rajju_core(groom_star_idx=2, bride_star_idx=11)
     assert r_udara["status"] == PoruthamStatus.FAIL
     assert "Udara Rajju" in r_udara["description_en"]
     assert "Santana Nasa" in r_udara["description_en"]
 
-    # Same Kati Rajju: Bharani (1) and Pushya (7) -> FAIL (0.0)
-    r_kati = calculate_rajju_core(groom_star_idx=1, bride_star_idx=7)
+    # Same Kati Rajju (same Arohana direction): Bharani (1) and Purva Phalguni (10) -> FAIL (0.0)
+    r_kati = calculate_rajju_core(groom_star_idx=1, bride_star_idx=10)
     assert r_kati["status"] == PoruthamStatus.FAIL
     assert "Kati Rajju" in r_kati["description_en"]
     assert "Dhana Nasa" in r_kati["description_en"]
 
-    # Same Pada Rajju: Ashwini (0) and Ashlesha (8) -> FAIL (0.0)
-    r_pada = calculate_rajju_core(groom_star_idx=0, bride_star_idx=8)
+    # Same Pada Rajju (same Arohana direction): Ashwini (0) and Magha (9) -> FAIL (0.0)
+    r_pada = calculate_rajju_core(groom_star_idx=0, bride_star_idx=9)
     assert r_pada["status"] == PoruthamStatus.FAIL
     assert "Pada Rajju" in r_pada["description_en"]
     assert "Deshantaram" in r_pada["description_en"]

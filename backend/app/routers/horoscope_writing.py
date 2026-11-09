@@ -6,6 +6,7 @@ from datetime import date, time, datetime
 from typing import Optional, Dict, Any, List, Tuple
 from fastapi import APIRouter, HTTPException, Depends, Security, Response, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.concurrency import run_in_threadpool
 
 from app.schemas.horoscope_writing import (
     HoroscopeWritingRequest,
@@ -229,7 +230,7 @@ async def generate_horoscope_writing_pdf_endpoint(
             )
 
         pdf_generator = TraditionalHoroscopePdfGenerator(calc_data)
-        pdf_bytes = pdf_generator.generate()
+        pdf_bytes = await run_in_threadpool(pdf_generator.generate)
 
         safe_name = "".join(c for c in (calc_data.get("person_details", {}).get("name", "Native")) if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
         bdate_str = calc_data.get("person_details", {}).get("birth_date", "Chart")

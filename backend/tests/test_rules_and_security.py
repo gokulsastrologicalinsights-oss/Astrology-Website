@@ -59,9 +59,9 @@ def test_cors_headers_allowed_origin():
 
 
 def test_request_body_size_limit():
-    # Sending payload with declared Content-Length exceeding 1MB (1,048,576 bytes)
+    from app.config import settings
     headers = {
-        "Content-Length": "2000000",  # 2MB
+        "Content-Length": str(settings.max_request_body_bytes + 1000),
         "Content-Type": "application/json",
     }
     response = client.post("/api/v1/horoscope/calculate", headers=headers, content=b"{}")
