@@ -67,6 +67,16 @@ interface AstrologyToolCard {
   // Section 1: Astrology Tools Cards (matching Screenshot 1)
   const astrologyTools: AstrologyToolCard[] = [
     {
+      id: "kalachakra",
+      titleTa: "காலச்சக்கரம்: தற்போதைய தசா-புத்தி மற்றும் கோச்சார ரேடார்",
+      titleEn: "KalaChakra: Current Period & Cosmic Weather",
+      descriptionTa: "நிகழ்கால விம்சோத்தரி தசா-புக்தி, தற்போதைய கோச்சார கிரக நிலைகள் (சனி, குரு, ராகு-கேது) மற்றும் கே.பி நிகழ்வு சாத்தியக்கூறுகள் வழிகாட்டி.",
+      descriptionEn: "Precision real-time life timing engine combining Vimshottari Dasa-Bhukti, live planetary transits, and KP event probability signals.",
+      href: "/tools/kalachakra",
+      icon: Compass,
+      color: "text-indigo-700 border-indigo-400 bg-indigo-50/90 ring-2 ring-indigo-500/40",
+    },
+    {
       id: "instant-revelation",
       titleTa: "வாடிக்கையாளர் நேரடி வாக்கு பலகை (உடனடி பலன்)",
       titleEn: "Instant Customer Revelation Teleprompter",
