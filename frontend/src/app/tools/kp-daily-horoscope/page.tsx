@@ -265,24 +265,24 @@ export default function KpDailyHoroscopePage() {
         .map((a) => {
           const icon = ASPECT_ICONS[a.aspect_code] || "•";
           const body = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
-          return `${icon} **${a.aspect_name_tamil} – ${a.score}%**\n${body}`;
+          return `${icon} ${a.aspect_name_tamil} – ${a.score}%\n${body}`;
         })
         .join("\n\n");
 
-      return `**தினசரி ராசிபலன்**
-📅 **தேதி:** ${formattedDateTa}
+      return `தினசரி ராசிபலன்
+📅 தேதி: ${formattedDateTa}
 
-${symbol} **${rNameTa}** - ⭐ **இன்றைய சாதக நிலை: ${activePrediction.daily_score}%** (${starsDisplay}/5 – ${sentimentTa})
+${symbol} ${rNameTa} - ⭐ இன்றைய சாதக நிலை: ${activePrediction.daily_score}% (${starsDisplay}/5 – ${sentimentTa})
 
-🔮 **இன்றைய பொதுப்பலன்:**
+🔮 இன்றைய பொதுப்பலன்:
 
 ${cleanBrief(activePrediction.brief_statement_ta)}
 
-📊 **இன்றைய விரிவான பலன்கள்:**
+📊 இன்றைய விரிவான பலன்கள்:
 
 ${aspectsTa}
 
-⏰ **இன்றைய நேர வழிகாட்டல்:**
+⏰ இன்றைய நேர வழிகாட்டல்:
 
 🌟 அதிர்ஷ்ட நேரம்: ${goldenTimes || "குறிப்பிட்ட சிறப்பான நேரம் இல்லை"}
 
@@ -294,12 +294,12 @@ ${aspectsTa}
 
 🧭 அதிர்ஷ்ட திசை: ${activePrediction.lucky_direction_ta}
 
-🛡️ **இன்றைய ஆலோசனை:**
+🛡️ இன்றைய ஆலோசனை:
 
 ${activePrediction.daily_remedy_ta}
 
-🙏 **Gokul's Astrological Insights**
-*Gokul Murugan | Thiruverkadu*`;
+🙏 Gokul's Astrological Insights
+Gokul Murugan | Thiruverkadu`;
     }
 
     if (shareLanguage === "en") {
@@ -308,24 +308,24 @@ ${activePrediction.daily_remedy_ta}
         .map((a) => {
           const icon = ASPECT_ICONS[a.aspect_code] || "•";
           const body = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
-          return `${icon} **${a.aspect_name} – ${a.score}%**\n${body}`;
+          return `${icon} ${a.aspect_name} – ${a.score}%\n${body}`;
         })
         .join("\n\n");
 
-      return `**Daily Horoscope**
-📅 **Date:** ${formattedDateEn}
+      return `Daily Horoscope
+📅 Date: ${formattedDateEn}
 
-${symbol} **${rNameEn}** - ⭐ **Today's Energy Score: ${activePrediction.daily_score}%** (${starsDisplay}/5 – ${sentimentEn} day)
+${symbol} ${rNameEn} - ⭐ Today's Energy Score: ${activePrediction.daily_score}% (${starsDisplay}/5 – ${sentimentEn} day)
 
-🔮 **Today's General Outlook:**
+🔮 Today's General Outlook:
 
 ${cleanBrief(activePrediction.brief_statement_en)}
 
-📊 **Today's Detailed Breakdown:**
+📊 Today's Detailed Breakdown:
 
 ${aspectsEn}
 
-⏰ **Today's Timing Guidance:**
+⏰ Today's Timing Guidance:
 
 🌟 Lucky Hours: ${goldenTimes || "No specific golden window"}
 
@@ -337,12 +337,12 @@ ${aspectsEn}
 
 🧭 Lucky Direction: ${activePrediction.lucky_direction_en}
 
-🛡️ **Today's Guidance:**
+🛡️ Today's Guidance:
 
 ${activePrediction.daily_remedy_en}
 
-🙏 **Gokul's Astrological Insights**
-*Gokul Murugan | Thiruverkadu*`;
+🙏 Gokul's Astrological Insights
+Gokul Murugan | Thiruverkadu`;
     }
 
     // Bilingual format

@@ -2,12 +2,14 @@
 
 Handles automated and manual posting of KP Daily Raasi Palan updates
 for all 12 Rashis to Facebook Pages using the Meta Graph API.
+Matches the official website formatting 1-to-1.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
@@ -22,86 +24,152 @@ logger = logging.getLogger("gai.facebook")
 
 FACEBOOK_API_BASE = "https://graph.facebook.com"
 
-RASHIS_ORDER = [
-    "Aries",
-    "Taurus",
-    "Gemini",
-    "Cancer",
-    "Leo",
-    "Virgo",
-    "Libra",
-    "Scorpio",
-    "Sagittarius",
-    "Capricorn",
-    "Aquarius",
-    "Pisces",
-]
+RASHI_SYMBOLS: Dict[int, str] = {
+    1: "♈",
+    2: "♉",
+    3: "♊",
+    4: "♋",
+    5: "♌",
+    6: "♍",
+    7: "♎",
+    8: "♏",
+    9: "♐",
+    10: "♑",
+    11: "♒",
+    12: "♓",
+}
+
+ASPECT_ICONS: Dict[str, str] = {
+    "career": "💼",
+    "finance": "💰",
+    "love": "❤️",
+    "health": "🩺",
+    "travel": "✈️",
+}
+
+SENTIMENT_MAP_TA: Dict[str, str] = {
+    "Excellent": "மிகச் சிறப்பான நாள்",
+    "Favorable": "சாதகமான நாள்",
+    "Mixed": "மிதமான நாள்",
+    "Challenging": "சவாலான நாள்",
+}
+
+MONTHS_TA: Dict[int, str] = {
+    1: "ஜனவரி",
+    2: "பிப்ரவரி",
+    3: "மார்ச்",
+    4: "ஏப்ரல்",
+    5: "மே",
+    6: "ஜூன்",
+    7: "ஜூலை",
+    8: "ஆகஸ்ட்",
+    9: "செப்டம்பர்",
+    10: "அக்டோபர்",
+    11: "நவம்பர்",
+    12: "டிசம்பர்",
+}
+
+
+def _format_tamil_date(date_str: str, day_ta: str) -> str:
+    """Formats YYYY-MM-DD into '10 நவம்பர் 2026 – செவ்வாய்க்கிழமை'."""
+    try:
+        parts = date_str.split("-")
+        if len(parts) == 3:
+            year = parts[0]
+            month = int(parts[1])
+            day = int(parts[2])
+            month_name = MONTHS_TA.get(month, parts[1])
+            return f"{day} {month_name} {year} – {day_ta}"
+    except Exception:
+        pass
+    return f"{date_str} – {day_ta}"
+
+
+def _clean_brief(text: str) -> str:
+    """Strips sign prefix (e.g., 'மேஷம் (8-ம் இடத்தில்...):') from the brief statement."""
+    if not text:
+        return ""
+    cleaned = re.sub(r"^.*?\):\s*", "", text).strip(" \"'")
+    return cleaned or text
+
+
+def _format_aspect_text_ta(insight: str, rec: str) -> str:
+    """Cleans technical KP jargon and combines insight and key recommendation into readable Tamil."""
+    clean = re.sub(
+        r"(?:KP\s*பாவகங்கள்|(?:\d+(?:\s*அல்லது\s*\d+)?|\[[\d,\s]+\]|\{houses\}|\d+(?:,\s*\d+)*)-ம்\s*பாவக[^.;]*[.;]?)",
+        "",
+        insight or "",
+        flags=re.IGNORECASE,
+    )
+    clean = re.sub(r"\{houses\}", "", clean)
+    clean = re.sub(r",\s*உப-அதிபதியின் ஆதிக்கத்தால்", "", clean)
+    clean = re.sub(r"\s+", " ", clean).strip()
+
+    if len(clean) < 35 and rec:
+        rec_short = rec.split(";")[0].strip().rstrip(".")
+        if rec_short:
+            clean = f"{clean.rstrip('.')}. {rec_short}." if clean else f"{rec_short}."
+    return clean or rec or insight
 
 
 def format_kp_daily_tamil_post(
     horoscope_data: KpDailyHoroscopeResponse,
     prediction: RashiDailyPrediction,
 ) -> str:
-    """Formats the KP Daily Horoscope for a given Rashi into the exact Tamil Facebook post text."""
+    """Formats the KP Daily Horoscope for a given Rashi into the exact Tamil post text matching the website."""
     r_name_ta = f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})"
+    symbol = RASHI_SYMBOLS.get(prediction.rashi_id, "✨")
+    formatted_date = _format_tamil_date(horoscope_data.date, horoscope_data.day_of_week_ta)
 
-    # Filter Moon Sub-Lord hourly timeline windows
+    # Filter Moon Sub-Lord hourly timeline windows using en-dash
     golden_times = (
         ", ".join(
-            f"{w.start_time} - {w.end_time}"
+            f"{w.start_time} – {w.end_time}"
             for w in prediction.moon_sub_windows
             if w.sentiment == "golden"
         )
-        or prediction.golden_hour_window
+        or (prediction.golden_hour_window.replace(" - ", " – ") if prediction.golden_hour_window else "")
         or "குறிப்பிட்ட சிறப்பான நேரம் இல்லை"
-    )
-
-    neutral_times = (
-        ", ".join(
-            f"{w.start_time} - {w.end_time}"
-            for w in prediction.moon_sub_windows
-            if w.sentiment == "neutral"
-        )
-        or "வழக்கமான நேரம்"
     )
 
     caution_times = (
         ", ".join(
-            f"{w.start_time} - {w.end_time}"
+            f"{w.start_time} – {w.end_time}"
             for w in prediction.moon_sub_windows
             if w.sentiment == "caution"
         )
-        or prediction.caution_hour_window
+        or (prediction.caution_hour_window.replace(" - ", " – ") if prediction.caution_hour_window else "")
         or "குறிப்பிடத்தக்க எச்சரிக்கை நேரம் இல்லை"
     )
 
-    # Format all 5 life aspects in points
     aspects_ta = "\n\n".join(
-        f"• {a.aspect_name_tamil} ({a.score}% - {a.status}):\n"
-        f"  {a.insight_ta}\n"
-        f"  [வழிகாட்டல்: {a.key_recommendation_ta}]"
+        f"{ASPECT_ICONS.get(a.aspect_code, '•')} {a.aspect_name_tamil} – {a.score}%\n"
+        f"{_format_aspect_text_ta(a.insight_ta, a.key_recommendation_ta)}"
         for a in prediction.aspects
     )
 
     stars_display = int(round(prediction.daily_rating_stars)) if prediction.daily_rating_stars else 2
+    sentiment_ta = SENTIMENT_MAP_TA.get(prediction.day_sentiment, prediction.day_sentiment)
+    lucky_color = prediction.lucky_color_ta.split("&")[0].strip() if prediction.lucky_color_ta else ""
 
     post_message = (
-        f"✨ கே.பி. தினசரி ராசிபலன்: {r_name_ta}\n"
-        f"📅 தேதி: {horoscope_data.date} ({horoscope_data.day_of_week_ta})\n"
-        f"📊 இன்றைய சாதக நிலை: {prediction.daily_score}% ({prediction.day_sentiment}) ⭐ {stars_display}/5\n\n"
-        f"🎯 இன்றைய தாரக மந்திரம்:\n"
-        f'"{prediction.brief_statement_ta}"\n\n'
-        f"🌟 சாதகமான வாய்ப்பு: {prediction.peak_highlight_ta}\n"
-        f"⚠️ கவனிக்க வேண்டியவை: {prediction.caution_trap_ta}\n\n"
-        f"📋 அனைத்து அம்சங்களின் விரிவான பலன்கள்:\n"
+        f"தினசரி ராசிபலன்\n"
+        f"📅 தேதி: {formatted_date}\n\n"
+        f"{symbol} {r_name_ta} - ⭐ இன்றைய சாதக நிலை: {prediction.daily_score}% ({stars_display}/5 – {sentiment_ta})\n\n"
+        f"🔮 இன்றைய பொதுப்பலன்:\n\n"
+        f"{_clean_brief(prediction.brief_statement_ta)}\n\n"
+        f"📊 இன்றைய விரிவான பலன்கள்:\n\n"
         f"{aspects_ta}\n\n"
-        f"⏱️ சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை:\n"
-        f"• Golden: {golden_times}\n"
-        f"• Neutral: {neutral_times}\n"
-        f"• Caution: {caution_times}\n\n"
-        f"🍀 அதிர்ஷ்ட நிறம் & எண்: {prediction.lucky_color_ta} (#{prediction.lucky_number}) | திசை: {prediction.lucky_direction_ta}\n"
-        f"🛡️ கே.பி. வழிகாட்டல்: {prediction.daily_remedy_ta}\n\n"
-        f"🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu"
+        f"⏰ இன்றைய நேர வழிகாட்டல்:\n\n"
+        f"🌟 அதிர்ஷ்ட நேரம்: {golden_times}\n\n"
+        f"⚠️ கவனமான நேரம்: {caution_times}\n\n"
+        f"🎨 அதிர்ஷ்ட நிறம்: {lucky_color}\n\n"
+        f"🔢 அதிர்ஷ்ட எண்: {prediction.lucky_number}\n\n"
+        f"🧭 அதிர்ஷ்ட திசை: {prediction.lucky_direction_ta}\n\n"
+        f"🛡️ இன்றைய ஆலோசனை:\n\n"
+        f"{prediction.daily_remedy_ta}\n\n"
+        f"🙏 Gokul's Astrological Insights\n"
+        f"Gokul Murugan | Thiruverkadu"
     )
 
     return post_message
@@ -258,7 +326,6 @@ async def post_all_12_raasi_palans(
         ist_now = datetime.now(ZoneInfo("Asia/Kolkata"))
         target_date = ist_now.strftime("%Y-%m-%d")
 
-    # Compute all 12 rashis at once using the astrological engine
     horoscope_data = compute_kp_daily_horoscope(
         target_date=target_date,
         timezone_str="Asia/Kolkata",
