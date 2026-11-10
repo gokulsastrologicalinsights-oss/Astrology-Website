@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -140,6 +140,7 @@ function KalaChakraContent() {
   const [savedHoroscopes, setSavedHoroscopes] = useState<SavedHoroscopeItem[]>([]);
   const [selectedHoroscopeId, setSelectedHoroscopeId] = useState<string>(initialHoroscopeId);
   const [loadingHoroscopes, setLoadingHoroscopes] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Manual chart input state
   const [manualName, setManualName] = useState<string>("My Chart");
@@ -148,6 +149,23 @@ function KalaChakraContent() {
   const [manualLat, setManualLat] = useState<string>("13.0827");
   const [manualLon, setManualLon] = useState<string>("80.2707");
   const [manualTz, setManualTz] = useState<string>("Asia/Kolkata");
+
+  // Selected horoscope object
+  const selectedHoroscope = useMemo(() => {
+    return savedHoroscopes.find((h) => h.id === selectedHoroscopeId) || null;
+  }, [savedHoroscopes, selectedHoroscopeId]);
+
+  // Filtered saved horoscopes for search
+  const filteredSavedHoroscopes = useMemo(() => {
+    if (!searchQuery.trim()) return savedHoroscopes;
+    const q = searchQuery.toLowerCase();
+    return savedHoroscopes.filter(
+      (h) =>
+        h.person_name?.toLowerCase().includes(q) ||
+        h.birthplace?.toLowerCase().includes(q) ||
+        h.birth_date?.includes(q)
+    );
+  }, [savedHoroscopes, searchQuery]);
 
   // Target Timing selection
   const now = new Date();
@@ -164,6 +182,28 @@ function KalaChakraContent() {
   const [copiedSummary, setCopiedSummary] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"all" | "favorable" | "caution">("all");
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
+
+  // Populate manual inputs from a horoscope record
+  const applyHoroscopeToInputs = useCallback((h: SavedHoroscopeItem) => {
+    if (h.person_name) setManualName(h.person_name);
+    if (h.birth_date) setManualDate(h.birth_date);
+    if (h.birth_time) {
+      let t = h.birth_time.trim();
+      if (t.length === 5) t += ":00";
+      setManualTime(t);
+    }
+    if (h.latitude !== undefined && h.latitude !== null) setManualLat(String(h.latitude));
+    if (h.longitude !== undefined && h.longitude !== null) setManualLon(String(h.longitude));
+    if (h.timezone) setManualTz(h.timezone);
+  }, []);
+
+  const handleSelectHoroscope = useCallback((newId: string) => {
+    setSelectedHoroscopeId(newId);
+    const found = savedHoroscopes.find((h) => h.id === newId);
+    if (found) {
+      applyHoroscopeToInputs(found);
+    }
+  }, [savedHoroscopes, applyHoroscopeToInputs]);
 
   // Load available candidate months
   useEffect(() => {
@@ -184,18 +224,25 @@ function KalaChakraContent() {
     if (authLoading || !isAuthenticated) return;
     try {
       setLoadingHoroscopes(true);
-      const res = await fetch("/api/v1/saved-horoscopes", {
-        headers: {
-          Authorization: `Bearer ${session?.access_token || ""}`,
-        },
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch("/api/horoscopes?page=1&limit=1000", {
+        cache: "no-store",
+        headers,
       });
       if (res.ok) {
         const data = await res.json();
-        const items = data.items || [];
+        const items: SavedHoroscopeItem[] = data.horoscopes || data.items || [];
         setSavedHoroscopes(items);
-        if (items.length > 0 && !selectedHoroscopeId) {
-          setSelectedHoroscopeId(items[0].id);
+        if (items.length > 0) {
+          const target = initialHoroscopeId
+            ? items.find((h) => h.id === initialHoroscopeId) || items[0]
+            : (selectedHoroscopeId ? items.find((h) => h.id === selectedHoroscopeId) || items[0] : items[0]);
+          setSelectedHoroscopeId(target.id);
           setChartMode("saved");
+          applyHoroscopeToInputs(target);
         }
       }
     } catch (err) {
@@ -203,45 +250,88 @@ function KalaChakraContent() {
     } finally {
       setLoadingHoroscopes(false);
     }
-  }, [authLoading, isAuthenticated, session, selectedHoroscopeId]);
+  }, [authLoading, isAuthenticated, session?.access_token, initialHoroscopeId, selectedHoroscopeId, applyHoroscopeToInputs]);
 
   useEffect(() => {
     loadSavedHoroscopes();
   }, [loadSavedHoroscopes]);
+
+  // If ?id= URL parameter is provided, fetch single horoscope immediately
+  useEffect(() => {
+    if (!initialHoroscopeId) return;
+    let isMounted = true;
+    const fetchTargetChart = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+        const res = await fetch(`/api/horoscopes/${initialHoroscopeId}`, { headers });
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          const h = data.horoscope;
+          if (h) {
+            setSelectedHoroscopeId(h.id);
+            setChartMode("saved");
+            applyHoroscopeToInputs(h);
+            setSavedHoroscopes((prev) => {
+              if (prev.some((p) => p.id === h.id)) return prev;
+              return [h, ...prev];
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch initial horoscope by ID:", err);
+      }
+    };
+    fetchTargetChart();
+    return () => {
+      isMounted = false;
+    };
+  }, [initialHoroscopeId, session?.access_token, applyHoroscopeToInputs]);
 
   // Main calculation handler
   const handleCalculateRadar = useCallback(async () => {
     setCalculating(true);
     setErrorMsg(null);
     try {
-      // 1. Fetch Live Planetary Transits (Gochara)
+      const targetDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-15`;
+      const found = chartMode === "saved" ? savedHoroscopes.find((h) => h.id === selectedHoroscopeId) : null;
+
+      const activeLat = found && found.latitude !== undefined ? parseFloat(found.latitude as any) || 13.0827 : parseFloat(manualLat) || 13.0827;
+      const activeLon = found && found.longitude !== undefined ? parseFloat(found.longitude as any) || 80.2707 : parseFloat(manualLon) || 80.2707;
+      const activeTz = found?.timezone || manualTz || "Asia/Kolkata";
+      const activeDate = found?.birth_date || manualDate;
+      let activeTime = (found?.birth_time || manualTime || "12:00:00").trim();
+      if (activeTime.length === 5) activeTime += ":00";
+      const activeName = (found?.person_name || manualName || "Native").trim();
+
+      // 1. Fetch Live Planetary Transits (Gochara) using active coordinates
       const transitsPromise = getLiveTransits({
-        latitude: parseFloat(manualLat) || 13.0827,
-        longitude: parseFloat(manualLon) || 80.2707,
-        timezone: manualTz || "Asia/Kolkata",
+        latitude: activeLat,
+        longitude: activeLon,
+        timezone: activeTz,
       }).catch((e) => {
         console.warn("Live transits fetch failed:", e);
         return null;
       });
 
       // 2. Fetch KP Monthly & Period Prediction
-      const targetDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-15`;
       let kpReq: any = {
         year: selectedYear,
         month: selectedMonth,
+        birth: {
+          birth_date: activeDate,
+          birth_time: activeTime,
+          latitude: activeLat,
+          longitude: activeLon,
+          timezone: activeTz,
+        },
+        native_name: activeName,
       };
 
       if (chartMode === "saved" && selectedHoroscopeId) {
         kpReq.saved_horoscope_id = selectedHoroscopeId;
-      } else {
-        kpReq.birth = {
-          birth_date: manualDate,
-          birth_time: manualTime,
-          latitude: parseFloat(manualLat),
-          longitude: parseFloat(manualLon),
-          timezone: manualTz,
-        };
-        kpReq.native_name = manualName || "Native";
       }
 
       const kpPromise = getKpMonthlyPrediction(kpReq, session?.access_token);
@@ -250,30 +340,12 @@ function KalaChakraContent() {
       let dasaReq: any = {
         depth: 3,
         target_date: targetDateStr,
+        birth_date: activeDate,
+        birth_time: activeTime,
+        latitude: activeLat,
+        longitude: activeLon,
+        timezone: activeTz,
       };
-
-      if (chartMode === "saved" && selectedHoroscopeId) {
-        const found = savedHoroscopes.find((h) => h.id === selectedHoroscopeId);
-        if (found) {
-          dasaReq.birth_date = found.birth_date;
-          dasaReq.birth_time = found.birth_time;
-          dasaReq.latitude = found.latitude;
-          dasaReq.longitude = found.longitude;
-          dasaReq.timezone = found.timezone || "Asia/Kolkata";
-        } else {
-          dasaReq.birth_date = manualDate;
-          dasaReq.birth_time = manualTime;
-          dasaReq.latitude = parseFloat(manualLat);
-          dasaReq.longitude = parseFloat(manualLon);
-          dasaReq.timezone = manualTz;
-        }
-      } else {
-        dasaReq.birth_date = manualDate;
-        dasaReq.birth_time = manualTime;
-        dasaReq.latitude = parseFloat(manualLat);
-        dasaReq.longitude = parseFloat(manualLon);
-        dasaReq.timezone = manualTz;
-      }
 
       const dasaPromise = calculateDasa(dasaReq).catch((e) => {
         console.warn("Dasa calculate failed:", e);
@@ -308,17 +380,24 @@ function KalaChakraContent() {
     manualName,
     selectedYear,
     selectedMonth,
-    session,
+    session?.access_token,
     savedHoroscopes,
     isTa,
   ]);
 
-  // Trigger initial calculation if id param present
+  // Trigger initial calculation once target horoscope is ready
+  const hasAutoRunRef = useRef(false);
   useEffect(() => {
-    if (initialHoroscopeId && savedHoroscopes.length > 0) {
-      handleCalculateRadar();
+    if (initialHoroscopeId && !hasAutoRunRef.current && savedHoroscopes.length > 0) {
+      const found = savedHoroscopes.find((h) => h.id === initialHoroscopeId);
+      if (found) {
+        hasAutoRunRef.current = true;
+        setSelectedHoroscopeId(found.id);
+        applyHoroscopeToInputs(found);
+        handleCalculateRadar();
+      }
     }
-  }, [initialHoroscopeId, savedHoroscopes.length, handleCalculateRadar]);
+  }, [initialHoroscopeId, savedHoroscopes, applyHoroscopeToInputs, handleCalculateRadar]);
 
   // Filter events based on active tab
   const filteredEvents = useMemo(() => {
@@ -462,14 +541,14 @@ ${predictionData.overall_month_summary_ta || "Maintain balanced effort and align
             <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
               <button
                 onClick={() => setChartMode("saved")}
-                disabled={!isAuthenticated || savedHoroscopes.length === 0}
+                disabled={!isAuthenticated || (savedHoroscopes.length === 0 && !loadingHoroscopes)}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   chartMode === "saved"
                     ? "bg-indigo-600 text-white shadow"
                     : "text-slate-400 hover:text-slate-200 disabled:opacity-40"
                 }`}
               >
-                {isTa ? "சேமித்த ஜாதகம்" : "Saved Chart"} ({savedHoroscopes.length})
+                {isTa ? "சேமித்த ஜாதகம்" : "Saved Chart"} ({loadingHoroscopes ? "..." : savedHoroscopes.length})
               </button>
               <button
                 onClick={() => setChartMode("manual")}
@@ -485,30 +564,84 @@ ${predictionData.overall_month_summary_ta || "Maintain balanced effort and align
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Chart Selection */}
             {chartMode === "saved" ? (
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 text-amber-400" />
-                  {isTa ? "சேமிக்கப்பட்ட ஜாதகத்தைத் தேர்ந்தெடுக்கவும்" : "Select Saved Horoscope"}
-                </label>
+              <div className="space-y-3 md:col-span-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-amber-400" />
+                    {isTa ? "சேமிக்கப்பட்ட ஜாதகத்தைத் தேர்ந்தெடுக்கவும்" : "Select Saved Horoscope"}
+                  </label>
+                  {savedHoroscopes.length > 4 && (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={isTa ? "ஜாதகத்தைத் தேடுக..." : "Search horoscopes..."}
+                        className="w-full sm:w-48 bg-slate-950/80 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  )}
+                </div>
                 {loadingHoroscopes ? (
                   <div className="h-10 bg-slate-800/60 animate-pulse rounded-xl" />
-                ) : savedHoroscopes.length > 0 ? (
-                  <select
-                    value={selectedHoroscopeId}
-                    onChange={(e) => setSelectedHoroscopeId(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
-                  >
-                    {savedHoroscopes.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.person_name} — {h.birth_date} ({h.birthplace || "N/A"})
-                      </option>
-                    ))}
-                  </select>
+                ) : filteredSavedHoroscopes.length > 0 ? (
+                  <>
+                    <select
+                      value={selectedHoroscopeId}
+                      onChange={(e) => handleSelectHoroscope(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    >
+                      {filteredSavedHoroscopes.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.person_name} — {h.birth_date} ({h.birthplace || "N/A"})
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedHoroscope && (
+                      <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                            {isTa ? "பெயர்" : "Name"}
+                          </span>
+                          <span className="font-bold text-white truncate block">
+                            {selectedHoroscope.person_name}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                            {isTa ? "பிறந்த நேரம்" : "Date & Time"}
+                          </span>
+                          <span className="text-slate-200 block truncate">
+                            {selectedHoroscope.birth_date} {selectedHoroscope.birth_time || ""}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                            {isTa ? "இடம்" : "Birthplace"}
+                          </span>
+                          <span className="text-slate-200 block truncate">
+                            {selectedHoroscope.birthplace || "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                            {isTa ? "ஆயனாம்சம்" : "Ayanamsa"}
+                          </span>
+                          <span className="text-amber-400 font-semibold block">
+                            {selectedHoroscope.ayanamsa_id === 1 ? "KP Original" : selectedHoroscope.ayanamsa_id === 3 ? "KP New" : "Lahiri"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-xs text-amber-400/90">
-                    {isTa
-                      ? "சேமிக்கப்பட்ட ஜாதகங்கள் இல்லை. 'நேரடி உள்ளீடு' முறையைப் பயன்படுத்தவும்."
-                      : "No saved charts found. Switch to 'Manual Input' tab."}
+                    {searchQuery
+                      ? (isTa ? "பொருத்தமான ஜாதகங்கள் எதுவும் இல்லை." : "No matching horoscopes found.")
+                      : (isTa
+                          ? "சேமிக்கப்பட்ட ஜாதகங்கள் இல்லை. 'நேரடி உள்ளீடு' முறையைப் பயன்படுத்தவும்."
+                          : "No saved charts found. Switch to 'Manual Input' tab.")}
                   </p>
                 )}
               </div>

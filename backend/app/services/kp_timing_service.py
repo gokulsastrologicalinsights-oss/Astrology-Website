@@ -221,6 +221,7 @@ def calculate_kp_monthly_prediction(
     year: int,
     month: int,
     ayanamsa_id: int = 1,
+    native_name: Optional[str] = None,
 ) -> KpMonthlyPredictionResponse:
     """Computes high-certainty KP monthly predictions for the target year and month."""
     # 1. Parse birth parameters
@@ -559,7 +560,7 @@ def calculate_kp_monthly_prediction(
         month=month,
         month_label=f"{MONTH_NAMES_EN[month]} {year}",
         month_label_ta=f"{MONTH_NAMES_TA[month]} {year}",
-        native_name=getattr(birth, "name", "") or "ஜாதகர்",
+        native_name=native_name or getattr(birth, "name", "") or "ஜாதகர்",
         dasha_hierarchy=dba_summary,
         transit_sun=transit_sun_summary,
         guaranteed_events=guaranteed_list,

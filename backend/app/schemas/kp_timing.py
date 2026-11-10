@@ -14,6 +14,7 @@ class KpMonthlyPredictionRequest(BaseModel):
     """Request model for KP monthly event timing prediction."""
     birth: Optional[BirthInput] = None
     saved_horoscope_id: Optional[str] = None
+    native_name: Optional[str] = None
     year: int = Field(default=2026, description="Target year, e.g. 2026")
     month: int = Field(default=11, ge=1, le=12, description="Target month: 1..12 (11=November, 12=December)")
     ayanamsa_id: int = Field(default=1, description="0=Lahiri, 1=KP (default)")

@@ -29,6 +29,18 @@ security = HTTPBearer(auto_error=False)
 router = APIRouter(prefix="/api/v1/kp/timing", tags=["KP Monthly & Period Timing"])
 
 
+def _validate_uuid(val: Any) -> str:
+    """Validates that a string is a well-formed UUID and returns its canonical string."""
+    try:
+        parsed = uuid.UUID(str(val).strip())
+        return str(parsed)
+    except (ValueError, AttributeError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid saved horoscope UUID format.",
+        )
+
+
 async def get_optional_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
 ) -> Optional[Dict[str, Any]]:
@@ -77,10 +89,20 @@ async def get_kp_monthly_prediction(
     """Calculates KP 4-pillar monthly event predictions with guaranteed fructification timing."""
     birth = request.birth
 
+    native_name = request.native_name
+
     # If saved_horoscope_id provided, load from cache/db
     if not birth and request.saved_horoscope_id:
         try:
-            saved = get_cached_saved_horoscope(request.saved_horoscope_id)
+            clean_id = _validate_uuid(request.saved_horoscope_id)
+            user_id = str(current_user["id"]) if current_user and "id" in current_user else ""
+            is_admin = bool(current_user and current_user.get("role") == "admin")
+            saved = get_cached_saved_horoscope(
+                clean_id=clean_id,
+                user_id=user_id,
+                is_admin=is_admin or (not bool(user_id)),
+                include_calculation_result=False,
+            )
             if not saved:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -88,15 +110,18 @@ async def get_kp_monthly_prediction(
                 )
             # Construct BirthInput
             b_data = saved.get("birth_data") or saved
+            birth_time_raw = b_data.get("birth_time") or b_data.get("time") or "12:00:00"
+            if isinstance(birth_time_raw, str) and len(birth_time_raw.split(":")) == 2:
+                birth_time_raw = f"{birth_time_raw}:00"
             birth = BirthInput(
                 birth_date=b_data.get("birth_date") or b_data.get("date"),
-                birth_time=b_data.get("birth_time") or b_data.get("time"),
+                birth_time=birth_time_raw,
                 latitude=float(b_data.get("latitude", 13.0827)),
                 longitude=float(b_data.get("longitude", 80.2707)),
                 timezone=b_data.get("timezone", "Asia/Kolkata"),
             )
-            # Attach native name if present
-            setattr(birth, "name", saved.get("name") or b_data.get("name") or "ஜாதகர்")
+            if not native_name:
+                native_name = saved.get("person_name") or saved.get("name") or b_data.get("person_name") or b_data.get("name") or "ஜாதகர்"
         except HTTPException:
             raise
         except Exception as e:
@@ -117,6 +142,7 @@ async def get_kp_monthly_prediction(
             year=request.year,
             month=request.month,
             ayanamsa_id=request.ayanamsa_id,
+            native_name=native_name or "ஜாதகர்",
         )
         return response
     except Exception as exc:

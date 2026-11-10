@@ -51,3 +51,35 @@ def test_kp_monthly_prediction_december_2026():
     assert res.month == 12
     assert "டிசம்பர்" in res.month_label_ta
     assert len(res.all_events) == 11
+
+
+@pytest.mark.anyio
+async def test_kp_monthly_prediction_with_saved_horoscope_id():
+    import uuid
+    from unittest.mock import patch
+    from app.routers.kp_timing import get_kp_monthly_prediction
+    from app.schemas.kp_timing import KpMonthlyPredictionRequest
+
+    test_uuid = str(uuid.uuid4())
+    mock_saved = {
+        "id": test_uuid,
+        "person_name": "Ramanathan",
+        "birth_date": "1990-05-15",
+        "birth_time": "14:30:00",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "timezone": "Asia/Kolkata",
+    }
+    with patch("app.routers.kp_timing.get_cached_saved_horoscope", return_value=mock_saved) as mock_cache:
+        req = KpMonthlyPredictionRequest(
+            saved_horoscope_id=test_uuid,
+            year=2026,
+            month=11,
+        )
+        res = await get_kp_monthly_prediction(req, current_user={"id": "usr-1", "role": "user"})
+        assert res.year == 2026
+        assert res.month == 11
+        assert res.native_name == "Ramanathan"
+        assert len(res.all_events) == 11
+        mock_cache.assert_called_once()
+
