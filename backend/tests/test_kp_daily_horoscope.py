@@ -96,6 +96,33 @@ def test_compute_kp_daily_horoscope_all_12_rashis():
             assert len(w.advice_en) > 0
             assert len(w.advice_ta) > 0
 
+    # Ensure lucky attributes and directions are sign-specific, not identical for all rashis
+    directions = {p.lucky_direction_en for p in res.predictions}
+    assert len(directions) == 4  # East, South, West, North
+    assert "East" in directions and "North" in directions and "South" in directions and "West" in directions
+
+    numbers = {p.lucky_number for p in res.predictions}
+    assert len(numbers) >= 5  # Multiple distinct lucky numbers across the 12 rashis
+
+    colors = {p.lucky_color_en for p in res.predictions}
+    assert len(colors) >= 6  # Multiple distinct lucky colors across the 12 rashis
+
+    # Verify specific signs have their correct traditional directions & numbers
+    aries = next(p for p in res.predictions if p.rashi_id == 1)
+    assert aries.lucky_direction_en == "East"
+    assert aries.lucky_direction_ta == "கிழக்கு"
+    assert aries.lucky_number == 9
+
+    cancer = next(p for p in res.predictions if p.rashi_id == 4)
+    assert cancer.lucky_direction_en == "North"
+    assert cancer.lucky_direction_ta == "வடக்கு"
+    assert cancer.lucky_number == 2
+
+    capricorn = next(p for p in res.predictions if p.rashi_id == 10)
+    assert capricorn.lucky_direction_en == "South"
+    assert capricorn.lucky_direction_ta == "தெற்கு"
+    assert capricorn.lucky_number == 8
+
 
 def test_compute_kp_daily_horoscope_single_rashi():
     """Verify filtering by single rashi number and name."""

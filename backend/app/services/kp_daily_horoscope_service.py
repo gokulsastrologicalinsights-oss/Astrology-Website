@@ -216,6 +216,95 @@ WEEKDAY_INFO: List[Tuple[str, str, str]] = [
     ("Sunday", "ஞாயிற்றுக்கிழமை", "Sun"),
 ]
 
+# Canonical Lucky Attributes per Rashi (1: Mesha to 12: Meena)
+# Based on Sign Lord, Element (Agni=East, Bhoomi=South, Vayu=West, Jala=North), and Vedic/KP traditions
+RASHI_LUCKY_ATTRIBUTES: Dict[int, Dict[str, Any]] = {
+    1: {  # Aries / மேஷம் (Lord: Mars, Fire -> East)
+        "color_en": "Coral Red & Crimson",
+        "color_ta": "பவள சிவப்பு & அடர் சிவப்பு",
+        "num": 9,
+        "dir_en": "East",
+        "dir_ta": "கிழக்கு",
+    },
+    2: {  # Taurus / ரிஷபம் (Lord: Venus, Earth -> South)
+        "color_en": "Pure White & Pastel Blue",
+        "color_ta": "தூய வெள்ளை & இளநீலம்",
+        "num": 6,
+        "dir_en": "South",
+        "dir_ta": "தெற்கு",
+    },
+    3: {  # Gemini / மிதுனம் (Lord: Mercury, Air -> West)
+        "color_en": "Emerald Green & Mint",
+        "color_ta": "மரகத பச்சை & புதினா",
+        "num": 5,
+        "dir_en": "West",
+        "dir_ta": "மேற்கு",
+    },
+    4: {  # Cancer / கடகம் (Lord: Moon, Water -> North)
+        "color_en": "Pearl White & Silver",
+        "color_ta": "முத்து வெள்ளை & வெள்ளி",
+        "num": 2,
+        "dir_en": "North",
+        "dir_ta": "வடக்கு",
+    },
+    5: {  # Leo / சிம்மம் (Lord: Sun, Fire -> East)
+        "color_en": "Ruby Red & Gold",
+        "color_ta": "சிவப்பு & பொன் நிறம்",
+        "num": 1,
+        "dir_en": "East",
+        "dir_ta": "கிழக்கு",
+    },
+    6: {  # Virgo / கன்னி (Lord: Mercury, Earth -> South)
+        "color_en": "Emerald Green & Light Grey",
+        "color_ta": "மரகத பச்சை & சாம்பல்",
+        "num": 5,
+        "dir_en": "South",
+        "dir_ta": "தெற்கு",
+    },
+    7: {  # Libra / துலாம் (Lord: Venus, Air -> West)
+        "color_en": "Pure White & Pastel Blue",
+        "color_ta": "தூய வெள்ளை & இளநீலம்",
+        "num": 6,
+        "dir_en": "West",
+        "dir_ta": "மேற்கு",
+    },
+    8: {  # Scorpio / விருச்சிகம் (Lord: Mars, Water -> North)
+        "color_en": "Deep Red & Maroon",
+        "color_ta": "அடர் சிவப்பு & மெரூன்",
+        "num": 9,
+        "dir_en": "North",
+        "dir_ta": "வடக்கு",
+    },
+    9: {  # Sagittarius / தனுசு (Lord: Jupiter, Fire -> East)
+        "color_en": "Golden Yellow & Saffron",
+        "color_ta": "தங்க மஞ்சள் & காவி",
+        "num": 3,
+        "dir_en": "East",
+        "dir_ta": "கிழக்கு",
+    },
+    10: {  # Capricorn / மகரம் (Lord: Saturn, Earth -> South)
+        "color_en": "Dark Blue & Charcoal",
+        "color_ta": "அடர் நீலம் & சாம்பல்",
+        "num": 8,
+        "dir_en": "South",
+        "dir_ta": "தெற்கு",
+    },
+    11: {  # Aquarius / கும்பம் (Lord: Saturn, Air -> West)
+        "color_en": "Sky Blue & Navy",
+        "color_ta": "நீலம் & வான நீலம்",
+        "num": 8,
+        "dir_en": "West",
+        "dir_ta": "மேற்கு",
+    },
+    12: {  # Pisces / மீனம் (Lord: Jupiter, Water -> North)
+        "color_en": "Golden Yellow & Rose",
+        "color_ta": "மஞ்சள் & இளஞ்சிவப்பு",
+        "num": 3,
+        "dir_en": "North",
+        "dir_ta": "வடக்கு",
+    },
+}
+
 LUCKY_ATTRIBUTES: Dict[str, Dict[str, Any]] = {
     "Sun": {"color_en": "Ruby Red & Gold", "color_ta": "சிவப்பு & பொன் நிறம்", "num": 1, "dir_en": "East", "dir_ta": "கிழக்கு"},
     "Moon": {"color_en": "Pearl White & Silver", "color_ta": "முத்து வெள்ளை & வெள்ளி", "num": 2, "dir_en": "North-West", "dir_ta": "வடமேற்கு"},
@@ -915,10 +1004,9 @@ def compute_kp_daily_horoscope(
         caution_en = m_interp["caution_en"]
         caution_ta = m_interp["caution_ta"]
 
-        # Lucky attributes based on dominant favorable lord or day lord
-        dominant_lord = moon_sub_noon if moon_sub_noon in LUCKY_ATTRIBUTES else day_lord
-        lucky_attr = LUCKY_ATTRIBUTES.get(dominant_lord, LUCKY_ATTRIBUTES["Jupiter"])
-        remedy_pair = KP_DAILY_REMEDIES.get(dominant_lord, KP_DAILY_REMEDIES["Jupiter"])
+        # Lucky attributes and direction specific to each Rashi
+        lucky_attr = RASHI_LUCKY_ATTRIBUTES.get(r_idx, RASHI_LUCKY_ATTRIBUTES[1])
+        remedy_pair = KP_DAILY_REMEDIES.get(sign_lord, KP_DAILY_REMEDIES["Jupiter"])
 
         pred = RashiDailyPrediction(
             rashi_id=r_idx,
