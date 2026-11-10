@@ -44,6 +44,7 @@ from app.routers import (
     kp_narrative,
     kp_timing,
     kp_daily_horoscope,
+    facebook_social,
 )
 
 
@@ -57,7 +58,23 @@ async def lifespan(app: FastAPI):
             bootstrap_admin()
         except Exception:
             pass
+
+    # Start automated daily Facebook poster if enabled in environment
+    if settings.fb_auto_post_enabled:
+        try:
+            from app.services.facebook_scheduler import start_facebook_scheduler
+            start_facebook_scheduler()
+        except Exception as fb_exc:
+            logger.error(f"Failed to start Facebook scheduler: {fb_exc}")
+
     yield
+
+    if settings.fb_auto_post_enabled:
+        try:
+            from app.services.facebook_scheduler import stop_facebook_scheduler
+            stop_facebook_scheduler()
+        except Exception:
+            pass
 
 
 app = FastAPI(
@@ -191,5 +208,6 @@ app.include_router(kp_timing.router)
 app.include_router(kp_timing.router, prefix="/api/kp-timing")
 app.include_router(kp_daily_horoscope.router)
 app.include_router(kp_daily_horoscope.legacy_router)
+app.include_router(facebook_social.router)
 
 

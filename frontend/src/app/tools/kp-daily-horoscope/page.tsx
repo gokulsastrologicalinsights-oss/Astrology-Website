@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   getKpDailyHoroscope,
+  publishToFacebookPage,
   KpDailyHoroscopeResponse,
   RashiDailyPrediction,
   KpAspectPrediction,
@@ -54,6 +55,118 @@ const RASHI_SYMBOLS: Record<number, string> = {
   11: "♒",
   12: "♓",
 };
+
+const ASPECT_ICONS: Record<string, string> = {
+  career: "💼",
+  finance: "💰",
+  love: "❤️",
+  health: "🩺",
+  travel: "✈️",
+};
+
+const SENTIMENT_MAP_TA: Record<string, string> = {
+  Excellent: "மிகச் சிறப்பான நாள்",
+  Favorable: "சாதகமான நாள்",
+  Mixed: "மிதமான நாள்",
+  Challenging: "சவாலான நாள்",
+};
+
+const MONTHS_TA: Record<number, string> = {
+  1: "ஜனவரி",
+  2: "பிப்ரவரி",
+  3: "மார்ச்",
+  4: "ஏப்ரல்",
+  5: "மே",
+  6: "ஜூன்",
+  7: "ஜூலை",
+  8: "ஆகஸ்ட்",
+  9: "செப்டம்பர்",
+  10: "அக்டோபர்",
+  11: "நவம்பர்",
+  12: "டிசம்பர்",
+};
+
+const MONTHS_EN: Record<number, string> = {
+  1: "January",
+  2: "February",
+  3: "March",
+  4: "April",
+  5: "May",
+  6: "June",
+  7: "July",
+  8: "August",
+  9: "September",
+  10: "October",
+  11: "November",
+  12: "December",
+};
+
+function formatTamilDate(dateStr: string, dayTa: string): string {
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      const mName = MONTHS_TA[month] || parts[1];
+      return `${day} ${mName} ${year} – ${dayTa}`;
+    }
+  } catch {}
+  return `${dateStr} – ${dayTa}`;
+}
+
+function formatEnglishDate(dateStr: string, dayEn: string): string {
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      const mName = MONTHS_EN[month] || parts[1];
+      return `${day} ${mName} ${year} – ${dayEn}`;
+    }
+  } catch {}
+  return `${dateStr} – ${dayEn}`;
+}
+
+function cleanBrief(text: string): string {
+  if (!text) return "";
+  const cleaned = text.replace(/^.*?\):\s*/, "").replace(/^["']|["']$/g, "").trim();
+  return cleaned || text;
+}
+
+function formatAspectTextTa(insight: string, rec: string): string {
+  let clean = (insight || "")
+    .replace(/(?:KP\s*பாவகங்கள்|(?:\d+(?:\s*அல்லது\s*\d+)?|\[[\d,\s]+\]|\{houses\}|\d+(?:,\s*\d+)*)-ம்\s*பாவக[^.;]*[.;]?)/gi, "")
+    .replace(/\{houses\}/gi, "")
+    .replace(/,\s*உப-அதிபதியின் ஆதிக்கத்தால்/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (clean.length < 35 && rec) {
+    const recShort = rec.split(";")[0].trim().replace(/\.$/, "");
+    if (recShort) {
+      clean = clean ? `${clean.replace(/\.$/, "")}. ${recShort}.` : `${recShort}.`;
+    }
+  }
+  return clean || rec || insight;
+}
+
+function formatAspectTextEn(insight: string, rec: string): string {
+  let clean = (insight || "")
+    .replace(/(?:Active KP houses|With houses|houses \d+|house \d+|KP houses)[^.;]*[.;]?/gi, "")
+    .replace(/\{houses\}/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (clean.length < 40 && rec) {
+    const recShort = rec.split(";")[0].trim().replace(/\.$/, "");
+    if (recShort) {
+      clean = clean ? `${clean.replace(/\.$/, "")}. ${recShort}.` : `${recShort}.`;
+    }
+  }
+  return clean || rec || insight;
+}
 
 export default function KpDailyHoroscopePage() {
   const { language } = useLanguage();
@@ -111,6 +224,8 @@ export default function KpDailyHoroscopePage() {
   // Copy-paste summary state
   const [copied, setCopied] = useState<boolean>(false);
   const [shareLanguage, setShareLanguage] = useState<"ta" | "en" | "bilingual">("ta");
+  const [fbPosting, setFbPosting] = useState<boolean>(false);
+  const [fbResult, setFbResult] = useState<{ type: "success" | "error"; text: string; url?: string } | null>(null);
 
   // Synchronize initial shareLanguage with site language
   useEffect(() => {
@@ -123,115 +238,159 @@ export default function KpDailyHoroscopePage() {
 
     const rNameEn = `${activePrediction.rashi_name_en} (${activePrediction.rashi_name_ta})`;
     const rNameTa = `${activePrediction.rashi_name_ta} (${activePrediction.rashi_name_en})`;
+    const symbol = RASHI_SYMBOLS[activePrediction.rashi_id] || "✨";
+    const starsDisplay = Math.round(activePrediction.daily_rating_stars);
+    const sentimentTa = SENTIMENT_MAP_TA[activePrediction.day_sentiment] || activePrediction.day_sentiment;
+    const sentimentEn = activePrediction.day_sentiment;
 
-    // Filter single-word Moon Sub-Lord timings
+    // Filter Moon Sub-Lord timings using en-dash " – "
     const goldenTimes =
       activePrediction.moon_sub_windows
         .filter((w) => w.sentiment === "golden")
-        .map((w) => `${w.start_time} - ${w.end_time}`)
-        .join(", ") || activePrediction.golden_hour_window;
-
-    const neutralTimes =
-      activePrediction.moon_sub_windows
-        .filter((w) => w.sentiment === "neutral")
-        .map((w) => `${w.start_time} - ${w.end_time}`)
-        .join(", ");
+        .map((w) => `${w.start_time} – ${w.end_time}`)
+        .join(", ") || (activePrediction.golden_hour_window ? activePrediction.golden_hour_window.replace(/ - /g, " – ") : "");
 
     const cautionTimes =
       activePrediction.moon_sub_windows
         .filter((w) => w.sentiment === "caution")
-        .map((w) => `${w.start_time} - ${w.end_time}`)
-        .join(", ") || activePrediction.caution_hour_window;
+        .map((w) => `${w.start_time} – ${w.end_time}`)
+        .join(", ") || (activePrediction.caution_hour_window ? activePrediction.caution_hour_window.replace(/ - /g, " – ") : "");
 
-    // Full points for all life aspects
-    const aspectsTa = activePrediction.aspects
-      .map(
-        (a) =>
-          `• ${a.aspect_name_tamil} (${a.score}% - ${a.status}):\n  ${a.insight_ta}\n  [வழிகாட்டல்: ${a.key_recommendation_ta}]`
-      )
-      .join("\n\n");
-
-    const aspectsEn = activePrediction.aspects
-      .map(
-        (a) =>
-          `• ${a.aspect_name} (${a.score}% - ${a.status}):\n  ${a.insight_en}\n  [Action: ${a.key_recommendation_en}]`
-      )
-      .join("\n\n");
+    const luckyColorTa = activePrediction.lucky_color_ta.split("&")[0].trim() || activePrediction.lucky_color_ta;
+    const luckyColorEn = activePrediction.lucky_color_en.split("&")[0].trim() || activePrediction.lucky_color_en;
 
     if (shareLanguage === "ta") {
-      return `✨ கே.பி. தினசரி ராசிபலன்: ${rNameTa}
-📅 தேதி: ${horoscopeData.date} (${horoscopeData.day_of_week_ta})
-📊 இன்றைய சாதக நிலை: ${activePrediction.daily_score}% (${activePrediction.day_sentiment}) ⭐ ${activePrediction.daily_rating_stars}/5
+      const formattedDateTa = formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta);
+      const aspectsTa = activePrediction.aspects
+        .map((a) => {
+          const icon = ASPECT_ICONS[a.aspect_code] || "•";
+          const body = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
+          return `${icon} **${a.aspect_name_tamil} – ${a.score}%**\n${body}`;
+        })
+        .join("\n\n");
 
-🎯 இன்றைய தாரக மந்திரம்:
-"${activePrediction.brief_statement_ta}"
+      return `**தினசரி ராசிபலன்**
+📅 **தேதி:** ${formattedDateTa}
 
-🌟 சாதகமான வாய்ப்பு: ${activePrediction.peak_highlight_ta}
-⚠️ கவனிக்க வேண்டியவை: ${activePrediction.caution_trap_ta}
+${symbol} **${rNameTa}** - ⭐ **இன்றைய சாதக நிலை: ${activePrediction.daily_score}%** (${starsDisplay}/5 – ${sentimentTa})
 
-📋 அனைத்து அம்சங்களின் விரிவான பலன்கள்:
+🔮 **இன்றைய பொதுப்பலன்:**
+
+${cleanBrief(activePrediction.brief_statement_ta)}
+
+📊 **இன்றைய விரிவான பலன்கள்:**
+
 ${aspectsTa}
 
-⏱️ சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை:
-• Golden: ${goldenTimes}
-• Neutral: ${neutralTimes || "வழக்கமான நேரம்"}
-• Caution: ${cautionTimes}
+⏰ **இன்றைய நேர வழிகாட்டல்:**
 
-🍀 அதிர்ஷ்ட நிறம் & எண்: ${activePrediction.lucky_color_ta} (#${activePrediction.lucky_number}) | திசை: ${activePrediction.lucky_direction_ta}
-🛡️ கே.பி. வழிகாட்டல்: ${activePrediction.daily_remedy_ta}
+🌟 அதிர்ஷ்ட நேரம்: ${goldenTimes || "குறிப்பிட்ட சிறப்பான நேரம் இல்லை"}
 
-🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu`;
+⚠️ கவனமான நேரம்: ${cautionTimes || "குறிப்பிடத்தக்க எச்சரிக்கை நேரம் இல்லை"}
+
+🎨 அதிர்ஷ்ட நிறம்: ${luckyColorTa}
+
+🔢 அதிர்ஷ்ட எண்: ${activePrediction.lucky_number}
+
+🧭 அதிர்ஷ்ட திசை: ${activePrediction.lucky_direction_ta}
+
+🛡️ **இன்றைய ஆலோசனை:**
+
+${activePrediction.daily_remedy_ta}
+
+🙏 **Gokul's Astrological Insights**
+*Gokul Murugan | Thiruverkadu*`;
     }
 
     if (shareLanguage === "en") {
-      return `✨ KP Daily Horoscope: ${rNameEn}
-📅 Date: ${horoscopeData.date} (${horoscopeData.day_of_week})
-📊 Day Energy Score: ${activePrediction.daily_score}% (${activePrediction.day_sentiment}) ⭐ ${activePrediction.daily_rating_stars}/5
+      const formattedDateEn = formatEnglishDate(horoscopeData.date, horoscopeData.day_of_week);
+      const aspectsEn = activePrediction.aspects
+        .map((a) => {
+          const icon = ASPECT_ICONS[a.aspect_code] || "•";
+          const body = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
+          return `${icon} **${a.aspect_name} – ${a.score}%**\n${body}`;
+        })
+        .join("\n\n");
 
-🎯 Today's Brief Verdict:
-"${activePrediction.brief_statement_en}"
+      return `**Daily Horoscope**
+📅 **Date:** ${formattedDateEn}
 
-🌟 Peak Opportunity: ${activePrediction.peak_highlight_en}
-⚠️ Caution Trap: ${activePrediction.caution_trap_en}
+${symbol} **${rNameEn}** - ⭐ **Today's Energy Score: ${activePrediction.daily_score}%** (${starsDisplay}/5 – ${sentimentEn} day)
 
-📋 In-Depth Life Aspects Breakdown:
+🔮 **Today's General Outlook:**
+
+${cleanBrief(activePrediction.brief_statement_en)}
+
+📊 **Today's Detailed Breakdown:**
+
 ${aspectsEn}
 
-⏱️ Moon's Sub-Lord Hourly Schedule:
-• Golden: ${goldenTimes}
-• Neutral: ${neutralTimes || "Regular hours"}
-• Caution: ${cautionTimes}
+⏰ **Today's Timing Guidance:**
 
-🍀 Lucky Color & No.: ${activePrediction.lucky_color_en} (#${activePrediction.lucky_number}) | Direction: ${activePrediction.lucky_direction_en}
-🛡️ KP Daily Action: ${activePrediction.daily_remedy_en}
+🌟 Lucky Hours: ${goldenTimes || "No specific golden window"}
 
-🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu`;
+⚠️ Caution Hours: ${cautionTimes || "No major caution period"}
+
+🎨 Lucky Color: ${luckyColorEn}
+
+🔢 Lucky Number: ${activePrediction.lucky_number}
+
+🧭 Lucky Direction: ${activePrediction.lucky_direction_en}
+
+🛡️ **Today's Guidance:**
+
+${activePrediction.daily_remedy_en}
+
+🙏 **Gokul's Astrological Insights**
+*Gokul Murugan | Thiruverkadu*`;
     }
 
     // Bilingual format
-    return `✨ KP Daily Horoscope | கே.பி. தினசரி ராசிபலன்: ${rNameTa}
-📅 ${horoscopeData.date} (${horoscopeData.day_of_week} / ${horoscopeData.day_of_week_ta})
-📊 Score: ${activePrediction.daily_score}% (${activePrediction.day_sentiment}) ⭐ ${activePrediction.daily_rating_stars}/5
+    const formattedDateBi = `${formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta)} (${horoscopeData.day_of_week})`;
+    const luckyColorBi = `${luckyColorTa} / ${luckyColorEn}`;
 
-🎯 Summary / தாரக மந்திரம்:
-"${activePrediction.brief_statement_ta}"
-("${activePrediction.brief_statement_en}")
+    const aspectsBi = activePrediction.aspects
+      .map((a) => {
+        const icon = ASPECT_ICONS[a.aspect_code] || "•";
+        const bodyTa = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
+        const bodyEn = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
+        return `${icon} **${a.aspect_name_tamil} / ${a.aspect_name} – ${a.score}%**\n${bodyTa}\n(${bodyEn})`;
+      })
+      .join("\n\n");
 
-🌟 Highlight: ${activePrediction.peak_highlight_ta}
-⚠️ Caution: ${activePrediction.caution_trap_ta}
+    return `**Daily Horoscope | தினசரி ராசிபலன்**
+📅 **Date / தேதி:** ${formattedDateBi}
 
-📋 அனைத்து அம்சங்களின் விரிவான பலன்கள் (Aspects in Points):
-${aspectsTa}
+${symbol} **${rNameTa}** - ⭐ **Score: ${activePrediction.daily_score}%** (${starsDisplay}/5 – ${sentimentTa})
 
-⏱️ சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை:
-• Golden: ${goldenTimes}
-• Neutral: ${neutralTimes || "வழக்கமான நேரம்"}
-• Caution: ${cautionTimes}
+🔮 **General Outlook / பொதுப்பலன்:**
 
-🍀 Lucky: ${activePrediction.lucky_color_ta} (#${activePrediction.lucky_number}) | ${activePrediction.lucky_direction_ta}
-🛡️ Remedy: ${activePrediction.daily_remedy_ta}
+${cleanBrief(activePrediction.brief_statement_ta)}
+(${cleanBrief(activePrediction.brief_statement_en)})
 
-🔮 Gokul's Astrological Insights - Gokul Murugan - Thiruverkadu`;
+📊 **Detailed Breakdown / விரிவான பலன்கள்:**
+
+${aspectsBi}
+
+⏰ **Timing Guidance / நேர வழிகாட்டல்:**
+
+🌟 Lucky Hours / அதிர்ஷ்ட நேரம்: ${goldenTimes || "—"}
+
+⚠️ Caution Hours / கவனமான நேரம்: ${cautionTimes || "—"}
+
+🎨 Lucky Color / நிறம்: ${luckyColorBi}
+
+🔢 Lucky Number / எண்: ${activePrediction.lucky_number}
+
+🧭 Lucky Direction / திசை: ${activePrediction.lucky_direction_ta} (${activePrediction.lucky_direction_en})
+
+🛡️ **Today's Guidance / ஆலோசனை:**
+
+${activePrediction.daily_remedy_ta}
+(${activePrediction.daily_remedy_en})
+
+🙏 **Gokul's Astrological Insights**
+*Gokul Murugan | Thiruverkadu*`;
   }, [activePrediction, horoscopeData, shareLanguage]);
 
   const handleCopy = async () => {
@@ -242,6 +401,53 @@ ${aspectsTa}
       setTimeout(() => setCopied(false), 2500);
     } catch (e) {
       console.error("Failed to copy text:", e);
+    }
+  };
+
+  const handlePostToFacebook = async (rashiTarget: string = "current") => {
+    if (!horoscopeData || !activePrediction) return;
+    setFbPosting(true);
+    setFbResult(null);
+    const isAll = rashiTarget === "all";
+    try {
+      const res = await publishToFacebookPage({
+        date: horoscopeData.date,
+        rashi: isAll ? "all" : activePrediction.rashi_name_en,
+      });
+      if (res.success) {
+        if (isAll) {
+          setFbResult({
+            type: "success",
+            text: isTa
+              ? "12 ராசிகளின் தினசரி பலன்களும் வரிசையாக Facebook பக்கத்தில் பதிவிடப்பட்டன!"
+              : "All 12 Rashis published successfully to your Facebook Page!",
+          });
+        } else {
+          setFbResult({
+            type: "success",
+            text: isTa
+              ? `Facebook பக்கத்தில் வெற்றிகரமாகப் பதிவிடப்பட்டது! (Post ID: ${res.post_id || "OK"})`
+              : `Successfully published to Facebook Page! (Post ID: ${res.post_id || "OK"})`,
+            url: res.fb_url,
+          });
+        }
+      } else {
+        setFbResult({
+          type: "error",
+          text: isTa ? "Facebook-ல் பதிவிட முடியவில்லை." : "Could not post to Facebook Page.",
+        });
+      }
+    } catch (err: any) {
+      setFbResult({
+        type: "error",
+        text:
+          err?.message ||
+          (isTa
+            ? "Facebook API பிழை ஏற்பட்டது. தயவுசெய்து backend .env அமைப்புகளைச் சரிபார்க்கவும்."
+            : "Facebook API error. Please check your backend .env FB_PAGE_ID and FB_PAGE_ACCESS_TOKEN."),
+      });
+    } finally {
+      setFbPosting(false);
     }
   };
 
@@ -809,8 +1015,78 @@ ${aspectsTa}
                       </>
                     )}
                   </button>
+
+                  <button
+                    type="button"
+                    disabled={fbPosting}
+                    onClick={() => handlePostToFacebook("current")}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                    title={isTa ? "இந்த ராசியை மட்டும் Facebook-ல் பதிவிடு" : "Post this Rashi to Facebook"}
+                  >
+                    {fbPosting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>{isTa ? "பதிவிடுகிறது..." : "Posting..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4" />
+                        <span>{isTa ? "FB-ல் பதிவிடு" : "Post to Facebook"}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={fbPosting}
+                    onClick={() => handlePostToFacebook("all")}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                    title={isTa ? "12 ராசிகளையும் வரிசையாக Facebook-ல் பதிவிடு" : "Post All 12 Rashis to Facebook"}
+                  >
+                    {fbPosting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>{isTa ? "பதிவிடுகிறது..." : "Posting..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>{isTa ? "12 ராசிகளையும் FB-ல் பதிவிடு" : "Post All 12 to FB"}</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
+
+              {/* Facebook Posting Result Banner */}
+              {fbResult && (
+                <div
+                  className={`p-3 rounded-xl text-xs sm:text-sm flex items-center justify-between border ${
+                    fbResult.type === "success"
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                      : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {fbResult.type === "success" ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span>{fbResult.text}</span>
+                  </div>
+                  {fbResult.url && (
+                    <a
+                      href={fbResult.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-3 underline font-semibold shrink-0 hover:opacity-80"
+                    >
+                      {isTa ? "பதிவைப் பார் ↗" : "View Post ↗"}
+                    </a>
+                  )}
+                </div>
+              )}
 
               {/* The Preformatted Text Box */}
               <div className="relative">

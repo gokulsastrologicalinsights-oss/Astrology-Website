@@ -62,6 +62,15 @@ class Settings(BaseModel):
     default_ayanamsa: int = 0  # Lahiri (Chitrapaksha)
     default_house_system: int = 2  # Placidus
 
+    # Facebook Auto-Publishing Integration
+    fb_page_id: str = ""
+    fb_page_access_token: str = ""
+    fb_auto_post_enabled: bool = False
+    fb_post_time_ist: str = "06:00"  # Format HH:MM (24h)
+    fb_post_rashi: str = "all"        # "all" for all 12 Rashis, or single e.g. "Aries"
+    fb_post_delay_seconds: int = 20  # Delay between posts when posting all 12 rashis (20s anti-spam pacing)
+    fb_graph_api_version: str = "v19.0"
+
     def __init__(self, **data):
         super().__init__(**data)
         env_origins = os.getenv("ALLOWED_ORIGINS")
@@ -87,6 +96,16 @@ class Settings(BaseModel):
         if env_body_limit and env_body_limit.isdigit():
             self.max_request_body_bytes = int(env_body_limit)
         self.debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+
+        # Facebook settings
+        self.fb_page_id = os.getenv("FB_PAGE_ID", "").strip()
+        self.fb_page_access_token = os.getenv("FB_PAGE_ACCESS_TOKEN", "").strip()
+        self.fb_auto_post_enabled = os.getenv("FB_AUTO_POST_ENABLED", "false").lower() in ("true", "1", "yes")
+        self.fb_post_time_ist = os.getenv("FB_POST_TIME_IST", "06:00").strip()
+        self.fb_post_rashi = os.getenv("FB_POST_RASHI", "all").strip()
+        env_delay = os.getenv("FB_POST_DELAY_SECONDS", "20").strip()
+        self.fb_post_delay_seconds = int(env_delay) if env_delay.isdigit() else 20
+        self.fb_graph_api_version = os.getenv("FB_GRAPH_API_VERSION", "v19.0").strip()
 
 
 settings = Settings()

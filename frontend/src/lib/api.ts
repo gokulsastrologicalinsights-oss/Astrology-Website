@@ -5617,3 +5617,30 @@ export async function getKpDailyHoroscope(params?: {
   return request<KpDailyHoroscopeResponse>(`/api/v1/kp/daily-horoscope${qs ? `?${qs}` : ""}`);
 }
 
+export async function getFacebookIntegrationStatus(): Promise<{
+  credentials: { configured: boolean; valid?: boolean; error?: string; page_name?: string };
+  scheduler: { auto_post_enabled: boolean; is_running: boolean; post_time_ist: string; post_rashi: string; next_run_ist?: string };
+}> {
+  return request("/api/v1/social/facebook/status");
+}
+
+export async function publishToFacebookPage(params: {
+  date?: string;
+  rashi?: string;
+  dry_run?: boolean;
+}): Promise<{
+  success: boolean;
+  post_id?: string;
+  page_id?: string;
+  fb_url?: string;
+  target_date?: string;
+  rashi?: string;
+}> {
+  return request("/api/v1/social/facebook/publish", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+}
+
+
