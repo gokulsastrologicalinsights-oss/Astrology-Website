@@ -39,6 +39,7 @@ import {
   Copy,
   Check,
   Share2,
+  MessageCircle,
 } from "lucide-react";
 
 const RASHI_SYMBOLS: Record<number, string> = {
@@ -449,6 +450,29 @@ ${activePrediction.daily_remedy_ta}
     } finally {
       setFbPosting(false);
     }
+  };
+
+  const handleShareWhatsApp = (mode: "current" | "all" = "current") => {
+    let textToSend = miniParagraphText;
+
+    if (mode === "all" && horoscopeData?.predictions) {
+      const formattedDateTa = formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta);
+      const listText = horoscopeData.predictions
+        .map((p) => {
+          const rName = `${p.rashi_name_ta} (${p.rashi_name_en})`;
+          const symbol = RASHI_SYMBOLS[p.rashi_id] || "✨";
+          const stars = Math.round(p.daily_rating_stars);
+          const brief = cleanBrief(p.brief_statement_ta);
+          return `${symbol} ${rName} - சாதக நிலை: ${p.daily_score}% (⭐ ${stars}/5)\n${brief}`;
+        })
+        .join("\n\n------------------------------\n\n");
+
+      textToSend = `தினசரி ராசிபலன் (12 ராசிகள்)\n📅 தேதி: ${formattedDateTa}\n\n${listText}\n\n🙏 Gokul's Astrological Insights\nGokul Murugan | Thiruverkadu`;
+    }
+
+    if (!textToSend) return;
+    const encoded = encodeURIComponent(textToSend);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
   };
 
   const getAspectIcon = (code: string) => {
@@ -1014,6 +1038,26 @@ ${activePrediction.daily_remedy_ta}
                         <span>{isTa ? "சுருக்கத்தை நகலெடு" : "Copy Summary"}</span>
                       </>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareWhatsApp("current")}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                    title={isTa ? "இந்த ராசிபலனை WhatsApp குரூப்பில் 1-கிளிக்கில் பகிரு" : "Share this Rashi to WhatsApp"}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>{isTa ? "WhatsApp-ல் பகிரு" : "WhatsApp"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareWhatsApp("all")}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                    title={isTa ? "12 ராசிகளின் சுருக்கத்தையும் WhatsApp குரூப்பில் பகிரு" : "Share all 12 Rashis to WhatsApp"}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>{isTa ? "12-ம் WhatsApp" : "All 12 WhatsApp"}</span>
                   </button>
 
                   <button
