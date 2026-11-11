@@ -4532,6 +4532,7 @@ export interface MarriageCompatibilityResponse {
   groom_d9_chart?: any;
   bride_d9_chart?: any;
   sivadasan_ravi_insights?: SivadasanRaviMarriageInsights;
+  print_report_data?: Record<string, any>;
   final_assessment: FinalAssessmentSummary;
 }
 

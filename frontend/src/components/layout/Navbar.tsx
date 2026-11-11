@@ -253,7 +253,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#D9DEE7] shadow-xs">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-[#D9DEE7] shadow-xs print:hidden">
         {/* Top Header Bar (Level 1) */}
         <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10">
           <div className="h-14 flex items-center justify-between gap-3 sm:gap-6">

@@ -11,6 +11,8 @@ services:
     envVars:
       - key: PORT
         value: 8000
+      - key: UVICORN_WORKERS
+        value: "1"
       - key: DEBUG
         value: "false"
       - key: ALLOWED_ORIGIN_REGEX

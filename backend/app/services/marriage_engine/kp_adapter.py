@@ -740,26 +740,33 @@ def evaluate_kp_marriage_analysis(
     """
     all_warnings: List[str] = []
 
-    # First pass: Extract RPs to pass into partner analysis
-    groom_kp, _, _, g_warns = _extract_kp_response_from_input(groom_chart)
-    bride_kp, _, _, b_warns = _extract_kp_response_from_input(bride_chart)
+    # First pass: Extract RPs to pass into partner analysis (reuse computed KpResponse to avoid duplicate runs)
+    groom_kp, g_id, g_gender, g_warns = _extract_kp_response_from_input(groom_chart)
+    bride_kp, b_id, b_gender, b_warns = _extract_kp_response_from_input(bride_chart)
     all_warnings.extend(g_warns)
     all_warnings.extend(b_warns)
 
     groom_rps = groom_kp.ruling_planets if groom_kp else None
     bride_rps = bride_kp.ruling_planets if bride_kp else None
 
-    # Individual analyses
+    g_name_override = groom_chart.person_name if isinstance(groom_chart, MarriageChartContext) else None
+    b_name_override = bride_chart.person_name if isinstance(bride_chart, MarriageChartContext) else None
+
+    # Individual analyses (reuse groom_kp / bride_kp so calculate_kp_chart only runs once per partner)
     groom_analysis = evaluate_individual_kp_analysis(
-        chart_input=groom_chart,
+        chart_input=groom_kp if groom_kp is not None else groom_chart,
         partner_rps=bride_rps,
-        gender_override=Gender.MALE,
+        person_id_override=g_id,
+        person_name_override=g_name_override,
+        gender_override=g_gender or Gender.MALE,
     )
 
     bride_analysis = evaluate_individual_kp_analysis(
-        chart_input=bride_chart,
+        chart_input=bride_kp if bride_kp is not None else bride_chart,
         partner_rps=groom_rps,
-        gender_override=Gender.FEMALE,
+        person_id_override=b_id,
+        person_name_override=b_name_override,
+        gender_override=b_gender or Gender.FEMALE,
     )
 
     # Ruling Planets Agreement

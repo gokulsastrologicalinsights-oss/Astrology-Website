@@ -28,6 +28,7 @@ import {
   safeErrorMessage,
 } from "@/lib/api";
 import { SavedMarriageReportsList } from "@/components/marriage-compatibility/SavedMarriageReportsList";
+import { MarriageCompatibilityPrintReport } from "@/components/marriage-compatibility/MarriageCompatibilityPrintReport";
 import {
   HeartHandshake,
   User,
@@ -53,6 +54,7 @@ import {
   BookmarkCheck,
   Save,
   Download,
+  Printer,
   X,
   History,
   Eye,
@@ -231,6 +233,11 @@ function MarriageCompatibilityContent() {
     } finally {
       setSavingReport(false);
     }
+  };
+
+  const handlePrintReport = () => {
+    if (!response) return;
+    window.print();
   };
 
   const handleOpenDownloadModal = () => {
@@ -464,7 +471,8 @@ function MarriageCompatibilityContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-800">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-800 print:min-h-0 print:bg-white print:pb-0">
+      <div className="print:hidden">
       {/* Breadcrumbs & Header */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-4">
@@ -565,6 +573,15 @@ function MarriageCompatibilityContent() {
                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                   <button
                     type="button"
+                    onClick={handlePrintReport}
+                    className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 flex items-center gap-1.5 cursor-pointer"
+                    title={language === "ta" ? "5-பக்க அறிக்கை அச்சிடுக" : "Print 5-Page Compatibility Report"}
+                  >
+                    <Printer className="w-3.5 h-3.5 text-[#153F6B]" />
+                    <span>{language === "ta" ? "அச்சிடுக" : "Print"}</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleOpenDownloadModal}
                     className="px-3.5 py-1.5 rounded-lg border border-[#B4872B]/50 bg-[#FAF2DE] hover:bg-[#F3E5BE] text-xs font-semibold text-[#8C6D23] flex items-center gap-1.5"
                   >
@@ -634,7 +651,12 @@ function MarriageCompatibilityContent() {
                     </label>
                     <select
                       value={groomSavedId}
-                      onChange={(e) => setGroomSavedId(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setGroomSavedId(val);
+                        const match = savedHoroscopes.find((h) => h.id === val);
+                        if (match?.person_name) setGroomName(match.person_name);
+                      }}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#153F6B] focus:border-[#153F6B]"
                     >
                       <option value="">{language === "ta" ? "-- தேர்வு செய்க --" : "-- Select Horoscope --"}</option>
@@ -808,7 +830,12 @@ function MarriageCompatibilityContent() {
                     </label>
                     <select
                       value={brideSavedId}
-                      onChange={(e) => setBrideSavedId(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setBrideSavedId(val);
+                        const match = savedHoroscopes.find((h) => h.id === val);
+                        if (match?.person_name) setBrideName(match.person_name);
+                      }}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4872B] focus:border-[#B4872B]"
                     >
                       <option value="">{language === "ta" ? "-- தேர்வு செய்க --" : "-- Select Horoscope --"}</option>
@@ -1081,6 +1108,17 @@ function MarriageCompatibilityContent() {
                           {comp.overall_outcome.replace(/_/g, " ")}
                         </span>
                       </div>
+
+                      {/* Print Report Action (5-Page Reference Format) */}
+                      <button
+                        type="button"
+                        onClick={handlePrintReport}
+                        className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-[#153F6B] border border-slate-300 font-bold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer"
+                        title={language === "ta" ? "5-பக்க அறிக்கையை அச்சிடுக" : "Print 5-Page Compatibility Report"}
+                      >
+                        <Printer className="w-4 h-4 text-[#153F6B]" />
+                        <span>{language === "ta" ? "அச்சிடுக (Print)" : "Print"}</span>
+                      </button>
 
                       {/* Download Report Action */}
                       <button
@@ -2539,6 +2577,12 @@ function MarriageCompatibilityContent() {
         </div>
       )}
     </main>
+      </div>
+      {response && (
+        <div className="hidden print:block">
+          <MarriageCompatibilityPrintReport response={response} />
+        </div>
+      )}
   </div>
 );
 }

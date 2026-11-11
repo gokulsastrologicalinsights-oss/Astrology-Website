@@ -152,16 +152,22 @@ def _resolve_partner_chart(
             return chart_ctx, is_approximate
 
         # If cached horoscope snapshot is missing, recompute from stored coordinates
+        stored_tz = horoscope_row.get("timezone") or "Asia/Kolkata"
+        stored_ayan = horoscope_row.get("ayanamsa_id")
+        stored_hsys = horoscope_row.get("house_system_id")
+        resolved_ayan = ayanamsa_id if stored_ayan is None else int(stored_ayan)
+        resolved_hsys = house_system_id if stored_hsys is None else int(stored_hsys)
+
         computed = calculate_full_horoscope(
             birth_date=horoscope_row["birth_date"],
             birth_time=horoscope_row["birth_time"],
-            timezone_str=horoscope_row["timezone"],
-            latitude=horoscope_row["latitude"],
-            longitude=horoscope_row["longitude"],
-            ayanamsa_id=horoscope_row.get("ayanamsa_id", ayanamsa_id),
-            house_system_id=horoscope_row.get("house_system_id", house_system_id),
+            timezone_str=stored_tz,
+            latitude=float(horoscope_row["latitude"]),
+            longitude=float(horoscope_row["longitude"]),
+            ayanamsa_id=resolved_ayan,
+            house_system_id=resolved_hsys,
             include_varga=True,
-            include_panchang=True,
+            include_panchang=False,
         )
         chart_ctx = build_chart_context_from_horoscope_response(
             horoscope=computed,
@@ -170,7 +176,7 @@ def _resolve_partner_chart(
             gender=gender_enum,
             birth_date_iso=str(horoscope_row["birth_date"]),
             birth_time_iso=str(horoscope_row["birth_time"]),
-            timezone_str=str(horoscope_row["timezone"]),
+            timezone_str=str(stored_tz),
             latitude=float(horoscope_row["latitude"]),
             longitude=float(horoscope_row["longitude"]),
         )
@@ -211,7 +217,7 @@ def _resolve_partner_chart(
 def _build_profile_summary(ctx: MarriageChartContext) -> PersonProfileSummary:
     """Extract strongly typed profile summary from MarriageChartContext."""
     nak_idx = ctx.moon_nakshatra_idx
-    nak_ta = NAKSHATRA_NAMES_TA[nak_idx - 1] if 1 <= nak_idx <= 27 else ""
+    nak_ta = NAKSHATRA_NAMES_TA[nak_idx] if 0 <= nak_idx < 27 else ""
 
     venus_sign = ctx.grahas["Venus"].sign_name if "Venus" in ctx.grahas else ""
     mars_sign = ctx.grahas["Mars"].sign_name if "Mars" in ctx.grahas else ""
@@ -529,6 +535,30 @@ def run_marriage_compatibility_analysis(
 
     sivadasan_ravi_res = run_sivadasan_ravi_marriage_insights(groom_chart, bride_chart)
 
+    # 11. Build structured 5-page reference print data
+    print_report_data = None
+    try:
+        from app.services.marriage_engine.print_report_builder import build_print_report_data
+
+        passed_poruthams_10 = sum(
+            1 for p in tamil_porutham.poruthams.values() if p.is_favorable
+        )
+        nadi_item = ashtakoota.kootas.get("nadi")
+        nadi_passed = 1 if (nadi_item and nadi_item.earned_points > 0) else 0
+        passed_11 = passed_poruthams_10 + nadi_passed
+
+        print_report_data = build_print_report_data(
+            groom_ctx=groom_chart,
+            bride_ctx=bride_chart,
+            groom_vedic=dual_vedic.groom_analysis,
+            bride_vedic=dual_vedic.bride_analysis,
+            mutual_doshas=mutual_doshas,
+            porutham_passed_count_11=passed_11,
+            ashtakoota_points=ashtakoota.total_points,
+        )
+    except Exception as print_exc:
+        logger.warning(f"Failed to build print_report_data: {print_exc}")
+
     return MarriageCompatibilityResponse(
         metadata=meta,
         groom_profile=groom_prof,
@@ -546,5 +576,6 @@ def run_marriage_compatibility_analysis(
         groom_d9_chart=groom_d9_chart_dict,
         bride_d9_chart=bride_d9_chart_dict,
         sivadasan_ravi_insights=sivadasan_ravi_res,
+        print_report_data=print_report_data,
         final_assessment=fin_legacy,
     )

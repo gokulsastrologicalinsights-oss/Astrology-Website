@@ -795,6 +795,29 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 /**
  * Request binary Blob stream with automatic fallback from API_BASE_URL to same-origin proxy.
  */
+async function requestWithGatewayRetry<T>(
+  path: string,
+  options: RequestInit = {},
+  maxAttempts: number = 3
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await request<T>(path, options);
+    } catch (err: unknown) {
+      lastError = err;
+      const isTransientGateway =
+        err instanceof ApiError &&
+        (err.statusCode === 502 || err.statusCode === 503 || err.statusCode === 504);
+      if (!isTransientGateway || attempt === maxAttempts) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1800 * attempt));
+    }
+  }
+  throw lastError;
+}
+
 export async function requestBlob(path: string, options: RequestInit = {}): Promise<Blob> {
   const url = `${API_BASE_URL}${path}`;
 
@@ -3818,7 +3841,7 @@ export async function analyzeMarriageCompatibility(
 
   const authHeaders = await resolveAuthHeaders(token);
 
-  return request<MarriageCompatibilityResponse>("/api/v1/marriage-compatibility/analyze", {
+  return requestWithGatewayRetry<MarriageCompatibilityResponse>("/api/v1/marriage-compatibility/analyze", {
 
     method: "POST",
 

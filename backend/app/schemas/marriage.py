@@ -465,6 +465,7 @@ class MarriageCompatibilityResponse(BaseModel):
     groom_d9_chart: Optional[Dict[str, Any]] = None
     bride_d9_chart: Optional[Dict[str, Any]] = None
     sivadasan_ravi_insights: Optional[Dict[str, Any]] = None
+    print_report_data: Optional[Dict[str, Any]] = None
     final_assessment: FinalAssessmentSummary
 
 

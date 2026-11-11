@@ -13,7 +13,7 @@ export function Footer() {
   const isLoginPage = pathname === "/login" || pathname === "/forgot-password" || pathname === "/register";
 
   return (
-    <footer className="w-full border-t border-[#DDE5F0] bg-white text-[#52667E] mt-auto">
+    <footer className="w-full border-t border-[#DDE5F0] bg-white text-[#52667E] mt-auto print:hidden">
       <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand & Mission */}

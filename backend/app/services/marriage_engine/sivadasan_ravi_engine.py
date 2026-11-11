@@ -42,14 +42,21 @@ from app.services.marriage_engine.models import (
 
 
 def _get_birth_jd(chart: MarriageChartContext) -> float:
-    """Computes UTC Julian Day from chart birth date and time."""
+    """Computes UTC Julian Day from chart birth date, time, and timezone."""
     try:
+        from app.services.timezone_utils import resolve_birth_datetime
         t_str = chart.birth_time_iso[:8] if chart.birth_time_iso else "12:00:00"
-        dt = datetime.strptime(f"{chart.birth_date_iso} {t_str}", "%Y-%m-%d %H:%M:%S")
-        hour_dec = dt.hour + dt.minute / 60.0 + dt.second / 3600.0
-        return float(xalen.swe.julday(dt.year, dt.month, dt.day, hour_dec))
+        tz_str = chart.timezone or "Asia/Kolkata"
+        _, _, jd, _, _ = resolve_birth_datetime(chart.birth_date_iso, t_str, tz_str)
+        return float(jd)
     except Exception:
-        return 2450000.0
+        try:
+            t_str = chart.birth_time_iso[:8] if chart.birth_time_iso else "12:00:00"
+            dt = datetime.strptime(f"{chart.birth_date_iso} {t_str}", "%Y-%m-%d %H:%M:%S")
+            hour_dec = dt.hour + dt.minute / 60.0 + dt.second / 3600.0
+            return float(xalen.julian_day(dt.year, dt.month, dt.day, hour_dec))
+        except Exception:
+            return 2450000.0
 
 
 def _get_dasa_info(chart: MarriageChartContext) -> Tuple[str, float, float]:
@@ -63,9 +70,11 @@ def _get_dasa_info(chart: MarriageChartContext) -> Tuple[str, float, float]:
         age = 28.0
 
     try:
+        # Only level-1 Mahadasha nodes are needed here; depth=1 avoids building 59,049 sub-period objects.
         dasa_res = calculate_direct_dasa(
             moon_sidereal_deg=chart.moon_degree,
             birth_jd=b_jd,
+            depth=1,
             target_date=today,
         )
         mahadasha_lord = dasa_res.active_period.mahadasha if dasa_res.active_period else dasa_res.birth_dasa_lord
