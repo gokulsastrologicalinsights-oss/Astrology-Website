@@ -2502,7 +2502,7 @@ function MarriageCompatibilityContent() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    5-Page Print Format PDF: Brand header, 11 Poruthams, South Indian Charts, Dosha Audit, Dasa Bhukti &amp; Verdict.
+                    6-Page Print Format PDF: Brand header, 11 Poruthams, Charts, Doshas, Dasa Bhukti, Ashtakoota 36, Papasamya, KP &amp; Remedies.
                   </p>
                 </div>
               </label>
@@ -2532,7 +2532,7 @@ function MarriageCompatibilityContent() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    5-பக்க அச்சு வடிவ PDF: 11 பொருத்த மதிப்பீடு, ராசி/நவாம்சம் சக்கரங்கள், தோஷ ஆய்வு, தசா புக்தி &amp; முனிவரின் வாக்கு.
+                    6-பக்க அச்சு வடிவ PDF: 11 பொருத்தம், சக்கரங்கள், தோஷ ஆய்வு, தசா புக்தி, அஷ்டகூடம் 36, பாபசாம்யம், கே.பி &amp; பரிகார வழிகாட்டி.
                   </p>
                 </div>
               </label>

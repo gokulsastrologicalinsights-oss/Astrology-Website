@@ -274,6 +274,61 @@ def generate_html_report(data: Dict[str, Any], lang: str = "ta") -> str:
         else '<tr><td colspan="3" class="incomp-empty">பொருத்தமற்ற எதிர்மறை கிரக சேர்க்கைகள் எதுவும் கண்டறியப்படவில்லை.</td></tr>'
     )
 
+    p6 = vm["page6"]
+    ash_badge_cls = "p6-badge-ok" if p6["ashtakoota_threshold_met"] else "p6-badge-no"
+    ash_badge_txt = f"மொத்தம்: {p6['ashtakoota_total_str']} / 36 (குறைந்தபட்சம் {p6['ashtakoota_threshold_str']})"
+
+    def _ash_tone_cls(tone: str) -> str:
+        return "st-ok" if tone == "green" else ("st-warn" if tone == "amber" else "st-bad")
+
+    ash_rows_html = "".join(
+        f"""
+        <tr>
+          <td class="a-lbl">{_esc(r["label_ta"])}</td>
+          <td class="a-sig">{_esc(r["sig_ta"])}{f'<div class="a-cancel">விலக்கு: {_esc(r["cancel_reason"])}</div>' if r.get("cancel_reason") else ''}</td>
+          <td class="a-pts">{_esc(r["earned_str"])} / {_esc(r["max_str"])}</td>
+          <td class="a-st"><span class="{_ash_tone_cls(r['status_tone'])}">{_esc(r["status_ta"])}</span></td>
+        </tr>
+        """
+        for r in p6["ashtakoota_rows"]
+    )
+
+    papa = p6["papasamya"]
+    papa_tone_cls = _ash_tone_cls(papa["verdict_tone"])
+    kp = p6["kp"]
+    kp_body_html = (
+        f"""
+        <div class="card-row"><span>மணமகன் 7-ஆம் உப அதிபதி:</span> <b>{_esc(kp["groom_csl_ta"])}</b> ({_esc(kp["groom_verdict_ta"])})</div>
+        <div class="card-sub">சாதக பாவங்கள்: [{_esc(kp["groom_houses"])}]</div>
+        <div class="card-row" style="margin-top:4px;"><span>மணமகள் 7-ஆம் உப அதிபதி:</span> <b>{_esc(kp["bride_csl_ta"])}</b> ({_esc(kp["bride_verdict_ta"])})</div>
+        <div class="card-sub">சாதக பாவங்கள்: [{_esc(kp["bride_houses"])}]</div>
+        <div class="card-foot">ஆளுமை கிரக ஒப்பீடு: <b>{_esc(kp["agreement_ta"])}</b> | பொது கிரகங்கள்: {_esc(kp["shared_rp_ta"])}</div>
+        """
+        if kp["available"]
+        else '<div class="card-sub">கே.பி (KP) 7-ஆம் உப அதிபதி தரவு சேர்க்கப்படவில்லை.</div>'
+    )
+
+    guru = p6["guru_balam"]
+    nadi_y = p6["nadi_yogam"]
+    in_laws = p6["in_laws"]
+    nav = p6["navamsa"]
+    rem = p6["remedies"]
+
+    nadi_obs_html = "".join(f'<div class="sp-sub">• {_esc(o)}</div>' for o in (nadi_y.get("obstacles_ta") or []))
+    inlaws_html = (
+        "".join(
+            f'<div class="sp-line"><b>{_esc(f["nakshatra_ta"])} ({_esc(f["relative_ta"])}):</b> {"விதிவிலக்கு பொருந்தியது (தோஷமில்லை)" if f["is_exempt"] else "கவனம் தேவை"} — {_esc(f["explanation_ta"])}</div>'
+            for f in in_laws["findings"]
+        )
+        if in_laws["has_special"] and in_laws["findings"]
+        else '<div class="sp-line"><b>மாமனார்/மாமியார் விசேஷ நட்சத்திர ஆய்வு:</b> விசேஷ நட்சத்திர தோஷம் எதுவும் இல்லை.</div>'
+    )
+    nav_warn_html = (
+        '<div class="nav-warn">நேர எச்சரிக்கை: பிறப்பு நேர சிறு மாற்றத்தால் நவாம்ச லக்னம் மாற வாய்ப்புள்ளதால் நேர உறுதிப்படுத்தல் நல்லது.</div>'
+        if nav["boundary_warning"]
+        else ""
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="ta">
 <head>
@@ -449,6 +504,41 @@ def generate_html_report(data: Dict[str, Any], lang: str = "ta") -> str:
   .empty-msg {{ color: #475569; }}
   .incomp-empty {{ color: #047857; }}
   .sage-text {{ margin: 0; font-size: 11.5px; line-height: 1.65; color: #0F172A; }}
+
+  /* Page 6 */
+  .page6-stack {{ padding-top: 2px; }}
+  .p6-hdr-row {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }}
+  .p6-badge-ok {{ background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }}
+  .p6-badge-no {{ background: #FFF1F2; color: #BE123C; border: 1px solid #FECDD3; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }}
+  .ash-tbl {{ width: 100%; border-collapse: collapse; font-size: 9.8px; margin-bottom: 10px; }}
+  .ash-tbl th, .ash-tbl td {{ border: 1px solid #94A3B8; padding: 4px 6px; }}
+  .ash-tbl th {{ background: #F1F5F9; font-weight: 700; text-align: left; color: #0F172A; }}
+  .ash-tbl th.center {{ text-align: center; }}
+  .a-lbl {{ font-weight: 700; color: #0F172A; width: 25%; }}
+  .a-sig {{ color: #334155; width: 47%; line-height: 1.3; }}
+  .a-cancel {{ color: #047857; font-weight: 600; font-size: 9px; margin-top: 1px; }}
+  .a-pts {{ text-align: center; font-weight: 700; color: #0F172A; width: 14%; }}
+  .a-st {{ text-align: center; font-weight: 700; width: 14%; }}
+  .st-ok {{ color: #047857; font-weight: 700; }}
+  .st-warn {{ color: #B45309; font-weight: 700; }}
+  .st-bad {{ color: #BE123C; font-weight: 700; }}
+
+  .cards-2col {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }}
+  .info-card {{ border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background: #F8FAFC; font-size: 9.8px; }}
+  .card-title {{ font-weight: 700; font-size: 11px; color: #0F172A; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; margin-bottom: 6px; }}
+  .card-row {{ color: #0F172A; line-height: 1.35; }}
+  .card-sub {{ color: #475569; font-size: 9px; line-height: 1.3; margin-top: 1px; }}
+  .card-foot {{ margin-top: 5px; padding-top: 4px; border-top: 1px dashed #CBD5E1; color: #1E293B; font-size: 9.2px; line-height: 1.35; }}
+
+  .sp-panel {{ border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; background: #FFFFFF; font-size: 9.8px; margin-bottom: 10px; }}
+  .sp-line {{ color: #1E293B; line-height: 1.4; margin-bottom: 4px; }}
+  .sp-sub {{ color: #475569; font-size: 9px; padding-left: 10px; line-height: 1.35; margin-bottom: 2px; }}
+  .nav-warn {{ color: #B45309; font-weight: 600; font-size: 9.2px; margin-top: 2px; }}
+
+  .rem-box {{ border: 1px solid #FDE68A; background: #FFFBEB; border-radius: 6px; padding: 8px 10px; font-size: 9.8px; margin-bottom: 8px; }}
+  .rem-title {{ font-weight: 700; color: #92400E; margin-bottom: 3px; font-size: 10.5px; }}
+  .rem-text {{ color: #334155; line-height: 1.38; }}
+  .disc-note {{ font-size: 8.8px; color: #64748B; line-height: 1.35; border-top: 1px solid #E2E8F0; padding-top: 5px; margin: 0; }}
 </style>
 </head>
 <body>
@@ -591,6 +681,58 @@ def generate_html_report(data: Dict[str, Any], lang: str = "ta") -> str:
 
       <h2 class="sec-h2">முனிவரின் வாக்கு</h2>
       <p class="sage-text">{_esc(vm["sage_verdict_ta"])}</p>
+    </section>
+
+    <!-- PAGE 6 -->
+    <section class="print-page page6-stack">
+      <div class="p6-hdr-row">
+        <h2 class="sec-h2" style="margin:0;">அஷ்டகூட (36) &amp; கூடுதல் பொருத்த ஆய்வுகள்</h2>
+        <span class="{ash_badge_cls}">{_esc(ash_badge_txt)}</span>
+      </div>
+
+      <table class="ash-tbl">
+        <thead>
+          <tr>
+            <th>கூடம் (Koota)</th>
+            <th>விளக்கம் &amp; விலக்கு</th>
+            <th class="center">மதிப்பெண்</th>
+            <th class="center">நிலை</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ash_rows_html}
+        </tbody>
+      </table>
+
+      <div class="cards-2col">
+        <div class="info-card">
+          <div class="card-title">தென் இந்திய பாபசாம்யம் (Papasamya)</div>
+          <div class="card-row">மணமகன் பாபம்: <b>{_esc(papa["groom_total"])}</b> | மணமகள் பாபம்: <b>{_esc(papa["bride_total"])}</b></div>
+          <div class="card-sub">மணமகன்: {_esc(papa["groom_frames"])}</div>
+          <div class="card-sub">மணமகள்: {_esc(papa["bride_frames"])}</div>
+          <div class="card-foot">வித்தியாசம்: <b>{_esc(papa["diff_str"])}</b> | தீர்ப்பு: <span class="{papa_tone_cls}">{_esc(papa["verdict_ta"])}</span><br/>{_esc(papa["explanation_ta"])}</div>
+        </div>
+        <div class="info-card">
+          <div class="card-title">கே.பி (KP) 7-ஆம் உப அதிபதி &amp; ஆளுமை கிரகங்கள்</div>
+          {kp_body_html}
+        </div>
+      </div>
+
+      <div class="sp-panel">
+        <div class="card-title" style="margin-bottom:5px;">கோட்சார குரு பலம், நாடி &amp; நவாம்ச சிறப்பு ஆய்வு</div>
+        <div class="sp-line"><b>கோட்சார குரு பலம்:</b> {_esc(guru["label_ta"])}{f' — {_esc(guru["description_ta"])}' if guru["description_ta"] else ''}</div>
+        {f'<div class="sp-line"><b>நாடிப் பொருத்தம் &amp; நந்தியோகம்:</b> {_esc(nadi_y["verdict_ta"])}</div>{nadi_obs_html}' if nadi_y["available"] else ''}
+        {inlaws_html}
+        <div class="sp-line"><b>நவாம்ச (D9) நிலை:</b> {_esc(nav["groom_ta"])} | {_esc(nav["bride_ta"])}</div>
+        {nav_warn_html}
+      </div>
+
+      <div class="rem-box">
+        <div class="rem-title">முதன்மை பரிகார ஸ்தலம் &amp; வழிகாட்டுதல்</div>
+        <div class="rem-text"><b>{_esc(rem["temple_name_ta"])}</b> — {_esc(rem["temple_sig_ta"])}{f' | <b>பரிந்துரைக்கப்படும் பாராயணம்:</b> {_esc(rem["hymn_title_ta"])}' if rem["hymn_title_ta"] else ''}</div>
+      </div>
+
+      <p class="disc-note">குறிப்பு: இந்த அறிக்கை பாரம்பரிய தமிழ் பொருத்தம், 36 அஷ்டகூடம், பாபசாம்யம், வேத மற்றும் கே.பி. (KP) ஜோதிட விதிகளின் அடிப்படையில் தயாரிக்கப்பட்டது; இறுதி திருமண முடிவிற்கு குடும்ப ஆலோசனையும் சுப முகூர்த்த தேர்வும் பரிந்துரைக்கப்படுகிறது.</p>
     </section>
   </div>
 </body>

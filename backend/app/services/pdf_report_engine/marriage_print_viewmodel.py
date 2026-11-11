@@ -44,6 +44,40 @@ PLANET_CHART_ABBR_TA: Dict[str, str] = {
     "Rahu": "ரா", "Ketu": "கே", "Ascendant": "ல", "Lagna": "ல",
 }
 
+PLANET_NAME_TA: Dict[str, str] = {
+    "Sun": "சூரியன்", "Moon": "சந்திரன்", "Mars": "செவ்வாய்", "Mercury": "புதன்",
+    "Jupiter": "குரு", "Venus": "சுக்கிரன்", "Saturn": "சனி",
+    "Rahu": "ராகு", "Ketu": "கேது",
+}
+
+ASHTAKOOTA_META_TA: List[Tuple[str, str, float, str]] = [
+    ("varna", "வர்ணம் (Varna)", 1.0, "ஆன்ம சுபாவம் & மனோபாவம்"),
+    ("vashya", "வசியம் (Vashya)", 2.0, "பரஸ்பர ஈர்ப்பு & ஒற்றுமை"),
+    ("tara", "தாரா (Tara)", 3.0, "நவதாரை அதிர்ஷ்டம் & ஆயுள்"),
+    ("yoni", "யோனி (Yoni)", 4.0, "தாம்பத்திய இணக்கம்"),
+    ("graha_maitri", "கிரக மைத்ரி (Maitri)", 5.0, "ராசிநாதர்களின் நட்பு"),
+    ("gana", "கணம் (Gana)", 6.0, "குண நலன் & கருத்துப் பரிமாற்றம்"),
+    ("bhakoot", "பகுட் (Bhakoot)", 7.0, "வம்ச விருத்தி & பொருள் நலம்"),
+    ("nadi", "நாடி (Nadi)", 8.0, "மரபணு & சந்ததி ஆரோக்கியம்"),
+]
+
+KP_VERDICT_TA: Dict[str, str] = {
+    "FAVORABLE": "சாதகம்",
+    "POSITIVE": "சாதகம்",
+    "MIXED": "மிதமானது",
+    "UNFAVORABLE": "சாதகமற்றது",
+    "NEGATIVE": "சாதகமற்றது",
+    "STRONG": "வலுவான ஒற்றுமை",
+    "MODERATE": "மிதமான ஒற்றுமை",
+    "WEAK": "குறைவான ஒற்றுமை",
+}
+
+PAPASAMYA_VERDICT_TA: Dict[str, str] = {
+    "FAVORABLE": "சாதகமான சமநிலை",
+    "TOLERABLE": "ஏற்கத்தக்க சமநிலை",
+    "UNFAVORABLE": "கவனம் தேவை (பாப வேறுபாடு)",
+}
+
 NAKSHATRA_NAMES_EN: List[str] = [
     "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
     "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
@@ -566,6 +600,163 @@ def build_marriage_print_view_model(data: Dict[str, Any]) -> Dict[str, Any]:
         )
     )
 
+    # Page 6: Additional compatibility sections (Ashtakoota 8 Kootas, Papasamya, KP, Guru Balam, Navamsa, Remedies)
+    ash_raw = safe_dict(d.get("ashtakoota"))
+    ash_threshold_str = format_points(ash_raw.get("minimum_threshold", 18.0))
+    ash_threshold_met = bool(
+        ash_raw.get("is_threshold_met")
+        if "is_threshold_met" in ash_raw
+        else float(ash_raw.get("total_points", 0) or 0) >= float(ash_raw.get("minimum_threshold", 18.0) or 18.0)
+    )
+
+    ashtakoota_rows: List[Dict[str, Any]] = []
+    for k_id, k_label_ta, k_max_default, k_sig_ta in ASHTAKOOTA_META_TA:
+        k_obj = safe_dict(kootas.get(k_id))
+        max_pts = float(k_obj.get("max_points", k_max_default) or k_max_default)
+        earned_pts = float(k_obj.get("earned_points", 0.0) or 0.0)
+        is_cancelled = bool(k_obj.get("is_cancelled"))
+        cancel_reason = str(k_obj.get("cancellation_reason") or "").strip()
+        if is_cancelled:
+            st_ta = "தோஷ நிவர்த்தி"
+            st_tone = "green"
+        elif earned_pts >= max_pts * 0.5:
+            st_ta = "சாதகம்"
+            st_tone = "green"
+        elif earned_pts > 0:
+            st_ta = "பகுதி"
+            st_tone = "amber"
+        else:
+            st_ta = "தோஷம்"
+            st_tone = "red"
+        ashtakoota_rows.append({
+            "id": k_id,
+            "label_ta": k_label_ta,
+            "sig_ta": k_sig_ta,
+            "earned_str": format_points(earned_pts),
+            "max_str": format_points(max_pts),
+            "status_ta": st_ta,
+            "status_tone": st_tone,
+            "cancel_reason": cancel_reason,
+        })
+
+    # Papasamya
+    g_papa = safe_dict(dosha_data.get("groom_papasamya"))
+    b_papa = safe_dict(dosha_data.get("bride_papasamya"))
+    papa_verdict = str(dosha_data.get("papasamya_verdict") or "TOLERABLE").upper()
+    papa_tone = "green" if papa_verdict == "FAVORABLE" else ("red" if papa_verdict == "UNFAVORABLE" else "amber")
+    papa_diff = dosha_data.get("papasamya_diff_percent")
+    papa_diff_str = f"{float(papa_diff):.1f}%" if papa_diff is not None else "-"
+    g_papa_frames = (
+        f"லக்னம்: {format_points(g_papa.get('lagna_papam'))} | சந்திரன்: {format_points(g_papa.get('moon_papam'))} | சுக்கிரன்: {format_points(g_papa.get('venus_papam'))}"
+        if g_papa
+        else "-"
+    )
+    b_papa_frames = (
+        f"லக்னம்: {format_points(b_papa.get('lagna_papam'))} | சந்திரன்: {format_points(b_papa.get('moon_papam'))} | சுக்கிரன்: {format_points(b_papa.get('venus_papam'))}"
+        if b_papa
+        else "-"
+    )
+    papasamya_vm = {
+        "groom_total": format_points(g_papa.get("total_papam")),
+        "bride_total": format_points(b_papa.get("total_papam")),
+        "groom_frames": g_papa_frames,
+        "bride_frames": b_papa_frames,
+        "diff_str": papa_diff_str,
+        "verdict_ta": PAPASAMYA_VERDICT_TA.get(papa_verdict, papa_verdict),
+        "verdict_tone": papa_tone,
+        "explanation_ta": str(dosha_data.get("papasamya_explanation_ta") or "இருவரின் பாபசாம்ய புள்ளிகள் ஒப்பிடப்பட்டன."),
+    }
+
+    # KP 7th CSL & Ruling Planets
+    kp_raw = safe_dict(d.get("kp_marriage"))
+    g_kp_csl = safe_dict(safe_dict(kp_raw.get("groom_analysis")).get("csl_7th"))
+    b_kp_csl = safe_dict(safe_dict(kp_raw.get("bride_analysis")).get("csl_7th"))
+    g_csl_en = str(g_kp_csl.get("sub_lord") or kp_raw.get("groom_7th_csl_planet") or "-")
+    b_csl_en = str(b_kp_csl.get("sub_lord") or kp_raw.get("bride_7th_csl_planet") or "-")
+    g_kp_verdict_en = str(g_kp_csl.get("verdict") or kp_raw.get("groom_7th_csl_promise") or "-").upper()
+    b_kp_verdict_en = str(b_kp_csl.get("verdict") or kp_raw.get("bride_7th_csl_promise") or "-").upper()
+    g_supp = g_kp_csl.get("supporting_houses_signified") or []
+    b_supp = b_kp_csl.get("supporting_houses_signified") or []
+    rp_level_en = str(kp_raw.get("ruling_planets_agreement_level") or kp_raw.get("significators_agreement") or "-").upper()
+    shared_rp_list = [PLANET_NAME_TA.get(str(p), str(p)) for p in (kp_raw.get("shared_ruling_planets") or [])]
+    kp_vm = {
+        "available": bool(kp_raw),
+        "groom_csl_ta": PLANET_NAME_TA.get(g_csl_en, g_csl_en),
+        "groom_verdict_ta": KP_VERDICT_TA.get(g_kp_verdict_en, g_kp_verdict_en),
+        "groom_houses": ", ".join(str(h) for h in g_supp) if g_supp else "-",
+        "bride_csl_ta": PLANET_NAME_TA.get(b_csl_en, b_csl_en),
+        "bride_verdict_ta": KP_VERDICT_TA.get(b_kp_verdict_en, b_kp_verdict_en),
+        "bride_houses": ", ".join(str(h) for h in b_supp) if b_supp else "-",
+        "agreement_ta": KP_VERDICT_TA.get(rp_level_en, str(kp_raw.get("ruling_planets_agreement_level") or kp_raw.get("significators_agreement") or "ஆய்வு செய்யப்பட்டது")),
+        "shared_rp_ta": ", ".join(shared_rp_list) if shared_rp_list else "-",
+    }
+
+    # Sivadasan Ravi: Guru Balam, Nadi Yogam, In-Laws, Remedies
+    sr_guru = safe_dict(sr_insights.get("guru_balam"))
+    sr_nadi = safe_dict(sr_insights.get("nadi_porutham"))
+    sr_inlaws = safe_dict(sr_insights.get("in_laws_nakshatras"))
+    sr_remedies = safe_dict(sr_insights.get("classical_remedies"))
+    parikara = safe_dict(sr_remedies.get("parikara_sthalam"))
+    hymns = sr_remedies.get("sacred_hymns") if isinstance(sr_remedies.get("sacred_hymns"), list) else []
+    first_hymn = safe_dict(hymns[0]) if hymns else {}
+
+    # Navamsa cross-check
+    g_vedic = safe_dict(d.get("groom_vedic"))
+    b_vedic = safe_dict(d.get("bride_vedic"))
+    g_d9_ca = safe_dict(g_vedic.get("navamsa_cross_analysis"))
+    b_d9_ca = safe_dict(b_vedic.get("navamsa_cross_analysis"))
+
+    def _d9_summary(ca: Dict[str, Any], role_ta: str) -> str:
+        if not ca:
+            return f"{role_ta}: நவாம்ச நிலை சரிபார்க்கப்பட்டது."
+        d9_lagna = get_sign_ta(ca.get("d9_lagna_sign_name"), None)
+        d9_lord = PLANET_NAME_TA.get(str(ca.get("d9_7th_lord") or ""), str(ca.get("d9_7th_lord") or "-"))
+        v_sign = get_sign_ta(ca.get("venus_in_d9_sign"), None)
+        return f"{role_ta}: நவாம்ச லக்னம் {d9_lagna}, 7-ஆம் அதிபதி {d9_lord}, சுக்கிரன் {v_sign}"
+
+    boundary_risk = bool(g_d9_ca.get("navamsa_boundary_risk") or b_d9_ca.get("navamsa_boundary_risk"))
+
+    page6_vm = {
+        "ashtakoota_rows": ashtakoota_rows,
+        "ashtakoota_total_str": ashtakoota_str,
+        "ashtakoota_threshold_str": ash_threshold_str,
+        "ashtakoota_threshold_met": ash_threshold_met,
+        "papasamya": papasamya_vm,
+        "kp": kp_vm,
+        "guru_balam": {
+            "available": bool(sr_guru),
+            "label_ta": str(sr_guru.get("label_ta") or "கோட்சார குரு பலம் சரிபார்க்கப்பட்டது"),
+            "description_ta": str(sr_guru.get("description_ta") or ""),
+        },
+        "nadi_yogam": {
+            "available": bool(sr_nadi),
+            "verdict_ta": str(sr_nadi.get("verdict_ta") or ""),
+            "obstacles_ta": (sr_nadi.get("nandi_obstacles_ta") or [])[:2],
+        },
+        "in_laws": {
+            "has_special": bool(sr_inlaws.get("has_special_nakshatra")),
+            "findings": [
+                {
+                    "nakshatra_ta": str(safe_dict(f).get("nakshatra_ta") or ""),
+                    "relative_ta": str(safe_dict(f).get("relative_ta") or ""),
+                    "is_exempt": bool(safe_dict(f).get("is_exempt")),
+                    "explanation_ta": str(safe_dict(f).get("explanation_ta") or ""),
+                }
+                for f in (sr_inlaws.get("findings") or [])[:3]
+            ],
+        },
+        "navamsa": {
+            "groom_ta": _d9_summary(g_d9_ca, "மணமகன்"),
+            "bride_ta": _d9_summary(b_d9_ca, "மணமகள்"),
+            "boundary_warning": boundary_risk,
+        },
+        "remedies": {
+            "temple_name_ta": str(parikara.get("name_ta") or "குலதெய்வ வழிபாடு & திருக்கோவில் தரிசனம்"),
+            "temple_sig_ta": str(parikara.get("significance_ta") or "திருமண நல்வாழ்விற்காக இறை வழிபாடு மேற்கொள்ளவும்."),
+            "hymn_title_ta": str(first_hymn.get("title_ta") or ""),
+        },
+    }
+
     return {
         "logo_data_uri": get_logo_data_uri(),
         "logo_path": str(LOGO_PATH) if LOGO_PATH.exists() else "",
@@ -609,4 +800,5 @@ def build_marriage_print_view_model(data: Dict[str, Any]) -> Dict[str, Any]:
         "harmonious_connections": harmonious,
         "incompatible_combinations": incompatible,
         "sage_verdict_ta": sage_verdict_ta,
+        "page6": page6_vm,
     }

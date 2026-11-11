@@ -631,5 +631,198 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
     story.append(_p_text("<b>முனிவரின் வாக்கு</b>", s_sec_h2))
     story.append(_p_text(_esc(vm["sage_verdict_ta"]), s_sage))
 
+    # ======================== PAGE 6 ========================
+    story.append(PageBreak())
+    p6 = vm["page6"]
+    s_p6_h = ParagraphStyle("RLP6H", fontName=font_bold, fontSize=12.5, leading=16, textColor=colors.HexColor("#0F172A"))
+    s_p6_badge = ParagraphStyle(
+        "RLP6B",
+        fontName=font_bold,
+        fontSize=8.0,
+        leading=10.5,
+        alignment=2,
+        textColor=colors.HexColor("#047857" if p6["ashtakoota_threshold_met"] else "#BE123C"),
+    )
+    p6_hdr = Table(
+        [
+            [
+                _p_text("<b>அஷ்டகூட (36) &amp; கூடுதல் பொருத்த ஆய்வுகள்</b>", s_p6_h),
+                _p_text(
+                    f"<b>மொத்தம்: {p6['ashtakoota_total_str']} / 36 (குறைந்தபட்சம் {p6['ashtakoota_threshold_str']})</b>",
+                    s_p6_badge,
+                ),
+            ]
+        ],
+        colWidths=[CONTENT_WIDTH * 0.62, CONTENT_WIDTH * 0.38],
+    )
+    p6_hdr.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    story.append(p6_hdr)
+
+    s_p6_td = ParagraphStyle("RLP6Td", fontName=font_reg, fontSize=7.8, leading=10.0, textColor=colors.HexColor("#1E293B"))
+    s_p6_tdb = ParagraphStyle("RLP6TdB", fontName=font_bold, fontSize=7.8, leading=10.0, textColor=colors.HexColor("#0F172A"))
+    s_p6_tdc = ParagraphStyle("RLP6TdC", fontName=font_bold, fontSize=7.8, leading=10.0, alignment=1, textColor=colors.HexColor("#0F172A"))
+
+    ash_rows: List[List[Any]] = [
+        [
+            _p_text("கூடம் (Koota)", s_th),
+            _p_text("விளக்கம் &amp; விலக்கு", s_th),
+            _p_text("மதிப்பெண்", s_th_c),
+            _p_text("நிலை", s_th_c),
+        ]
+    ]
+    for r in p6["ashtakoota_rows"]:
+        tone_col = "#047857" if r["status_tone"] == "green" else ("#B45309" if r["status_tone"] == "amber" else "#BE123C")
+        s_st = ParagraphStyle(f"RLA_{r['id']}", fontName=font_bold, fontSize=7.8, leading=10.0, alignment=1, textColor=colors.HexColor(tone_col))
+        sig_html = _esc(r["sig_ta"])
+        if r.get("cancel_reason"):
+            sig_html += f"<br/><font color='#047857'><b>விலக்கு: {_esc(r['cancel_reason'])}</b></font>"
+        ash_rows.append([
+            _p_text(f"<b>{_esc(r['label_ta'])}</b>", s_p6_tdb),
+            _p_text(sig_html, s_p6_td),
+            _p_text(f"{_esc(r['earned_str'])} / {_esc(r['max_str'])}", s_p6_tdc),
+            _p_text(f"<b>{_esc(r['status_ta'])}</b>", s_st),
+        ])
+
+    ash_tbl = Table(ash_rows, colWidths=[122, CONTENT_WIDTH - 262, 66, 74])
+    ash_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F1F5F9")),
+        ("GRID", (0, 0), (-1, -1), 0.7, colors.HexColor("#94A3B8")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 3.2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3.2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(ash_tbl)
+    story.append(Spacer(1, 8))
+
+    # 2-column Papasamya & KP cards
+    papa = p6["papasamya"]
+    kp = p6["kp"]
+    s_card_t = ParagraphStyle("RLCT", fontName=font_bold, fontSize=8.8, leading=11.5, textColor=colors.HexColor("#0F172A"))
+    s_card_b = ParagraphStyle("RLCB", fontName=font_reg, fontSize=7.7, leading=10.5, textColor=colors.HexColor("#1E293B"))
+
+    papa_flow = [
+        _p_text("<b>தென் இந்திய பாபசாம்யம் (Papasamya)</b>", s_card_t),
+        Spacer(1, 3),
+        _p_text(
+            f"மணமகன்: <b>{_esc(papa['groom_total'])}</b> | மணமகள்: <b>{_esc(papa['bride_total'])}</b> | வித்தியாசம்: <b>{_esc(papa['diff_str'])}</b>",
+            s_card_b,
+        ),
+        _p_text(f"மணமகன்: {_esc(papa['groom_frames'])}", s_card_b),
+        _p_text(f"மணமகள்: {_esc(papa['bride_frames'])}", s_card_b),
+        Spacer(1, 2),
+        _p_text(f"<b>தீர்ப்பு: {_esc(papa['verdict_ta'])}</b> — {_esc(papa['explanation_ta'])}", s_card_b),
+    ]
+    if kp["available"]:
+        kp_flow = [
+            _p_text("<b>கே.பி (KP) 7-ஆம் உப அதிபதி &amp; ஆளுமை கிரகங்கள்</b>", s_card_t),
+            Spacer(1, 3),
+            _p_text(f"மணமகன் 7-ஆம் உப அதிபதி: <b>{_esc(kp['groom_csl_ta'])}</b> ({_esc(kp['groom_verdict_ta'])}) | பாவங்கள்: [{_esc(kp['groom_houses'])}]", s_card_b),
+            _p_text(f"மணமகள் 7-ஆம் உப அதிபதி: <b>{_esc(kp['bride_csl_ta'])}</b> ({_esc(kp['bride_verdict_ta'])}) | பாவங்கள்: [{_esc(kp['bride_houses'])}]", s_card_b),
+            Spacer(1, 2),
+            _p_text(f"<b>ஆளுமை கிரக ஒப்பீடு:</b> {_esc(kp['agreement_ta'])} | பொது: {_esc(kp['shared_rp_ta'])}", s_card_b),
+        ]
+    else:
+        kp_flow = [
+            _p_text("<b>கே.பி (KP) 7-ஆம் உப அதிபதி &amp; ஆளுமை கிரகங்கள்</b>", s_card_t),
+            Spacer(1, 3),
+            _p_text("கே.பி (KP) 7-ஆம் உப அதிபதி தரவு சேர்க்கப்படவில்லை.", s_card_b),
+        ]
+
+    half_w = (CONTENT_WIDTH - 8) / 2.0
+    cards_tbl = Table([[papa_flow, "", kp_flow]], colWidths=[half_w, 8, half_w])
+    cards_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#F8FAFC")),
+        ("BACKGROUND", (2, 0), (2, 0), colors.HexColor("#F8FAFC")),
+        ("BOX", (0, 0), (0, 0), 0.7, colors.HexColor("#CBD5E1")),
+        ("BOX", (2, 0), (2, 0), 0.7, colors.HexColor("#CBD5E1")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (0, 0), 7),
+        ("RIGHTPADDING", (0, 0), (0, 0), 7),
+        ("LEFTPADDING", (2, 0), (2, 0), 7),
+        ("RIGHTPADDING", (2, 0), (2, 0), 7),
+    ]))
+    story.append(cards_tbl)
+    story.append(Spacer(1, 8))
+
+    # Special Insights Panel (Guru Balam, Nandi Yogam, In-Laws, Navamsa)
+    guru = p6["guru_balam"]
+    nadi_y = p6["nadi_yogam"]
+    in_laws = p6["in_laws"]
+    nav = p6["navamsa"]
+    rem = p6["remedies"]
+
+    panel_flows: List[Any] = [
+        _p_text("<b>கோட்சார குரு பலம், நாடி &amp; நவாம்ச சிறப்பு ஆய்வு</b>", s_card_t),
+        Spacer(1, 3),
+        _p_text(
+            f"<b>கோட்சார குரு பலம்:</b> {_esc(guru['label_ta'])}" + (f" — {_esc(guru['description_ta'])}" if guru["description_ta"] else ""),
+            s_card_b,
+        ),
+    ]
+    if nadi_y["available"]:
+        panel_flows.append(_p_text(f"<b>நாடிப் பொருத்தம் &amp; நந்தியோகம்:</b> {_esc(nadi_y['verdict_ta'])}", s_card_b))
+        for obs in nadi_y.get("obstacles_ta") or []:
+            panel_flows.append(_p_text(f"&nbsp;&nbsp;• {_esc(obs)}", s_card_b))
+    if in_laws["has_special"] and in_laws["findings"]:
+        for f_item in in_laws["findings"]:
+            st_lbl = "விதிவிலக்கு பொருந்தியது (தோஷமில்லை)" if f_item["is_exempt"] else "கவனம் தேவை"
+            panel_flows.append(
+                _p_text(f"<b>{_esc(f_item['nakshatra_ta'])} ({_esc(f_item['relative_ta'])}):</b> {st_lbl} — {_esc(f_item['explanation_ta'])}", s_card_b)
+            )
+    else:
+        panel_flows.append(_p_text("<b>மாமனார்/மாமியார் விசேஷ நட்சத்திர ஆய்வு:</b> விசேஷ நட்சத்திர தோஷம் எதுவும் இல்லை.", s_card_b))
+    panel_flows.append(_p_text(f"<b>நவாம்ச (D9) நிலை:</b> {_esc(nav['groom_ta'])} | {_esc(nav['bride_ta'])}", s_card_b))
+    if nav["boundary_warning"]:
+        s_warn = ParagraphStyle("RLNW", fontName=font_bold, fontSize=7.7, leading=10.5, textColor=colors.HexColor("#B45309"))
+        panel_flows.append(_p_text("நேர எச்சரிக்கை: பிறப்பு நேர சிறு மாற்றத்தால் நவாம்ச லக்னம் மாற வாய்ப்புள்ளது.", s_warn))
+
+    sp_tbl = Table([[panel_flows]], colWidths=[CONTENT_WIDTH])
+    sp_tbl.setStyle(TableStyle([
+        ("BOX", (0, 0), (-1, -1), 0.7, colors.HexColor("#CBD5E1")),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.append(sp_tbl)
+    story.append(Spacer(1, 8))
+
+    # Primary Parikara Sthalam & Remedies
+    s_rem_h = ParagraphStyle("RLRemH", fontName=font_bold, fontSize=8.5, leading=11, textColor=colors.HexColor("#92400E"))
+    rem_txt = f"<b>{_esc(rem['temple_name_ta'])}</b> — {_esc(rem['temple_sig_ta'])}"
+    if rem["hymn_title_ta"]:
+        rem_txt += f" | <b>பரிந்துரைக்கப்படும் பாராயணம்:</b> {_esc(rem['hymn_title_ta'])}"
+    rem_tbl = Table(
+        [[[_p_text("<b>முதன்மை பரிகார ஸ்தலம் &amp; வழிகாட்டுதல்</b>", s_rem_h), Spacer(1, 2), _p_text(rem_txt, s_card_b)]]],
+        colWidths=[CONTENT_WIDTH],
+    )
+    rem_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FFFBEB")),
+        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#FDE68A")),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.append(rem_tbl)
+    story.append(Spacer(1, 6))
+
+    s_disc = ParagraphStyle("RLDisc", fontName=font_reg, fontSize=7.2, leading=9.8, textColor=colors.HexColor("#64748B"))
+    story.append(
+        _p_text(
+            "குறிப்பு: இந்த அறிக்கை பாரம்பரிய தமிழ் பொருத்தம், 36 அஷ்டகூடம், பாபசாம்யம், வேத மற்றும் கே.பி. (KP) ஜோதிட விதிகளின் அடிப்படையில் தயாரிக்கப்பட்டது; இறுதி திருமண முடிவிற்கு குடும்ப ஆலோசனையும் சுப முகூர்த்த தேர்வும் பரிந்துரைக்கப்படுகிறது.",
+            s_disc,
+        )
+    )
+
     doc.build(story)
     return buffer.getvalue()

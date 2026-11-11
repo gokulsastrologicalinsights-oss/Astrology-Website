@@ -168,9 +168,47 @@ const ANIMAL_TA: Record<string, string> = {
 
 const NADI_TA: Record<string, string> = {
   Adi: "வாதம்",
+  Aadi: "வாதம்",
+  Vata: "வாதம்",
   Madhya: "பித்தம்",
+  Pitta: "பித்தம்",
   Antya: "சிலேத்துமம்",
+  Kapha: "சிலேத்துமம்",
 };
+
+const ASHTAKOOTA_META_PRINT: Array<[string, string, number, string]> = [
+  ["varna", "வர்ணம் (Varna)", 1, "ஆன்ம சுபாவம் & மனோபாவம்"],
+  ["vashya", "வசியம் (Vashya)", 2, "பரஸ்பர ஈர்ப்பு & ஒற்றுமை"],
+  ["tara", "தாரா (Tara)", 3, "நவதாரை அதிர்ஷ்டம் & ஆயுள்"],
+  ["yoni", "யோனி (Yoni)", 4, "தாம்பத்திய இணக்கம்"],
+  ["graha_maitri", "கிரக மைத்ரி (Maitri)", 5, "ராசிநாதர்களின் நட்பு"],
+  ["gana", "கணம் (Gana)", 6, "குண நலன் & கருத்துப் பரிமாற்றம்"],
+  ["bhakoot", "பகுட் (Bhakoot)", 7, "வம்ச விருத்தி & பொருள் நலம்"],
+  ["nadi", "நாடி (Nadi)", 8, "மரபணு & சந்ததி ஆரோக்கியம்"],
+];
+
+const KP_VERDICT_TA: Record<string, string> = {
+  FAVORABLE: "சாதகம்",
+  POSITIVE: "சாதகம்",
+  MIXED: "மிதமானது",
+  UNFAVORABLE: "சாதகமற்றது",
+  NEGATIVE: "சாதகமற்றது",
+  STRONG: "வலுவான ஒற்றுமை",
+  MODERATE: "மிதமான ஒற்றுமை",
+  WEAK: "குறைவான ஒற்றுமை",
+};
+
+const PAPASAMYA_VERDICT_TA: Record<string, string> = {
+  FAVORABLE: "சாதகமான சமநிலை",
+  TOLERABLE: "ஏற்கத்தக்க சமநிலை",
+  UNFAVORABLE: "கவனம் தேவை (பாப வேறுபாடு)",
+};
+
+function fmtPts(val: any): string {
+  const n = Number(val ?? 0);
+  if (Number.isNaN(n)) return "0";
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
+}
 
 const DASA_COLORS: Record<string, { bg: string; lightBg: string; text: string }> = {
   Sun: { bg: "#F59E0B", lightBg: "#FDE68A", text: "#1E293B" },
@@ -707,6 +745,89 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
   const sageVerdictTa =
     prd.sage_verdict?.summary_ta ||
     `பொருத்தம் மதிப்பெண் ${passedCount11}/11 ஆகும். அஷ்டகூட மதிப்பெண்: ${ashtakootaPts}/36. ${kujaSummaryTa}. மேலும் மதிப்பாய்வு மற்றும் முடிவெடுப்பதற்கு விரிவான தோஷ பகுப்பாய்வு அட்டவணையை தயவுசெய்து சரிபார்க்கவும்.`;
+
+  // Page 6 computed sections (Ashtakoota 36, Papasamya, KP 7th CSL, Guru Balam, Nandi Yogam, In-Laws, Navamsa, Remedies)
+  const ashSummary = response.ashtakoota;
+  const ashThreshold = ashSummary?.minimum_threshold ?? 18;
+  const ashThresholdMet = ashSummary?.is_threshold_met ?? ashtakootaPts >= ashThreshold;
+  const ashtakootaRows = ASHTAKOOTA_META_PRINT.map(([kId, labelTa, maxDef, sigTa]) => {
+    const kObj = kootas?.[kId];
+    const maxPts = Number(kObj?.max_points ?? maxDef) || maxDef;
+    const earnedPts = Number(kObj?.earned_points ?? 0) || 0;
+    const isCancelled = Boolean(kObj?.is_cancelled);
+    const cancelReason = String(kObj?.cancellation_reason || "").trim();
+    let statusTa = "தோஷம்";
+    let statusCls = "text-rose-700 font-bold";
+    if (isCancelled) {
+      statusTa = "தோஷ நிவர்த்தி";
+      statusCls = "text-emerald-700 font-bold";
+    } else if (earnedPts >= maxPts * 0.5) {
+      statusTa = "சாதகம்";
+      statusCls = "text-emerald-700 font-bold";
+    } else if (earnedPts > 0) {
+      statusTa = "பகுதி";
+      statusCls = "text-amber-700 font-bold";
+    }
+    return {
+      id: kId,
+      labelTa,
+      sigTa,
+      earnedStr: fmtPts(earnedPts),
+      maxStr: fmtPts(maxPts),
+      statusTa,
+      statusCls,
+      cancelReason,
+    };
+  });
+
+  const doshaAny: Record<string, any> = response.dosha_analysis || {};
+  const gPapa = doshaAny.groom_papasamya || {};
+  const bPapa = doshaAny.bride_papasamya || {};
+  const papaVerdict = String(doshaAny.papasamya_verdict || "TOLERABLE").toUpperCase();
+  const papaVerdictTa = PAPASAMYA_VERDICT_TA[papaVerdict] || papaVerdict;
+  const papaToneCls =
+    papaVerdict === "FAVORABLE"
+      ? "text-emerald-700 font-bold"
+      : papaVerdict === "UNFAVORABLE"
+      ? "text-rose-700 font-bold"
+      : "text-amber-700 font-bold";
+  const papaDiffStr =
+    doshaAny.papasamya_diff_percent !== undefined && doshaAny.papasamya_diff_percent !== null
+      ? `${Number(doshaAny.papasamya_diff_percent).toFixed(1)}%`
+      : "-";
+
+  const kpRaw: Record<string, any> = response.kp_marriage || {};
+  const kpAvailable = Boolean(response.kp_marriage && Object.keys(kpRaw).length > 0);
+  const gKpCsl = kpRaw.groom_analysis?.csl_7th || {};
+  const bKpCsl = kpRaw.bride_analysis?.csl_7th || {};
+  const gCslEn = String(gKpCsl.sub_lord || kpRaw.groom_7th_csl_planet || "-");
+  const bCslEn = String(bKpCsl.sub_lord || kpRaw.bride_7th_csl_planet || "-");
+  const gKpVerdictEn = String(gKpCsl.verdict || kpRaw.groom_7th_csl_promise || "-").toUpperCase();
+  const bKpVerdictEn = String(bKpCsl.verdict || kpRaw.bride_7th_csl_promise || "-").toUpperCase();
+  const gKpHouses: number[] = Array.isArray(gKpCsl.supporting_houses_signified) ? gKpCsl.supporting_houses_signified : [];
+  const bKpHouses: number[] = Array.isArray(bKpCsl.supporting_houses_signified) ? bKpCsl.supporting_houses_signified : [];
+  const rpLevelEn = String(kpRaw.ruling_planets_agreement_level || kpRaw.significators_agreement || "-").toUpperCase();
+  const sharedRpList: string[] = Array.isArray(kpRaw.shared_ruling_planets)
+    ? kpRaw.shared_ruling_planets.map((p: string) => PLANET_NAME_TO_TA[p] || p)
+    : [];
+
+  const sr = response.sivadasan_ravi_insights;
+  const guruBalam = sr?.guru_balam;
+  const nadiYogam = sr?.nadi_porutham;
+  const inLaws = sr?.in_laws_nakshatras;
+  const parikara = sr?.classical_remedies?.parikara_sthalam;
+  const firstHymn = sr?.classical_remedies?.sacred_hymns?.[0];
+
+  const gD9Ca = (response.groom_vedic as any)?.navamsa_cross_analysis;
+  const bD9Ca = (response.bride_vedic as any)?.navamsa_cross_analysis;
+  const formatD9Summary = (ca: any, roleTa: string) => {
+    if (!ca) return `${roleTa}: நவாம்ச நிலை சரிபார்க்கப்பட்டது.`;
+    const d9Lagna = getSignTa(ca.d9_lagna_sign_name);
+    const d9Lord = PLANET_NAME_TO_TA[ca.d9_7th_lord] || ca.d9_7th_lord || "-";
+    const venusSign = getSignTa(ca.venus_in_d9_sign);
+    return `${roleTa}: நவாம்ச லக்னம் ${d9Lagna}, 7-ஆம் அதிபதி ${d9Lord}, சுக்கிரன் ${venusSign}`;
+  };
+  const d9BoundaryWarn = Boolean(gD9Ca?.navamsa_boundary_risk || bD9Ca?.navamsa_boundary_risk);
 
   return (
     <div className="bg-white text-slate-900 font-tamil max-w-[190mm] mx-auto">
@@ -1267,6 +1388,162 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           <h2 className="text-[18px] font-bold text-slate-900 mb-2">முனிவரின் வாக்கு</h2>
           <p className="text-[11.5px] leading-[1.65] text-slate-900">{sageVerdictTa}</p>
         </div>
+      </section>
+
+      {/* ======================== PAGE 6 ======================== */}
+      <section className="marriage-print-page pt-1 pb-2 space-y-3">
+        {/* Ashtakoota 8-Koota Breakdown */}
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[17px] font-bold text-slate-900">அஷ்டகூட (36) &amp; கூடுதல் பொருத்த ஆய்வுகள்</h2>
+          <span
+            className={`px-2 py-0.5 rounded border text-[10px] font-bold ${
+              ashThresholdMet
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-rose-50 border-rose-200 text-rose-700"
+            }`}
+          >
+            மொத்தம்: {fmtPts(ashtakootaPts)} / 36 (குறைந்தபட்சம் {fmtPts(ashThreshold)})
+          </span>
+        </div>
+
+        <table className="w-full border-collapse border border-slate-400 text-[9.8px]">
+          <thead>
+            <tr className="bg-slate-100 text-slate-900 font-bold">
+              <th className="border border-slate-400 px-2 py-1.5 text-left w-[25%]">கூடம் (Koota)</th>
+              <th className="border border-slate-400 px-2 py-1.5 text-left w-[47%]">விளக்கம் &amp; விலக்கு</th>
+              <th className="border border-slate-400 px-2 py-1.5 text-center w-[14%]">மதிப்பெண்</th>
+              <th className="border border-slate-400 px-2 py-1.5 text-center w-[14%]">நிலை</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ashtakootaRows.map((row) => (
+              <tr key={row.id} className="bg-white align-middle">
+                <td className="border border-slate-400 px-2 py-1 font-bold text-slate-900">{row.labelTa}</td>
+                <td className="border border-slate-400 px-2 py-1 text-slate-700 leading-snug">
+                  <div>{row.sigTa}</div>
+                  {row.cancelReason && (
+                    <div className="text-[9px] text-emerald-700 font-semibold">விலக்கு: {row.cancelReason}</div>
+                  )}
+                </td>
+                <td className="border border-slate-400 px-2 py-1 text-center font-bold text-slate-900">
+                  {row.earnedStr} / {row.maxStr}
+                </td>
+                <td className={`border border-slate-400 px-2 py-1 text-center ${row.statusCls}`}>
+                  {row.statusTa}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Papasamya & KP 7th CSL */}
+        <div className="grid grid-cols-2 gap-3 text-[9.8px]">
+          <div className="rounded-md border border-slate-300 bg-slate-50 p-2.5 space-y-1">
+            <div className="font-bold text-[11px] text-slate-900 border-b border-slate-200 pb-1">
+              தென் இந்திய பாபசாம்யம் (Papasamya)
+            </div>
+            <div className="text-slate-900">
+              மணமகன் பாபம்: <b>{fmtPts(gPapa.total_papam)}</b> | மணமகள் பாபம்: <b>{fmtPts(bPapa.total_papam)}</b>
+            </div>
+            <div className="text-[9px] text-slate-600">
+              மணமகன்: {Object.keys(gPapa).length > 0 ? `லக்னம்: ${fmtPts(gPapa.lagna_papam)} | சந்திரன்: ${fmtPts(gPapa.moon_papam)} | சுக்கிரன்: ${fmtPts(gPapa.venus_papam)}` : "-"}
+            </div>
+            <div className="text-[9px] text-slate-600">
+              மணமகள்: {Object.keys(bPapa).length > 0 ? `லக்னம்: ${fmtPts(bPapa.lagna_papam)} | சந்திரன்: ${fmtPts(bPapa.moon_papam)} | சுக்கிரன்: ${fmtPts(bPapa.venus_papam)}` : "-"}
+            </div>
+            <div className="pt-1 border-t border-dashed border-slate-300 text-[9.2px] text-slate-800 leading-snug">
+              வித்தியாசம்: <b>{papaDiffStr}</b> | தீர்ப்பு: <span className={papaToneCls}>{papaVerdictTa}</span>
+              <br />
+              {doshaAny.papasamya_explanation_ta || "இருவரின் பாபசாம்ய புள்ளிகள் ஒப்பிடப்பட்டன."}
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-300 bg-slate-50 p-2.5 space-y-1">
+            <div className="font-bold text-[11px] text-slate-900 border-b border-slate-200 pb-1">
+              கே.பி (KP) 7-ஆம் உப அதிபதி &amp; ஆளுமை கிரகங்கள்
+            </div>
+            {kpAvailable ? (
+              <>
+                <div className="text-slate-900">
+                  மணமகன் 7-ஆம் உப அதிபதி: <b>{PLANET_NAME_TO_TA[gCslEn] || gCslEn}</b> ({KP_VERDICT_TA[gKpVerdictEn] || gKpVerdictEn})
+                </div>
+                <div className="text-[9px] text-slate-600">
+                  சாதக பாவங்கள்: [{gKpHouses.length > 0 ? gKpHouses.join(", ") : "-"}]
+                </div>
+                <div className="text-slate-900 pt-0.5">
+                  மணமகள் 7-ஆம் உப அதிபதி: <b>{PLANET_NAME_TO_TA[bCslEn] || bCslEn}</b> ({KP_VERDICT_TA[bKpVerdictEn] || bKpVerdictEn})
+                </div>
+                <div className="text-[9px] text-slate-600">
+                  சாதக பாவங்கள்: [{bKpHouses.length > 0 ? bKpHouses.join(", ") : "-"}]
+                </div>
+                <div className="pt-1 border-t border-dashed border-slate-300 text-[9.2px] text-slate-800 leading-snug">
+                  ஆளுமை கிரக ஒப்பீடு: <b>{KP_VERDICT_TA[rpLevelEn] || kpRaw.ruling_planets_agreement_level || "ஆய்வு செய்யப்பட்டது"}</b> | பொது கிரகங்கள்: {sharedRpList.length > 0 ? sharedRpList.join(", ") : "-"}
+                </div>
+              </>
+            ) : (
+              <div className="text-slate-600 text-[9.5px]">கே.பி (KP) 7-ஆம் உப அதிபதி தரவு சேர்க்கப்படவில்லை.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Guru Balam, Nandi Yogam, In-Laws & Navamsa */}
+        <div className="rounded-md border border-slate-300 bg-white p-2.5 space-y-1 text-[9.8px]">
+          <div className="font-bold text-[11px] text-slate-900 border-b border-slate-200 pb-1">
+            கோட்சார குரு பலம், நாடி &amp; நவாம்ச சிறப்பு ஆய்வு
+          </div>
+          <div className="text-slate-800 leading-snug">
+            <b>கோட்சார குரு பலம்:</b> {guruBalam?.label_ta || "கோட்சார குரு பலம் சரிபார்க்கப்பட்டது"}
+            {guruBalam?.description_ta ? ` — ${guruBalam.description_ta}` : ""}
+          </div>
+          {nadiYogam && (
+            <>
+              <div className="text-slate-800 leading-snug">
+                <b>நாடிப் பொருத்தம் &amp; நந்தியோகம்:</b> {nadiYogam.verdict_ta}
+              </div>
+              {(nadiYogam.nandi_obstacles_ta || []).slice(0, 2).map((obs, idx) => (
+                <div key={idx} className="text-[9px] text-slate-600 pl-2.5 leading-snug">
+                  • {obs}
+                </div>
+              ))}
+            </>
+          )}
+          {inLaws?.has_special_nakshatra && inLaws.findings.length > 0 ? (
+            inLaws.findings.slice(0, 3).map((f, idx) => (
+              <div key={idx} className="text-slate-800 leading-snug">
+                <b>
+                  {f.nakshatra_ta} ({f.relative_ta}):
+                </b>{" "}
+                {f.is_exempt ? "விதிவிலக்கு பொருந்தியது (தோஷமில்லை)" : "கவனம் தேவை"} — {f.explanation_ta}
+              </div>
+            ))
+          ) : (
+            <div className="text-slate-800 leading-snug">
+              <b>மாமனார்/மாமியார் விசேஷ நட்சத்திர ஆய்வு:</b> விசேஷ நட்சத்திர தோஷம் எதுவும் இல்லை.
+            </div>
+          )}
+          <div className="text-slate-800 leading-snug">
+            <b>நவாம்ச (D9) நிலை:</b> {formatD9Summary(gD9Ca, "மணமகன்")} | {formatD9Summary(bD9Ca, "மணமகள்")}
+          </div>
+          {d9BoundaryWarn && (
+            <div className="text-[9.2px] font-semibold text-amber-700">
+              நேர எச்சரிக்கை: பிறப்பு நேர சிறு மாற்றத்தால் நவாம்ச லக்னம் மாற வாய்ப்புள்ளதால் நேர உறுதிப்படுத்தல் நல்லது.
+            </div>
+          )}
+        </div>
+
+        {/* Parikara Sthalam & Ethical Disclaimer */}
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-[9.8px]">
+          <div className="font-bold text-[10.5px] text-amber-900 mb-0.5">முதன்மை பரிகார ஸ்தலம் &amp; வழிகாட்டுதல்</div>
+          <div className="text-slate-800 leading-snug">
+            <b>{parikara?.name_ta || "குலதெய்வ வழிபாடு & திருக்கோவில் தரிசனம்"}</b> —{" "}
+            {parikara?.significance_ta || "திருமண நல்வாழ்விற்காக இறை வழிபாடு மேற்கொள்ளவும்."}
+            {firstHymn?.title_ta ? ` | பரிந்துரைக்கப்படும் பாராயணம்: ${firstHymn.title_ta}` : ""}
+          </div>
+        </div>
+
+        <p className="text-[8.8px] text-slate-500 border-t border-slate-200 pt-1.5 leading-snug">
+          குறிப்பு: இந்த அறிக்கை பாரம்பரிய தமிழ் பொருத்தம், 36 அஷ்டகூடம், பாபசாம்யம், வேத மற்றும் கே.பி. (KP) ஜோதிட விதிகளின் அடிப்படையில் தயாரிக்கப்பட்டது; இறுதி திருமண முடிவிற்கு குடும்ப ஆலோசனையும் சுப முகூர்த்த தேர்வும் பரிந்துரைக்கப்படுகிறது.
+        </p>
       </section>
     </div>
   );

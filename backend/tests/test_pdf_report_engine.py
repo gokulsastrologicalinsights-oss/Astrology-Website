@@ -496,7 +496,7 @@ def test_marriage_compatibility_pdf_generation():
     assert len(pdf_bytes_ta) > 10000
 
     reader = pypdf.PdfReader(BytesIO(pdf_bytes_ta))
-    assert len(reader.pages) == 5
+    assert len(reader.pages) == 6
 
     page_1_text = reader.pages[0].extract_text()
     assert "Gokul's Astrological Insights" in page_1_text
@@ -510,14 +510,19 @@ def test_marriage_compatibility_pdf_generation():
     page_4_text = reader.pages[3].extract_text()
     assert "Dasa Bhukti Sequence" in page_4_text
 
-    # Also verify pure-Python ReportLab 5-page fallback renders exact 5 pages cleanly
+    page_6_text = reader.pages[5].extract_text()
+    assert "Papasamya" in page_6_text
+    assert "Varna" in page_6_text
+
+    # Also verify pure-Python ReportLab 6-page fallback renders exact 6 pages cleanly
     pdf_bytes_rl = generate_marriage_compatibility_pdf_bytes_rl(sample_payload, language="ta")
     assert len(pdf_bytes_rl) > 5000
     reader_rl = pypdf.PdfReader(BytesIO(pdf_bytes_rl))
-    assert len(reader_rl.pages) == 5
+    assert len(reader_rl.pages) == 6
     rl_p1 = reader_rl.pages[0].extract_text()
     assert "Gokul's Astrological Insights" in rl_p1
     assert "Dasa Bhukti Sequence" in reader_rl.pages[3].extract_text()
+    assert "Papasamya" in reader_rl.pages[5].extract_text()
 
     # Test Endpoint
     res = client.post(
