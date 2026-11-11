@@ -2502,7 +2502,7 @@ function MarriageCompatibilityContent() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Comprehensive report with 10 Poruthams, 36 Ashtakoota, Kuja Dosha, Papasamya, Vedic &amp; KP analysis.
+                    5-Page Print Format PDF: Brand header, 11 Poruthams, South Indian Charts, Dosha Audit, Dasa Bhukti &amp; Verdict.
                   </p>
                 </div>
               </label>
@@ -2532,7 +2532,7 @@ function MarriageCompatibilityContent() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    10 பொருத்தங்கள், அஷ்டகூடம், செவ்வாய் தோஷம், பாபசாம்யம், கே.பி மற்றும் மங்கள வாழ்த்துச் செய்தி அடங்கிய முழு அறிக்கை.
+                    5-பக்க அச்சு வடிவ PDF: 11 பொருத்த மதிப்பீடு, ராசி/நவாம்சம் சக்கரங்கள், தோஷ ஆய்வு, தசா புக்தி &amp; முனிவரின் வாக்கு.
                   </p>
                 </div>
               </label>

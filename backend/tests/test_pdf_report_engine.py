@@ -484,7 +484,11 @@ def test_marriage_compatibility_pdf_generation():
         "bride_d9_chart": {"ascendant": {"sign_index": 4}, "planets": []},
     }
 
-    # Test PDF generation in English and Tamil
+    # Test 5-page Print-Aligned PDF generation (Playwright + ReportLab fallback)
+    from app.services.pdf_report_engine.marriage_compatibility_generator_rl import (
+        generate_marriage_compatibility_pdf_bytes_rl,
+    )
+
     pdf_bytes_en = generate_marriage_compatibility_pdf_bytes(sample_payload, language="en")
     assert len(pdf_bytes_en) > 10000
 
@@ -492,15 +496,28 @@ def test_marriage_compatibility_pdf_generation():
     assert len(pdf_bytes_ta) > 10000
 
     reader = pypdf.PdfReader(BytesIO(pdf_bytes_ta))
-    assert len(reader.pages) == 7
+    assert len(reader.pages) == 5
 
     page_1_text = reader.pages[0].extract_text()
     assert "Gokul's Astrological Insights" in page_1_text
     assert "165, Sakreeshwari Nagar" in page_1_text
-    assert "9444 55 9071" in page_1_text
+    assert "Karthik" in page_1_text
+    assert "Priya" in page_1_text
 
-    page_7_text = reader.pages[6].extract_text()
-    assert "sikiram kalyanam nadakanum" in page_7_text
+    page_2_text = reader.pages[1].extract_text()
+    assert "Navamsa" in page_2_text
+
+    page_4_text = reader.pages[3].extract_text()
+    assert "Dasa Bhukti Sequence" in page_4_text
+
+    # Also verify pure-Python ReportLab 5-page fallback renders exact 5 pages cleanly
+    pdf_bytes_rl = generate_marriage_compatibility_pdf_bytes_rl(sample_payload, language="ta")
+    assert len(pdf_bytes_rl) > 5000
+    reader_rl = pypdf.PdfReader(BytesIO(pdf_bytes_rl))
+    assert len(reader_rl.pages) == 5
+    rl_p1 = reader_rl.pages[0].extract_text()
+    assert "Gokul's Astrological Insights" in rl_p1
+    assert "Dasa Bhukti Sequence" in reader_rl.pages[3].extract_text()
 
     # Test Endpoint
     res = client.post(
