@@ -2,8 +2,11 @@ name: Daily Facebook Raasi Palan Poster
 
 on:
   schedule:
-    # 06:00 AM IST (Indian Standard Time is UTC + 5:30) -> 00:30 AM UTC
-    - cron: '30 0 * * *'
+    # Off-peak UTC slots around 06:00 AM IST (UTC+5:30) to avoid :00/:30 GitHub Actions cron congestion:
+    # - 00:33 UTC = 06:03 AM IST (primary run)
+    # - 00:57 UTC = 06:27 AM IST (backup retry; backend skips already-posted Rashis)
+    - cron: '33 0 * * *'
+    - cron: '57 0 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub Actions web tab anytime
 
 jobs:
@@ -13,29 +16,94 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Trigger Cloud Raasi Palan Auto-Poster
+      - name: Wake Backend and Publish Daily Raasi Palan
         run: |
+          set -euo pipefail
+          BASE_URL="https://gai-astrology-backend.onrender.com"
+          TODAY_IST=$(TZ=Asia/Kolkata date +%Y-%m-%d)
+
           echo "==========================================================="
           echo "Triggering Daily KP Raasi Palan for All 12 Rashis to Facebook"
-          echo "Target Time: 06:00 AM IST"
+          echo "Target Date (IST): $TODAY_IST"
           echo "==========================================================="
 
-          # Request publication for all 12 rashis from the live backend
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://gai-astrology-backend.onrender.com/api/v1/social/facebook/publish" \
-            -H "Content-Type: application/json" \
-            -d '{"rashi": "all"}' \
-            --max-time 600)
+          # 1. Wake up Render Free Tier container and wait until /health returns 200 OK
+          READY=0
+          for i in $(seq 1 24); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$BASE_URL/health" || echo "000")
+            echo "Health check attempt $i/24: HTTP $CODE"
+            if [ "$CODE" = "200" ]; then
+              READY=1
+              break
+            fi
+            sleep 5
+          done
 
-          BODY=$(echo "$RESPONSE" | sed -e '$d')
-          STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
-
-          echo "Response Body: $BODY"
-          echo "HTTP Status Code: $STATUS"
-
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
-            echo "Successfully triggered and published to Facebook!"
-            exit 0
-          else
-            echo "Failed to publish to Facebook. HTTP Status: $STATUS"
+          if [ "$READY" -ne 1 ]; then
+            echo "Backend did not become healthy within 120 seconds."
             exit 1
           fi
+
+          # 2. Check status first; if today is not already complete, queue non-blocking publish
+          STATUS_JSON=$(curl -s --max-time 20 "$BASE_URL/api/v1/social/facebook/status" || echo "{}")
+          if ! echo "$STATUS_JSON" | jq -e . >/dev/null 2>&1; then
+            STATUS_JSON="{}"
+          fi
+          LAST_DATE=$(echo "$STATUS_JSON" | jq -r '.scheduler.last_run.last_posted_date // ""')
+          LAST_STATUS=$(echo "$STATUS_JSON" | jq -r '.scheduler.last_run.status // ""')
+          IN_PROGRESS=$(echo "$STATUS_JSON" | jq -r '.scheduler.in_progress // false')
+
+          if [ "$LAST_DATE" = "$TODAY_IST" ] && [ "$LAST_STATUS" = "success" ]; then
+            echo "All 12 Rashis are already marked posted for $TODAY_IST."
+            echo "$STATUS_JSON" | jq .
+            exit 0
+          fi
+
+          if [ "$IN_PROGRESS" != "true" ]; then
+            echo "Triggering non-blocking background publish for $TODAY_IST..."
+            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL/api/v1/social/facebook/publish" \
+              -H "Content-Type: application/json" \
+              -d "{\"date\": \"$TODAY_IST\", \"rashi\": \"all\", \"background\": true}" \
+              --max-time 30 || echo -e "\nHTTP_STATUS:000")
+
+            BODY=$(echo "$RESPONSE" | sed -e '$d')
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
+            echo "Publish trigger HTTP $HTTP_CODE: $BODY"
+
+            if ! [[ "$HTTP_CODE" =~ ^[0-9]+$ ]] || [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+              echo "Failed to trigger Facebook publish."
+              exit 1
+            fi
+          else
+            echo "Background publish already in progress; monitoring status..."
+          fi
+
+          # 3. Poll /status until the 12-Rashi batch completes (also keeps Render warm)
+          for i in $(seq 1 27); do
+            sleep 20
+            STATUS_JSON=$(curl -s --max-time 20 "$BASE_URL/api/v1/social/facebook/status" || echo "{}")
+            if ! echo "$STATUS_JSON" | jq -e . >/dev/null 2>&1; then
+              echo "Poll $i/27 -> transient non-JSON response; retrying..."
+              continue
+            fi
+            LAST_DATE=$(echo "$STATUS_JSON" | jq -r '.scheduler.last_run.last_posted_date // ""')
+            LAST_STATUS=$(echo "$STATUS_JSON" | jq -r '.scheduler.last_run.status // ""')
+            IN_PROGRESS=$(echo "$STATUS_JSON" | jq -r '.scheduler.in_progress // false')
+            POST_SUMMARY=$(echo "$STATUS_JSON" | jq -r '.scheduler.last_run.post_id // ""')
+            ERR_MSG=$(echo "$STATUS_JSON" | jq -r '.scheduler.last_run.error // ""')
+
+            echo "Poll $i/27 -> in_progress=$IN_PROGRESS date=$LAST_DATE status=$LAST_STATUS summary=$POST_SUMMARY"
+
+            if [ "$IN_PROGRESS" = "false" ]; then
+              if [ "$LAST_DATE" = "$TODAY_IST" ] && [ "$LAST_STATUS" = "success" ]; then
+                echo "Successfully verified Raasi Palan posts for $TODAY_IST ($POST_SUMMARY)!"
+                exit 0
+              elif [ "$LAST_STATUS" = "failed" ] || [ "$LAST_STATUS" = "partial" ]; then
+                echo "Facebook publish ended with status=$LAST_STATUS error=$ERR_MSG"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "Timed out waiting for Raasi Palan publish completion."
+          exit 1

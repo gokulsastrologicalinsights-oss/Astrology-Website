@@ -10,6 +10,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import sys
+import weakref
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
@@ -21,6 +23,26 @@ from app.schemas.kp_daily_horoscope import KpDailyHoroscopeResponse, RashiDailyP
 from app.services.kp_daily_horoscope_service import compute_kp_daily_horoscope
 
 logger = logging.getLogger("gai.facebook")
+if not logger.handlers:
+    _handler = logging.StreamHandler(sys.stdout)
+    _handler.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"))
+    logger.addHandler(_handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+_LOOP_PUBLISH_LOCKS: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def _get_publish_lock() -> asyncio.Lock:
+    """Returns an asyncio.Lock bound to the currently running event loop."""
+    loop = asyncio.get_running_loop()
+    lock = _LOOP_PUBLISH_LOCKS.get(loop)
+    if lock is None:
+        lock = asyncio.Lock()
+        _LOOP_PUBLISH_LOCKS[loop] = lock
+    return lock
 
 FACEBOOK_API_BASE = "https://graph.facebook.com"
 
@@ -70,8 +92,8 @@ MONTHS_TA: Dict[int, str] = {
 }
 
 
-def _format_tamil_date(date_str: str, day_ta: str) -> str:
-    """Formats YYYY-MM-DD into '10 நவம்பர் 2026 – செவ்வாய்க்கிழமை'."""
+def _format_tamil_date_prefix(date_str: str) -> str:
+    """Formats YYYY-MM-DD into '10 நவம்பர் 2026' without weekday."""
     try:
         parts = date_str.split("-")
         if len(parts) == 3:
@@ -79,10 +101,15 @@ def _format_tamil_date(date_str: str, day_ta: str) -> str:
             month = int(parts[1])
             day = int(parts[2])
             month_name = MONTHS_TA.get(month, parts[1])
-            return f"{day} {month_name} {year} – {day_ta}"
+            return f"{day} {month_name} {year}"
     except Exception:
         pass
-    return f"{date_str} – {day_ta}"
+    return date_str
+
+
+def _format_tamil_date(date_str: str, day_ta: str) -> str:
+    """Formats YYYY-MM-DD into '10 நவம்பர் 2026 – செவ்வாய்க்கிழமை'."""
+    return f"{_format_tamil_date_prefix(date_str)} – {day_ta}"
 
 
 def _clean_brief(text: str) -> str:
@@ -257,10 +284,65 @@ async def post_to_facebook(
         }
 
 
+_RASHI_HEADER_RE = re.compile(r"\(([A-Za-z]+)\)\s*-\s*⭐")
+
+
+async def fetch_posted_rashis_for_date(
+    target_date: str,
+    page_id: Optional[str] = None,
+    access_token: Optional[str] = None,
+    limit: int = 40,
+) -> Dict[str, Dict[str, Any]]:
+    """Checks the Facebook Page feed for Rashis already posted for target_date (YYYY-MM-DD)."""
+    pid = (page_id or settings.fb_page_id or "").strip()
+    token = (access_token or settings.fb_page_access_token or "").strip()
+    if not pid or not token:
+        return {}
+
+    date_marker = f"📅 தேதி: {_format_tamil_date_prefix(target_date)}"
+    url = f"{FACEBOOK_API_BASE}/{settings.fb_graph_api_version}/{pid}/posts"
+    params = {
+        "fields": "id,created_time,message,permalink_url",
+        "limit": limit,
+        "access_token": token,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.get(url, params=params)
+            data = resp.json()
+            if resp.status_code != 200 or "error" in data:
+                err_msg = data.get("error", {}).get("message", f"HTTP {resp.status_code}")
+                logger.warning(f"Could not read existing Facebook Page posts for deduplication: {err_msg}")
+                return {}
+    except Exception as exc:
+        logger.warning(f"Error reading existing Facebook Page posts for deduplication: {exc}")
+        return {}
+
+    posted: Dict[str, Dict[str, Any]] = {}
+    for item in data.get("data", []):
+        msg = item.get("message") or ""
+        if "தினசரி ராசிபலன்" not in msg or date_marker not in msg:
+            continue
+        match = _RASHI_HEADER_RE.search(msg)
+        if not match:
+            continue
+        rashi_key = match.group(1).strip().lower()
+        post_id = item.get("id")
+        if rashi_key not in posted:
+            posted[rashi_key] = {
+                "post_id": post_id,
+                "fb_url": item.get("permalink_url") or (f"https://www.facebook.com/{post_id}" if post_id else None),
+                "created_time": item.get("created_time"),
+            }
+    return posted
+
+
 async def generate_and_post_daily_raasi_palan(
     target_date: Optional[str] = None,
     rashi: Optional[str] = None,
     dry_run: bool = False,
+    skip_if_already_posted: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Generates today's KP Daily Raasi Palan in Tamil and posts it to Facebook.
 
@@ -275,10 +357,12 @@ async def generate_and_post_daily_raasi_palan(
 
     # If 'all' is requested, call batch handler for all 12 rashis
     if target_rashi.lower() == "all":
+        skip_dup = True if skip_if_already_posted is None else skip_if_already_posted
         return await post_all_12_raasi_palans(
             target_date=target_date,
             delay_seconds=settings.fb_post_delay_seconds,
             dry_run=dry_run,
+            skip_if_already_posted=skip_dup,
         )
 
     # Single Rashi posting
@@ -293,67 +377,93 @@ async def generate_and_post_daily_raasi_palan(
 
     prediction = horoscope_data.predictions[0]
     post_text = format_kp_daily_tamil_post(horoscope_data, prediction)
+    rashi_label = f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})"
 
     if dry_run:
         return {
             "success": True,
             "dry_run": True,
             "target_date": target_date,
-            "rashi": f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})",
+            "rashi": rashi_label,
             "message": post_text,
         }
 
-    post_result = await post_to_facebook(post_text)
-    post_result.update({
-        "target_date": target_date,
-        "rashi": f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})",
-        "posted_at": datetime.now(ZoneInfo("Asia/Kolkata")).isoformat(),
-        "preview_text": post_text[:200] + "...",
-    })
-    return post_result
+    skip_dup = False if skip_if_already_posted is None else skip_if_already_posted
+    async with _get_publish_lock():
+        if skip_dup:
+            already_posted = await fetch_posted_rashis_for_date(target_date)
+            existing = already_posted.get(prediction.rashi_name_en.lower())
+            if existing:
+                logger.info(f"Skipping {rashi_label} for {target_date}; already posted ({existing.get('post_id')}).")
+                return {
+                    "success": True,
+                    "skipped": True,
+                    "reason": "already_posted_today",
+                    "post_id": existing.get("post_id"),
+                    "fb_url": existing.get("fb_url"),
+                    "target_date": target_date,
+                    "rashi": rashi_label,
+                }
+
+        post_result = await post_to_facebook(post_text)
+        post_result.update({
+            "target_date": target_date,
+            "rashi": rashi_label,
+            "posted_at": datetime.now(ZoneInfo("Asia/Kolkata")).isoformat(),
+            "preview_text": post_text[:200] + "...",
+        })
+        return post_result
 
 
-async def post_all_12_raasi_palans(
-    target_date: Optional[str] = None,
-    delay_seconds: float = 20.0,
-    dry_run: bool = False,
+async def _post_all_12_unlocked(
+    horoscope_data: KpDailyHoroscopeResponse,
+    target_date: str,
+    delay_seconds: float,
+    skip_if_already_posted: bool,
 ) -> Dict[str, Any]:
-    """Computes and posts KP Daily Raasi Palan for all 12 Rashis sequentially.
-
-    Introduces a 20-second delay between posts to prevent Facebook anti-spam rate limiting.
-    """
-    if not target_date:
-        ist_now = datetime.now(ZoneInfo("Asia/Kolkata"))
-        target_date = ist_now.strftime("%Y-%m-%d")
-
-    horoscope_data = compute_kp_daily_horoscope(
-        target_date=target_date,
-        timezone_str="Asia/Kolkata",
-        rashi_filter="all",
+    """Executes sequential 12-Rashi Facebook publishing while holding the publish lock."""
+    already_posted = (
+        await fetch_posted_rashis_for_date(target_date)
+        if skip_if_already_posted
+        else {}
     )
+    if already_posted:
+        logger.info(
+            f"Found {len(already_posted)} Rashi(s) already posted on Facebook for {target_date}; they will be skipped."
+        )
 
     results: List[Dict[str, Any]] = []
-    messages: List[Dict[str, Any]] = []
+    newly_posted = 0
+    skipped_existing = 0
 
     for index, prediction in enumerate(horoscope_data.predictions):
         post_text = format_kp_daily_tamil_post(horoscope_data, prediction)
         rashi_label = f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})"
+        existing = already_posted.get(prediction.rashi_name_en.lower())
 
-        if dry_run:
-            messages.append({
+        if existing:
+            skipped_existing += 1
+            logger.info(f"Skipping {index + 1}/12: {rashi_label} (already posted today: {existing.get('post_id')}).")
+            results.append({
                 "rashi_id": prediction.rashi_id,
-                "rashi_name": rashi_label,
-                "message": post_text,
+                "rashi": rashi_label,
+                "success": True,
+                "skipped": True,
+                "reason": "already_posted_today",
+                "post_id": existing.get("post_id"),
+                "fb_url": existing.get("fb_url"),
             })
             continue
 
         try:
             logger.info(f"Posting {index + 1}/12: {rashi_label} to Facebook...")
             post_res = await post_to_facebook(post_text)
+            newly_posted += 1
             results.append({
                 "rashi_id": prediction.rashi_id,
                 "rashi": rashi_label,
                 "success": True,
+                "skipped": False,
                 "post_id": post_res.get("post_id"),
                 "fb_url": post_res.get("fb_url"),
             })
@@ -366,11 +476,57 @@ async def post_all_12_raasi_palans(
                 "error": str(exc),
             })
 
-        # Anti-spam delay between posts if more posts remain
-        if index < len(horoscope_data.predictions) - 1 and delay_seconds > 0:
+        has_more_to_post = any(
+            p.rashi_name_en.lower() not in already_posted
+            for p in horoscope_data.predictions[index + 1:]
+        )
+        if has_more_to_post and delay_seconds > 0:
             await asyncio.sleep(delay_seconds)
 
+    success_count = sum(1 for r in results if r.get("success"))
+    failed_count = len(results) - success_count
+    return {
+        "success": failed_count == 0 and success_count > 0,
+        "target_date": target_date,
+        "total_attempted": len(results),
+        "successful_posts": success_count,
+        "newly_posted": newly_posted,
+        "skipped_existing": skipped_existing,
+        "failed_posts": failed_count,
+        "results": results,
+    }
+
+
+async def post_all_12_raasi_palans(
+    target_date: Optional[str] = None,
+    delay_seconds: float = 20.0,
+    dry_run: bool = False,
+    skip_if_already_posted: bool = True,
+) -> Dict[str, Any]:
+    """Computes and posts KP Daily Raasi Palan for all 12 Rashis sequentially.
+
+    Skips Rashis already posted for target_date unless skip_if_already_posted=False,
+    and serializes concurrent runs via an event-loop lock.
+    """
+    if not target_date:
+        ist_now = datetime.now(ZoneInfo("Asia/Kolkata"))
+        target_date = ist_now.strftime("%Y-%m-%d")
+
+    horoscope_data = compute_kp_daily_horoscope(
+        target_date=target_date,
+        timezone_str="Asia/Kolkata",
+        rashi_filter="all",
+    )
+
     if dry_run:
+        messages = [
+            {
+                "rashi_id": prediction.rashi_id,
+                "rashi_name": f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})",
+                "message": format_kp_daily_tamil_post(horoscope_data, prediction),
+            }
+            for prediction in horoscope_data.predictions
+        ]
         return {
             "success": True,
             "dry_run": True,
@@ -379,12 +535,10 @@ async def post_all_12_raasi_palans(
             "posts": messages,
         }
 
-    success_count = sum(1 for r in results if r.get("success"))
-    return {
-        "success": success_count > 0,
-        "target_date": target_date,
-        "total_attempted": len(results),
-        "successful_posts": success_count,
-        "failed_posts": len(results) - success_count,
-        "results": results,
-    }
+    async with _get_publish_lock():
+        return await _post_all_12_unlocked(
+            horoscope_data=horoscope_data,
+            target_date=target_date,
+            delay_seconds=delay_seconds,
+            skip_if_already_posted=skip_if_already_posted,
+        )
