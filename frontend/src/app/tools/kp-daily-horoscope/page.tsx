@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   getKpDailyHoroscope,
+  getFacebookPreviewCardUrl,
   publishToFacebookPage,
   KpDailyHoroscopeResponse,
   RashiDailyPrediction,
@@ -40,6 +41,7 @@ import {
   Check,
   Share2,
   MessageCircle,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const RASHI_SYMBOLS: Record<number, string> = {
@@ -227,6 +229,8 @@ export default function KpDailyHoroscopePage() {
   const [shareLanguage, setShareLanguage] = useState<"ta" | "en" | "bilingual">("ta");
   const [fbPosting, setFbPosting] = useState<boolean>(false);
   const [fbResult, setFbResult] = useState<{ type: "success" | "error"; text: string; url?: string } | null>(null);
+  const [showFbCardPreview, setShowFbCardPreview] = useState<boolean>(false);
+  const [fbCardTarget, setFbCardTarget] = useState<"current" | "overview">("current");
 
   // Synchronize initial shareLanguage with site language
   useEffect(() => {
@@ -420,8 +424,8 @@ ${activePrediction.daily_remedy_ta}
           setFbResult({
             type: "success",
             text: isTa
-              ? "12 ராசிகளின் தினசரி பலன்களும் வரிசையாக Facebook பக்கத்தில் பதிவிடப்பட்டன!"
-              : "All 12 Rashis published successfully to your Facebook Page!",
+              ? "12 ராசிகளின் பட அட்டைகளும் (Overview + Carousels) Facebook பக்கத்தில் பதிவிடப்பட்டன!"
+              : "All 12 Rashis published as visual Tamil cards & carousels to your Facebook Page!",
           });
         } else {
           setFbResult({
@@ -1062,6 +1066,16 @@ ${activePrediction.daily_remedy_ta}
 
                   <button
                     type="button"
+                    onClick={() => setShowFbCardPreview((prev) => !prev)}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                    title={isTa ? "Facebook பட அட்டையைப் பார்வையிடு" : "Preview Branded Facebook Image Card"}
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>{isTa ? "பட அட்டை பார்" : "Preview Card"}</span>
+                  </button>
+
+                  <button
+                    type="button"
                     disabled={fbPosting}
                     onClick={() => handlePostToFacebook("current")}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition active:scale-95"
@@ -1078,6 +1092,16 @@ ${activePrediction.daily_remedy_ta}
                         <span>{isTa ? "FB-ல் பதிவிடு" : "Post to Facebook"}</span>
                       </>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowFbCardPreview((prev) => !prev)}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+                    title={isTa ? "Facebook பட அட்டையைப் பார்வையிடு" : "Preview Branded Facebook Image Card"}
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>{isTa ? "பட அட்டை பார்" : "Preview Card"}</span>
                   </button>
 
                   <button
@@ -1129,6 +1153,60 @@ ${activePrediction.daily_remedy_ta}
                       {isTa ? "பதிவைப் பார் ↗" : "View Post ↗"}
                     </a>
                   )}
+                </div>
+              )}
+
+              {/* Facebook Branded Image Card Preview */}
+              {showFbCardPreview && horoscopeData && activePrediction && (
+                <div className="p-4 rounded-xl bg-slate-950/90 border border-amber-500/30 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFbCardTarget("current")}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                          fbCardTarget === "current"
+                            ? "bg-amber-500 text-slate-950"
+                            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                        }`}
+                      >
+                        {activePrediction.rashi_name_ta} ({activePrediction.rashi_name_en})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFbCardTarget("overview")}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                          fbCardTarget === "overview"
+                            ? "bg-amber-500 text-slate-950"
+                            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                        }`}
+                      >
+                        {isTa ? "12 ராசிகள் சுருக்கம் (Slide 1)" : "12-Rashi Overview"}
+                      </button>
+                    </div>
+                    <a
+                      href={getFacebookPreviewCardUrl({
+                        date: horoscopeData.date,
+                        rashi: fbCardTarget === "overview" ? "overview" : activePrediction.rashi_name_en,
+                      })}
+                      download={`raasi_palan_${fbCardTarget === "overview" ? "overview" : activePrediction.rashi_name_en.toLowerCase()}_${horoscopeData.date}.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-amber-400 hover:text-amber-300 underline"
+                    >
+                      {isTa ? "PNG பதிவிறக்கு ↗" : "Open / Download PNG ↗"}
+                    </a>
+                  </div>
+                  <div className="flex justify-center">
+                    <img
+                      src={getFacebookPreviewCardUrl({
+                        date: horoscopeData.date,
+                        rashi: fbCardTarget === "overview" ? "overview" : activePrediction.rashi_name_en,
+                      })}
+                      alt={`Facebook Card Preview - ${fbCardTarget === "overview" ? "Overview" : activePrediction.rashi_name_en}`}
+                      className="max-h-[480px] w-auto rounded-xl border border-amber-500/20 shadow-lg"
+                    />
+                  </div>
                 </div>
               )}
 

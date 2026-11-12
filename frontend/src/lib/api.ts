@@ -5642,15 +5642,32 @@ export async function getKpDailyHoroscope(params?: {
 
 export async function getFacebookIntegrationStatus(): Promise<{
   credentials: { configured: boolean; valid?: boolean; error?: string; page_name?: string };
-  scheduler: { auto_post_enabled: boolean; is_running: boolean; post_time_ist: string; post_rashi: string; next_run_ist?: string };
+  scheduler: {
+    auto_post_enabled: boolean;
+    is_running: boolean;
+    post_time_ist: string;
+    post_rashi: string;
+    post_mode?: string;
+    next_run_ist?: string;
+  };
 }> {
   return request("/api/v1/social/facebook/status");
+}
+
+export function getFacebookPreviewCardUrl(params: { date?: string; rashi?: string }): string {
+  const qs = new URLSearchParams();
+  if (params.date) qs.set("date", params.date);
+  if (params.rashi) qs.set("rashi", params.rashi);
+  const base = getApiBaseUrl();
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return `${base}/api/v1/social/facebook/preview-card${suffix}`;
 }
 
 export async function publishToFacebookPage(params: {
   date?: string;
   rashi?: string;
   dry_run?: boolean;
+  mode?: "carousel" | "cards" | "image" | "text";
 }): Promise<{
   success: boolean;
   post_id?: string;
@@ -5658,6 +5675,8 @@ export async function publishToFacebookPage(params: {
   fb_url?: string;
   target_date?: string;
   rashi?: string;
+  post_mode?: string;
+  carousel_posts?: Array<{ group_index: number; rashis: string[]; success: boolean; post_id?: string; fb_url?: string }>;
 }> {
   return request("/api/v1/social/facebook/publish", {
     method: "POST",

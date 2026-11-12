@@ -117,6 +117,7 @@ def get_scheduler_status() -> Dict[str, Any]:
         "in_progress": _publish_in_progress,
         "post_time_ist": settings.fb_post_time_ist,
         "post_rashi": settings.fb_post_rashi,
+        "post_mode": settings.fb_post_mode,
         "next_run_ist": next_run.strftime("%Y-%m-%d %H:%M:%S %Z") if next_run else None,
         "last_run": _last_run_info,
     }
@@ -138,6 +139,7 @@ async def run_and_record_daily_publish(
     execution_date: Optional[str] = None,
     rashi: Optional[str] = None,
     force: bool = False,
+    post_mode: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Publishes daily horoscope (idempotently by default) and records scheduler telemetry."""
     global _publish_in_progress
@@ -147,18 +149,20 @@ async def run_and_record_daily_publish(
     skip_dup = False if force else (True if target_rashi.lower() == "all" else False)
 
     logger.info(
-        f"Running Facebook publish for date: {target_date} (Rashi: {target_rashi}, skip_existing={skip_dup})"
+        f"Running Facebook publish for date: {target_date} (Rashi: {target_rashi}, mode={post_mode or settings.fb_post_mode}, skip_existing={skip_dup})"
     )
     _publish_in_progress = True
     _last_run_info["status"] = "running"
     _last_run_info["error"] = None
 
     try:
+        extra_kwargs = {"post_mode": post_mode} if post_mode else {}
         result = await generate_and_post_daily_raasi_palan(
             target_date=target_date,
             rashi=target_rashi,
             dry_run=False,
             skip_if_already_posted=skip_dup,
+            **extra_kwargs,
         )
         succeeded = bool(result.get("success"))
         _last_run_info["last_run_time"] = datetime.now(tz).isoformat()
@@ -190,6 +194,7 @@ def trigger_background_publish(
     execution_date: Optional[str] = None,
     rashi: Optional[str] = None,
     force: bool = False,
+    post_mode: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Schedules a non-blocking daily publish task on the running loop if one is not active."""
     global _background_publish_task, _publish_in_progress
@@ -208,10 +213,12 @@ def trigger_background_publish(
 
     async def _runner() -> None:
         try:
+            extra_kwargs = {"post_mode": post_mode} if post_mode else {}
             await run_and_record_daily_publish(
                 execution_date=target_date,
                 rashi=target_rashi,
                 force=force,
+                **extra_kwargs,
             )
         except Exception:
             # Errors are already logged and recorded in _last_run_info

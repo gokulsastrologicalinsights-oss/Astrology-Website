@@ -70,6 +70,8 @@ class Settings(BaseModel):
     fb_post_rashi: str = "all"        # "all" for all 12 Rashis, or single e.g. "Aries"
     fb_post_delay_seconds: int = 20  # Delay between posts when posting all 12 rashis (20s anti-spam pacing)
     fb_graph_api_version: str = "v19.0"
+    fb_post_mode: str = "carousel"   # "carousel" (overview + 4-card groups), "cards" (12 photos), or "text"
+    fb_carousel_group_size: int = 4  # Photos per multi-photo carousel post (1..10; 4 = clean 2x2 FB grid)
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -106,6 +108,11 @@ class Settings(BaseModel):
         env_delay = os.getenv("FB_POST_DELAY_SECONDS", "20").strip()
         self.fb_post_delay_seconds = int(env_delay) if env_delay.isdigit() else 20
         self.fb_graph_api_version = os.getenv("FB_GRAPH_API_VERSION", "v19.0").strip()
+        env_mode = os.getenv("FB_POST_MODE", "carousel").strip().lower()
+        self.fb_post_mode = env_mode if env_mode in ("carousel", "cards", "text") else "carousel"
+        env_group = os.getenv("FB_CAROUSEL_GROUP_SIZE", "4").strip()
+        parsed_group = int(env_group) if env_group.isdigit() else 4
+        self.fb_carousel_group_size = max(1, min(10, parsed_group))
 
 
 settings = Settings()
