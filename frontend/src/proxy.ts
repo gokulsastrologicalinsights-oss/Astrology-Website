@@ -28,6 +28,15 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  const pathname = request.nextUrl.pathname;
+
+  // 0. Public Health Check & Uptime Monitoring:
+  // Whitelist /health for Vercel uptime checks, Docker healthchecks, or Pingdom
+  // without requiring Supabase queries or being blocked by the login wall.
+  if (pathname === "/health" || pathname.startsWith("/health/")) {
+    return response;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -64,8 +73,6 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
   // 1. Root URL Enforcement:
   // Root URL ('/') must always redirect unauthenticated visitors to /login,
   // and authenticated users to /dashboard.
@@ -77,11 +84,6 @@ export async function proxy(request: NextRequest) {
       redirectUrl.pathname = "/login";
     }
     return NextResponse.redirect(redirectUrl);
-  }
-
-  // 1b. Public Health Check & Uptime Monitoring
-  if (pathname === "/health" || pathname.startsWith("/health/")) {
-    return response;
   }
 
   // 2. Protected Backend API Endpoints:
