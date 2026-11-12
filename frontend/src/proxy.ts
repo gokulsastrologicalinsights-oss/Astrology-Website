@@ -79,6 +79,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // 1b. Public Health Check & Uptime Monitoring
+  if (pathname === "/health" || pathname.startsWith("/health/")) {
+    return response;
+  }
+
   // 2. Protected Backend API Endpoints:
   // Pass through /api/v1/* and /api/marriage-compatibility/* to FastAPI backend (FastAPI handles its own token auth & public endpoints)
   if (pathname.startsWith("/api/v1/") || pathname.startsWith("/api/marriage-compatibility/")) {
@@ -206,7 +211,6 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const middleware = proxy;
 export default proxy;
 
 export const config = {

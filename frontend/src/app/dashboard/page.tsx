@@ -305,7 +305,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/vastu"
+              href="/tools/daily-sastra?tab=vastu"
               className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[#334155] hover:bg-[#F8FAFC] transition-colors group"
             >
               <div className="flex items-center gap-2 min-w-0">

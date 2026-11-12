@@ -24,6 +24,7 @@ import {
   Zap,
   ShieldAlert,
   Flame,
+  Star,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 import { DasaCautionReminderModal } from "@/components/caution/DasaCautionReminderModal";
@@ -296,6 +297,16 @@ interface AstrologyToolCard {
       href: "/tools/daily-sastra",
       icon: ShieldCheck,
       color: "text-indigo-700 border-indigo-300 bg-indigo-50",
+    },
+    {
+      id: "nakshatras",
+      titleTa: "28 நட்சத்திர சாஸ்திர அரங்கம்",
+      titleEn: "28 Nakshatras - Secrets and Shastra Portal",
+      descriptionTa: "அபிஜித் உள்ளிட்ட 28 விண்மீன்களின் தத்துவங்கள், 4 பாத குணங்கள், தோஷ பரிகாரங்கள் மற்றும் தேர்தல் சுப முகூர்த்த வழிகாட்டி.",
+      descriptionEn: "Classical guide to all 28 Nakshatras (including Abhijit), 4-pada dosha diagnostics, electional activity checker, and functional natures.",
+      href: "/tools/nakshatras",
+      icon: Star,
+      color: "text-amber-700 border-amber-300 bg-amber-50",
     },
     {
       id: "kuladeivam-finder",

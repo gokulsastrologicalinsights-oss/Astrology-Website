@@ -1,4 +1,4 @@
 @echo off
-cd /d "E:\GAI\Astrology Website\frontend"
+cd /d "%~dp0frontend"
 call npm.cmd run dev
 pause

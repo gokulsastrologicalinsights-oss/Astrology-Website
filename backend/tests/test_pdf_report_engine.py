@@ -484,45 +484,50 @@ def test_marriage_compatibility_pdf_generation():
         "bride_d9_chart": {"ascendant": {"sign_index": 4}, "planets": []},
     }
 
-    # Test 5-page Print-Aligned PDF generation (Playwright + ReportLab fallback)
+    # Test Comprehensive Royal Gold Marriage Dossier PDF generation (Playwright + ReportLab fallback)
     from app.services.pdf_report_engine.marriage_compatibility_generator_rl import (
         generate_marriage_compatibility_pdf_bytes_rl,
     )
 
     pdf_bytes_en = generate_marriage_compatibility_pdf_bytes(sample_payload, language="en")
     assert len(pdf_bytes_en) > 10000
+    reader_en = pypdf.PdfReader(BytesIO(pdf_bytes_en))
+    assert len(reader_en.pages) >= 10
+    en_all = "\n".join(pg.extract_text() or "" for pg in reader_en.pages)
+    assert "Master Composite Assessment" in en_all
+    assert "Ashtakoota" in en_all
+    assert "Papasamya" in en_all
+    assert "Dasa Bhukti Sequence" in en_all
+    assert "sikiram kalyanam nadakanum" in en_all
 
     pdf_bytes_ta = generate_marriage_compatibility_pdf_bytes(sample_payload, language="ta")
     assert len(pdf_bytes_ta) > 10000
 
     reader = pypdf.PdfReader(BytesIO(pdf_bytes_ta))
-    assert len(reader.pages) == 6
+    assert len(reader.pages) >= 10
 
     page_1_text = reader.pages[0].extract_text()
     assert "Gokul's Astrological Insights" in page_1_text
     assert "165, Sakreeshwari Nagar" in page_1_text
+    assert "9444 55 9071" in page_1_text
     assert "Karthik" in page_1_text
     assert "Priya" in page_1_text
 
-    page_2_text = reader.pages[1].extract_text()
-    assert "Navamsa" in page_2_text
+    ta_all = "\n".join(pg.extract_text() or "" for pg in reader.pages)
+    assert "Dasa Bhukti Sequence" in ta_all
+    assert "Papasamya" in ta_all
+    assert "sikiram kalyanam nadakanum" in ta_all
 
-    page_4_text = reader.pages[3].extract_text()
-    assert "Dasa Bhukti Sequence" in page_4_text
-
-    page_6_text = reader.pages[5].extract_text()
-    assert "Papasamya" in page_6_text
-    assert "Varna" in page_6_text
-
-    # Also verify pure-Python ReportLab 6-page fallback renders exact 6 pages cleanly
+    # Also verify pure-Python ReportLab dossier fallback renders cleanly across multiple bordered pages
     pdf_bytes_rl = generate_marriage_compatibility_pdf_bytes_rl(sample_payload, language="ta")
     assert len(pdf_bytes_rl) > 5000
     reader_rl = pypdf.PdfReader(BytesIO(pdf_bytes_rl))
-    assert len(reader_rl.pages) == 6
-    rl_p1 = reader_rl.pages[0].extract_text()
-    assert "Gokul's Astrological Insights" in rl_p1
-    assert "Dasa Bhukti Sequence" in reader_rl.pages[3].extract_text()
-    assert "Papasamya" in reader_rl.pages[5].extract_text()
+    assert len(reader_rl.pages) >= 8
+    rl_all = "\n".join(pg.extract_text() or "" for pg in reader_rl.pages)
+    assert "Gokul's Astrological Insights" in (reader_rl.pages[0].extract_text() or "")
+    assert "Dasa Bhukti Sequence" in rl_all
+    assert "Papasamya" in rl_all
+    assert "sikiram kalyanam nadakanum" in rl_all
 
     # Test Endpoint
     res = client.post(

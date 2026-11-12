@@ -115,7 +115,9 @@ runTest("api.ts exports analyzeMarriageCompatibility and getMarriageCompatibilit
   assert(apiContent.includes("export async function analyzeMarriageCompatibility"), "Missing analyzeMarriageCompatibility");
   assert(
     apiContent.includes('request<MarriageCompatibilityResponse>("/api/v1/marriage-compatibility/analyze"') ||
-    apiContent.includes('request<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze"'),
+    apiContent.includes('requestWithGatewayRetry<MarriageCompatibilityResponse>("/api/v1/marriage-compatibility/analyze"') ||
+    apiContent.includes('request<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze"') ||
+    apiContent.includes('requestWithGatewayRetry<MarriageCompatibilityResponse>("/api/marriage-compatibility/analyze"'),
     "Incorrect endpoint path"
   );
   assert(apiContent.includes("export async function getMarriageCompatibilityRules"), "Missing getMarriageCompatibilityRules");

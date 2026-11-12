@@ -1381,7 +1381,7 @@ export function AstrologicalPredictionsSection({
             href="/tools/nakshatras"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#153F6B] text-white font-bold whitespace-nowrap shadow-xs hover:bg-[#103052] transition-colors shrink-0"
           >
-            <span>{language === "ta" ? "28 நட்சத்திர கருவிக்குச் செல்க" : "Open 28 Nakshatras Portal"}</span>
+            <span>{language === "ta" ? "28 நட்சத்திர சாஸ்திர அரங்கம்" : "Open 28 Nakshatras Portal"}</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#F3E5AB]" />
           </Link>
         </div>

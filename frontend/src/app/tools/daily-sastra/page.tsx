@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
@@ -47,11 +48,42 @@ type ActiveTab =
   | "navagraha"
   | "dharma";
 
-export default function DailySastraPage() {
+const VALID_TABS: ActiveTab[] = [
+  "daily",
+  "medical",
+  "wishes",
+  "vastu",
+  "muhurta",
+  "navagraha",
+  "dharma",
+];
+
+function DailySastraContent() {
+  const searchParams = useSearchParams();
+  const tabQuery = searchParams.get("tab") as ActiveTab | null;
+  const initialTab: ActiveTab =
+    tabQuery && VALID_TABS.includes(tabQuery) ? tabQuery : "daily";
+
   const { language } = useLanguage();
   const isTa = language === "ta";
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>("daily");
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
+
+  // Sync state if URL search params change
+  useEffect(() => {
+    if (tabQuery && VALID_TABS.includes(tabQuery)) {
+      setActiveTab(tabQuery);
+    }
+  }, [tabQuery]);
+
+  const handleTabChange = (tabId: ActiveTab) => {
+    setActiveTab(tabId);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tabId);
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
 
   // Daily guidance state
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -224,7 +256,7 @@ export default function DailySastraPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as ActiveTab)}
+              onClick={() => handleTabChange(tab.id as ActiveTab)}
               className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 activeTab === tab.id
                   ? "bg-[#1B365D] text-white shadow-sm"
@@ -947,5 +979,19 @@ export default function DailySastraPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DailySastraPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-[#1B365D] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <DailySastraContent />
+    </Suspense>
   );
 }

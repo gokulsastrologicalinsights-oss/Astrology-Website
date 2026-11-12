@@ -70,6 +70,21 @@ const nextConfig: NextConfig = {
         destination: "/tools/kp-events-prediction",
         permanent: false,
       },
+      {
+        source: "/vastu",
+        destination: "/tools/daily-sastra?tab=vastu",
+        permanent: false,
+      },
+      {
+        source: "/tools/vastu",
+        destination: "/tools/daily-sastra?tab=vastu",
+        permanent: false,
+      },
+      {
+        source: "/nakshatras",
+        destination: "/tools/nakshatras",
+        permanent: false,
+      },
     ];
   },
 };

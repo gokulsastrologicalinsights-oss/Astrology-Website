@@ -2502,7 +2502,7 @@ function MarriageCompatibilityContent() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    6-Page Print Format PDF: Brand header, 11 Poruthams, Charts, Doshas, Dasa Bhukti, Ashtakoota 36, Papasamya, KP &amp; Remedies.
+                    Royal Gold Detailed Dossier (~11 Pages): All Website Sections — Composite Assessment, D1/D9 Charts & Degrees, 10 Poruthams, Ashtakoota 36, Kuja & Papasamya, 10 Doshas, Vedic Houses, Synastry, KP 7th CSL, Dasa-Bhukti & Remedies.
                   </p>
                 </div>
               </label>
@@ -2532,7 +2532,7 @@ function MarriageCompatibilityContent() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    6-பக்க அச்சு வடிவ PDF: 11 பொருத்தம், சக்கரங்கள், தோஷ ஆய்வு, தசா புக்தி, அஷ்டகூடம் 36, பாபசாம்யம், கே.பி &amp; பரிகார வழிகாட்டி.
+                    முழுமையான 11+ பக்க ராயல் கோல்டு அறிக்கை: அனைத்து இணையதளப் பிரிவுகளும் (முடிவு, கட்டங்கள் & பாகைகள், 10 பொருத்தம், அஷ்டகூடம் 36, செவ்வாய் & பாபசாம்யம், 10 தோஷம், வேத பாவங்கள், கே.பி, தசா-புக்தி & திருமுறை பரிகாரம்).
                   </p>
                 </div>
               </label>
