@@ -237,6 +237,385 @@ const VIMSHOTTARI_YEARS: Record<string, number> = {
   Mercury: 17,
 };
 
+const OWN_SIGNS_MAP: Record<string, number[]> = {
+  Sun: [5], Moon: [4], Mars: [1, 8], Mercury: [3, 6],
+  Jupiter: [9, 12], Venus: [2, 7], Saturn: [10, 11],
+};
+const EXALTATION_SIGNS_MAP: Record<string, number> = {
+  Sun: 1, Moon: 2, Mars: 10, Mercury: 6, Jupiter: 4, Venus: 12, Saturn: 7,
+};
+const DEBILITATION_SIGNS_MAP: Record<string, number> = {
+  Sun: 7, Moon: 8, Mars: 4, Mercury: 12, Jupiter: 10, Venus: 6, Saturn: 1,
+};
+const SIGN_LORDS_MAP: Record<number, string> = {
+  1: "Mars", 2: "Venus", 3: "Mercury", 4: "Moon", 5: "Sun", 6: "Mercury",
+  7: "Venus", 8: "Mars", 9: "Jupiter", 10: "Saturn", 11: "Saturn", 12: "Jupiter",
+};
+
+interface EvaluatedDoshaCell {
+  status: "NONE" | "MITIGATED" | "PRESENT";
+  severity_percent?: number;
+  reasons_ta?: string[];
+}
+
+function deriveDoshaAuditFromChartAndVedic(
+  chart: any,
+  vedic: any,
+  partnerChart: any
+): Record<string, EvaluatedDoshaCell> {
+  const ascRaw = chart?.ascendant || {};
+  const ascSignIdx: number =
+    ascRaw.sign_index ||
+    SIGN_NAME_TO_IDX[ascRaw.sign_name] ||
+    1;
+
+  const planetsList: any[] = Array.isArray(chart?.planets)
+    ? chart.planets
+    : chart?.planets
+    ? Object.values(chart.planets)
+    : [];
+
+  const grahas: Record<string, { sign_index: number; house: number; is_combust: boolean; is_retrograde: boolean }> = {};
+  for (const p of planetsList) {
+    if (!p || !p.name) continue;
+    const sIdx = Number(p.sign_index || SIGN_NAME_TO_IDX[p.sign_name] || 1);
+    const house = ((sIdx - ascSignIdx + 12) % 12) + 1;
+    grahas[p.name] = {
+      sign_index: sIdx,
+      house,
+      is_combust: Boolean(p.is_combust),
+      is_retrograde: Boolean(p.is_retrograde),
+    };
+  }
+
+  // Cross-reference combustion and affliction from houses_analysis if present
+  const housesAnalysis: Record<string, any> = vedic?.houses_analysis || {};
+  for (const hData of Object.values(housesAnalysis)) {
+    const lName = (hData as any)?.lord_name;
+    if (lName && grahas[lName]) {
+      const confl: string[] = (hData as any)?.conflicting_influences || [];
+      if (confl.some((c) => typeof c === "string" && c.toLowerCase().includes("combust"))) {
+        grahas[lName].is_combust = true;
+      }
+    }
+  }
+
+  const jupP = grahas["Jupiter"];
+  const jupStrong = Boolean(jupP && (jupP.house === 1 || jupP.house === 4 || jupP.house === 7 || jupP.house === 10 || jupP.house === 5 || jupP.house === 9));
+
+  const hasAspectOnHouse = (pName: string, targetHouse: number): boolean => {
+    const p = grahas[pName];
+    if (!p) return false;
+    const dist = ((targetHouse - p.house + 12) % 12) + 1;
+    if (dist === 7) return true;
+    if (pName === "Mars" && (dist === 4 || dist === 8)) return true;
+    if (pName === "Jupiter" && (dist === 5 || dist === 9)) return true;
+    if (pName === "Saturn" && (dist === 3 || dist === 10)) return true;
+    return false;
+  };
+
+  const hasAspectOnGraha = (p1: string, p2: string): boolean => {
+    const target = grahas[p2];
+    return target ? hasAspectOnHouse(p1, target.house) : false;
+  };
+
+  const audit: Record<string, EvaluatedDoshaCell> = {};
+
+  // 1. செவ்வாய் தோஷம் (Kuja Dosha)
+  const kuja = vedic?.kuja_dosha;
+  if (!kuja || !kuja.is_present) {
+    audit["kuja_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else if (kuja.is_cancelled) {
+    const reasons: string[] = [];
+    const marsP = grahas["Mars"];
+    if (marsP) {
+      if (OWN_SIGNS_MAP["Mars"]?.includes(marsP.sign_index)) {
+        reasons.push("தோஷ நிவர்த்தி: செவ்வாய் ஆட்சி பெற்றுள்ளது.");
+      } else if (EXALTATION_SIGNS_MAP["Mars"] === marsP.sign_index) {
+        reasons.push("தோஷ நிவர்த்தி: செவ்வாய் உச்சம் பெற்றுள்ளது.");
+      }
+      if (jupP && (jupP.sign_index === marsP.sign_index || hasAspectOnGraha("Jupiter", "Mars"))) {
+        reasons.push("தோஷ நிவர்த்தி: செவ்வாய் குருவுடன் சேர்க்கை / பார்வை பெற்றுள்ளது.");
+      }
+    }
+    const cList: string[] = Array.isArray(kuja.cancellations_applied) ? kuja.cancellations_applied : [];
+    for (const c of cList) {
+      if (typeof c === "string") {
+        if (c.includes("Jupiter") && !reasons.some((r) => r.includes("குரு"))) {
+          reasons.push("தோஷ நிவர்த்தி: செவ்வாய் குருவின் சுப பார்வை பெற்றுள்ளது.");
+        } else if (c.includes("Saturn") && !reasons.some((r) => r.includes("சனி"))) {
+          reasons.push("தோஷ நிவர்த்தி: செவ்வாய் சனியின் பார்வை பெற்றுள்ளது.");
+        } else if ((c.includes("Mercury") || c.includes("Virgo")) && !reasons.some((r) => r.includes("ராசிநாதனுடன்"))) {
+          reasons.push("தோஷம் நிவர்த்தி: செவ்வாய் ராசிநாதனுடன் சேர்க்கை பெற்றுள்ளார். (பு)");
+        }
+      }
+    }
+    if (reasons.length === 0) {
+      reasons.push("தோஷ நிவர்த்தி: சாஸ்திர விதிவிலக்குகளால் செவ்வாய் தோஷம் நீங்கியுள்ளது.");
+    }
+    audit["kuja_dosha"] = { status: "MITIGATED", severity_percent: 0, reasons_ta: reasons.slice(0, 2) };
+  } else {
+    const sev = Math.min(100, Math.max(25, Math.round(Number(kuja.effective_intensity_percent ?? 45))));
+    const defaultReason = kuja.mars_house_from_lagna
+      ? `செவ்வாய் லக்னத்திலிருந்து ${kuja.mars_house_from_lagna}-ஆம் வீட்டிலும், சந்திரனிலிருந்து ${kuja.mars_house_from_moon ?? "-"}-ஆம் வீட்டிலும் உள்ளார்.`
+      : "செவ்வாய் தோஷம் உள்ளது.";
+    audit["kuja_dosha"] = {
+      status: "PRESENT",
+      severity_percent: sev,
+      reasons_ta: [kuja.explanation_ta || defaultReason],
+    };
+  }
+
+  // 2. நாக தோஷம் (Naga Dosha)
+  const nagaTriggers: string[] = [];
+  for (const nodeName of ["Rahu", "Ketu"]) {
+    const np = grahas[nodeName];
+    if (np && (np.house === 1 || np.house === 2 || np.house === 7 || np.house === 8)) {
+      nagaTriggers.push(`${PLANET_NAME_TO_TA[nodeName]} ${np.house}-ஆம் வீட்டில் உள்ளார்.`);
+    }
+  }
+  if (nagaTriggers.length === 0) {
+    audit["naga_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    const mitigations: string[] = [];
+    if (jupP && (hasAspectOnHouse("Jupiter", 1) || hasAspectOnHouse("Jupiter", 7))) {
+      mitigations.push("தோஷ நிவர்த்தி: குரு பார்வை லக்னம் / 7-ஆம் வீட்டின் மீது உள்ளது.");
+    }
+    if (jupStrong && nagaTriggers.length === 1) {
+      mitigations.push("பாதுகாப்பு: குரு கேந்திர/திரிகோணத்தில் வலுவாக உள்ளதால் நாக தோஷம் தணிக்கப்படுகிறது.");
+    }
+    if (mitigations.length > 0) {
+      audit["naga_dosha"] = { status: "MITIGATED", severity_percent: 0, reasons_ta: mitigations };
+    } else {
+      audit["naga_dosha"] = {
+        status: "PRESENT",
+        severity_percent: Math.min(75, 30 * nagaTriggers.length),
+        reasons_ta: nagaTriggers,
+      };
+    }
+  }
+
+  // 3. புத்ர தோஷம் (Putra Dosha)
+  const h5 = housesAnalysis["5"] || housesAnalysis[5];
+  const putraAff: string[] = [];
+  if (h5) {
+    const occs: string[] = Array.isArray(h5.occupants) ? h5.occupants : [];
+    for (const occ of occs) {
+      if (occ === "Rahu" || occ === "Ketu" || occ === "Saturn" || occ === "Mars") {
+        putraAff.push(`${PLANET_NAME_TO_TA[occ] || occ} 5-ஆம் வீட்டில் உள்ளார்.`);
+      }
+    }
+    if (h5.lord_house === 6 || h5.lord_house === 8 || h5.lord_house === 12) {
+      putraAff.push(`5-ஆம் அதிபதி ${h5.lord_house}-ஆம் வீட்டில் (ஒரு துர்ஸ்தானம்) உள்ளார்.`);
+    }
+    if (h5.lord_dignity === "Debilitated") {
+      putraAff.push("5-ஆம் அதிபதி நீசமடைந்துள்ளார்.");
+    }
+  }
+  if (jupP && DEBILITATION_SIGNS_MAP["Jupiter"] === jupP.sign_index) {
+    putraAff.push("குரு (புத்திர காரகன்) நீசமடைந்துள்ளார்.");
+  }
+  if (putraAff.length === 0) {
+    audit["putra_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    const protections: string[] = [];
+    if (jupStrong && putraAff.length <= 1 && (!h5 || !((h5.occupants || []).includes("Rahu") || (h5.occupants || []).includes("Ketu")))) {
+      protections.push("வலுவான பாதுகாப்பு அமைப்புகளால், குறிப்பிடத்தக்க புத்திர தோஷம் இல்லை.");
+      protections.push("பாதுகாப்பு: குரு கேந்திர/திரிகோணத்தில் நல்ல நிலையில் உள்ளார்.");
+    } else if (hasAspectOnHouse("Jupiter", 5) && putraAff.length === 1) {
+      protections.push("பாதுகாப்பு: குரு பகவான் 5-ஆம் வீட்டைப் பார்வையிடுவதால் தோஷ நிவர்த்தி ஏற்படுகிறது.");
+    }
+    if (protections.length > 0) {
+      audit["putra_dosha"] = { status: "MITIGATED", severity_percent: 0, reasons_ta: protections };
+    } else {
+      const sev = putraAff.length >= 2 ? 55 : 30;
+      audit["putra_dosha"] = {
+        status: "PRESENT",
+        severity_percent: Math.min(90, sev),
+        reasons_ta: ["கண்டறியப்பட்ட பாதிப்புகள்:", ...putraAff],
+      };
+    }
+  }
+
+  // 4. பஞ்சணை தோஷம் (12th House Sayana Sukha)
+  const h12 = housesAnalysis["12"] || housesAnalysis[12];
+  const h12Aff: string[] = [];
+  if (h12) {
+    const occs: string[] = Array.isArray(h12.occupants) ? h12.occupants : [];
+    for (const occ of occs) {
+      if (occ === "Saturn" || occ === "Rahu" || occ === "Ketu" || occ === "Mars") {
+        h12Aff.push(`பாவ கிரகம் ${PLANET_NAME_TO_TA[occ] || occ} 12-ஆம் வீட்டில் உள்ளார்.`);
+      }
+    }
+    if (h12.lord_dignity === "Debilitated") {
+      h12Aff.push("12-ஆம் அதிபதி நீசமடைந்துள்ளார்.");
+    }
+  }
+  if (h12Aff.length === 0) {
+    audit["panchanai_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    if (hasAspectOnHouse("Jupiter", 12) || (h12?.occupants || []).includes("Venus")) {
+      audit["panchanai_dosha"] = {
+        status: "MITIGATED",
+        severity_percent: 0,
+        reasons_ta: ["தோஷ நிவர்த்தி: சுப கிரக பார்வை/சேர்க்கையால் படுக்கை சுகம் பாதுகாக்கப்படுகிறது."],
+      };
+    } else {
+      audit["panchanai_dosha"] = {
+        status: "PRESENT",
+        severity_percent: Math.min(75, 30 * h12Aff.length),
+        reasons_ta: h12Aff,
+      };
+    }
+  }
+
+  // 5. சூரிய தோஷம் (Surya Dosha)
+  const sunP = grahas["Sun"];
+  const sunAff: string[] = [];
+  if (sunP) {
+    if (sunP.house === 1 || sunP.house === 7 || sunP.house === 8) {
+      sunAff.push(`சூரிய தோஷம்: லக்னத்திலிருந்து ${sunP.house}-ல் சூரியன் (கூட்டுறவில் அகந்தை/ஆதிக்கம்).`);
+    }
+    if (DEBILITATION_SIGNS_MAP["Sun"] === sunP.sign_index) {
+      sunAff.push("சூரியன் நீசமடைந்துள்ளார்.");
+    }
+  }
+  if (sunAff.length === 0) {
+    audit["surya_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    const mit: string[] = [];
+    if (sunP && (sunP.sign_index === 1 || sunP.sign_index === 5)) {
+      mit.push("தோஷ நிவர்த்தி: சூரியன் ஆட்சி/உச்ச பலத்துடன் உள்ளார்.");
+    }
+    if (jupP && hasAspectOnGraha("Jupiter", "Sun")) {
+      mit.push("பாதுகாப்பு: குரு பகவான் சூரியனைப் பார்வையிடுகிறார்.");
+    }
+    if (mit.length > 0 && sunAff.length === 1) {
+      audit["surya_dosha"] = { status: "MITIGATED", severity_percent: 0, reasons_ta: mit };
+    } else {
+      audit["surya_dosha"] = {
+        status: "PRESENT",
+        severity_percent: 35,
+        reasons_ta: sunAff,
+      };
+    }
+  }
+
+  // 6. சுக்ர தோஷம் (Shukra Dosha)
+  const venusP = grahas["Venus"];
+  const vAff: string[] = [];
+  if (venusP) {
+    if (DEBILITATION_SIGNS_MAP["Venus"] === venusP.sign_index) {
+      vAff.push("சுக்கிர தோஷம்: சுக்கிரன் நீசமடைந்துள்ளார்.");
+    }
+    if (venusP.house === 6 || venusP.house === 8 || venusP.house === 12) {
+      vAff.push(`சுக்கிர தோஷம்: சுக்கிரன் துர்ஸ்தானமான ${venusP.house}-ஆம் வீட்டில் உள்ளார்.`);
+    }
+    if (venusP.is_combust) {
+      vAff.push("சுக்கிர தோஷம்: சுக்கிரன் அஸ்தமனம் அடைந்துள்ளார்.");
+    }
+    for (const mName of ["Sun", "Rahu", "Ketu", "Saturn", "Mars"]) {
+      const mp = grahas[mName];
+      if (mp && mp.sign_index === venusP.sign_index && mName !== "Venus") {
+        vAff.push(`சுக்கிர தோஷம்: சுக்கிரன் ${PLANET_NAME_TO_TA[mName]}-உடன் இணைந்துள்ளார்.`);
+      }
+    }
+  }
+  if (vAff.length === 0) {
+    audit["shukra_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    const sev = vAff.length === 1 ? 25 : 30;
+    audit["shukra_dosha"] = {
+      status: "PRESENT",
+      severity_percent: sev,
+      reasons_ta: ["காணப்படும் பாதிப்புகள்:", ...vAff],
+    };
+  }
+
+  // 7. 7 ஆம் வீடு தோஷம் (7th House Affliction)
+  const h7 = housesAnalysis["7"] || housesAnalysis[7];
+  const h7Aff: string[] = [];
+  if (h7) {
+    const occs: string[] = Array.isArray(h7.occupants) ? h7.occupants : [];
+    for (const occ of occs) {
+      if (occ === "Saturn" || occ === "Rahu" || occ === "Ketu" || occ === "Mars" || occ === "Sun") {
+        h7Aff.push(`7-ஆம் இட தோஷம்: ${PLANET_NAME_TO_TA[occ] || occ} 7-ஆம் வீட்டில் உள்ளார்.`);
+      }
+    }
+  }
+  if (h7Aff.length === 0) {
+    audit["seventh_house_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    if (h7 && (hasAspectOnHouse("Jupiter", 7) || (h7.occupants || []).includes("Jupiter"))) {
+      audit["seventh_house_dosha"] = {
+        status: "MITIGATED",
+        severity_percent: 0,
+        reasons_ta: ["தோஷ நிவர்த்தி: குரு பார்வை/சேர்க்கை 7-ஆம் வீட்டைப் பாதுகாக்கிறது."],
+      };
+    } else {
+      audit["seventh_house_dosha"] = {
+        status: "PRESENT",
+        severity_percent: 25,
+        reasons_ta: h7Aff,
+      };
+    }
+  }
+
+  // 8. 7 ஆம் அதிபதி தோஷம் (7th Lord Affliction)
+  const h7LordAff: string[] = [];
+  if (h7) {
+    if (h7.lord_house === 6 || h7.lord_house === 8 || h7.lord_house === 12) {
+      h7LordAff.push(`7-ஆம் அதிபதி தோஷம்: 7-ஆம் அதிபதி துர்ஸ்தானமான ${h7.lord_house}-ஆம் வீட்டில் உள்ளார்.`);
+    }
+    if (h7.lord_dignity === "Debilitated") {
+      h7LordAff.push("7-ஆம் அதிபதி தோஷம்: 7-ஆம் அதிபதி நீசமடைந்துள்ளார்.");
+    }
+    const lordP = grahas[h7.lord_name];
+    if (lordP && lordP.is_combust) {
+      h7LordAff.push("7-ஆம் அதிபதி தோஷம்: 7-ஆம் அதிபதி அஸ்தமனம் அடைந்துள்ளார்.");
+    }
+  }
+  if (h7LordAff.length === 0) {
+    audit["seventh_lord_dosha"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    const sev = h7LordAff.length > 1 ? 50 : 25;
+    audit["seventh_lord_dosha"] = {
+      status: "PRESENT",
+      severity_percent: sev,
+      reasons_ta: h7LordAff,
+    };
+  }
+
+  // 9. தீய கிரக சேர்க்கைகள் (Malefic Conjunctions)
+  const malConj: string[] = [];
+  if (venusP) {
+    for (const mName of ["Sun", "Saturn", "Rahu", "Ketu", "Mars"]) {
+      const mp = grahas[mName];
+      if (mp && mp.sign_index === venusP.sign_index && mName !== "Venus") {
+        malConj.push(`பாப கிரக சேர்க்கை: சுக்கிரன் பாவியான ${PLANET_NAME_TO_TA[mName]}-உடன் இணைந்துள்ளார்.`);
+      }
+    }
+  }
+  if (malConj.length === 0) {
+    audit["malefic_conjunctions"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+  } else {
+    audit["malefic_conjunctions"] = {
+      status: "PRESENT",
+      severity_percent: 30,
+      reasons_ta: malConj,
+    };
+  }
+
+  // 10. வதை வைநாசிகம் (Vadha Vainashika)
+  const partnerAscIdx = partnerChart?.ascendant?.sign_index || 1;
+  const partnerPlanets: any[] = Array.isArray(partnerChart?.planets) ? partnerChart.planets : [];
+  const partnerMoon = partnerPlanets.find((p: any) => p && p.name === "Moon");
+  const myMoon = planetsList.find((p: any) => p && p.name === "Moon");
+  audit["vadha_vainashika"] = { status: "NONE", severity_percent: 0, reasons_ta: [] };
+
+  return audit;
+}
+
 function formatBirthDateWithAge(dateStr?: string): string {
   if (!dateStr) return "-";
   const parsed = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
@@ -619,30 +998,78 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
     : "பொருத்தம் நன்று (நிபந்தனைகளுடன்)";
 
   // Page 3: 10-row Dosha Audit
+  const derivedGroomAudit = deriveDoshaAuditFromChartAndVedic(
+    response.groom_chart,
+    response.groom_vedic,
+    response.bride_chart
+  );
+  const derivedBrideAudit = deriveDoshaAuditFromChartAndVedic(
+    response.bride_chart,
+    response.bride_vedic,
+    response.groom_chart
+  );
+
   const fallbackDoshaRows = [
     {
       id: "kuja_dosha",
       label_ta: "செவ்வாய் தோஷம்",
-      groom: response.dosha_analysis?.groom_kuja?.is_present
-        ? response.dosha_analysis?.groom_kuja?.is_cancelled
-          ? { status: "MITIGATED", reasons_ta: ["தோஷ நிவர்த்தி: செவ்வாய் தோஷ விலக்கு பெற்றுள்ளது."] }
-          : { status: "PRESENT", severity_percent: 45, reasons_ta: [response.dosha_analysis?.groom_kuja?.interpretation_tamil || "செவ்வாய் தோஷம் உள்ளது."] }
-        : { status: "NONE", reasons_ta: [] },
-      bride: response.dosha_analysis?.bride_kuja?.is_present
-        ? response.dosha_analysis?.bride_kuja?.is_cancelled
-          ? { status: "MITIGATED", reasons_ta: ["தோஷ நிவர்த்தி: செவ்வாய் தோஷ விலக்கு பெற்றுள்ளது."] }
-          : { status: "PRESENT", severity_percent: 45, reasons_ta: [response.dosha_analysis?.bride_kuja?.interpretation_tamil || "செவ்வாய் தோஷம் உள்ளது."] }
-        : { status: "NONE", reasons_ta: [] },
+      groom: derivedGroomAudit["kuja_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["kuja_dosha"] || { status: "NONE", reasons_ta: [] },
     },
-    { id: "naga_dosha", label_ta: "நாக தோஷம்", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "putra_dosha", label_ta: "புத்ர தோஷம்", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "panchanai_dosha", label_ta: "பஞ்சணை தோஷம் (படுக்கை வசதிகள்)", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "surya_dosha", label_ta: "சூரிய தோஷம் (அகங்காரம் / ஆதிக்கம்)", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "shukra_dosha", label_ta: "சுக்ர தோஷம் (வெள்ளி கிரகப் பிறழ்வு)", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "seventh_house_dosha", label_ta: "7 ஆம் வீடு தோஷம்", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "seventh_lord_dosha", label_ta: "7 ஆம் அதிபதி தோஷம்", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "malefic_conjunctions", label_ta: "தீய கிரக சேர்க்கைகள்", groom: { status: "NONE" }, bride: { status: "NONE" } },
-    { id: "vadha_vainashika", label_ta: "வதை வைநாசிகம்", groom: { status: "NONE" }, bride: { status: "NONE" } },
+    {
+      id: "naga_dosha",
+      label_ta: "நாக தோஷம்",
+      groom: derivedGroomAudit["naga_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["naga_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "putra_dosha",
+      label_ta: "புத்ர தோஷம்",
+      groom: derivedGroomAudit["putra_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["putra_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "panchanai_dosha",
+      label_ta: "பஞ்சணை தோஷம் (படுக்கை வசதிகள்)",
+      groom: derivedGroomAudit["panchanai_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["panchanai_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "surya_dosha",
+      label_ta: "சூரிய தோஷம் (அகங்காரம் / ஆதிக்கம்)",
+      groom: derivedGroomAudit["surya_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["surya_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "shukra_dosha",
+      label_ta: "சுக்ர தோஷம் (வெள்ளி கிரகப் பிறழ்வு)",
+      groom: derivedGroomAudit["shukra_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["shukra_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "seventh_house_dosha",
+      label_ta: "7 ஆம் வீடு தோஷம்",
+      groom: derivedGroomAudit["seventh_house_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["seventh_house_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "seventh_lord_dosha",
+      label_ta: "7 ஆம் அதிபதி தோஷம்",
+      groom: derivedGroomAudit["seventh_lord_dosha"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["seventh_lord_dosha"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "malefic_conjunctions",
+      label_ta: "தீய கிரக சேர்க்கைகள்",
+      groom: derivedGroomAudit["malefic_conjunctions"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["malefic_conjunctions"] || { status: "NONE", reasons_ta: [] },
+    },
+    {
+      id: "vadha_vainashika",
+      label_ta: "வதை வைநாசிகம்",
+      groom: derivedGroomAudit["vadha_vainashika"] || { status: "NONE", reasons_ta: [] },
+      bride: derivedBrideAudit["vadha_vainashika"] || { status: "NONE", reasons_ta: [] },
+    },
   ];
   const doshaAuditRows = Array.isArray(prd.dosha_audit) && prd.dosha_audit.length > 0 ? prd.dosha_audit : fallbackDoshaRows;
 

@@ -739,9 +739,14 @@ def build_print_report_data(
     b_kuja_int = bride_vedic.kuja_dosha.effective_intensity_percent if (bride_vedic.kuja_dosha and not bride_vedic.kuja_dosha.is_cancelled) else 0.0
     kuja_diff_pct = int(round(abs(g_kuja_int - b_kuja_int)))
 
+    samadosham_status_str = (
+        mutual_doshas.samadosham.status.value
+        if hasattr(mutual_doshas.samadosham.status, "value")
+        else str(mutual_doshas.samadosham.status)
+    )
     if g_kuja_int == 0.0 and b_kuja_int == 0.0:
         kuja_label_ta = "செவ்வாய் தோஷம் இல்லை"
-    elif mutual_doshas.samadosham_outcome.value in ("MUTUALLY_MATCHED", "CANCELLED_BY_RULE", "MITIGATED"):
+    elif samadosham_status_str in ("MUTUALLY_MATCHED", "CANCELLED_BY_RULE", "MITIGATED"):
         kuja_label_ta = "செவ்வாய் தோஷ சமநிலை உள்ளது"
     else:
         kuja_label_ta = "செவ்வாய் தோஷம் கவனிக்கப்பட வேண்டும்"
