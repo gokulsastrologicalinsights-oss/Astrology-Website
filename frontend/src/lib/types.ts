@@ -939,6 +939,7 @@ export interface SavedHoroscopeItem {
   customer_country_code?: string | null;
   country_code?: string | null;
   normalized_phone?: string | null;
+  phone_number?: string | null;
   whatsapp_number?: string | null;
   has_missing_contact?: boolean;
   is_pinned?: boolean;
@@ -5701,35 +5702,42 @@ export interface NakshatraSummaryTableRow {
 }
 
 export interface ActivityCheckResult {
-  valid: boolean;
-  nakshatra_id: number;
-  nakshatra_name: string;
-  nakshatra_name_tamil: string;
-  activity_queried: string;
-  functional_nature: string;
-  result_grade: string;
-  is_suitable: boolean;
-  recommendation: string;
-  matched_favourable_points: string[];
-  matched_inauspicious_points: string[];
-  nature_guidance: string;
+  valid?: boolean;
+  nakshatra_id?: number;
+  nakshatra_name?: string;
+  nakshatra_name_tamil?: string;
+  activity_queried?: string;
+  functional_nature?: string;
+  result_grade?: string;
+  is_suitable?: boolean;
+  suitable?: boolean;
+  verdict?: string;
+  reason?: string;
+  nakshatra_nature?: string;
+  nakshatra_nature_tamil?: string;
+  direction?: string;
+  recommendation?: string;
+  matched_favourable_points?: string[];
+  matched_inauspicious_points?: string[];
+  nature_guidance?: string;
 }
 
 export interface PadaDoshaResult {
-  valid: boolean;
-  nakshatra_id: number;
-  nakshatra_name: string;
-  nakshatra_name_tamil: string;
-  pada: number;
-  degree_range: string;
-  traits: string;
-  dosha_status: string;
-  has_dosha: boolean;
-  is_severe_gandanta: boolean;
+  valid?: boolean;
+  nakshatra_id?: number;
+  nakshatra_name?: string;
+  nakshatra_name_tamil?: string;
+  pada?: number;
+  degree_range?: string;
+  traits?: string;
+  dosha_status?: string;
+  has_dosha?: boolean;
+  is_severe_gandanta?: boolean;
   dosha_affects?: string | null;
   remedial_upaya?: string | null;
-  ruling_deity: string;
-  gaze_direction: string;
+  remedy?: string | null;
+  ruling_deity?: string;
+  gaze_direction?: string;
 }
 
 

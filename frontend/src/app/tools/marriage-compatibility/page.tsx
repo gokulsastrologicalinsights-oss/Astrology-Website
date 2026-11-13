@@ -417,7 +417,7 @@ function MarriageCompatibilityContent() {
     }
     if (item.timezone) setGroomTz(item.timezone);
     if (item.birthplace || item.location_name) {
-      setGroomCity(item.birthplace || item.location_name);
+      setGroomCity(item.birthplace || item.location_name || "Chennai");
     }
     setValidationErrors((prev) => {
       const next = { ...prev };
@@ -448,7 +448,7 @@ function MarriageCompatibilityContent() {
     }
     if (item.timezone) setBrideTz(item.timezone);
     if (item.birthplace || item.location_name) {
-      setBrideCity(item.birthplace || item.location_name);
+      setBrideCity(item.birthplace || item.location_name || "Chennai");
     }
     setValidationErrors((prev) => {
       const next = { ...prev };
