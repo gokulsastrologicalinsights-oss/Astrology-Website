@@ -388,9 +388,11 @@ function SouthIndianPrintChart({
         key={signIdx}
         className="border border-slate-900 align-middle text-center p-1 w-1/4 h-[68px]"
       >
-        <div className="flex flex-col items-center justify-center leading-[1.25] text-[10.5px] font-medium text-slate-900">
+        <div className="flex flex-col items-center justify-center leading-[1.25] text-[11px] font-bold text-slate-900 font-tamil">
           {items.map((txt, idx) => (
-            <span key={idx}>{txt}</span>
+            <span key={idx} className="font-tamil whitespace-nowrap">
+              {txt.normalize("NFC")}
+            </span>
           ))}
         </div>
       </td>
@@ -398,9 +400,9 @@ function SouthIndianPrintChart({
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="text-[12px] font-bold text-slate-900 mb-1.5 text-center">{title}</div>
-      <table className="w-full max-w-[300px] border-collapse border-2 border-slate-900 table-fixed bg-white">
+    <div className="flex flex-col items-center font-tamil">
+      <div className="text-[13px] font-bold text-slate-900 mb-1.5 text-center font-tamil">{title}</div>
+      <table className="w-full max-w-[300px] border-collapse border-2 border-slate-900 table-fixed bg-white font-tamil">
         <tbody>
           <tr>{[12, 1, 2, 3].map(renderCell)}</tr>
           <tr>
@@ -408,7 +410,7 @@ function SouthIndianPrintChart({
             <td
               colSpan={2}
               rowSpan={2}
-              className="border border-slate-900 align-middle text-center font-bold text-[12px] text-slate-900 bg-white"
+              className="border border-slate-900 align-middle text-center font-bold text-[13px] text-slate-900 bg-white font-tamil"
             >
               {centerLabel}
             </td>
@@ -1002,13 +1004,13 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           <SouthIndianPrintChart
             chartData={response.groom_d9_chart}
             fallbackAscSign={gp.ascendant_navamsa_sign}
-            title="மணமகன் Navamsa"
+            title="மணமகன் நவாம்சம் (Navamsa)"
             centerLabel="நவாம்சம் (9)"
           />
           <SouthIndianPrintChart
             chartData={response.bride_d9_chart}
             fallbackAscSign={bp.ascendant_navamsa_sign}
-            title="மணமகள் Navamsa"
+            title="மணமகள் நவாம்சம் (Navamsa)"
             centerLabel="நவாம்சம் (9)"
           />
         </div>

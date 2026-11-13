@@ -65,8 +65,27 @@ svg {
   hyphens: auto;
 }
 
+/* Local fallback font faces for Noto Sans Tamil to guarantee offline and print availability */
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  src: url('/fonts/NotoSansTamil-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  src: url('/fonts/NotoSansTamil-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
 .font-tamil {
-  font-family: var(--font-tamil), var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-tamil), "Noto Sans Tamil", "Nirmala UI", "Latha", "Vijaya", "Tamil Sangam MN", system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
 
 .font-serif {
@@ -107,6 +126,17 @@ svg {
     color: #0f172a !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .marriage-print-page,
+  .marriage-print-page *,
+  .font-tamil,
+  .font-tamil * {
+    font-family: var(--font-tamil), "Noto Sans Tamil", "Nirmala UI", "Latha", "Vijaya", "Tamil Sangam MN", system-ui, sans-serif !important;
+    text-rendering: optimizeLegibility !important;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
   }
 
   .marriage-print-page {

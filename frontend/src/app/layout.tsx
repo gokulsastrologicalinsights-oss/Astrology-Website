@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Tamil } from "next/font/google";
+import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
@@ -14,10 +14,21 @@ const inter = Inter({
   display: "swap",
 });
 
-const notoTamil = Noto_Sans_Tamil({
+const notoTamil = localFont({
+  src: [
+    {
+      path: "./fonts/NotoSansTamil-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/NotoSansTamil-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-tamil",
-  subsets: ["tamil"],
-  display: "swap",
+  display: "block",
 });
 
 const cinzel = localFont({

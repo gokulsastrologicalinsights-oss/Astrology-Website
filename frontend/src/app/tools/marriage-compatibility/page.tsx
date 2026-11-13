@@ -240,9 +240,18 @@ function MarriageCompatibilityContent() {
     }
   };
 
-  const handlePrintReport = () => {
+  const handlePrintReport = async () => {
     if (!response) return;
-    window.print();
+    try {
+      if (typeof document !== "undefined" && (document as any).fonts) {
+        await (document as any).fonts.ready;
+      }
+    } catch {
+      // ignore
+    }
+    setTimeout(() => {
+      window.print();
+    }, 60);
   };
 
   const handleOpenDownloadModal = () => {
@@ -3037,9 +3046,18 @@ function MarriageCompatibilityContent() {
       />
 
       {response && (
-        <div className="hidden print:block">
-          <MarriageCompatibilityPrintReport response={response} />
-        </div>
+        <>
+          {/* Pre-render invisible font warmup element so Tamil glyphs and ligatures are decoded by the browser before window.print() */}
+          <div
+            aria-hidden="true"
+            className="fixed -top-[9999px] -left-[9999px] opacity-0 pointer-events-none font-tamil text-[1px]"
+          >
+            மணமகன் மணமகள் ராசி நவாம்சம் சூ சந் செ பு குரு சுக் சனி ரா கே ல
+          </div>
+          <div className="hidden print:block font-tamil">
+            <MarriageCompatibilityPrintReport response={response} />
+          </div>
+        </>
       )}
   </div>
 );
