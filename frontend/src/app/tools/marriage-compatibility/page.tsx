@@ -29,7 +29,10 @@ import {
   safeErrorMessage,
 } from "@/lib/api";
 import { SavedMarriageReportsList } from "@/components/marriage-compatibility/SavedMarriageReportsList";
-import { MarriageCompatibilityPrintReport } from "@/components/marriage-compatibility/MarriageCompatibilityPrintReport";
+import {
+  MarriageCompatibilityPrintReport,
+  MarriagePrintSectionKey,
+} from "@/components/marriage-compatibility/MarriageCompatibilityPrintReport";
 import { SavedChartSearchModal } from "@/components/marriage-compatibility/SavedChartSearchModal";
 import {
   Search,
@@ -177,9 +180,18 @@ function MarriageCompatibilityContent() {
 
   // Download Report Modal & Generation State
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
-  const [downloadLanguage, setDownloadLanguage] = useState<"en" | "ta">("en");
+  const [downloadLanguage, setDownloadLanguage] = useState<"en" | "ta">("ta");
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [exportMode, setExportMode] = useState<"print_selected" | "full_pdf">("print_selected");
+  const [selectedSections, setSelectedSections] = useState<MarriagePrintSectionKey[]>([
+    "porutham",
+    "charts",
+    "doshas",
+    "dasa_timeline",
+    "dasa_sandhi_verdict",
+    "ashtakoota_kp",
+  ]);
 
   // Sync with searchParams
   useEffect(() => {
@@ -241,8 +253,20 @@ function MarriageCompatibilityContent() {
     }
   };
 
-  const handlePrintReport = async () => {
+  const handlePrintReport = async (overrideSections?: MarriagePrintSectionKey[]) => {
     if (!response) return;
+    if (overrideSections && overrideSections.length > 0) {
+      setSelectedSections(overrideSections);
+    } else {
+      setSelectedSections([
+        "porutham",
+        "charts",
+        "doshas",
+        "dasa_timeline",
+        "dasa_sandhi_verdict",
+        "ashtakoota_kp",
+      ]);
+    }
     try {
       if (typeof document !== "undefined" && (document as any).fonts) {
         await (document as any).fonts.ready;
@@ -252,14 +276,58 @@ function MarriageCompatibilityContent() {
     }
     setTimeout(() => {
       window.print();
-    }, 60);
+    }, 120);
   };
 
   const handleOpenDownloadModal = () => {
     if (!response) return;
     setDownloadError(null);
     setDownloadLanguage(language === "ta" ? "ta" : "en");
+    setExportMode("print_selected");
+    // Ensure default selection has all sections checked initially
+    if (!selectedSections || selectedSections.length === 0) {
+      setSelectedSections([
+        "porutham",
+        "charts",
+        "doshas",
+        "dasa_timeline",
+        "dasa_sandhi_verdict",
+        "ashtakoota_kp",
+      ]);
+    }
     setIsDownloadModalOpen(true);
+  };
+
+  const handleToggleSection = (key: MarriagePrintSectionKey) => {
+    setSelectedSections((prev) => {
+      if (prev.includes(key)) {
+        if (prev.length === 1) return prev; // Keep at least one section selected
+        return prev.filter((k) => k !== key);
+      } else {
+        return [...prev, key];
+      }
+    });
+  };
+
+  const handleSelectAllSections = () => {
+    setSelectedSections([
+      "porutham",
+      "charts",
+      "doshas",
+      "dasa_timeline",
+      "dasa_sandhi_verdict",
+      "ashtakoota_kp",
+    ]);
+  };
+
+  const handleExecuteSelectedExport = async () => {
+    if (!response) return;
+    if (exportMode === "print_selected") {
+      setIsDownloadModalOpen(false);
+      await handlePrintReport(selectedSections);
+    } else {
+      await handleConfirmDownload();
+    }
   };
 
   const handleConfirmDownload = async () => {
@@ -2890,10 +2958,11 @@ function MarriageCompatibilityContent() {
         </div>
       )}
 
-      {/* Download Report Language Selection Modal */}
+      {/* Download / Print Category Selection Modal */}
       {isDownloadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#FAF2DE] border border-[#B4872B]/30 flex items-center justify-center">
@@ -2901,12 +2970,12 @@ function MarriageCompatibilityContent() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-[#153F6B]">
-                    {language === "ta" ? "பொருத்த அறிக்கையைப் பதிவிறக்குக" : "Download Compatibility Report"}
+                    {language === "ta" ? "பொருத்த அறிக்கை - தேர்வு & பதிவிறக்கம்" : "Compatibility Report Export"}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {language === "ta"
-                      ? "அறிக்கைக்கான மொழியைத் தேர்ந்தெடுக்கவும்"
-                      : "Select report language before download"}
+                      ? "தேவையான பகுதிகளைத் தேர்ந்தெடுத்து அச்சிடவும் அல்லது PDF பெறவும்"
+                      : "Select custom sections to print or download as PDF"}
                   </p>
                 </div>
               </div>
@@ -2920,71 +2989,316 @@ function MarriageCompatibilityContent() {
               </button>
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                {language === "ta" ? "அறிக்கை மொழி / Report Language" : "Report Language"}
-              </label>
-
-              {/* English Option */}
-              <label
-                onClick={() => setDownloadLanguage("en")}
-                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
-                  downloadLanguage === "en"
-                    ? "bg-[#FAF2DE]/50 border-[#B4872B] ring-1 ring-[#B4872B]"
-                    : "border-slate-200 hover:bg-slate-50"
+            {/* Export Method Toggle Tabs */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setExportMode("print_selected")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition ${
+                  exportMode === "print_selected"
+                    ? "bg-white text-[#153F6B] shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                <input
-                  type="radio"
-                  name="download_language"
-                  value="en"
-                  checked={downloadLanguage === "en"}
-                  onChange={() => setDownloadLanguage("en")}
-                  className="mt-1 text-[#153F6B] focus:ring-[#B4872B]"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-800">English</span>
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
-                      Full Report
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Royal Gold Detailed Dossier (~11 Pages): All Website Sections — Composite Assessment, D1/D9 Charts & Degrees, 10 Poruthams, Ashtakoota 36, Kuja & Papasamya, 10 Doshas, Vedic Houses, Synastry, KP 7th CSL, Dasa-Bhukti & Remedies.
-                  </p>
-                </div>
-              </label>
-
-              {/* Tamil Option */}
-              <label
-                onClick={() => setDownloadLanguage("ta")}
-                className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
-                  downloadLanguage === "ta"
-                    ? "bg-[#FAF2DE]/50 border-[#B4872B] ring-1 ring-[#B4872B]"
-                    : "border-slate-200 hover:bg-slate-50"
+                <Printer className="w-3.5 h-3.5 text-[#153F6B]" />
+                <span>{language === "ta" ? "தேர்ந்தெடுத்து அச்சிடு / PDF" : "Print Selected (Custom)"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setExportMode("full_pdf")}
+                className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition ${
+                  exportMode === "full_pdf"
+                    ? "bg-[#153F6B] text-white shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                <input
-                  type="radio"
-                  name="download_language"
-                  value="ta"
-                  checked={downloadLanguage === "ta"}
-                  onChange={() => setDownloadLanguage("ta")}
-                  className="mt-1 text-[#153F6B] focus:ring-[#B4872B]"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-800">தமிழ் (Tamil)</span>
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-50 text-[#8C6D23]">
-                      முழு அறிக்கை
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    முழுமையான 11+ பக்க ராயல் கோல்டு அறிக்கை: அனைத்து இணையதளப் பிரிவுகளும் (முடிவு, கட்டங்கள் & பாகைகள், 10 பொருத்தம், அஷ்டகூடம் 36, செவ்வாய் & பாபசாம்யம், 10 தோஷம், வேத பாவங்கள், கே.பி, தசா-புக்தி & திருமுறை பரிகாரம்).
-                  </p>
-                </div>
-              </label>
+                <Download className="w-3.5 h-3.5 text-[#D8BD80]" />
+                <span>{language === "ta" ? "முழு PDF கோப்பு (11+ பக்கங்கள்)" : "Full Official PDF (11+ Pgs)"}</span>
+              </button>
             </div>
+
+            {/* Mode 1: Custom Sections Selection */}
+            {exportMode === "print_selected" ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    {language === "ta"
+                      ? "அச்சிட வேண்டிய பகுதிகள் (டிக் செய்யவும்)"
+                      : "Sections to Print (Check to Include)"}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllSections}
+                      className="text-[11px] font-semibold text-[#153F6B] hover:underline"
+                    >
+                      {language === "ta" ? "அனைத்தையும் தேர்ந்தெடு" : "Select All"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  {/* Option 1: 10/11 Poruthams */}
+                  <label
+                    onClick={() => handleToggleSection("porutham")}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      selectedSections.includes("porutham")
+                        ? "bg-[#FAF2DE]/40 border-[#B4872B] ring-1 ring-[#B4872B]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSections.includes("porutham")}
+                      onChange={() => {}} // handled by label onClick
+                      className="mt-0.5 rounded text-[#153F6B] focus:ring-[#B4872B] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800">
+                          {language === "ta" ? "1. நட்சத்திரப் பொருத்தங்கள் (10/11 அம்சங்கள்)" : "1. 10/11 Star Compatibility"}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
+                          பக்கம் 1
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        {language === "ta"
+                          ? "தின, கண, மகேந்திர, ஸ்திரீ தீர்க்க, யோனி, ராசி, ராசி அதிபதி, வசிய, ரஜ்ஜு, வேதை, நாடி பொருத்தம் & தீர்ப்பு."
+                          : "Traditional Tamil 10/11 Porutham assessment, individual points, and final verdict banner."}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 2: Charts D1 & D9 */}
+                  <label
+                    onClick={() => handleToggleSection("charts")}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      selectedSections.includes("charts")
+                        ? "bg-[#FAF2DE]/40 border-[#B4872B] ring-1 ring-[#B4872B]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSections.includes("charts")}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded text-[#153F6B] focus:ring-[#B4872B] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800">
+                          {language === "ta" ? "2. ராசி & நவாம்சக் கட்டங்கள் (D1 & D9)" : "2. Rasi & Navamsa Birth Charts"}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
+                          பக்கம் 2
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        {language === "ta"
+                          ? "மணமகன் ராசி & நவாம்சம், மணமகள் ராசி & நவாம்சம் தென் இந்திய 2x2 கட்டங்கள்."
+                          : "Groom & Bride 2x2 South Indian Rasi and Navamsa divisional charts with planetary placements."}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 3: Dosha Audit */}
+                  <label
+                    onClick={() => handleToggleSection("doshas")}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      selectedSections.includes("doshas")
+                        ? "bg-[#FAF2DE]/40 border-[#B4872B] ring-1 ring-[#B4872B]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSections.includes("doshas")}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded text-[#153F6B] focus:ring-[#B4872B] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800">
+                          {language === "ta" ? "3. விரிவான தோஷ ஆய்வு & சமநிலை" : "3. Complete Dosha Audit Table"}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800">
+                          பக்கம் 3
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        {language === "ta"
+                          ? "செவ்வாய் தோஷம் (நிவர்த்தி விபரங்களுடன்), நாக, புத்ர, சுக்ர, 7-ஆம் வீடு/அதிபதி மற்றும் தீய கிரக சேர்க்கைகள் (10 தோஷங்கள்)."
+                          : "10-row dosha table with Mars dosha mitigations, Naga, Puthra, Shukra, 7th Lord doshas & severities."}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 4: Dasa Bhukti Timeline */}
+                  <label
+                    onClick={() => handleToggleSection("dasa_timeline")}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      selectedSections.includes("dasa_timeline")
+                        ? "bg-[#FAF2DE]/40 border-[#B4872B] ring-1 ring-[#B4872B]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSections.includes("dasa_timeline")}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded text-[#153F6B] focus:ring-[#B4872B] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800">
+                          {language === "ta" ? "4. தசா புத்தி காலவரிசை (Dasa Sequence)" : "4. Dasa Bhukti Timeline Sequence"}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
+                          பக்கம் 4
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        {language === "ta"
+                          ? "மணமகன் & மணமகள் மகா தசா வண்ணப் பட்டைகள், நடப்பு குறிப்பான் (Now) & புத்தி மாற்ற அம்புக்குறிகள்."
+                          : "Dual comparative timeline of Mahadasas and Bhuktis with cross-transitions and current marker."}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 5: Dasa Sandhi & Sage Verdict */}
+                  <label
+                    onClick={() => handleToggleSection("dasa_sandhi_verdict")}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      selectedSections.includes("dasa_sandhi_verdict")
+                        ? "bg-[#FAF2DE]/40 border-[#B4872B] ring-1 ring-[#B4872B]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSections.includes("dasa_sandhi_verdict")}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded text-[#153F6B] focus:ring-[#B4872B] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800">
+                          {language === "ta" ? "5. தசா சந்தி, கிரக சேர்க்கை & முனிவர் வாக்கு" : "5. Dasa Sandhi & Sage's Verdict"}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
+                          பக்கம் 5
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        {language === "ta"
+                          ? "தசா சந்தி ஆய்வு, பொருத்தமான/பொருத்தமற்ற கிரக சேர்க்கை அட்டவணைகள் & முனிவரின் இறுதி வாக்கு."
+                          : "Dasa Sandhi junction findings, planetary synastry connections, and holistic sage counsel."}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Option 6: Ashtakoota 36, Papasamya & KP */}
+                  <label
+                    onClick={() => handleToggleSection("ashtakoota_kp")}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      selectedSections.includes("ashtakoota_kp")
+                        ? "bg-[#FAF2DE]/40 border-[#B4872B] ring-1 ring-[#B4872B]"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSections.includes("ashtakoota_kp")}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded text-[#153F6B] focus:ring-[#B4872B] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800">
+                          {language === "ta" ? "6. அஷ்டகூட (36), பாபசாம்யம் & கே.பி (KP)" : "6. Ashtakoota 36, Papasamya & KP"}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-purple-50 text-purple-800">
+                          பக்கம் 6
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        {language === "ta"
+                          ? "36 அஷ்டகூட 8 அம்ச அட்டவணை, தென் இந்திய பாபசாம்ய புள்ளிகள், கே.பி. 7-ஆம் உப அதிபதி & பரிகார ஸ்தலம்."
+                          : "36-point Ashtakoota breakdown, South Indian Papasamya balance, KP 7th sub-lord & remedy guidance."}
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            ) : (
+              /* Mode 2: Full 11-page PDF Download */
+              <div className="space-y-3">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  {language === "ta" ? "அறிக்கை மொழி / Report Language" : "Report Language"}
+                </label>
+
+                {/* English Option */}
+                <label
+                  onClick={() => setDownloadLanguage("en")}
+                  className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
+                    downloadLanguage === "en"
+                      ? "bg-[#FAF2DE]/50 border-[#B4872B] ring-1 ring-[#B4872B]"
+                      : "border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="download_language"
+                    value="en"
+                    checked={downloadLanguage === "en"}
+                    onChange={() => setDownloadLanguage("en")}
+                    className="mt-1 text-[#153F6B] focus:ring-[#B4872B]"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-slate-800">English</span>
+                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-50 text-[#153F6B]">
+                        Full Report
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Royal Gold Detailed Dossier (~11 Pages): All Website Sections — Composite Assessment, D1/D9 Charts & Degrees, 10 Poruthams, Ashtakoota 36, Kuja & Papasamya, 10 Doshas, Vedic Houses, Synastry, KP 7th CSL, Dasa-Bhukti & Remedies.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Tamil Option */}
+                <label
+                  onClick={() => setDownloadLanguage("ta")}
+                  className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
+                    downloadLanguage === "ta"
+                      ? "bg-[#FAF2DE]/50 border-[#B4872B] ring-1 ring-[#B4872B]"
+                      : "border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="download_language"
+                    value="ta"
+                    checked={downloadLanguage === "ta"}
+                    onChange={() => setDownloadLanguage("ta")}
+                    className="mt-1 text-[#153F6B] focus:ring-[#B4872B]"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-slate-800">தமிழ் (Tamil)</span>
+                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-50 text-[#8C6D23]">
+                        முழு அறிக்கை
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      முழுமையான 11+ பக்க ராயல் கோல்டு அறிக்கை: அனைத்து இணையதளப் பிரிவுகளும் (முடிவு, கட்டங்கள் & பாகைகள், 10 பொருத்தம், அஷ்டகூடம் 36, செவ்வாய் & பாபசாம்யம், 10 தோஷம், வேத பாவங்கள், கே.பி, தசா-புக்தி & திருமுறை பரிகாரம்).
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
 
             {downloadError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
@@ -2993,7 +3307,7 @@ function MarriageCompatibilityContent() {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsDownloadModalOpen(false)}
@@ -3004,14 +3318,23 @@ function MarriageCompatibilityContent() {
               </button>
               <button
                 type="button"
-                onClick={handleConfirmDownload}
-                disabled={downloadingPdf}
-                className="px-5 py-2 rounded-xl bg-[#153F6B] hover:bg-[#1E5692] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition disabled:opacity-50"
+                onClick={handleExecuteSelectedExport}
+                disabled={downloadingPdf || (exportMode === "print_selected" && selectedSections.length === 0)}
+                className="px-5 py-2.5 rounded-xl bg-[#153F6B] hover:bg-[#1E5692] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition disabled:opacity-50 cursor-pointer"
               >
                 {downloadingPdf ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>{language === "ta" ? "பதிவிறக்கம் தயாராகிறது..." : "Generating PDF..."}</span>
+                    <span>{language === "ta" ? "தயாராகிறது..." : "Generating..."}</span>
+                  </>
+                ) : exportMode === "print_selected" ? (
+                  <>
+                    <Printer className="w-3.5 h-3.5 text-[#D8BD80]" />
+                    <span>
+                      {language === "ta"
+                        ? `தேர்ந்தெடுத்ததை அச்சிடு / PDF (${selectedSections.length})`
+                        : `Print Selected Sections (${selectedSections.length})`}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -3056,7 +3379,10 @@ function MarriageCompatibilityContent() {
             மணமகன் மணமகள் ராசி நவாம்சம் சூ சந் செ பு குரு சுக் சனி ரா கே ல
           </div>
           <div className="hidden print:block font-tamil">
-            <MarriageCompatibilityPrintReport response={response} />
+            <MarriageCompatibilityPrintReport
+              response={response}
+              visibleSections={selectedSections}
+            />
           </div>
         </>
       )}

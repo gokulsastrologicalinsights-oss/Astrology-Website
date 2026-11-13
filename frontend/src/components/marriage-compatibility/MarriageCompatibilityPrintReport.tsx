@@ -3,8 +3,17 @@
 import React from "react";
 import { MarriageCompatibilityResponse } from "@/lib/types";
 
+export type MarriagePrintSectionKey =
+  | "porutham" // Page 1: 10/11 நட்சத்திரப் பொருத்தங்கள் & விவரங்கள்
+  | "charts" // Page 2: ராசி மற்றும் நவாம்சக் கட்டங்கள் (D1 & D9)
+  | "doshas" // Page 3: விரிவான தோஷ ஆய்வு (செவ்வாய், நாக, புத்ர, சுக்ர, 7-ஆம் அதிபதி, முதலியன)
+  | "dasa_timeline" // Page 4: தசா புத்தி காலவரிசை (Dasa Bhukti Sequence)
+  | "dasa_sandhi_verdict" // Page 5: தசா சந்தி ஆய்வு, கிரக நிலைகள் & முனிவரின் வாக்கு
+  | "ashtakoota_kp"; // Page 6: அஷ்டகூட 36 அட்டவணை, பாபசாம்யம் & கே.பி (KP) 7-ஆம் உப அதிபதி
+
 interface MarriageCompatibilityPrintReportProps {
   response: MarriageCompatibilityResponse;
+  visibleSections?: MarriagePrintSectionKey[];
 }
 
 const SIGN_NAME_TO_IDX: Record<string, number> = {
@@ -834,7 +843,14 @@ function renderDoshaCell(cell: { status?: string; severity_percent?: number; rea
   );
 }
 
-export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibilityPrintReportProps) {
+export function MarriageCompatibilityPrintReport({
+  response,
+  visibleSections,
+}: MarriageCompatibilityPrintReportProps) {
+  const isSectionVisible = (key: MarriagePrintSectionKey) => {
+    if (!visibleSections || visibleSections.length === 0) return true;
+    return visibleSections.includes(key);
+  };
   const gp = response.groom_profile;
   const bp = response.bride_profile;
   const poruthams = response.tamil_porutham?.poruthams || {};
@@ -1261,6 +1277,7 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
   return (
     <div className="bg-white text-slate-900 font-tamil max-w-[190mm] mx-auto">
       {/* ======================== PAGE 1 ======================== */}
+      {isSectionVisible("porutham") && (
       <section className="marriage-print-page pt-1 pb-2">
         {/* Header with Logo and Address */}
         <div className="flex items-center justify-between border-b border-slate-300 pb-3 mb-4">
@@ -1412,8 +1429,10 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           </tbody>
         </table>
       </section>
+      )}
 
       {/* ======================== PAGE 2 ======================== */}
+      {isSectionVisible("charts") && (
       <section className="marriage-print-page pt-4 pb-2">
         <div className="grid grid-cols-2 gap-x-8 gap-y-10">
           <SouthIndianPrintChart
@@ -1442,8 +1461,10 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           />
         </div>
       </section>
+      )}
 
       {/* ======================== PAGE 3 ======================== */}
+      {isSectionVisible("doshas") && (
       <section className="marriage-print-page pt-2 pb-2">
         <h2 className="text-[19px] font-bold text-slate-900 mb-3">தோஷ ஆய்வு</h2>
         <table className="w-full border-collapse border border-slate-400 text-[10.5px]">
@@ -1465,8 +1486,10 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           </tbody>
         </table>
       </section>
+      )}
 
       {/* ======================== PAGE 4 ======================== */}
+      {isSectionVisible("dasa_timeline") && (
       <section className="marriage-print-page pt-2 pb-2">
         <h2 className="text-[19px] font-bold text-slate-900 mb-3">Dasa Bhukti Sequence</h2>
         <div className="grid grid-cols-2 mb-2 text-center font-bold text-[13px] text-slate-900">
@@ -1700,8 +1723,10 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           ))}
         </svg>
       </section>
+      )}
 
       {/* ======================== PAGE 5 ======================== */}
+      {isSectionVisible("dasa_sandhi_verdict") && (
       <section className="marriage-print-page pt-2 pb-2 space-y-5">
         {/* 1. Dasa Sandhi Analysis */}
         <div>
@@ -1818,8 +1843,10 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           <p className="text-[11.5px] leading-[1.65] text-slate-900">{sageVerdictTa}</p>
         </div>
       </section>
+      )}
 
       {/* ======================== PAGE 6 ======================== */}
+      {isSectionVisible("ashtakoota_kp") && (
       <section className="marriage-print-page pt-1 pb-2 space-y-3">
         {/* Ashtakoota 8-Koota Breakdown */}
         <div className="flex items-center justify-between gap-2">
@@ -1974,6 +2001,7 @@ export function MarriageCompatibilityPrintReport({ response }: MarriageCompatibi
           குறிப்பு: இந்த அறிக்கை பாரம்பரிய தமிழ் பொருத்தம், 36 அஷ்டகூடம், பாபசாம்யம், வேத மற்றும் கே.பி. (KP) ஜோதிட விதிகளின் அடிப்படையில் தயாரிக்கப்பட்டது; இறுதி திருமண முடிவிற்கு குடும்ப ஆலோசனையும் சுப முகூர்த்த தேர்வும் பரிந்துரைக்கப்படுகிறது.
         </p>
       </section>
+      )}
     </div>
   );
 }
