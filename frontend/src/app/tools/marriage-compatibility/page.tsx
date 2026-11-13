@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -29,7 +29,9 @@ import {
 } from "@/lib/api";
 import { SavedMarriageReportsList } from "@/components/marriage-compatibility/SavedMarriageReportsList";
 import { MarriageCompatibilityPrintReport } from "@/components/marriage-compatibility/MarriageCompatibilityPrintReport";
+import { SavedChartSearchModal } from "@/components/marriage-compatibility/SavedChartSearchModal";
 import {
+  Search,
   HeartHandshake,
   User,
   Calendar,
@@ -110,6 +112,9 @@ function MarriageCompatibilityContent() {
   const [brideMode, setBrideMode] = useState<"manual" | "saved">("manual");
   const [savedHoroscopes, setSavedHoroscopes] = useState<SavedHoroscopeItem[]>([]);
   const [loadingSavedList, setLoadingSavedList] = useState<boolean>(false);
+  const [groomSearchQuery, setGroomSearchQuery] = useState<string>("");
+  const [brideSearchQuery, setBrideSearchQuery] = useState<string>("");
+  const [searchModalTarget, setSearchModalTarget] = useState<"groom" | "bride" | null>(null);
 
   // Groom Form
   const [groomName, setGroomName] = useState<string>("Groom");
@@ -282,27 +287,170 @@ function MarriageCompatibilityContent() {
   };
 
   // Fetch saved horoscopes if authenticated
-  useEffect(() => {
+  const fetchSavedHoroscopes = useCallback(async () => {
     if (!isAuthenticated) return;
-    let isMounted = true;
     setLoadingSavedList(true);
-    fetch("/api/horoscopes?page=1&limit=1000", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (isMounted && data?.horoscopes) {
+    try {
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch("/api/horoscopes?page=1&limit=1000", {
+        headers,
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.horoscopes) {
           setSavedHoroscopes(data.horoscopes);
         }
-      })
-      .catch((err) => {
-        console.warn("Could not load saved horoscopes:", err);
-      })
-      .finally(() => {
-        if (isMounted) setLoadingSavedList(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthenticated]);
+      }
+    } catch (err) {
+      console.warn("Could not load saved horoscopes:", err);
+    } finally {
+      setLoadingSavedList(false);
+    }
+  }, [isAuthenticated, session?.access_token]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSavedHoroscopes();
+    }
+  }, [isAuthenticated, fetchSavedHoroscopes]);
+
+  // Filter saved horoscopes for Groom
+  const filteredGroomSavedHoroscopes = useMemo(() => {
+    const q = groomSearchQuery.trim().toLowerCase();
+    if (!q) return savedHoroscopes;
+
+    return savedHoroscopes.filter((item) => {
+      const name = (item.person_name || "").toLowerCase();
+      const birthDate = (item.birth_date || "").toLowerCase();
+      const birthTime = (item.birth_time || "").toLowerCase();
+      const place = (item.birthplace || item.location_name || "").toLowerCase();
+      const dispNum = item.display_number ? String(item.display_number) : "";
+      const phone = (
+        item.customer_phone ||
+        item.normalized_phone ||
+        item.phone_number ||
+        item.whatsapp_number ||
+        ""
+      ).toLowerCase();
+
+      return (
+        name.includes(q) ||
+        birthDate.includes(q) ||
+        birthTime.includes(q) ||
+        place.includes(q) ||
+        dispNum === q ||
+        `#${dispNum}` === q ||
+        phone.includes(q)
+      );
+    });
+  }, [savedHoroscopes, groomSearchQuery]);
+
+  // Filter saved horoscopes for Bride
+  const filteredBrideSavedHoroscopes = useMemo(() => {
+    const q = brideSearchQuery.trim().toLowerCase();
+    if (!q) return savedHoroscopes;
+
+    return savedHoroscopes.filter((item) => {
+      const name = (item.person_name || "").toLowerCase();
+      const birthDate = (item.birth_date || "").toLowerCase();
+      const birthTime = (item.birth_time || "").toLowerCase();
+      const place = (item.birthplace || item.location_name || "").toLowerCase();
+      const dispNum = item.display_number ? String(item.display_number) : "";
+      const phone = (
+        item.customer_phone ||
+        item.normalized_phone ||
+        item.phone_number ||
+        item.whatsapp_number ||
+        ""
+      ).toLowerCase();
+
+      return (
+        name.includes(q) ||
+        birthDate.includes(q) ||
+        birthTime.includes(q) ||
+        place.includes(q) ||
+        dispNum === q ||
+        `#${dispNum}` === q ||
+        phone.includes(q)
+      );
+    });
+  }, [savedHoroscopes, brideSearchQuery]);
+
+  // Active selected horoscopes
+  const selectedGroomHoroscope = useMemo(() => {
+    return savedHoroscopes.find((h) => h.id === groomSavedId) || null;
+  }, [savedHoroscopes, groomSavedId]);
+
+  const selectedBrideHoroscope = useMemo(() => {
+    return savedHoroscopes.find((h) => h.id === brideSavedId) || null;
+  }, [savedHoroscopes, brideSavedId]);
+
+  // Apply / Get data from saved horoscope for Groom
+  const handleApplyGroomSaved = (item: SavedHoroscopeItem) => {
+    setGroomSavedId(item.id);
+    if (item.person_name) setGroomName(item.person_name);
+    if (item.birth_date) setGroomDate(item.birth_date);
+    if (item.birth_time) {
+      let t = item.birth_time.trim();
+      if (t.length === 5) t += ":00";
+      setGroomTime(t);
+    }
+    if (item.latitude !== undefined && item.latitude !== null) {
+      setGroomLat(String(item.latitude));
+    }
+    if (item.longitude !== undefined && item.longitude !== null) {
+      setGroomLon(String(item.longitude));
+    }
+    if (item.timezone) setGroomTz(item.timezone);
+    if (item.birthplace || item.location_name) {
+      setGroomCity(item.birthplace || item.location_name);
+    }
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      delete next.groomSaved;
+      delete next.groomDate;
+      delete next.groomTime;
+      delete next.groomLat;
+      delete next.groomLon;
+      return next;
+    });
+  };
+
+  // Apply / Get data from saved horoscope for Bride
+  const handleApplyBrideSaved = (item: SavedHoroscopeItem) => {
+    setBrideSavedId(item.id);
+    if (item.person_name) setBrideName(item.person_name);
+    if (item.birth_date) setBrideDate(item.birth_date);
+    if (item.birth_time) {
+      let t = item.birth_time.trim();
+      if (t.length === 5) t += ":00";
+      setBrideTime(t);
+    }
+    if (item.latitude !== undefined && item.latitude !== null) {
+      setBrideLat(String(item.latitude));
+    }
+    if (item.longitude !== undefined && item.longitude !== null) {
+      setBrideLon(String(item.longitude));
+    }
+    if (item.timezone) setBrideTz(item.timezone);
+    if (item.birthplace || item.location_name) {
+      setBrideCity(item.birthplace || item.location_name);
+    }
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      delete next.brideSaved;
+      delete next.brideDate;
+      delete next.brideTime;
+      delete next.brideLat;
+      delete next.brideLon;
+      return next;
+    });
+  };
 
   const handleGroomCityChange = (cityName: string) => {
     setGroomCity(cityName);
@@ -645,37 +793,182 @@ function MarriageCompatibilityContent() {
 
               <div className="p-6 space-y-5 flex-1">
                 {groomMode === "saved" ? (
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">
-                      {language === "ta" ? "சேமிக்கப்பட்ட ஜாதகத்தைத் தேர்ந்தெடுக்கவும்" : "Select Saved Horoscope"} *
-                    </label>
+                  <div className="space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        {language === "ta" ? "சேமிக்கப்பட்ட ஜாதகத்தைத் தேர்ந்தெடுக்கவும்" : "Select Saved Horoscope"} *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setSearchModalTarget("groom")}
+                        className="inline-flex items-center gap-1.5 text-xs text-[#153F6B] hover:text-[#1E4E8C] font-bold px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition cursor-pointer"
+                        title={language === "ta" ? "ஜாதகத்தைத் தேடுக" : "Search saved charts"}
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "ஜாதகம் தேடுக" : "Search Chart"}</span>
+                      </button>
+                    </div>
+
+                    {/* Inline Search Input with Dedicated Search Button */}
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={groomSearchQuery}
+                          onChange={(e) => setGroomSearchQuery(e.target.value)}
+                          placeholder={
+                            language === "ta"
+                              ? "பெயர், பிறந்த தேதி, இடம் அல்லது எண் மூலம் தேடுக..."
+                              : "Search by name, DOB (YYYY-MM-DD), place, or chart #..."
+                          }
+                          className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B] shadow-2xs"
+                        />
+                        {groomSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setGroomSearchQuery("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                            title={language === "ta" ? "நீக்குக" : "Clear"}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSearchModalTarget("groom")}
+                        className="px-3.5 py-2 rounded-xl bg-[#153F6B] hover:bg-[#1E4E8C] text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs shrink-0 cursor-pointer"
+                        title={language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்களில் தேடுக" : "Search saved charts"}
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "தேடுக" : "Search"}</span>
+                      </button>
+                    </div>
+
+                    {groomSearchQuery && (
+                      <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
+                        <span>
+                          {language === "ta"
+                            ? `"${groomSearchQuery}" க்கான முடிவுகள்: ${filteredGroomSavedHoroscopes.length} ஜாதகம்`
+                            : `Results for "${groomSearchQuery}": ${filteredGroomSavedHoroscopes.length} chart(s)`}
+                        </span>
+                        {filteredGroomSavedHoroscopes.length === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setGroomSearchQuery("")}
+                            className="text-blue-700 hover:underline font-semibold cursor-pointer"
+                          >
+                            {language === "ta" ? "அனைத்தையும் காட்டு" : "Show all charts"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <select
                       value={groomSavedId}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setGroomSavedId(val);
+                        if (!val) {
+                          setGroomSavedId("");
+                          return;
+                        }
                         const match = savedHoroscopes.find((h) => h.id === val);
-                        if (match?.person_name) setGroomName(match.person_name);
+                        if (match) {
+                          handleApplyGroomSaved(match);
+                        }
                       }}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#153F6B] focus:border-[#153F6B]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#153F6B] focus:border-[#153F6B] bg-white text-slate-800"
                     >
-                      <option value="">{language === "ta" ? "-- தேர்வு செய்க --" : "-- Select Horoscope --"}</option>
-                      {savedHoroscopes.map((h) => (
+                      <option value="">
+                        {filteredGroomSavedHoroscopes.length === 0
+                          ? language === "ta"
+                            ? "-- பொருத்தமான ஜாதகங்கள் இல்லை --"
+                            : "-- No matching charts found --"
+                          : language === "ta"
+                            ? `-- ஜாதகத்தை தேர்வு செய்க (${filteredGroomSavedHoroscopes.length} உள்ளன) --`
+                            : `-- Select Horoscope (${filteredGroomSavedHoroscopes.length} available) --`}
+                      </option>
+                      {filteredGroomSavedHoroscopes.map((h) => (
                         <option key={h.id} value={h.id}>
+                          {h.display_number ? `#${h.display_number} - ` : ""}
                           {h.person_name || "Horoscope"} ({h.birth_date} {h.birth_time})
+                          {h.birthplace ? ` - ${h.birthplace}` : ""}
                         </option>
                       ))}
                     </select>
                     {validationErrors.groomSaved && (
                       <p className="text-xs text-rose-600 mt-1">{validationErrors.groomSaved}</p>
                     )}
+
+                    {/* Active Selected Saved Chart Data Confirmation Card */}
+                    {selectedGroomHoroscope && (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-blue-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                          <div>
+                            <div className="font-bold text-blue-950 text-sm flex items-center gap-2 flex-wrap">
+                              <span>{selectedGroomHoroscope.person_name || "Horoscope"}</span>
+                              {selectedGroomHoroscope.display_number && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-800">
+                                  #{selectedGroomHoroscope.display_number}
+                                </span>
+                              )}
+                              <span className="text-[11px] font-semibold text-blue-700 bg-white/90 px-2 py-0.5 rounded-md border border-blue-200">
+                                ✓ {language === "ta" ? "விவரங்கள் பெறப்பட்டன" : "Data retrieved from saved chart"}
+                              </span>
+                            </div>
+                            <div className="text-blue-800 text-xs mt-1 flex flex-wrap gap-x-3.5 gap-y-1">
+                              <span>📅 {selectedGroomHoroscope.birth_date}</span>
+                              <span>⏰ {selectedGroomHoroscope.birth_time}</span>
+                              <span>
+                                📍 {selectedGroomHoroscope.birthplace || "Coordinates"}
+                                {selectedGroomHoroscope.latitude !== undefined && (
+                                  <> ({Number(selectedGroomHoroscope.latitude).toFixed(2)}°, {Number(selectedGroomHoroscope.longitude).toFixed(2)}°)</>
+                                )}
+                              </span>
+                              <span>🌐 {selectedGroomHoroscope.timezone}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setSearchModalTarget("groom")}
+                            className="text-xs font-semibold text-[#153F6B] bg-white hover:bg-blue-100/50 px-2.5 py-1.5 rounded-lg border border-blue-200 transition cursor-pointer"
+                          >
+                            {language === "ta" ? "மாற்றுக" : "Change"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGroomSavedId("")}
+                            className="text-xs text-slate-500 hover:text-rose-600 p-1 rounded cursor-pointer"
+                            title={language === "ta" ? "நீக்குக" : "Clear selection"}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                        {language === "ta" ? "மணமகன் பெயர்" : "Groom Name"} ({language === "ta" ? "விருப்பத்தேர்வு" : "Optional"})
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                          {language === "ta" ? "மணமகன் பெயர்" : "Groom Name"} ({language === "ta" ? "விருப்பத்தேர்வு" : "Optional"})
+                        </label>
+                        {isAuthenticated && (
+                          <button
+                            type="button"
+                            onClick={() => setSearchModalTarget("groom")}
+                            className="inline-flex items-center gap-1 text-[11px] text-[#153F6B] hover:text-[#1E4E8C] font-semibold hover:underline cursor-pointer"
+                          >
+                            <Search className="w-3 h-3" />
+                            <span>{language === "ta" ? "சேமித்த ஜாதகத்திலிருந்து பெறுக" : "Load from Saved Chart"}</span>
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={groomName}
@@ -824,37 +1117,182 @@ function MarriageCompatibilityContent() {
 
               <div className="p-6 space-y-5 flex-1">
                 {brideMode === "saved" ? (
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">
-                      {language === "ta" ? "சேமிக்கப்பட்ட ஜாதகத்தைத் தேர்ந்தெடுக்கவும்" : "Select Saved Horoscope"} *
-                    </label>
+                  <div className="space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        {language === "ta" ? "சேமிக்கப்பட்ட ஜாதகத்தைத் தேர்ந்தெடுக்கவும்" : "Select Saved Horoscope"} *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setSearchModalTarget("bride")}
+                        className="inline-flex items-center gap-1.5 text-xs text-[#996F1D] hover:text-[#7A5612] font-bold px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 transition cursor-pointer"
+                        title={language === "ta" ? "ஜாதகத்தைத் தேடுக" : "Search saved charts"}
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "ஜாதகம் தேடுக" : "Search Chart"}</span>
+                      </button>
+                    </div>
+
+                    {/* Inline Search Input with Dedicated Search Button */}
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={brideSearchQuery}
+                          onChange={(e) => setBrideSearchQuery(e.target.value)}
+                          placeholder={
+                            language === "ta"
+                              ? "பெயர், பிறந்த தேதி, இடம் அல்லது எண் மூலம் தேடுக..."
+                              : "Search by name, DOB (YYYY-MM-DD), place, or chart #..."
+                          }
+                          className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#B4872B] focus:ring-1 focus:ring-[#B4872B] shadow-2xs"
+                        />
+                        {brideSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setBrideSearchQuery("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                            title={language === "ta" ? "நீக்குக" : "Clear"}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSearchModalTarget("bride")}
+                        className="px-3.5 py-2 rounded-xl bg-[#B4872B] hover:bg-[#996F1D] text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs shrink-0 cursor-pointer"
+                        title={language === "ta" ? "சேமிக்கப்பட்ட ஜாதகங்களில் தேடுக" : "Search saved charts"}
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "தேடுக" : "Search"}</span>
+                      </button>
+                    </div>
+
+                    {brideSearchQuery && (
+                      <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
+                        <span>
+                          {language === "ta"
+                            ? `"${brideSearchQuery}" க்கான முடிவுகள்: ${filteredBrideSavedHoroscopes.length} ஜாதகம்`
+                            : `Results for "${brideSearchQuery}": ${filteredBrideSavedHoroscopes.length} chart(s)`}
+                        </span>
+                        {filteredBrideSavedHoroscopes.length === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setBrideSearchQuery("")}
+                            className="text-amber-800 hover:underline font-semibold cursor-pointer"
+                          >
+                            {language === "ta" ? "அனைத்தையும் காட்டு" : "Show all charts"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <select
                       value={brideSavedId}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setBrideSavedId(val);
+                        if (!val) {
+                          setBrideSavedId("");
+                          return;
+                        }
                         const match = savedHoroscopes.find((h) => h.id === val);
-                        if (match?.person_name) setBrideName(match.person_name);
+                        if (match) {
+                          handleApplyBrideSaved(match);
+                        }
                       }}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4872B] focus:border-[#B4872B]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4872B] focus:border-[#B4872B] bg-white text-slate-800"
                     >
-                      <option value="">{language === "ta" ? "-- தேர்வு செய்க --" : "-- Select Horoscope --"}</option>
-                      {savedHoroscopes.map((h) => (
+                      <option value="">
+                        {filteredBrideSavedHoroscopes.length === 0
+                          ? language === "ta"
+                            ? "-- பொருத்தமான ஜாதகங்கள் இல்லை --"
+                            : "-- No matching charts found --"
+                          : language === "ta"
+                            ? `-- ஜாதகத்தை தேர்வு செய்க (${filteredBrideSavedHoroscopes.length} உள்ளன) --`
+                            : `-- Select Horoscope (${filteredBrideSavedHoroscopes.length} available) --`}
+                      </option>
+                      {filteredBrideSavedHoroscopes.map((h) => (
                         <option key={h.id} value={h.id}>
+                          {h.display_number ? `#${h.display_number} - ` : ""}
                           {h.person_name || "Horoscope"} ({h.birth_date} {h.birth_time})
+                          {h.birthplace ? ` - ${h.birthplace}` : ""}
                         </option>
                       ))}
                     </select>
                     {validationErrors.brideSaved && (
                       <p className="text-xs text-rose-600 mt-1">{validationErrors.brideSaved}</p>
                     )}
+
+                    {/* Active Selected Saved Chart Data Confirmation Card */}
+                    {selectedBrideHoroscope && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-[#B4872B] mt-0.5 shrink-0" />
+                          <div>
+                            <div className="font-bold text-amber-950 text-sm flex items-center gap-2 flex-wrap">
+                              <span>{selectedBrideHoroscope.person_name || "Horoscope"}</span>
+                              {selectedBrideHoroscope.display_number && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-200/80 text-amber-900">
+                                  #{selectedBrideHoroscope.display_number}
+                                </span>
+                              )}
+                              <span className="text-[11px] font-semibold text-amber-800 bg-white/90 px-2 py-0.5 rounded-md border border-amber-200">
+                                ✓ {language === "ta" ? "விவரங்கள் பெறப்பட்டன" : "Data retrieved from saved chart"}
+                              </span>
+                            </div>
+                            <div className="text-amber-800 text-xs mt-1 flex flex-wrap gap-x-3.5 gap-y-1">
+                              <span>📅 {selectedBrideHoroscope.birth_date}</span>
+                              <span>⏰ {selectedBrideHoroscope.birth_time}</span>
+                              <span>
+                                📍 {selectedBrideHoroscope.birthplace || "Coordinates"}
+                                {selectedBrideHoroscope.latitude !== undefined && (
+                                  <> ({Number(selectedBrideHoroscope.latitude).toFixed(2)}°, {Number(selectedBrideHoroscope.longitude).toFixed(2)}°)</>
+                                )}
+                              </span>
+                              <span>🌐 {selectedBrideHoroscope.timezone}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setSearchModalTarget("bride")}
+                            className="text-xs font-semibold text-[#996F1D] bg-white hover:bg-amber-100/50 px-2.5 py-1.5 rounded-lg border border-amber-200 transition cursor-pointer"
+                          >
+                            {language === "ta" ? "மாற்றுக" : "Change"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBrideSavedId("")}
+                            className="text-xs text-slate-500 hover:text-rose-600 p-1 rounded cursor-pointer"
+                            title={language === "ta" ? "நீக்குக" : "Clear selection"}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                        {language === "ta" ? "மணமகள் பெயர்" : "Bride Name"} ({language === "ta" ? "விருப்பத்தேர்வு" : "Optional"})
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                          {language === "ta" ? "மணமகள் பெயர்" : "Bride Name"} ({language === "ta" ? "விருப்பத்தேர்வு" : "Optional"})
+                        </label>
+                        {isAuthenticated && (
+                          <button
+                            type="button"
+                            onClick={() => setSearchModalTarget("bride")}
+                            className="inline-flex items-center gap-1 text-[11px] text-[#996F1D] hover:text-[#7A5612] font-semibold hover:underline cursor-pointer"
+                          >
+                            <Search className="w-3 h-3" />
+                            <span>{language === "ta" ? "சேமித்த ஜாதகத்திலிருந்து பெறுக" : "Load from Saved Chart"}</span>
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={brideName}
@@ -2578,6 +3016,26 @@ function MarriageCompatibilityContent() {
       )}
     </main>
       </div>
+      {/* Saved Chart Search Modal */}
+      <SavedChartSearchModal
+        isOpen={searchModalTarget !== null}
+        onClose={() => setSearchModalTarget(null)}
+        onSelect={(item) => {
+          if (searchModalTarget === "groom") {
+            setGroomMode("saved");
+            handleApplyGroomSaved(item);
+          } else if (searchModalTarget === "bride") {
+            setBrideMode("saved");
+            handleApplyBrideSaved(item);
+          }
+        }}
+        savedHoroscopes={savedHoroscopes}
+        loading={loadingSavedList}
+        onRefresh={fetchSavedHoroscopes}
+        partnerType={searchModalTarget || "groom"}
+        language={language}
+      />
+
       {response && (
         <div className="hidden print:block">
           <MarriageCompatibilityPrintReport response={response} />
