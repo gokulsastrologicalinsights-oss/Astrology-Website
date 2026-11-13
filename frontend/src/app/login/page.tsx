@@ -119,9 +119,9 @@ function LoginForm() {
         <div className="absolute bottom-20 left-20 w-2 h-2 rounded-full bg-amber-200/30 pointer-events-none" />
 
         {/* Content Container */}
-        <div className="relative z-10 flex flex-col items-center text-center max-w-lg my-auto">
-          {/* Main Brand Title */}
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+        <div className="relative z-10 flex flex-col items-center text-center max-w-xl xl:max-w-2xl w-full px-2 sm:px-4 my-auto">
+          {/* Main Brand Title in Single Line */}
+          <h1 className="font-serif text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl font-bold text-white tracking-tight leading-tight whitespace-nowrap">
             {language === "ta" ? "கோகுலின் ஜோதிட நுண்ணறிவுகள்" : "Gokul's Astrological Insights"}
           </h1>
 
@@ -202,8 +202,8 @@ function LoginForm() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="font-serif text-lg font-bold text-[#0D2238] tracking-tight">
-                {language === "ta" ? "கோகுல் ஜோதிடம்" : "VedicSage.ai"}
+              <span className="font-serif text-base sm:text-lg font-bold text-[#0D2238] tracking-tight whitespace-nowrap">
+                {language === "ta" ? "கோகுலின் ஜோதிட நுண்ணறிவுகள்" : "Gokul's Astrological Insights"}
               </span>
             </div>
 
