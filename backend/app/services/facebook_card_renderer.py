@@ -1056,272 +1056,332 @@ DEPARTMENT_BAR_COLORS = [
 ]
 
 
+LOGO_G_PATH = SOCIAL_ASSETS_DIR / "logo_g.jpg"
+FOUNDER_PORTRAIT_PATH = SOCIAL_ASSETS_DIR / "founder_portrait.jpg"
+
+RASHI_NAKSHATRAS_TA: Dict[int, List[Tuple[str, str]]] = {
+    1: [
+        ("அஸ்வினி", "எடுத்த காரியங்களில் அனுகூலமான வெற்றி கிடைக்கும்."),
+        ("பரணி", "பணவரவு திருப்திகரமாக இருக்கும்; குடும்பத்தில் மகிழ்ச்சி."),
+        ("கார்த்திகை", "தொழில் ரீதியான புதிய முயற்சிகளில் ஆதாயம் கிட்டும்."),
+    ],
+    2: [
+        ("கார்த்திகை", "அலுவலகப் பணிகளில் நிதானமும் கவனமும் தேவை."),
+        ("ரோகிணி", "சுபகாரிய பேச்சுவார்த்தைகள் சுமுகமாக முடியும்."),
+        ("மிருகசீரிஷம்", "புதிய நபர்களின் அறிமுகமும் ஆதரவும் உற்சாகம் தரும்."),
+    ],
+    3: [
+        ("மிருகசீரிஷம்", "திட்டமிட்ட காரியங்கள் தடையின்றி நிறைவேறும்."),
+        ("திருவாதிரை", "பயணங்களால் நன்மையும் புதிய அனுபவங்களும் கிடைக்கும்."),
+        ("புனர்பூசம்", "குடும்பத்தில் அமைதியும் மகிழ்ச்சியான சூழலும் நிலவும்."),
+    ],
+    4: [
+        ("புனர்பூசம்", "எடுத்த காரியங்களில் அனுகூலமான வெற்றியும் மனமகிழ்ச்சியும் உண்டாகும்."),
+        ("பூசம்", "குடும்பத்தில் சுபகாரிய பேச்சுவார்த்தைகள் கைகூடி மகிழ்ச்சி பெருகும்."),
+        ("ஆயில்யம்", "தொழில் ரீதியான புதிய முயற்சிகளில் எதிர்பார்த்த நல்ல ஆதாயம் கிட்டும்."),
+    ],
+    5: [
+        ("மகம்", "தொழில் மற்றும் உத்தியோகத்தில் புதிய வாய்ப்புகள் தேடி வரும்."),
+        ("பூரம்", "உறவினர்கள் மூலம் சுபச்செய்திகள் வந்து சேரும்."),
+        ("உத்திரம்", "பெரியோர்களின் ஆதரவு மற்றும் வழிகாட்டுதல் மனத்தெளிவு தரும்."),
+    ],
+    6: [
+        ("உத்திரம்", "பணவரவு சீராக இருக்கும்; பழைய பாக்கிகள் வசூலாகும்."),
+        ("அஸ்தம்", "பணியிடத்தில் மேலதிகாரிகளின் நன்மதிப்பும் பாராட்டுகளும் கிட்டும்."),
+        ("சித்திரை", "உடன் பிறந்தவர்கள் மற்றும் நண்பர்களின் ஒத்துழைப்பு கிடைக்கும்."),
+    ],
+    7: [
+        ("சித்திரை", "வியாபாரத்தில் புதிய வாடிக்கையாளர்கள் மூலம் லாபம் கூடும்."),
+        ("சுவாதி", "நீண்ட நாள் ஆசைகள் மற்றும் திட்டங்கள் நிறைவேறும்."),
+        ("விசாகம்", "குடும்பத்தினருடன் மகிழ்ச்சியான நேரத்தைச் செலவிடுவீர்கள்."),
+    ],
+    8: [
+        ("விசாகம்", "எதிர்பாராத தனவரவு மற்றும் நல்ல மாற்றங்கள் உண்டாகும்."),
+        ("அனுஷம்", "தொழில் பணிகளில் நிலவி வந்த தடைகள் விலகும்."),
+        ("கேட்டை", "உத்தியோகத்தில் புதிய பொறுப்புகள் மற்றும் அங்கீகாரம் கிடைக்கும்."),
+    ],
+    9: [
+        ("மூலம்", "ஆன்மீக ஈடுபாடும் மன அமைதியும் கூடும்."),
+        ("பூராடம்", "சுபகாரிய முயற்சிகளில் எதிர்பார்த்த அனுகூலம் உண்டு."),
+        ("உத்திராடம்", "நிதி நிலைமை உயரும்; குடும்பத் தேவைகள் பூர்த்தியாகும்."),
+    ],
+    10: [
+        ("உத்திராடம்", "உழைப்பிற்கேற்ற நல்ல பலன்களும் நன்மதிப்பும் கிட்டும்."),
+        ("திருவோணம்", "புதிய முதலீடுகள் மற்றும் திட்டங்களில் விவேகம் தேவை."),
+        ("அவிட்டம்", "நண்பர்கள் மற்றும் உடன் பணிபுரிபவர்களின் ஆதரவு உற்சாகம் தரும்."),
+    ],
+    11: [
+        ("அவிட்டம்", "பணவரவு தாராளமாக இருக்கும்; சேமிப்பு உயரும்."),
+        ("சதயம்", "தொழில் விரிவாக்க முயற்சிகள் நல்ல பலனைத் தரும்."),
+        ("பூரட்டாதி", "குடும்பத்தில் இருந்த கருத்து வேறுபாடுகள் நீங்கி ஒற்றுமை பலப்படும்."),
+    ],
+    12: [
+        ("பூரட்டாதி", "மனதில் நிலவிய கவலைகள் நீங்கி புத்துணர்ச்சி பிறக்கும்."),
+        ("உத்திரட்டாதி", "தொழில் மற்றும் வியாபாரத்தில் நல்ல முன்னேற்றம் காணப்படும்."),
+        ("ரேவதி", "சுபச்செலவுகள் மூலம் குடும்பத்தில் சுபமங்கள நிகழ்வுகள் கைகூடும்."),
+    ],
+}
+
+
 def render_rashi_daily_card_png(
     horoscope_data: KpDailyHoroscopeResponse,
     prediction: RashiDailyPrediction,
     slide_index: Optional[int] = None,
     total_slides: Optional[int] = None,
 ) -> bytes:
-    """Renders a 1080x1350 premium navy-blue & antique-gold Tamil KP Daily Raasi Palan card for one Rashi."""
+    """Renders the finalized high-impact 1080x1350 Tamil social card matching the approved magazine design."""
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=(CARD_PT_WIDTH, CARD_PT_HEIGHT))
     c.setTitle(f"KP Daily Raasi Palan - {prediction.rashi_name_en} - {horoscope_data.date}")
 
-    # Coordinate converters (1080x1350 px -> 540x675 pt)
     def pt_x(px: float) -> float:
         return px * (CARD_PT_WIDTH / 1080.0)
 
     def pt_y(py: float) -> float:
         return (1350.0 - py) * (CARD_PT_HEIGHT / 1350.0)
 
-    # 1. Base template canvas backdrop styled specifically to the Rashi's color theme
+    # 1. Background styled to Rashi's distinctive luxury color theme
     theme = RASHI_COLOR_THEMES.get(prediction.rashi_id, {})
-    c_tint = theme.get("tint", C_BG_NAVY)
-    c_card_bg = theme.get("card_bg", C_CARD_BG)
-    c_gold_border = theme.get("border_gold", C_BORDER_GOLD)
-    c_gold_bright = theme.get("gold_bright", C_GOLD_BRIGHT)
-    c_pill_bg = theme.get("pill_bg", colors.HexColor("#E8B83D"))
-    c_pill_text = theme.get("pill_text", colors.HexColor("#000000"))
+    bg_deep = theme.get("bg_deep", colors.HexColor("#040C1A"))
+    bg_accent = theme.get("bg_accent", colors.HexColor("#0A1E3B"))
+    border_gold = theme.get("border_gold", colors.HexColor("#D4AF37"))
+    gold_bright = theme.get("gold_bright", colors.HexColor("#FCD34D"))
+    pill_bg = theme.get("pill_bg", colors.HexColor("#103762"))
 
-    if PRISTINE_BASE_CANVAS_PATH.is_file():
-        c.drawImage(
-            ImageReader(str(PRISTINE_BASE_CANVAS_PATH)),
-            0,
-            0,
-            width=CARD_PT_WIDTH,
-            height=CARD_PT_HEIGHT,
-        )
-        # Apply a subtle atmospheric color tint over the base canvas for this Rashi
-        c.saveState()
-        c.setFillColor(c_tint)
-        c.setFillAlpha(0.28)
-        c.rect(0, 0, CARD_PT_WIDTH, CARD_PT_HEIGHT, stroke=0, fill=1)
-        # Dynamic colored inner accent glow border for this Rashi
-        c.setStrokeColor(c_gold_border)
-        c.setStrokeAlpha(0.75)
-        c.setLineWidth(1.2)
-        c.roundRect(pt_x(18), pt_y(1332), pt_x(1044), pt_y(18), 12, stroke=1, fill=0)
-        c.restoreState()
-    else:
-        _draw_canvas_backdrop(c, rashi_id=prediction.rashi_id)
+    c.saveState()
+    c.setFillColor(bg_deep)
+    c.rect(0, 0, CARD_PT_WIDTH, CARD_PT_HEIGHT, stroke=0, fill=1)
 
-    # 2. Header: Tamil date and weekday in top right gold date badge
-    date_badge_text_c = colors.HexColor("#221608")
-    date_str_ta = format_tamil_date_prefix(horoscope_data.date)
-    weekday_ta = horoscope_data.day_of_week_ta
-    draw_shaped_text(c, date_str_ta, pt_x(725), pt_y(38), font_key="bold", font_size=7.6, color=date_badge_text_c, align="left")
-    draw_shaped_text(c, weekday_ta, pt_x(725), pt_y(58), font_key="bold", font_size=7.2, color=date_badge_text_c, align="left")
+    c.setFillColor(bg_accent)
+    c.setFillAlpha(0.75)
+    c.circle(CARD_PT_WIDTH * 0.5, CARD_PT_HEIGHT * 0.82, 170, stroke=0, fill=1)
+    c.circle(CARD_PT_WIDTH * 0.15, CARD_PT_HEIGHT * 0.18, 140, stroke=0, fill=1)
 
-    # 3. Hero Section: Zodiac Illustration, Rashi Names, Score, Rating, Transits
-    c_ivory = colors.HexColor("#FFFFFF")
+    c.setStrokeColor(border_gold)
+    c.setStrokeAlpha(0.9)
+    c.setLineWidth(2.2)
+    c.roundRect(pt_x(14), pt_y(1336), pt_x(1052), pt_y(14), 16, stroke=1, fill=0)
 
-    # Rashi Zodiac Illustration
+    c.setStrokeAlpha(0.4)
+    c.setLineWidth(0.8)
+    c.roundRect(pt_x(22), pt_y(1328), pt_x(1036), pt_y(22), 12, stroke=1, fill=0)
+    c.restoreState()
+
+    # 2. HEADER: Circular Logo, Company Title, Big WhatsApp Pill, Circular Photo
+    logo_cx, logo_cy, logo_r = pt_x(105), pt_y(98), pt_x(65)
+    c.saveState()
+    c.setFillColor(colors.HexColor("#020B18"))
+    c.setStrokeColor(gold_bright)
+    c.setLineWidth(2.0)
+    c.circle(logo_cx, logo_cy, logo_r, stroke=1, fill=1)
+    if LOGO_G_PATH.is_file():
+        c.drawImage(ImageReader(str(LOGO_G_PATH)), logo_cx - logo_r + 2, logo_cy - logo_r + 2, width=(logo_r - 2) * 2, height=(logo_r - 2) * 2, mask="auto")
+    elif LOGO_PATH.is_file():
+        c.drawImage(ImageReader(str(LOGO_PATH)), logo_cx - logo_r + 2, logo_cy - logo_r + 2, width=(logo_r - 2) * 2, height=(logo_r - 2) * 2, mask="auto")
+    c.restoreState()
+
+    draw_shaped_text(
+        c,
+        "Gokul's Astrological Insights",
+        CARD_PT_WIDTH / 2.0,
+        pt_y(74),
+        font_key="bold",
+        font_size=17.5,
+        color=gold_bright,
+        align="center",
+    )
+
+    wa_w, wa_h = pt_x(480), pt_x(48)
+    wa_x = (CARD_PT_WIDTH - wa_w) / 2.0
+    wa_y = pt_y(136)
+    c.saveState()
+    c.setFillColor(colors.HexColor("#092013"))
+    c.setStrokeColor(colors.HexColor("#25D366"))
+    c.setLineWidth(1.6)
+    c.roundRect(wa_x, wa_y, wa_w, wa_h, wa_h / 2.0, stroke=1, fill=1)
+    c.restoreState()
+
+    draw_shaped_text(
+        c,
+        "வாட்ஸ்அப் / தொடர்புக்கு: 9444 55 9071",
+        CARD_PT_WIDTH / 2.0,
+        wa_y + 8.5,
+        font_key="bold",
+        font_size=10.2,
+        color=colors.HexColor("#FFFFFF"),
+        align="center",
+    )
+
+    photo_cx, photo_cy, photo_r = pt_x(975), pt_y(98), pt_x(65)
+    c.saveState()
+    c.setFillColor(colors.HexColor("#020B18"))
+    c.setStrokeColor(gold_bright)
+    c.setLineWidth(2.0)
+    c.circle(photo_cx, photo_cy, photo_r, stroke=1, fill=1)
+    if FOUNDER_PORTRAIT_PATH.is_file():
+        c.drawImage(ImageReader(str(FOUNDER_PORTRAIT_PATH)), photo_cx - photo_r + 2, photo_cy - photo_r + 2, width=(photo_r - 2) * 2, height=(photo_r - 2) * 2, mask="auto")
+    c.restoreState()
+
+    # 3. DATE RIBBON: Kottai Ezhuthu Bold Tamil Date
+    date_parts = horoscope_data.date.split("-")
+    date_ddmmyyyy = f"{date_parts[2]}-{date_parts[1]}-{date_parts[0]}" if len(date_parts) == 3 else horoscope_data.date
+    date_title = f"{date_ddmmyyyy} தினசரி ராசிபலன்கள்"
+    date_sub = f"{format_tamil_date_prefix(horoscope_data.date)} • {horoscope_data.day_of_week_ta}"
+
+    ribbon_w = CARD_PT_WIDTH - pt_x(72)
+    ribbon_h = pt_x(66)
+    ribbon_x = pt_x(36)
+    ribbon_y = pt_y(224)
+    c.saveState()
+    c.setFillColor(colors.HexColor("#153C69"))
+    c.setFillAlpha(0.65)
+    c.setStrokeColor(border_gold)
+    c.setLineWidth(1.2)
+    c.rect(ribbon_x, ribbon_y, ribbon_w, ribbon_h, stroke=1, fill=1)
+    c.restoreState()
+
+    draw_shaped_text(c, date_title, CARD_PT_WIDTH / 2.0, ribbon_y + 19.0, font_key="bold", font_size=14.0, color=colors.HexColor("#FFF9E6"), align="center")
+    draw_shaped_text(c, date_sub, CARD_PT_WIDTH / 2.0, ribbon_y + 6.0, font_key="bold", font_size=9.2, color=gold_bright, align="center")
+
+    # 4. RASI BANNER & ZODIAC EMBLEM
+    zodiac_cx, zodiac_cy, zodiac_r = pt_x(175), pt_y(308), pt_x(70)
+    c.saveState()
+    c.setFillColor(colors.HexColor("#14355E"))
+    c.setStrokeColor(border_gold)
+    c.setLineWidth(2.2)
+    c.circle(zodiac_cx, zodiac_cy, zodiac_r, stroke=1, fill=1)
+    c.restoreState()
+
     rashi_img_path = SOCIAL_ASSETS_DIR / f"rashi_{prediction.rashi_id}.png"
     if rashi_img_path.is_file():
-        c.drawImage(
-            ImageReader(str(rashi_img_path)),
-            pt_x(35),
-            pt_y(265),
-            width=pt_x(230),
-            height=pt_x(230),
-            mask="auto",
-        )
+        c.drawImage(ImageReader(str(rashi_img_path)), zodiac_cx - pt_x(50), zodiac_cy - pt_x(50), width=pt_x(100), height=pt_x(100), mask="auto")
     else:
-        _draw_zodiac_emblem(c, prediction.rashi_id, pt_x(150), pt_y(150), pt_x(105), accent=c_gold_bright)
+        _draw_zodiac_emblem(c, prediction.rashi_id, zodiac_cx, zodiac_cy, zodiac_r - 5, accent=gold_bright)
 
-    # Tamil Rashi Name
-    draw_shaped_text(
-        c,
-        prediction.rashi_name_ta,
-        pt_x(390),
-        pt_y(105),
-        font_key="bold",
-        font_size=23.5,
-        color=c_ivory,
-        align="center",
-    )
+    draw_shaped_text(c, prediction.rashi_name_en.upper(), zodiac_cx, zodiac_cy - pt_x(58), font_key="bold", font_size=7.2, color=gold_bright, align="center")
 
-    # English Rashi Name Pill (Rendered in Rashi's distinctive accent color)
+    rp_x = pt_x(280)
+    rp_w = pt_x(740)
+    rp_h = pt_x(98)
+    rp_y = pt_y(342)
     c.saveState()
-    c.setFillColor(c_pill_bg)
-    c.roundRect(pt_x(335), pt_y(148), pt_x(110), pt_x(30), pt_x(15), stroke=0, fill=1)
+    c.setFillColor(pill_bg)
+    c.setStrokeColor(border_gold)
+    c.setLineWidth(2.2)
+    c.roundRect(rp_x, rp_y, rp_w, rp_h, pt_x(20), stroke=1, fill=1)
     c.restoreState()
-    draw_shaped_text(
-        c,
-        prediction.rashi_name_en.upper(),
-        pt_x(390),
-        pt_y(140),
-        font_key="bold",
-        font_size=10.0,
-        color=c_pill_text,
-        align="center",
-    )
 
-    # Overall Daily Horoscope Percentage Circle Gauge
+    draw_shaped_text(c, "❖", rp_x + pt_x(40), rp_y + pt_y(28), font_key="bold", font_size=15.0, color=border_gold, align="center")
+    draw_shaped_text(c, "❖", rp_x + rp_w - pt_x(40), rp_y + pt_y(28), font_key="bold", font_size=15.0, color=border_gold, align="center")
+    draw_shaped_text(c, prediction.rashi_name_ta, rp_x + rp_w / 2.0, rp_y + 11.0, font_key="bold", font_size=28.0, color=colors.HexColor("#FFFFFF"), align="center")
+
+    # 5. MAIN PREDICTIONS CARD (Clean Parchment Box with 4 Spacious Points)
+    pbox_x = pt_x(42)
+    pbox_w = CARD_PT_WIDTH - pt_x(84)
+    pbox_h = pt_x(360)
+    pbox_y = pt_y(738)
     c.saveState()
-    c.setFillColor(colors.HexColor("#081224"))
-    c.setStrokeColor(c_gold_border)
-    c.setLineWidth(1.8)
-    c.circle(pt_x(555), pt_y(118), pt_x(48), stroke=1, fill=1)
-    c.setStrokeColor(c_gold_bright)
-    c.setLineWidth(0.8)
-    c.circle(pt_x(555), pt_y(118), pt_x(42), stroke=1, fill=0)
+    c.setFillColor(colors.HexColor("#FFFDF5"))
+    c.setStrokeColor(border_gold)
+    c.setLineWidth(2.2)
+    c.roundRect(pbox_x, pbox_y, pbox_w, pbox_h, pt_x(16), stroke=1, fill=1)
     c.restoreState()
-    draw_shaped_text(
-        c,
-        f"{prediction.daily_score}%",
-        pt_x(555),
-        pt_y(110),
-        font_key="bold",
-        font_size=13.0,
-        color=c_gold_bright,
-        align="center",
-    )
-    draw_shaped_text(
-        c,
-        "சாதகம்",
-        pt_x(555),
-        pt_y(128),
-        font_key="bold",
-        font_size=6.8,
-        color=c_ivory,
-        align="center",
-    )
 
-    # Star Rating + Sentiment Badge
-    _draw_stars_row(c, pt_x(645), pt_y(92), prediction.daily_rating_stars, size=4.8)
-    draw_shaped_text(
-        c,
-        f"({int(round(prediction.daily_rating_stars))}/5)",
-        pt_x(700),
-        pt_y(112),
-        font_key="regular",
-        font_size=7.5,
-        color=colors.HexColor("#CBD5E1"),
-        align="center",
-    )
-    sentiment_text = (
-        "சாதகமான நாள்"
-        if prediction.daily_score >= 60
-        else ("மிகச் சிறப்பு" if prediction.daily_score >= 80 else "கவனமான நாள்")
-    )
-    c.saveState()
-    c.setFillColor(colors.HexColor("#1A2946"))
-    c.setStrokeColor(colors.HexColor("#3B5B8C"))
-    c.setLineWidth(0.8)
-    c.roundRect(pt_x(632), pt_y(142), pt_x(136), pt_x(26), pt_x(13), stroke=1, fill=1)
-    c.restoreState()
-    draw_shaped_text(
-        c,
-        sentiment_text,
-        pt_x(700),
-        pt_y(135),
-        font_key="bold",
-        font_size=7.5,
-        color=c_ivory,
-        align="center",
-    )
+    points_to_draw: List[str] = []
+    if prediction.brief_statement_ta:
+        b_clean = clean_brief_ta(prediction.brief_statement_ta)
+        if b_clean:
+            points_to_draw.append(b_clean)
 
-    # Transit Details: Transit Nakshatra, Sub-Lord, Sign Lord, Day Lord
-    moon_star_ta = _to_tamil_star(horoscope_data.moon_star_at_noon)
-    sub_lord_ta = _to_tamil_planet(horoscope_data.moon_sub_lord_at_noon)
-    sign_lord_ta = SIGN_LORDS_TA.get(prediction.rashi_id, _to_tamil_planet(sub_lord_ta))
-    day_lord_ta = _to_tamil_planet(horoscope_data.day_lord)
+    for aspect in prediction.aspects:
+        if len(points_to_draw) >= 4:
+            break
+        a_txt = format_aspect_text_ta(aspect.insight_ta, aspect.key_recommendation_ta)
+        if a_txt and a_txt not in points_to_draw:
+            points_to_draw.append(a_txt)
 
-    transit_items = [
-        ("★ நட்சத்திரம்", moon_star_ta),
-        ("🗝 உப-அதிபதி", sub_lord_ta),
-        (f"🪐 {sign_lord_ta} பகவான்", sign_lord_ta),
-        ("♀ தின அதிபதி", day_lord_ta),
+    if prediction.daily_remedy_ta and len(points_to_draw) < 4:
+        points_to_draw.append(prediction.daily_remedy_ta)
+
+    while len(points_to_draw) < 4:
+        points_to_draw.append("எடுத்த காரியங்களில் அனுகூலமான வெற்றியும் மனமகிழ்ச்சியும் உண்டாகும்.")
+
+    line_y_starts = [pt_y(440), pt_y(518), pt_y(596), pt_y(674)]
+    for idx, pt_text in enumerate(points_to_draw[:4]):
+        ly = line_y_starts[idx]
+        draw_shaped_text(c, "❖", pbox_x + pt_x(24), ly, font_key="bold", font_size=11.5, color=colors.HexColor("#0D345F"))
+        wrapped_lines = wrap_shaped_text(pt_text, "bold", 9.8, max_width=pbox_w - pt_x(65), max_lines=2)
+        for w_idx, w_line in enumerate(wrapped_lines):
+            draw_shaped_text(c, w_line, pbox_x + pt_x(48), ly - (w_idx * 13.5), font_key="bold", font_size=9.8, color=colors.HexColor("#0B1A2D"))
+
+    # 6. LUCKY DETAILS (3 Golden Tiles: திசை, எண், நிறம்)
+    tile_w = (CARD_PT_WIDTH - pt_x(84) - pt_x(28)) / 3.0
+    tile_h = pt_x(82)
+    tile_y = pt_y(842)
+
+    lucky_dir = prediction.lucky_direction_ta or "வடக்கு"
+    lucky_num = str(prediction.lucky_number or "2, 7")
+    lucky_color = prediction.lucky_color_ta.split("&")[0].strip() if prediction.lucky_color_ta else "வெள்ளை"
+
+    tiles_data = [
+        ("🧭", "அதிர்ஷ்ட திசை", lucky_dir),
+        (lucky_num.split(",")[0].strip() if "," in lucky_num else lucky_num, "அதிர்ஷ்ட எண்", lucky_num),
+        ("⚪", "அதிர்ஷ்ட நிறம்", lucky_color),
     ]
-    for idx, (label, val) in enumerate(transit_items):
-        tx = 280 + idx * 135
-        draw_shaped_text(c, label, pt_x(tx), pt_y(212), font_key="regular", font_size=6.2, color=c_gold_bright, align="center")
-        draw_shaped_text(c, val, pt_x(tx), pt_y(232), font_key="bold", font_size=7.8, color=c_ivory, align="center")
 
-    # 4. Main Section: Daily Life Department Assessment (5 rows)
-    row_py = [425, 481, 537, 593, 649]
-    for idx, aspect in enumerate(prediction.aspects[:5]):
-        py = row_py[idx]
-        cleaned_insight = format_aspect_text_ta(aspect.insight_ta, aspect.key_recommendation_ta)
-        wrapped = wrap_shaped_text(cleaned_insight, "regular", 6.6, max_width=pt_x(430), max_lines=1)
-        line_txt = wrapped[0] if wrapped else cleaned_insight
-        draw_shaped_text(c, line_txt, pt_x(385), pt_y(py), font_key="regular", font_size=6.6, color=c_ivory, align="left")
-
-        # Dynamic Percentage
-        draw_shaped_text(c, f"{aspect.score}%", pt_x(840), pt_y(py), font_key="bold", font_size=8.2, color=c_ivory, align="right")
-
-        # Colored Progress Bar
-        bar_w = pt_x(165)
-        bar_h = pt_x(14)
-        bar_x = pt_x(855)
-        bar_y = pt_y(py + 6)
+    for t_idx, (t_icon, t_label, t_val) in enumerate(tiles_data):
+        tx = pbox_x + t_idx * (tile_w + pt_x(14))
         c.saveState()
-        c.setFillColor(colors.HexColor("#1A2538"))
-        c.roundRect(bar_x, bar_y, bar_w, bar_h, bar_h / 2.0, stroke=0, fill=1)
-        fill_w = max(bar_h, bar_w * (aspect.score / 100.0))
-        c.setFillColor(DEPARTMENT_BAR_COLORS[idx % len(DEPARTMENT_BAR_COLORS)])
-        c.roundRect(bar_x, bar_y, fill_w, bar_h, bar_h / 2.0, stroke=0, fill=1)
+        c.setFillColor(colors.HexColor("#0E2747"))
+        c.setStrokeColor(border_gold)
+        c.setLineWidth(1.4)
+        c.roundRect(tx, tile_y, tile_w, tile_h, pt_x(12), stroke=1, fill=1)
+
+        ic_r = pt_x(26)
+        c.setFillColor(gold_bright)
+        c.circle(tx + pt_x(36), tile_y + tile_h / 2.0, ic_r, stroke=0, fill=1)
         c.restoreState()
 
-    # 5. Golden Hours and Caution Hours Side-by-Side Panels
-    golden_times = (
-        ", ".join(
-            f"{w.start_time} - {w.end_time}"
-            for w in prediction.moon_sub_windows
-            if w.sentiment == "golden"
-        )
-        or (prediction.golden_hour_window.replace(" – ", " - ") if prediction.golden_hour_window else "")
-        or "குறிப்பிட்ட சிறப்பான நேரம் இல்லை"
+        draw_shaped_text(c, t_icon, tx + pt_x(36), tile_y + (tile_h / 2.0) - 4.5, font_key="bold", font_size=10.5, color=colors.HexColor("#0C233F"), align="center")
+        draw_shaped_text(c, t_label, tx + pt_x(72), tile_y + tile_h - 13.0, font_key="bold", font_size=7.2, color=gold_bright)
+        draw_shaped_text(c, t_val, tx + pt_x(72), tile_y + 9.0, font_key="bold", font_size=10.0, color=colors.HexColor("#FFFFFF"))
+
+    # 7. NAKSHATRA PREDICTIONS (3 Rows)
+    nbox_h = pt_x(165)
+    nbox_y = pt_y(1028)
+    c.saveState()
+    c.setFillColor(colors.HexColor("#07192E"))
+    c.setStrokeColor(border_gold)
+    c.setLineWidth(1.8)
+    c.roundRect(pbox_x, nbox_y, pbox_w, nbox_h, pt_x(14), stroke=1, fill=1)
+    c.restoreState()
+
+    stars = RASHI_NAKSHATRAS_TA.get(prediction.rashi_id, [
+        ("நட்சத்திரம் 1", "எடுத்த காரியங்களில் அனுகூலமான வெற்றி கிடைக்கும்."),
+        ("நட்சத்திரம் 2", "குடும்பத்தில் மகிழ்ச்சியும் உறவினர்களின் வருகையும் உண்டு."),
+        ("நட்சத்திரம் 3", "தொழில் ரீதியான புதிய முயற்சிகளில் நல்ல ஆதாயம் கிட்டும்."),
+    ])
+
+    star_row_y = [pt_y(896), pt_y(948), pt_y(1000)]
+    for s_idx, (s_name, s_pred) in enumerate(stars[:3]):
+        sy = star_row_y[s_idx]
+        draw_shaped_text(c, f"★  {s_name}", pbox_x + pt_x(18), sy, font_key="bold", font_size=9.8, color=gold_bright)
+        draw_shaped_text(c, ":", pbox_x + pt_x(145), sy, font_key="bold", font_size=10.0, color=gold_bright)
+        wrapped_sp = wrap_shaped_text(s_pred, "bold", 9.5, max_width=pbox_w - pt_x(175), max_lines=1)
+        sp_text = wrapped_sp[0] if wrapped_sp else s_pred
+        draw_shaped_text(c, sp_text, pbox_x + pt_x(165), sy, font_key="bold", font_size=9.5, color=colors.HexColor("#FFFFFF"))
+
+    # 8. FOOTER: Signature & Slide Tracker
+    draw_shaped_text(
+        c,
+        "© Gokul's Astrological Insights • Daily Horoscope Service",
+        CARD_PT_WIDTH / 2.0,
+        pt_y(1055),
+        font_key="bold",
+        font_size=7.6,
+        color=colors.HexColor("#8DA4BE"),
+        align="center",
     )
-    caution_times = (
-        ", ".join(
-            f"{w.start_time} - {w.end_time}"
-            for w in prediction.moon_sub_windows
-            if w.sentiment == "caution"
-        )
-        or (prediction.caution_hour_window.replace(" – ", " - ") if prediction.caution_hour_window else "")
-        or "குறிப்பிடத்தக்க எச்சரிக்கை நேரம் இல்லை"
-    )
-    draw_shaped_text(c, golden_times, pt_x(277), pt_y(782), font_key="bold", font_size=6.8, color=c_ivory, align="center")
-    draw_shaped_text(c, caution_times, pt_x(803), pt_y(782), font_key="bold", font_size=7.2, color=c_ivory, align="center")
-
-    # 6. Today's Lucky Details: Color, Number, Direction, Gem
-    lucky_color = prediction.lucky_color_ta.split("&")[0].strip() if prediction.lucky_color_ta else "சிவப்பு"
-    lucky_num = str(prediction.lucky_number)
-    lucky_dir = prediction.lucky_direction_ta or "கிழக்கு"
-    gem_name, gem_benefit = RASHI_GEMS_TA.get(prediction.rashi_id, ("மாணிக்கம்", "சூரிய பலம் பெற அணியலாம்"))
-
-    draw_shaped_text(c, lucky_color, pt_x(153), pt_y(948), font_key="bold", font_size=9.2, color=c_ivory, align="center")
-    draw_shaped_text(c, lucky_num, pt_x(411), pt_y(948), font_key="bold", font_size=9.2, color=c_ivory, align="center")
-    draw_shaped_text(c, lucky_dir, pt_x(669), pt_y(948), font_key="bold", font_size=9.2, color=c_ivory, align="center")
-    draw_shaped_text(c, gem_name, pt_x(927), pt_y(938), font_key="bold", font_size=9.2, color=c_ivory, align="center")
-    draw_shaped_text(c, f"({gem_benefit})", pt_x(927), pt_y(954), font_key="regular", font_size=5.4, color=colors.HexColor("#CBD5E1"), align="center")
-
-    # 7. Pariharam and Guidance (Bullet points from actual remedy)
-    remedy_raw = prediction.daily_remedy_ta or "காலை நேரத்தில் சூரிய நமஸ்காரம் செய்யவும்."
-    raw_parts = [p.strip() for p in re.split(r"[.;\n]", remedy_raw) if p.strip()]
-    if len(raw_parts) < 2:
-        raw_parts = [
-            remedy_raw,
-            f"\"{prediction.rashi_name_ta} அதிபதி வழிபாடு செய்வது மன அமைதியையும் தெளிவையும் தரும்.\"",
-            "இன்றைய முக்கிய பணிகளை அதிர்ஷ்ட நேரத்தில் தொடங்குவது நன்று.",
-        ]
-    elif len(raw_parts) == 2:
-        raw_parts.append("இன்றைய முக்கிய காரியங்களை அதிர்ஷ்ட நேரத்தில் தொடங்குவது நன்று.")
-
-    bullet_pts = raw_parts[:3]
-    bullet_y = [1075, 1115, 1155]
-    for idx, b_txt in enumerate(bullet_pts):
-        wrapped_bullet = wrap_shaped_text(b_txt, "regular", 7.6, max_width=pt_x(680), max_lines=1)
-        b_line = wrapped_bullet[0] if wrapped_bullet else b_txt
-        draw_shaped_text(c, f"•  {b_line}", pt_x(345), pt_y(bullet_y[idx]), font_key="regular", font_size=7.6, color=c_ivory, align="left")
-
-    # 8. Footer: Slide Number (e.g. ராசி 5 / 12)
-    current_slide = slide_index if slide_index is not None else prediction.rashi_id
-    total_slide_cnt = total_slides if total_slides is not None else 12
-    slide_text = f"ராசி {current_slide} / {total_slide_cnt}"
-    draw_shaped_text(c, slide_text, pt_x(958), pt_y(1248), font_key="bold", font_size=8.5, color=colors.HexColor("#000000"), align="center")
 
     c.showPage()
     c.save()
