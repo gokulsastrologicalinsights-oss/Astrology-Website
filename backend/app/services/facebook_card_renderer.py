@@ -89,6 +89,143 @@ C_TEXT_SILVER = colors.HexColor("#CBD5E1")
 C_TEXT_MUTED = colors.HexColor("#94A3B8")
 C_TRACK_DARK = colors.HexColor("#223254")
 
+# Dedicated Color Theme Profiles for Each of the 12 Rashis
+# (bg_deep, bg_accent, card_bg, border_gold, gold_bright, pill_bg, pill_text)
+RASHI_COLOR_THEMES: Dict[int, Dict[str, colors.Color]] = {
+    # 1. மேஷம் (Aries - Mars/Fire): Royal Crimson Maroon & Sacred Gold
+    1: {
+        "bg_deep": colors.HexColor("#180408"),
+        "bg_accent": colors.HexColor("#380D15"),
+        "card_bg": colors.HexColor("#2A0A10"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#FCD34D"),
+        "pill_bg": colors.HexColor("#B91C1C"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#881337"),
+    },
+    # 2. ரிஷபம் (Taurus - Venus/Earth): Royal Emerald Green & Gold
+    2: {
+        "bg_deep": colors.HexColor("#03140C"),
+        "bg_accent": colors.HexColor("#082B1B"),
+        "card_bg": colors.HexColor("#0A2417"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#6EE7B7"),
+        "pill_bg": colors.HexColor("#047857"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#065F46"),
+    },
+    # 3. மிதுனம் (Gemini - Mercury/Air): Royal Turquoise Teal & Gold
+    3: {
+        "bg_deep": colors.HexColor("#041318"),
+        "bg_accent": colors.HexColor("#092E38"),
+        "card_bg": colors.HexColor("#08242C"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#5EEAD4"),
+        "pill_bg": colors.HexColor("#0F766E"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#115E59"),
+    },
+    # 4. கடகம் (Cancer - Moon/Water): Deep Oceanic Royal Navy & Gold
+    4: {
+        "bg_deep": colors.HexColor("#040C1A"),
+        "bg_accent": colors.HexColor("#0A1E3B"),
+        "card_bg": colors.HexColor("#0A1B33"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#7DD3FC"),
+        "pill_bg": colors.HexColor("#0369A1"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#075985"),
+    },
+    # 5. சிம்மம் (Leo - Sun/Fire): Imperial Sun Gold & Warm Maroon
+    5: {
+        "bg_deep": colors.HexColor("#1A0E03"),
+        "bg_accent": colors.HexColor("#3D1F06"),
+        "card_bg": colors.HexColor("#2B1705"),
+        "border_gold": colors.HexColor("#F59E0B"),
+        "gold_bright": colors.HexColor("#FDE68A"),
+        "pill_bg": colors.HexColor("#C2410C"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#9A3412"),
+    },
+    # 6. கன்னி (Virgo - Mercury/Earth): Forest Olive Green & Amber
+    6: {
+        "bg_deep": colors.HexColor("#091409"),
+        "bg_accent": colors.HexColor("#1A2E16"),
+        "card_bg": colors.HexColor("#152412"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#A7F3D0"),
+        "pill_bg": colors.HexColor("#15803D"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#166534"),
+    },
+    # 7. துலாம் (Libra - Venus/Air): Royal Indigo Cobalt & Rose Gold
+    7: {
+        "bg_deep": colors.HexColor("#090B1E"),
+        "bg_accent": colors.HexColor("#191E42"),
+        "card_bg": colors.HexColor("#131736"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#A5B4FC"),
+        "pill_bg": colors.HexColor("#4338CA"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#3730A3"),
+    },
+    # 8. விருச்சிகம் (Scorpio - Mars/Water): Deep Burgundy Ruby Wine & Gold
+    8: {
+        "bg_deep": colors.HexColor("#18030D"),
+        "bg_accent": colors.HexColor("#38071E"),
+        "card_bg": colors.HexColor("#2A0717"),
+        "border_gold": colors.HexColor("#D4AF37"),
+        "gold_bright": colors.HexColor("#FCA5A5"),
+        "pill_bg": colors.HexColor("#9F1239"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#881337"),
+    },
+    # 9. தனுசு (Sagittarius - Jupiter/Fire): Royal Sacred Purple & Golden Saffron
+    9: {
+        "bg_deep": colors.HexColor("#13061A"),
+        "bg_accent": colors.HexColor("#2E0F3D"),
+        "card_bg": colors.HexColor("#240B30"),
+        "border_gold": colors.HexColor("#EAB308"),
+        "gold_bright": colors.HexColor("#E9D5FF"),
+        "pill_bg": colors.HexColor("#7E22CE"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#6B21A8"),
+    },
+    # 10. மகரம் (Capricorn - Saturn/Earth): Steel Charcoal Slate & Navy Gold
+    10: {
+        "bg_deep": colors.HexColor("#0A0F14"),
+        "bg_accent": colors.HexColor("#18222C"),
+        "card_bg": colors.HexColor("#131B24"),
+        "border_gold": colors.HexColor("#CBD5E1"),
+        "gold_bright": colors.HexColor("#E2E8F0"),
+        "pill_bg": colors.HexColor("#334155"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#1E293B"),
+    },
+    # 11. கும்பம் (Aquarius - Saturn/Air): Electric Sapphire Blue & Platinum Gold
+    11: {
+        "bg_deep": colors.HexColor("#040E1E"),
+        "bg_accent": colors.HexColor("#0B2347"),
+        "card_bg": colors.HexColor("#091B36"),
+        "border_gold": colors.HexColor("#38BDF8"),
+        "gold_bright": colors.HexColor("#93C5FD"),
+        "pill_bg": colors.HexColor("#1D4ED8"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#1E40AF"),
+    },
+    # 12. மீனம் (Pisces - Jupiter/Water): Deep Sea Aqua & Golden Pearl
+    12: {
+        "bg_deep": colors.HexColor("#031216"),
+        "bg_accent": colors.HexColor("#072830"),
+        "card_bg": colors.HexColor("#062026"),
+        "border_gold": colors.HexColor("#EAB308"),
+        "gold_bright": colors.HexColor("#67E8F9"),
+        "pill_bg": colors.HexColor("#0E7490"),
+        "pill_text": colors.HexColor("#FFFFFF"),
+        "tint": colors.HexColor("#155E75"),
+    },
+}
+
 # Sentiment Accents (fg, bg_tint, border)
 SENTIMENT_COLORS: Dict[str, Tuple[colors.Color, colors.Color, colors.Color]] = {
     "Excellent": (
@@ -439,21 +576,26 @@ def _get_circular_logo_reader() -> Optional[ImageReader]:
     return ImageReader(BytesIO(_CIRCULAR_LOGO_BYTES))
 
 
-def _draw_canvas_backdrop(c: canvas.Canvas) -> None:
-    """Draws the signature Royal Midnight Navy & Sacred Gold card background + frame."""
+def _draw_canvas_backdrop(c: canvas.Canvas, rashi_id: Optional[int] = None) -> None:
+    """Draws the signature card background + frame, styled to the specific Rashi color theme."""
+    theme = RASHI_COLOR_THEMES.get(rashi_id, {}) if rashi_id else {}
+    bg_deep = theme.get("bg_deep", C_BG_DEEP)
+    bg_accent = theme.get("bg_accent", C_BG_NAVY)
+    border_gold = theme.get("border_gold", C_BORDER_GOLD)
+
     c.saveState()
-    c.setFillColor(C_BG_DEEP)
+    c.setFillColor(bg_deep)
     c.rect(0, 0, CARD_PT_WIDTH, CARD_PT_HEIGHT, stroke=0, fill=1)
 
-    # Subtle layered cosmic depth bands & ambient glows
-    c.setFillColor(C_BG_NAVY)
+    # Subtle layered cosmic depth bands & ambient glows in Rashi's distinctive palette
+    c.setFillColor(bg_accent)
     c.setFillAlpha(0.72)
     c.circle(CARD_PT_WIDTH * 0.85, CARD_PT_HEIGHT * 0.86, 260, stroke=0, fill=1)
     c.circle(CARD_PT_WIDTH * 0.14, CARD_PT_HEIGHT * 0.16, 230, stroke=0, fill=1)
 
     # Sacred mandala corner rings (subtle gold watermark geometry)
-    c.setStrokeColor(C_GOLD_PRIMARY)
-    c.setStrokeAlpha(0.11)
+    c.setStrokeColor(border_gold)
+    c.setStrokeAlpha(0.12)
     c.setLineWidth(1.0)
     for radius in (95, 130, 165):
         c.circle(CARD_PT_WIDTH * 0.88, CARD_PT_HEIGHT * 0.88, radius, stroke=1, fill=0)
@@ -462,7 +604,7 @@ def _draw_canvas_backdrop(c: canvas.Canvas) -> None:
 
     # Double outer gold border frame
     c.setStrokeAlpha(0.85)
-    c.setStrokeColor(C_BORDER_GOLD)
+    c.setStrokeColor(border_gold)
     c.setLineWidth(1.1)
     c.roundRect(10, 10, CARD_PT_WIDTH - 20, CARD_PT_HEIGHT - 20, 14, stroke=1, fill=0)
 
@@ -932,7 +1074,15 @@ def render_rashi_daily_card_png(
     def pt_y(py: float) -> float:
         return (1350.0 - py) * (CARD_PT_HEIGHT / 1350.0)
 
-    # 1. Base template canvas backdrop (100% clean vector base with zero baked-in text)
+    # 1. Base template canvas backdrop styled specifically to the Rashi's color theme
+    theme = RASHI_COLOR_THEMES.get(prediction.rashi_id, {})
+    c_tint = theme.get("tint", C_BG_NAVY)
+    c_card_bg = theme.get("card_bg", C_CARD_BG)
+    c_gold_border = theme.get("border_gold", C_BORDER_GOLD)
+    c_gold_bright = theme.get("gold_bright", C_GOLD_BRIGHT)
+    c_pill_bg = theme.get("pill_bg", colors.HexColor("#E8B83D"))
+    c_pill_text = theme.get("pill_text", colors.HexColor("#000000"))
+
     if PRISTINE_BASE_CANVAS_PATH.is_file():
         c.drawImage(
             ImageReader(str(PRISTINE_BASE_CANVAS_PATH)),
@@ -941,8 +1091,19 @@ def render_rashi_daily_card_png(
             width=CARD_PT_WIDTH,
             height=CARD_PT_HEIGHT,
         )
+        # Apply a subtle atmospheric color tint over the base canvas for this Rashi
+        c.saveState()
+        c.setFillColor(c_tint)
+        c.setFillAlpha(0.28)
+        c.rect(0, 0, CARD_PT_WIDTH, CARD_PT_HEIGHT, stroke=0, fill=1)
+        # Dynamic colored inner accent glow border for this Rashi
+        c.setStrokeColor(c_gold_border)
+        c.setStrokeAlpha(0.75)
+        c.setLineWidth(1.2)
+        c.roundRect(pt_x(18), pt_y(1332), pt_x(1044), pt_y(18), 12, stroke=1, fill=0)
+        c.restoreState()
     else:
-        _draw_canvas_backdrop(c)
+        _draw_canvas_backdrop(c, rashi_id=prediction.rashi_id)
 
     # 2. Header: Tamil date and weekday in top right gold date badge
     date_badge_text_c = colors.HexColor("#221608")
@@ -953,8 +1114,6 @@ def render_rashi_daily_card_png(
 
     # 3. Hero Section: Zodiac Illustration, Rashi Names, Score, Rating, Transits
     c_ivory = colors.HexColor("#FFFFFF")
-    c_gold_bright = colors.HexColor("#F4CE6A")
-    c_gold_border = colors.HexColor("#D4AF37")
 
     # Rashi Zodiac Illustration
     rashi_img_path = SOCIAL_ASSETS_DIR / f"rashi_{prediction.rashi_id}.png"
@@ -982,9 +1141,9 @@ def render_rashi_daily_card_png(
         align="center",
     )
 
-    # English Rashi Name Pill
+    # English Rashi Name Pill (Rendered in Rashi's distinctive accent color)
     c.saveState()
-    c.setFillColor(colors.HexColor("#E8B83D"))
+    c.setFillColor(c_pill_bg)
     c.roundRect(pt_x(335), pt_y(148), pt_x(110), pt_x(30), pt_x(15), stroke=0, fill=1)
     c.restoreState()
     draw_shaped_text(
@@ -994,7 +1153,7 @@ def render_rashi_daily_card_png(
         pt_y(140),
         font_key="bold",
         font_size=10.0,
-        color=colors.HexColor("#000000"),
+        color=c_pill_text,
         align="center",
     )
 
