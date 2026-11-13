@@ -253,9 +253,9 @@ function MarriageCompatibilityContent() {
     }
   };
 
-  const handlePrintReport = async (overrideSections?: MarriagePrintSectionKey[]) => {
+  const handlePrintReport = async (overrideSections?: MarriagePrintSectionKey[] | React.MouseEvent) => {
     if (!response) return;
-    if (overrideSections && overrideSections.length > 0) {
+    if (Array.isArray(overrideSections) && overrideSections.length > 0) {
       setSelectedSections(overrideSections);
     } else {
       setSelectedSections([
@@ -799,7 +799,7 @@ function MarriageCompatibilityContent() {
                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                   <button
                     type="button"
-                    onClick={handlePrintReport}
+                    onClick={() => handlePrintReport()}
                     className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 flex items-center gap-1.5 cursor-pointer"
                     title={language === "ta" ? "5-பக்க அறிக்கை அச்சிடுக" : "Print 5-Page Compatibility Report"}
                   >
@@ -1628,7 +1628,7 @@ function MarriageCompatibilityContent() {
                       {/* Print Report Action (5-Page Reference Format) */}
                       <button
                         type="button"
-                        onClick={handlePrintReport}
+                        onClick={() => handlePrintReport()}
                         className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-[#153F6B] border border-slate-300 font-bold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer"
                         title={language === "ta" ? "5-பக்க அறிக்கையை அச்சிடுக" : "Print 5-Page Compatibility Report"}
                       >

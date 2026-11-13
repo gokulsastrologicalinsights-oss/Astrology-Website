@@ -251,6 +251,10 @@ export function Navbar() {
     },
   ];
 
+  if (pathname === "/login") {
+    return null;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-white border-b border-[#D9DEE7] shadow-xs print:hidden">

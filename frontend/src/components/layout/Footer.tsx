@@ -12,6 +12,10 @@ export function Footer() {
   const { language, t } = useLanguage();
   const isLoginPage = pathname === "/login" || pathname === "/forgot-password" || pathname === "/register";
 
+  if (pathname === "/login") {
+    return null;
+  }
+
   return (
     <footer className="w-full border-t border-[#DDE5F0] bg-white text-[#52667E] mt-auto print:hidden">
       <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-10">
