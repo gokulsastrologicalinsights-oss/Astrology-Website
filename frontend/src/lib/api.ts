@@ -5110,9 +5110,15 @@ export async function checkPadaDosha(
 
 /**
 
+
+
+
  * 32. Nakshatra E-Book Treatise (GET /api/v1/nakshatras/treatise)
 
  */
+
+export const fetchActivityCheck = checkActivitySuitability;
+export const fetchPadaDosha = checkPadaDosha;
 
 export async function fetchEbookTreatise(): Promise<EbookTreatise> {
 

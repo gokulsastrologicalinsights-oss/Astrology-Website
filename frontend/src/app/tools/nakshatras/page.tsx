@@ -9,8 +9,8 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   fetchNakshatras,
   fetchFunctionalNatures,
-  fetchActivityCheck,
-  fetchPadaDosha,
+  checkActivitySuitability as fetchActivityCheck,
+  checkPadaDosha as fetchPadaDosha,
 } from "@/lib/api";
 import {
   NakshatraItem,
