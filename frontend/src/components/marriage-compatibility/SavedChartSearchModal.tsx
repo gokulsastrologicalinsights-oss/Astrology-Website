@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { SavedHoroscopeItem } from "@/lib/types";
+import { SavedChatSearch } from "@/components/saved/SavedChatSearch";
+import { formatDate } from "@/lib/date-formatter";
 import {
   Search,
   X,
@@ -150,34 +152,30 @@ export function SavedChartSearchModal({
           </button>
         </div>
 
-        {/* Search controls */}
+        {/* Search controls with Live Suggestion Library */}
         <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-3 shrink-0">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={
-                  language === "ta"
-                    ? "பெயர், பிறந்த தேதி (YYYY-MM-DD), ஊர் அல்லது ஜாதக எண் (#) மூலம் தேடுக..."
-                    : "Search by customer name, birth date (YYYY-MM-DD), place, or chart #..."
+          <div className="flex gap-2 items-center">
+            <SavedChatSearch<SavedHoroscopeItem>
+              className="flex-1"
+              items={savedHoroscopes}
+              initialValue={searchQuery}
+              language={language}
+              themeColor={themeColor}
+              placeholder={
+                language === "ta"
+                  ? "பெயர், ஊர் அல்லது எண் தட்டச்சு செய்க..."
+                  : "Type name, birthplace, or chart #..."
+              }
+              onSelect={(suggestion) => {
+                if (suggestion.data) {
+                  onSelect(suggestion.data as SavedHoroscopeItem);
                 }
-                className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B] shadow-2xs"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  title={language === "ta" ? "நீக்குக" : "Clear"}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+              }}
+              onSearchSubmit={(val) => {
+                setSearchQuery(val);
+              }}
+              onClear={() => setSearchQuery("")}
+            />
 
             {/* Refresh button */}
             {onRefresh && (
@@ -185,7 +183,7 @@ export function SavedChartSearchModal({
                 type="button"
                 onClick={onRefresh}
                 disabled={loading}
-                className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs cursor-pointer shrink-0"
                 title={language === "ta" ? "புதுப்பிக்க" : "Refresh saved charts"}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-blue-600" : ""}`} />

@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/date-formatter";
+import { SavedChatSearch } from "@/components/saved/SavedChatSearch";
 import {
   FolderOpen,
   Trash2,
@@ -51,6 +52,7 @@ export function SavedMarriageReportsList({
   const { session, isAuthenticated, isLoading: authLoading } = useAuth();
   const [reports, setReports] = useState<SavedMarriageReportSummary[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [searchFilter, setSearchFilter] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 10;
 
@@ -309,7 +311,7 @@ export function SavedMarriageReportsList({
   return (
     <div className="space-y-6">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
         <div>
           <h2 className="text-lg font-bold text-[#153F6B] flex items-center gap-2">
             <HeartHandshake className="w-5 h-5 text-[#B4872B]" />
@@ -322,20 +324,60 @@ export function SavedMarriageReportsList({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={fetchReports}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>{language === "ta" ? "புதுப்பி" : "Refresh"}</span>
-        </button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <SavedChatSearch<SavedMarriageReportSummary>
+            className="flex-1 md:w-72"
+            items={reports}
+            language={language}
+            themeColor="#153F6B"
+            placeholder={
+              language === "ta"
+                ? "மணமகன் / மணமகள் பெயர்..."
+                : "Search groom / bride name..."
+            }
+            getItemSuggestion={(rep) => ({
+              id: rep.id,
+              title: rep.title || `${rep.groom_name} & ${rep.bride_name}`,
+              subtitle: `${rep.groom_name} ⚬ ${rep.bride_name} • ${formatDate(rep.created_at)}`,
+              badge: `#${rep.display_number}`,
+              data: rep,
+            })}
+            onSelect={(suggestion) => {
+              if (suggestion.data) {
+                setSearchFilter(suggestion.title);
+              }
+            }}
+            onSearchSubmit={(val) => setSearchFilter(val)}
+            onClear={() => setSearchFilter("")}
+          />
+
+          <button
+            type="button"
+            onClick={fetchReports}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shrink-0"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">{language === "ta" ? "புதுப்பி" : "Refresh"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Reports Grid / Cards List */}
       <div className="grid grid-cols-1 gap-4">
-        {reports.map((report) => {
+        {reports
+          .filter((rep) => {
+            if (!searchFilter.trim()) return true;
+            const q = searchFilter.toLowerCase();
+            return (
+              (rep.title || "").toLowerCase().includes(q) ||
+              (rep.groom_name || "").toLowerCase().includes(q) ||
+              (rep.bride_name || "").toLowerCase().includes(q) ||
+              String(rep.display_number) === q ||
+              `#${rep.display_number}` === q
+            );
+          })
+          .map((report) => {
           const badge = getVerdictBadge(report.overall_outcome);
           const BadgeIcon = badge.icon;
           const isOpening = openingId === report.id;
