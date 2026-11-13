@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
+import { formatDate } from "@/lib/date-formatter";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FeatureGuard } from "@/components/auth/FeatureGuard";
 import {
@@ -722,8 +723,8 @@ function MarriageCompatibilityContent() {
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {language === "ta"
-                        ? `சேமிக்கப்பட்ட வரலாற்று அறிக்கை • ${new Date(viewingHistoricalReport.created_at).toLocaleDateString()} • மாற்ற முடியாத கணக்கீட்டு நகல்`
-                        : `Historical snapshot saved on ${new Date(viewingHistoricalReport.created_at).toLocaleDateString()} • Read-only immutable calculation record`}
+                        ? `சேமிக்கப்பட்ட வரலாற்று அறிக்கை • ${formatDate(viewingHistoricalReport.created_at)} • மாற்ற முடியாத கணக்கீட்டு நகல்`
+                        : `Historical snapshot saved on ${formatDate(viewingHistoricalReport.created_at)} • Read-only immutable calculation record`}
                     </p>
                   </div>
                 </div>

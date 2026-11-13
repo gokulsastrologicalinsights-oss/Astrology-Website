@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n";
 import { PermissionKey, MODULE_REGISTRY } from "@/lib/permissions";
+import { formatDate } from "@/lib/date-formatter";
 import { Lock, ShieldAlert, ArrowLeft, Mail, AlertTriangle, Sparkles } from "lucide-react";
 
 interface FeatureGuardProps {
@@ -64,12 +65,12 @@ export function FeatureGuard({ permission, moduleName, children }: FeatureGuardP
               : language === "ta"
               ? `உங்கள் மாதாந்திர/வருடாந்திர சந்தா காலம் முடிவடைந்துவிட்டது (${
                   user?.subscription?.validUntil
-                    ? new Date(user.subscription.validUntil).toLocaleDateString()
+                    ? formatDate(user.subscription.validUntil)
                     : ""
                 }). இந்த மென்பொருளைத் தொடர்ந்து பயன்படுத்த உங்கள் சந்தாவைப் புதுப்பிக்கவும்.`
               : `Your active access plan expired on ${
                   user?.subscription?.validUntil
-                    ? new Date(user.subscription.validUntil).toLocaleDateString()
+                    ? formatDate(user.subscription.validUntil)
                     : "the scheduled date"
                 }. Please renew your rental subscription with the administrator to restore full uninterrupted access.`}
           </p>

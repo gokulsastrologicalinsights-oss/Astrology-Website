@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
+import { formatDate } from "@/lib/date-formatter";
 import {
   ShieldAlert,
   AlertTriangle,
@@ -878,8 +879,8 @@ export function DasaCautionReminderModal({
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                         <span>
                           {isTa
-                            ? `எச்சரிக்கை செய்தி அனுப்பப்பட்டது (${item.alertSentAt ? new Date(item.alertSentAt).toLocaleDateString() : "முடிந்தது"})`
-                            : `Caution alert dispatched (${item.alertSentAt ? new Date(item.alertSentAt).toLocaleDateString() : "Completed"})`}
+                            ? `எச்சரிக்கை செய்தி அனுப்பப்பட்டது (${item.alertSentAt ? formatDate(item.alertSentAt) : "முடிந்தது"})`
+                            : `Caution alert dispatched (${item.alertSentAt ? formatDate(item.alertSentAt) : "Completed"})`}
                         </span>
                       </div>
                       <button

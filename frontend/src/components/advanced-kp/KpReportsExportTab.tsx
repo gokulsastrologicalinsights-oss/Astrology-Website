@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { KpResponse, HoraryKpResponse } from "@/lib/types";
 import { Printer, Download, FileText, CheckCircle, FileDown, Loader2, AlertCircle } from "lucide-react";
 import { formatDms } from "@/lib/formatters";
+import { formatDate } from "@/lib/date-formatter";
 import { exportKpPdf } from "@/lib/api";
 
 interface KpReportsExportTabProps {
@@ -251,7 +252,7 @@ export function KpReportsExportTab({
             </div>
           </div>
           <div className="text-right text-xs text-[#52667E] space-y-0.5">
-            <div>Generated: {new Date().toLocaleDateString()}</div>
+            <div>Generated: {formatDate(new Date())}</div>
             <div>Engine: <strong>{data.metadata?.engine || "Swiss Ephemeris & XALEN"}</strong></div>
             <div>Ayanamsa: <strong>{data.metadata?.ayanamsa_name} ({data.metadata?.ayanamsa_deg?.toFixed(4)}°)</strong></div>
             <div>House System: <strong>{data.metadata?.house_system_name}</strong></div>

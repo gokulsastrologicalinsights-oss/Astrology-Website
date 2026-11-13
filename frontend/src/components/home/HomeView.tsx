@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { formatSerialNumber } from "@/lib/formatters";
+import { formatDate } from "@/lib/date-formatter";
 import { SavedHoroscopeItem } from "@/lib/types";
 import {
   Compass,
@@ -417,7 +418,7 @@ interface AstrologyToolCard {
 
                   <div className="mt-4 pt-3 border-t border-[#F2F3F5] flex items-center justify-between">
                     <span className="text-[10px] text-[#8190A6]">
-                      {new Date(item.created_at).toLocaleDateString()}
+                      {formatDate(item.created_at)}
                     </span>
 
                     <Link

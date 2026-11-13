@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { listNumerologyReports } from "@/lib/api";
 import { SavedNumerologyReportResponse } from "@/lib/types";
+import { formatDate } from "@/lib/date-formatter";
 import { NameCorrectionStudio } from "@/components/numerology/NameCorrectionStudio";
 import { BusinessNumerologyStudio } from "@/components/numerology/BusinessNumerologyStudio";
 import { PhoneNumberStudio } from "@/components/numerology/PhoneNumberStudio";
@@ -896,11 +897,11 @@ export function NumerologySectionView() {
                         <div className="text-[11px] text-[#64748B] flex items-center gap-3 mt-0.5">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3 text-[#94A3B8]" />
-                            DOB: {report.birth_date}
+                            DOB: {formatDate(report.birth_date)}
                           </span>
                           <span>•</span>
                           <span>
-                            Saved: {new Date(report.created_at).toLocaleDateString()}
+                            Saved: {formatDate(report.created_at)}
                           </span>
                         </div>
                       </div>

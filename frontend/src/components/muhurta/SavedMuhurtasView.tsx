@@ -9,6 +9,7 @@ import {
   deleteSavedMuhurta,
 } from "@/lib/api";
 import { SavedMuhurtaItem } from "@/lib/types";
+import { formatDate } from "@/lib/date-formatter";
 import { MuhurtaReportModal } from "./MuhurtaReportModal";
 import {
   Bookmark,
@@ -282,7 +283,7 @@ export function SavedMuhurtasView() {
                           {item.occasion_name}
                         </div>
                         <div className="text-[10px] text-slate-400">
-                          {new Date(item.created_at).toLocaleDateString()}
+                          {formatDate(item.created_at)}
                         </div>
                       </div>
                     </div>

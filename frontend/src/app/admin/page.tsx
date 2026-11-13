@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { TenantUserManager, TenantUser } from "@/components/admin/TenantUserManager";
+import { formatDate } from "@/lib/date-formatter";
 
 type AdminUser = TenantUser;
 
@@ -527,7 +528,7 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[#64748B] font-mono text-[10px]">
-                        {new Date(h.created_at).toLocaleDateString()}
+                        {formatDate(h.created_at)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center gap-1.5">

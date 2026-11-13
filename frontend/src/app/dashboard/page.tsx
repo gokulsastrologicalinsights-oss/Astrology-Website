@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { SavedHoroscopesList } from "@/components/saved/SavedHoroscopesList";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { formatDate } from "@/lib/date-formatter";
 import {
   Compass,
   User,
@@ -192,7 +193,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 text-[#334155]">
                 <Calendar className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
                 <span>
-                  {t.memberSince || "Member since"}: {new Date(user.createdAt).toLocaleDateString()}
+                  {t.memberSince || "Member since"}: {formatDate(user.createdAt)}
                 </span>
               </div>
             )}

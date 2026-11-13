@@ -15,6 +15,7 @@ import {
   saveRemedyReport,
   listRemedyReportsForHoroscope,
 } from "@/lib/api";
+import { formatDate } from "@/lib/date-formatter";
 import {
   Sparkles,
   ShieldAlert,
@@ -995,7 +996,7 @@ export function PersonalizedRemedySection({
                       </span>
                       <span className="font-bold text-[#102A4C]">{rpt.person_name}</span>
                       <span className="text-[#64748B] text-[11px]">
-                        ({new Date(rpt.created_at).toLocaleDateString()})
+                        ({formatDate(rpt.created_at)})
                       </span>
                     </div>
                     {rpt.astrologer_notes && (

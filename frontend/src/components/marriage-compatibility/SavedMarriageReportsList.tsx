@@ -14,6 +14,7 @@ import {
   deleteSavedMarriageCompatibilityReport,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { formatDate } from "@/lib/date-formatter";
 import {
   FolderOpen,
   Trash2,
@@ -357,11 +358,7 @@ export function SavedMarriageReportsList({
                   </span>
                   <span className="text-xs text-slate-400 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>{new Date(report.created_at).toLocaleDateString(language === "ta" ? "ta-IN" : "en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}</span>
+                    <span>{formatDate(report.created_at)}</span>
                   </span>
                 </div>
 

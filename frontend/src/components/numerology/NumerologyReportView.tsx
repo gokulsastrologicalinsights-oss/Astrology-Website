@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { formatDate } from "@/lib/date-formatter";
 import {
   Printer,
   Download,
@@ -243,7 +244,7 @@ export function NumerologyReportView({
           <div>
             <div className="text-[#64748B] text-[11px]">Calculated On</div>
             <div className="font-bold text-[#0F172A]">
-              {new Date().toLocaleDateString()}
+              {formatDate(new Date())}
             </div>
           </div>
         </div>

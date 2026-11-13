@@ -7,7 +7,7 @@ import { SavedHoroscopeItem, SavedHoroscopesListResponse } from "@/lib/types";
 import { SavedHoroscopeCard } from "./SavedHoroscopeCard";
 import { SavedHoroscopeEditModal } from "./SavedHoroscopeEditModal";
 import { formatHoroscopeSequence, exportHoroscopesToCsv } from "@/lib/horoscope-storage-utils";
-import { formatBirthDate, formatBirthTime } from "@/lib/formatters";
+import { formatBirthDate, formatBirthTime, formatDate, formatTime12 } from "@/lib/formatters";
 import {
   Search,
   RefreshCw,
@@ -566,19 +566,8 @@ export function SavedHoroscopesList({
                       const typeLabel = isKp
                         ? (language === "ta" ? "கே.பி" : "KP")
                         : (language === "ta" ? "வேத" : "Vedic");
-                      const genDateStr = item.created_at
-                        ? new Date(item.created_at).toLocaleDateString(language === "ta" ? "ta-IN" : "en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "";
-                      const genTimeStr = item.created_at
-                        ? new Date(item.created_at).toLocaleTimeString(language === "ta" ? "ta-IN" : "en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "";
+                      const genDateStr = item.created_at ? formatDate(item.created_at) : "";
+                      const genTimeStr = item.created_at ? formatTime12(null, item.created_at) : "";
 
                       return (
                         <tr key={item.id} className={`transition-colors ${

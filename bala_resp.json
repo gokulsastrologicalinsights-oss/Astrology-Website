@@ -1,0 +1,3441 @@
+{
+  "metadata": {
+    "engine": "XALEN 0.6.0 (Rust) + GAI Marriage Compatibility Engine 1.0.0",
+    "birth_utc_iso": "1996-12-31T17:30:00Z",
+    "julian_day_ut1": 2450000.0,
+    "local_timezone": "Asia/Kolkata",
+    "utc_offset_hours": null,
+    "coordinates": null,
+    "ayanamsa_id": 0,
+    "ayanamsa_name": "Lahiri (Chitrapaksha)",
+    "ayanamsa_deg": 0.0,
+    "house_system_id": 0,
+    "house_system_name": "Whole Sign",
+    "calculation_frame": "Geocentric Sidereal",
+    "notes": [
+      "Purely deterministic calculation.",
+      "Tamil 10 Porutham (10.0 scale) and Ashtakoota (36.0 scale) preserved as independent metrics.",
+      "Cross-tradition conflict detection active."
+    ]
+  },
+  "groom_profile": {
+    "name": "Bala Krishnan",
+    "gender": "male",
+    "birth_date": "1996-12-31",
+    "birth_time": "17:30:00",
+    "timezone": "Asia/Kolkata",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "ascendant_sign": "Gemini",
+    "ascendant_sign_tamil": "மிதுனம்",
+    "ascendant_degree": 71.8858,
+    "ascendant_nakshatra": "Ardra",
+    "ascendant_pada": 2,
+    "ascendant_navamsa_sign": "Capricorn",
+    "moon_sign": "Leo",
+    "moon_sign_tamil": "சிம்மம்",
+    "moon_degree": 148.9583,
+    "moon_nakshatra": "Uttara Phalguni",
+    "moon_nakshatra_tamil": "உத்திரம்",
+    "moon_pada": 1,
+    "moon_navamsa_sign": "Sagittarius",
+    "venus_sign": "Scorpio",
+    "mars_sign": "Virgo",
+    "jupiter_sign": "Capricorn"
+  },
+  "bride_profile": {
+    "name": "Saranya",
+    "gender": "female",
+    "birth_date": "2000-07-20",
+    "birth_time": "12:00:00",
+    "timezone": "Asia/Kolkata",
+    "latitude": 13.0827,
+    "longitude": 80.2707,
+    "ascendant_sign": "Libra",
+    "ascendant_sign_tamil": "துலாம்",
+    "ascendant_degree": 181.801,
+    "ascendant_nakshatra": "Chitra",
+    "ascendant_pada": 3,
+    "ascendant_navamsa_sign": "Libra",
+    "moon_sign": "Aquarius",
+    "moon_sign_tamil": "கும்பம்",
+    "moon_degree": 314.6291,
+    "moon_nakshatra": "Shatabhisha",
+    "moon_nakshatra_tamil": "சதயம்",
+    "moon_pada": 3,
+    "moon_navamsa_sign": "Aquarius",
+    "venus_sign": "Cancer",
+    "mars_sign": "Gemini",
+    "jupiter_sign": "Taurus"
+  },
+  "composite_assessment": {
+    "overall_outcome": "UNFAVOURABLE_UNDER_SELECTED_RULES",
+    "overall_outcome_label_en": "Unfavourable Under Selected Rules",
+    "overall_outcome_label_ta": "தேர்ந்தெடுக்கப்பட்ட விதிகளின்படி பொருத்தமற்றது",
+    "category_verdicts": {
+      "tamil_porutham": {
+        "category_id": "tamil_porutham",
+        "category_name_en": "Tamil 10 Poruthams",
+        "category_name_ta": "தமிழ் 10 பொருத்தங்கள்",
+        "status": "MIXED",
+        "tradition": "Tamil Traditional (South Indian)",
+        "score_summary": "5.2/10.0 matches (Rajju: PASS, Vedha: PASS)",
+        "key_factors": [
+          "Foundational Maha Poruthams (Rajju and Vedha) are both satisfied.",
+          "Tamil 10 Porutham score: 5.2 / 10.0 (Grade: Madhyama). Astrological compatibility analysis highlights traditional harmony indicators; it is an interpretive advisory tool rather than a fatalistic certainty."
+        ],
+        "vetoes_applied": []
+      },
+      "ashtakoota": {
+        "category_id": "ashtakoota",
+        "category_name_en": "North Indian Ashtakoota",
+        "category_name_ta": "வட இந்திய அஷ்டகூட பொருத்தம்",
+        "status": "UNFAVORABLE",
+        "tradition": "North Indian Vedic (Muhurta Chintamani)",
+        "score_summary": "14.5/36.0 points (Nadi: Dosha, Bhakoot: Clear)",
+        "key_factors": [
+          "Ashtakoota Aggregate: 14.5 / 36.0 points (Does not satisfy traditional threshold of 18.0 pts).",
+          "CRITICAL: Active, uncancelled Nadi Dosha is present (0/8 pts). Traditional remediation advised.",
+          "Bhakoot Koota is clear (7/7 pts).",
+          "Traditional note: The 36-point Ashtakoota score reflects North Indian compatibility conventions. A score >= 18 points is an indicator of alignment, not an absolute guarantee of marital outcome."
+        ],
+        "vetoes_applied": [
+          "Active uncancelled Nadi Dosha (North Indian tradition critical veto per Muhurta Chintamani Ch. 6)"
+        ]
+      },
+      "kuja_samadosham": {
+        "category_id": "kuja_samadosham",
+        "category_name_en": "Kuja Dosha & Samadosham",
+        "category_name_ta": "செவ்வாய் தோஷ சமதோஷம்",
+        "status": "INDETERMINATE",
+        "tradition": "Muhurta Chintamani & Kalaprakasika",
+        "score_summary": "GROOM_EXCESS",
+        "key_factors": [
+          "Bride has Saturn/Rahu counterpoise in 7th/8th house"
+        ],
+        "vetoes_applied": []
+      },
+      "papasamya": {
+        "category_id": "papasamya",
+        "category_name_en": "South Indian Papasamya",
+        "category_name_ta": "பாபசாம்யம் (பாவ சமநிலை)",
+        "status": "FAVORABLE",
+        "tradition": "Kalaprakasika & Jathaka Alankaram",
+        "score_summary": "Groom: 5.5 pts, Bride: 5.5 pts (FAVORABLE)",
+        "key_factors": [
+          "Verdict: FAVORABLE",
+          "Difference: 0.0%"
+        ],
+        "vetoes_applied": []
+      },
+      "vedic_individual": {
+        "category_id": "vedic_individual",
+        "category_name_en": "Individual Vedic Marriage Houses (D1 & D9)",
+        "category_name_ta": "தனிநபர் களத்திர பாவ ஆய்வு (D1 & D9)",
+        "status": "MIXED",
+        "tradition": "Brihat Parashara Hora Shastra",
+        "score_summary": "Groom 7th: Afflicted, Bride 7th: Afflicted",
+        "key_factors": [
+          "7th House (Kalatra Bhava) is well-supported by benefic influences or strong lord disposition.",
+          "Kuja Dosha was neutralized by classical cancellations (Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat, Saturn casts Parashari aspect on Mars, tempering planetary volatility).",
+          "7th House (Kalatra Bhava) is well-supported by benefic influences or strong lord disposition."
+        ],
+        "vetoes_applied": []
+      },
+      "synastry": {
+        "category_id": "synastry",
+        "category_name_en": "Bidirectional Vedic Synastry",
+        "category_name_ta": "இருவழி ஜாதக இணைவு ஆய்வு",
+        "status": "FAVORABLE",
+        "tradition": "Parashari Cross-Chart Overlays",
+        "score_summary": "Moon Axis: Samasaptaka (Mutual 7th Axis), Lagna Axis: Trikona (Trine 5/9 Axis)",
+        "key_factors": [
+          "Supportive Moon axis: Samasaptaka (Mutual 7th Axis).",
+          "Harmonious Ascendant axis: Trikona (Trine 5/9 Axis).",
+          "Inimical Moon lords: Sun & Saturn."
+        ],
+        "vetoes_applied": []
+      },
+      "kp_promise": {
+        "category_id": "kp_promise",
+        "category_name_en": "KP 7th Cuspal Sub-Lord Promise",
+        "category_name_ta": "கே.பி 7-ம் பாவ உப அதிபதி வாக்குறுதி",
+        "status": "UNFAVORABLE",
+        "tradition": "Krishnamurti Paddhati (Prof. K.S. Krishnamurti)",
+        "score_summary": "Groom 7th CSL: MIXED, Bride 7th CSL: UNFAVORABLE",
+        "key_factors": [
+          "7th Cuspal Sub-Lord Mercury exhibits dual significations: supporting houses [7] alongside separating houses [1, 6]. Marital promise is mixed, indicating partnership with periods of adjustment or delay.",
+          "7th Cuspal Sub-Lord Venus signifies separating/denying houses [1, 10] (12th to marriage houses: 1, 6, 10) without supporting significations. Indicates astrological challenges or delays under classical KP principles."
+        ],
+        "vetoes_applied": []
+      },
+      "kp_timing": {
+        "category_id": "kp_timing",
+        "category_name_en": "KP Vimshottari Timing Window",
+        "category_name_ta": "கே.பி தசா-புக்தி கால அமைவு",
+        "status": "MIXED",
+        "tradition": "Krishnamurti Paddhati (Prof. K.S. Krishnamurti)",
+        "score_summary": "Groom Timing: MIXED, Bride Timing: MIXED",
+        "key_factors": [
+          "Dasa-Bhukti timing presents mixed or standard indicators across both birth horoscopes."
+        ],
+        "vetoes_applied": []
+      }
+    },
+    "major_supportive_indicators": [
+      "Rajju Porutham satisfied (Different Rajju - Mangalya protection preserved).",
+      "Vedha Porutham satisfied (No mutual repulsion detected).",
+      "Acceptable Porutham match score: 5.2/10.0.",
+      "Bhakoot Koota clear (Full 7/7 points awarded).",
+      "Optimum Papasamya malefic balance (Groom: 5.5, Bride: 5.5, diff: 0.0%)."
+    ],
+    "major_challenging_indicators": [
+      "Active Nadi Dosha present without classical cancellation (0/8 points).",
+      "Ashtakoota score below standard threshold or afflicted: 14.5/36.0 points.",
+      "Both prospective partners exhibit minor malefic influences on the 7th house.",
+      "Groom natal chart carries Kuja Dosha (Cancelled).",
+      "Bride natal chart carries Kuja Dosha (Mild).",
+      "7th Cuspal Sub-Lord signifies separating houses (1, 6, 10), indicating marital hurdles or delay."
+    ],
+    "conflicting_findings": [
+      {
+        "conflict_type": "MISSING_OR_UNSUPPORTED_DATA",
+        "title_en": "Incomplete Data in Category: Kuja Dosha & Samadosham",
+        "title_ta": "முழுமையற்ற தரவு: செவ்வாய் தோஷ சமதோஷம்",
+        "finding_a": "Category Kuja Dosha & Samadosham returned INDETERMINATE.",
+        "finding_b": "Mandatory chart data or astrological coordinates were not supplied.",
+        "resolution_principle": "Missing data is never treated as favorable; category remains explicitly indeterminate.",
+        "explanation_en": "Category Kuja Dosha & Samadosham could not be fully calculated.",
+        "explanation_ta": "செவ்வாய் தோஷ சமதோஷம் முழுமையாக கணிக்கப்படவில்லை.",
+        "rule_sources": [
+          "RULE-MATRIX-08"
+        ]
+      }
+    ],
+    "missing_or_uncertain_evidence": [
+      "Kuja Dosha & Samadosham data missing or indeterminate."
+    ],
+    "recommended_astrologer_review": [
+      "Review documented traditional divergences with family elders to align on preferred ancestral tradition."
+    ],
+    "decision_path": [
+      "Unfavorable verdict assigned due to tradition-specific critical veto(es): Active uncancelled Nadi Dosha (North Indian tradition critical veto per Muhurta Chintamani Ch. 6)."
+    ],
+    "disclaimers": [
+      "This compatibility assessment provides traditional astrological analysis based on classical texts and Krishnamurti Paddhati (KP) principles. It represents astronomical propensities and karmic tendencies rather than an absolute guarantee or denial of marital success. Human agency, mutual understanding, emotional maturity, socio-cultural context, and personal life choices remain paramount.",
+      "இந்த திருமணப் பொருத்த மதிப்பீடு பாரம்பரிய செவ்வியல் நூல்கள் மற்றும் கே.பி விதிகளின் அடிப்படையிலான ஜோதிட பகுப்பாய்வை வழங்குகிறது. இது சாத்தியமான கிரக நிலைகளையும் கர்ம போக்குகளையும் மட்டுமே குறிக்கிறது; மாறாக திருமண வெற்றியின் உறுதியான உத்திரவாதம் அல்லது மறுப்பு அல்ல. மனித முயற்சி, பரஸ்பர புரிதல், மன முதிர்ச்சி மற்றும் தனிநபர் தேர்வுகளே முதன்மையானவை."
+    ],
+    "rule_sources": [
+      "TAM-POR-01",
+      "TAM-POR-02",
+      "TAM-POR-03",
+      "TAM-POR-04",
+      "TAM-POR-05",
+      "TAM-POR-06",
+      "TAM-POR-07",
+      "TAM-POR-08",
+      "TAM-POR-09",
+      "TAM-POR-10",
+      "ASHTA-01",
+      "ASHTA-02",
+      "ASHTA-03",
+      "ASHTA-04",
+      "ASHTA-05",
+      "ASHTA-06",
+      "ASHTA-07",
+      "ASHTA-08",
+      "DOS-KUJA-01",
+      "DOS-KUJA-06",
+      "DOS-PAPA-01",
+      "DOS-PAPA-02",
+      "VED-MARR-01",
+      "VED-MARR-04",
+      "VED-MARR-05",
+      "KP-MARR-01",
+      "KP-MARR-02",
+      "KP-MARR-03",
+      "RULE-MATRIX-08"
+    ],
+    "warnings": [],
+    "explanation_en": "Overall Compatibility Verdict: UNFAVOURABLE_UNDER_SELECTED_RULES. Tamil Porutham: MIXED (5.2/10.0 matches (Rajju: PASS, Vedha: PASS)). Ashtakoota: UNFAVORABLE (14.5/36.0 points (Nadi: Dosha, Bhakoot: Clear)). Kuja Samadosham: INDETERMINATE. Papasamya: FAVORABLE. Vedic 7th House: MIXED. Synastry: FAVORABLE. KP Promise: UNFAVORABLE.",
+    "explanation_ta": "ஒட்டுமொத்த பொருத்த முடிவு: UNFAVOURABLE_UNDER_SELECTED_RULES. தமிழ் பொருத்தம்: MIXED (5.2/10.0 matches (Rajju: PASS, Vedha: PASS)). அஷ்டகூடம்: UNFAVORABLE (14.5/36.0 points (Nadi: Dosha, Bhakoot: Clear)). செவ்வாய் சமதோஷம்: INDETERMINATE. பாபசாம்யம்: FAVORABLE. களத்திர பாவம்: MIXED. ஜாதக இணைவு: FAVORABLE. கே.பி வாக்குறுதி: UNFAVORABLE."
+  },
+  "tamil_porutham": {
+    "poruthams": {
+      "dina": {
+        "rule_id": "TAM-POR-01",
+        "name_en": "Dina Porutham",
+        "name_ta": "தினப் பொருத்தம்",
+        "status": "FAIL",
+        "grade": "Adhama",
+        "score": 0.0,
+        "max_score": 1.0,
+        "is_favorable": false,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni",
+          "nakshatra_pada": 1
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha",
+          "nakshatra_pada": 3
+        },
+        "intermediate_calculation": {
+          "counting_distance": 16,
+          "tara_number": 7,
+          "tara_name": "Naidhana",
+          "tara_name_tamil": "நைதனம் (வதம்)"
+        },
+        "counting_direction": "Bride Nakshatra to Groom Nakshatra (inclusive count)",
+        "applied_acceptance_criteria": "Tara count modulo 9 in {2, 4, 6, 8, 9} excluding 27th star (Vainashika), with Eka Nakshatra exemptions",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 1–6 (v1.0)",
+        "description": "Distance from Shatabhisha to Uttara Phalguni is 16 stars (Naidhana Tara, 7/9). Dina Porutham is unfavorable.",
+        "description_tamil": "மணமகள் நட்சத்திரத்திலிருந்து மணமகன் நட்சத்திரம் 16-வது நட்சத்திரமாக (நைதனம் (வதம்) தாரை) அமைவதால் தினப் பொருத்தம் அமையவில்லை.",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 1–6 (v1.0)",
+        "warnings": []
+      },
+      "gana": {
+        "rule_id": "TAM-POR-02",
+        "name_en": "Gana Porutham",
+        "name_ta": "கணப் பொருத்தம்",
+        "status": "FAIL",
+        "grade": "Varjya",
+        "score": 0.0,
+        "max_score": 1.0,
+        "is_favorable": false,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni",
+          "gana": "Manushya"
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha",
+          "gana": "Rakshasa"
+        },
+        "intermediate_calculation": {
+          "groom_gana": "Manushya",
+          "bride_gana": "Rakshasa",
+          "groom_gana_tamil": "மனுஷ கணம்",
+          "bride_gana_tamil": "ராட்சஸ கணம்"
+        },
+        "counting_direction": "Mutual / Bidirectional Gana alignment",
+        "applied_acceptance_criteria": "Same Gana or Deva Groom + Manushya Bride; Rakshasa Bride forbidden per Kalaprakasika",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 7–12; Muhurta Chintamani (v1.0)",
+        "description": "Bride is Rakshasa Gana while Groom is Manushya Gana. Strictly rejected in classical Tamil matching (Gana Dosha), as it portends sharp temperamental friction and emotional discord.",
+        "description_tamil": "மணமகள் ராட்சஸ கணமாகவும் மணமகன் மனுஷ கணம்மாகவும் அமைவது மரபுப்படி கணப் பொருத்தக் குறைபாடாகும் (கண தோஷம்). கருத்து வேறுபாடுகளுக்கு வாய்ப்புள்ளது.",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 7–12; Muhurta Chintamani (v1.0)",
+        "warnings": [
+          "Gana defect is partially mitigated by favorable Rasi/Lord alignment or star distance > 14, but classical Tamil matching maintains caution for Rakshasa bride with Deva/Manushya groom."
+        ]
+      },
+      "mahendra": {
+        "rule_id": "TAM-POR-03",
+        "name_en": "Mahendra Porutham",
+        "name_ta": "மகேந்திரப் பொருத்தம்",
+        "status": "PASS",
+        "grade": "Uthama",
+        "score": 1.0,
+        "max_score": 1.0,
+        "is_favorable": true,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni"
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha"
+        },
+        "intermediate_calculation": {
+          "counting_distance": 16,
+          "is_in_mahendra_set": true,
+          "eligible_stars": [
+            4,
+            7,
+            10,
+            13,
+            16,
+            19,
+            22,
+            25
+          ]
+        },
+        "counting_direction": "Bride Nakshatra to Groom Nakshatra (inclusive count)",
+        "applied_acceptance_criteria": "Groom star is 4th, 7th, 10th, 13th, 16th, 19th, 22nd, or 25th from Bride star",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 13–15 (v1.0)",
+        "description": "Groom star Uttara Phalguni is the 16th star from Bride star Shatabhisha. Mahendra Porutham is fully present, conferring progeny, lineage prosperity, and family well-being (Putra Pautra Vriddhi).",
+        "description_tamil": "மணமகள் நட்சத்திரத்திலிருந்து மணமகன் நட்சத்திரம் 16-வது நட்சத்திரமாக வருவதால் மகேந்திரப் பொருத்தம் உத்தமம். புத்திர பாக்கியம், வம்ச விருத்தி மற்றும் குடும்ப நல்வாழ்வை அருளும்.",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 13–15 (v1.0)",
+        "warnings": []
+      },
+      "sthree_deergha": {
+        "rule_id": "TAM-POR-04",
+        "name_en": "Sthree Deergha Porutham",
+        "name_ta": "ஸ்திரீ தீர்க்கப் பொருத்தம்",
+        "status": "PASS",
+        "grade": "Uthama",
+        "score": 1.0,
+        "max_score": 1.0,
+        "is_favorable": true,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni"
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha"
+        },
+        "intermediate_calculation": {
+          "counting_distance": 16,
+          "threshold_tier": "Uthama (>13)"
+        },
+        "counting_direction": "Bride Nakshatra to Groom Nakshatra (inclusive count)",
+        "applied_acceptance_criteria": "Distance > 13: Uthama (1.0 pt), 8-13: Madhyama (0.5 pt), <= 7: Adhama (0.0 pt)",
+        "source_and_version": "Kalaprakasika Ch. 12, Sloka 16 (v1.0)",
+        "description": "Distance from Bride star Shatabhisha to Groom star Uttara Phalguni is 16 nakshatras (> 13). Sthree Deergha Porutham is Uthama, conferring long married life, health, and prosperity for the wife.",
+        "description_tamil": "மணமகள் நட்சத்திரத்திலிருந்து மணமகன் நட்சத்திரம் 16 நட்சத்திரங்கள் இடைவெளியில் (13-க்கு மேல்) அமைவதால் ஸ்திரீ தீர்க்கப் பொருத்தம் உத்தமம். மணப்பெண்ணுக்கு தீர்க்க சுமங்கலி பாக்கியம் மற்றும் சகல ஐஸ்வர்யங்களையும் தரும்.",
+        "classical_reference": "Kalaprakasika Ch. 12, Sloka 16 (v1.0)",
+        "warnings": []
+      },
+      "yoni": {
+        "rule_id": "TAM-POR-05",
+        "name_en": "Yoni Porutham",
+        "name_ta": "யோனிப் பொருத்தம்",
+        "status": "PASS",
+        "grade": "Madhyama",
+        "score": 0.5,
+        "max_score": 1.0,
+        "is_favorable": true,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni",
+          "yoni_animal": "Cow"
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha",
+          "yoni_animal": "Horse"
+        },
+        "intermediate_calculation": {
+          "groom_animal": "Cow",
+          "bride_animal": "Horse",
+          "groom_animal_tamil": "பசு/மாடு",
+          "bride_animal_tamil": "குதிரை",
+          "is_bitter_enemy_pair": false
+        },
+        "counting_direction": "Mutual / Bidirectional Animal Archetype alignment",
+        "applied_acceptance_criteria": "Same animal is Uthama (1.0 pt), non-inimical is Madhyama (0.5 pt), sworn enemy pairs are Varjya (0.0 pt)",
+        "source_and_version": "Kalaprakasika Ch. 12; Brihat Samhita Ch. 100 (v1.0)",
+        "description": "Groom Yoni is Cow and Bride Yoni is Horse. Neither identical nor bitter enemies; classified as Madhyama (compatible animal archetypes).",
+        "description_tamil": "மணமகன் யோனி பசு/மாடு, மணமகள் யோனி குதிரை. பகை யோனி இல்லாததால் யோனிப் பொருத்தம் மத்திமமாக அமைகிறது.",
+        "classical_reference": "Kalaprakasika Ch. 12; Brihat Samhita Ch. 100 (v1.0)",
+        "warnings": []
+      },
+      "rasi": {
+        "rule_id": "TAM-POR-06",
+        "name_en": "Rasi Porutham",
+        "name_ta": "ராசிப் பொருத்தம்",
+        "status": "PASS",
+        "grade": "Madhyama",
+        "score": 0.75,
+        "max_score": 1.0,
+        "is_favorable": true,
+        "groom_input": {
+          "moon_sign_index": 5,
+          "moon_sign_name": "Leo",
+          "nakshatra_index": 11
+        },
+        "bride_input": {
+          "moon_sign_index": 11,
+          "moon_sign_name": "Aquarius",
+          "nakshatra_index": 23
+        },
+        "intermediate_calculation": {
+          "counting_distance": 7,
+          "groom_sign": "Leo",
+          "bride_sign": "Aquarius",
+          "groom_sign_tamil": "சிம்மம்",
+          "bride_sign_tamil": "கும்பம்"
+        },
+        "counting_direction": "Bride Moon Sign to Groom Moon Sign (inclusive count)",
+        "applied_acceptance_criteria": "7th, 3rd, 11th, 4th, 10th favorable; 6/8 and 2/12 evaluated with classical lord exceptions",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 20–25 (v1.0)",
+        "description": "Moon signs are in Samasaptaka (7th from each other: Leo and Aquarius). Favorable Kendra alignment with moderate caution due to Saturn-Luminary rulership.",
+        "description_tamil": "இருவரின் ராசிகளும் சமசப்தமமாக (7-ம் இடம்: சிம்மம் - கும்பம்) அமைந்துள்ளன. அதிபதிகள் பகை கிரகங்களாக அமைந்ததால் நடுத்தர இணக்கம் தரும்.",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 20–25 (v1.0)",
+        "warnings": [
+          "Samasaptaka between signs ruled by planetary enemies (Sun/Moon vs Saturn) requires emotional maturity."
+        ]
+      },
+      "rasi_adhipathi": {
+        "rule_id": "TAM-POR-07",
+        "name_en": "Rasi Adhipathi Porutham",
+        "name_ta": "ராசி அதிபதிப் பொருத்தம்",
+        "status": "FAIL",
+        "grade": "Adhama",
+        "score": 0.0,
+        "max_score": 1.0,
+        "is_favorable": false,
+        "groom_input": {
+          "moon_sign_index": 5,
+          "moon_sign_name": "Leo",
+          "moon_sign_lord": "Sun"
+        },
+        "bride_input": {
+          "moon_sign_index": 11,
+          "moon_sign_name": "Aquarius",
+          "moon_sign_lord": "Saturn"
+        },
+        "intermediate_calculation": {
+          "groom_lord": "Sun",
+          "bride_lord": "Saturn",
+          "relationship_classification": "Mutual Enemies"
+        },
+        "counting_direction": "Mutual / Bidirectional Sign Lord Natural Relationship",
+        "applied_acceptance_criteria": "Same lord / mutual friends is Uthama (1.0), friend-neutral (0.75), neutral (0.5), inimical (0.0-0.25)",
+        "source_and_version": "Kalaprakasika Ch. 12; Phaladeepika Ch. 2; BPHS Ch. 15 (v1.0)",
+        "description": "Moon sign lords Sun and Saturn are natural mutual enemies. Rasi Adhipathi Porutham is unfavorable.",
+        "description_tamil": "ராசி அதிபதிகள் (Sun மற்றும் Saturn) பரஸ்பர சத்ருக்கள் (விரோதிகள்) என்பதால் ராசி அதிபதிப் பொருத்தம் அமையவில்லை.",
+        "classical_reference": "Kalaprakasika Ch. 12; Phaladeepika Ch. 2; BPHS Ch. 15 (v1.0)",
+        "warnings": [
+          "Mutual enmity between Moon sign lords Sun and Saturn."
+        ]
+      },
+      "vasya": {
+        "rule_id": "TAM-POR-08",
+        "name_en": "Vasya Porutham",
+        "name_ta": "வசியப் பொருத்தம்",
+        "status": "FAIL",
+        "grade": "Adhama",
+        "score": 0.0,
+        "max_score": 1.0,
+        "is_favorable": false,
+        "groom_input": {
+          "moon_sign_index": 5,
+          "moon_sign_name": "Leo"
+        },
+        "bride_input": {
+          "moon_sign_index": 11,
+          "moon_sign_name": "Aquarius"
+        },
+        "intermediate_calculation": {
+          "groom_attracts_bride": false,
+          "bride_attracts_groom": false,
+          "vasya_classification": "Absent"
+        },
+        "counting_direction": "Mutual / Bidirectional Rasi magnetic affinity",
+        "applied_acceptance_criteria": "Mutual Vasya is Uthama (1.0 pt), One-way Vasya is Madhyama (0.75 pt), Absent is Adhama (0.0 pt)",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 26–28 (v1.0)",
+        "description": "Vasya is absent between Leo and Aquarius. Note: Vasya is a secondary Porutham; its absence does not veto marriage if primary Poruthams are favorable.",
+        "description_tamil": "வசியப் பொருத்தம் அமையவில்லை. (இது இரண்டாம் நிலை பொருத்தம்; ரஜ்ஜு, ராசி பொருத்தம் இருப்பின் விவாகம் செய்யலாம்).",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 26–28 (v1.0)",
+        "warnings": []
+      },
+      "rajju": {
+        "rule_id": "TAM-POR-09",
+        "name_en": "Rajju Porutham",
+        "name_ta": "ரஜ்ஜுப் பொருத்தம்",
+        "status": "PASS",
+        "grade": "Uthama",
+        "score": 1.0,
+        "max_score": 1.0,
+        "is_favorable": true,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni",
+          "rajju": "Udara"
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha",
+          "rajju": "Kantha"
+        },
+        "intermediate_calculation": {
+          "groom_rajju": "Udara",
+          "bride_rajju": "Kantha",
+          "groom_rajju_tamil": "உதர ரஜ்ஜு (வயிறு)",
+          "bride_rajju_tamil": "கண்ட ரஜ்ஜு (கழுத்து)",
+          "is_rajju_thatu": false
+        },
+        "counting_direction": "Bidirectional Vital Cord Compatibility (Maha Porutham)",
+        "applied_acceptance_criteria": "Different Rajju is Uthama (1.0 pt); Same Rajju is Varjya (0.0 pt) with zero cancellation in South Indian canon",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 29–35; Kumaraswamiyam (v1.0)",
+        "description": "Different Rajjus: Groom belongs to Udara Rajju (Arohana) and Bride belongs to Kantha Rajju (Avarohana). The vital life cords are independent, protecting Mangalya Bhagya and conferring long married life. Rajju Porutham is fully satisfied.",
+        "description_tamil": "இருவரும் வெவ்வேறு ரஜ்ஜுவில் (மணமகன்: உதர ரஜ்ஜு (வயிறு) [Arohana], மணமகள்: கண்ட ரஜ்ஜு (கழுத்து) [Avarohana]) அமைந்துள்ளதால் ரஜ்ஜுப் பொருத்தம் உத்தமம். மாங்கல்ய பலமும், தம்பதியருக்கு தீர்க்காயுளும் உண்டாகும்.",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 29–35; Kumaraswamiyam (v1.0)",
+        "warnings": []
+      },
+      "vedha": {
+        "rule_id": "TAM-POR-10",
+        "name_en": "Vedha Porutham",
+        "name_ta": "வேதைப் பொருத்தம்",
+        "status": "PASS",
+        "grade": "Uthama",
+        "score": 1.0,
+        "max_score": 1.0,
+        "is_favorable": true,
+        "groom_input": {
+          "nakshatra_index": 11,
+          "nakshatra_name": "Uttara Phalguni"
+        },
+        "bride_input": {
+          "nakshatra_index": 23,
+          "nakshatra_name": "Shatabhisha"
+        },
+        "intermediate_calculation": {
+          "is_vedha_afflicted": false
+        },
+        "counting_direction": "Bidirectional Repulsion and Affliction Check (Maha Porutham)",
+        "applied_acceptance_criteria": "Absence of mutual Vedha pair is Uthama (1.0 pt); Presence of Vedha pair is Varjya (0.0 pt)",
+        "source_and_version": "Kalaprakasika Ch. 12, Slokas 36–38 (v1.0)",
+        "description": "No Vedha affliction between Groom star (Uttara Phalguni) and Bride star (Shatabhisha). Freedom from psychic repulsion and mutual affliction. Vedha Porutham is fully satisfied.",
+        "description_tamil": "இருவரின் நட்சத்திரங்களுக்கும் (உத்திரம் - சதயம்) இடையே எவ்வித வேதை (பகை) தோஷமும் இல்லை. வேதைப் பொருத்தம் உத்தமம்.",
+        "classical_reference": "Kalaprakasika Ch. 12, Slokas 36–38 (v1.0)",
+        "warnings": []
+      }
+    },
+    "total_score": 5.25,
+    "max_score": 10.0,
+    "aggregate_verdict": "Madhyama",
+    "rajju_status": "PASS",
+    "vedha_status": "PASS",
+    "summary_notes": [
+      "Foundational Maha Poruthams (Rajju and Vedha) are both satisfied.",
+      "Tamil 10 Porutham score: 5.2 / 10.0 (Grade: Madhyama). Astrological compatibility analysis highlights traditional harmony indicators; it is an interpretive advisory tool rather than a fatalistic certainty."
+    ]
+  },
+  "ashtakoota": {
+    "kootas": {
+      "varna": {
+        "koota_id": "ASHTA-01",
+        "name_en": "Varna Koota",
+        "status": "PASS",
+        "max_points": 1.0,
+        "earned_points": 1.0,
+        "raw_calculation": "Groom Varna: Kshatriya (Rank 3) vs Bride Varna: Shudra (Rank 1)",
+        "groom_input": {
+          "moon_sign": "Leo",
+          "varna": "Kshatriya"
+        },
+        "bride_input": {
+          "moon_sign": "Aquarius",
+          "varna": "Shudra"
+        },
+        "intermediate_calculation": {
+          "groom_varna": "Kshatriya",
+          "bride_varna": "Shudra",
+          "groom_rank": 3,
+          "bride_rank": 1
+        },
+        "is_dosha_present": false,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Groom Varna (Kshatriya) is equal to or higher than Bride Varna (Shudra). Varna Koota is fully satisfied (1.0 / 1.0).",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Sloka 1 (v1.0)",
+        "warnings": []
+      },
+      "vashya": {
+        "koota_id": "ASHTA-02",
+        "name_en": "Vashya Koota",
+        "status": "FAIL",
+        "max_points": 2.0,
+        "earned_points": 0.0,
+        "raw_calculation": "Groom Vashya: Vanachara vs Bride Vashya: Dwipada",
+        "groom_input": {
+          "moon_sign": "Leo",
+          "vashya_category": "Vanachara"
+        },
+        "bride_input": {
+          "moon_sign": "Aquarius",
+          "vashya_category": "Dwipada"
+        },
+        "intermediate_calculation": {
+          "groom_vashya_category": "Vanachara",
+          "bride_vashya_category": "Dwipada",
+          "is_mutual": false
+        },
+        "is_dosha_present": false,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Inimical predator-prey Vashya relationship (Vanachara vs Dwipada). 0.0 points awarded.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Sloka 2 (v1.0)",
+        "warnings": []
+      },
+      "tara": {
+        "koota_id": "ASHTA-03",
+        "name_en": "Tara Koota",
+        "status": "PASS",
+        "max_points": 3.0,
+        "earned_points": 1.5,
+        "raw_calculation": "Bride->Groom: Tara 7 (0.0 pts), Groom->Bride: Tara 4 (1.5 pts)",
+        "groom_input": {
+          "nakshatra": "Uttara Phalguni",
+          "nakshatra_index": 11
+        },
+        "bride_input": {
+          "nakshatra": "Shatabhisha",
+          "nakshatra_index": 23
+        },
+        "intermediate_calculation": {
+          "bride_to_groom": {
+            "distance": 16,
+            "tara": 7,
+            "is_auspicious": false,
+            "points": 0.0
+          },
+          "groom_to_bride": {
+            "distance": 13,
+            "tara": 4,
+            "is_auspicious": true,
+            "points": 1.5
+          }
+        },
+        "is_dosha_present": false,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Bidirectional Tara evaluation: Bride-to-Groom distance 16 (Tara 7) earned 0.0 pts; Groom-to-Bride distance 13 (Tara 4) earned 1.5 pts. Total Tara points: 1.5 / 3.0.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Slokas 3–5 (v1.0)",
+        "warnings": []
+      },
+      "yoni": {
+        "koota_id": "ASHTA-04",
+        "name_en": "Yoni Koota",
+        "status": "PASS",
+        "max_points": 4.0,
+        "earned_points": 2.0,
+        "raw_calculation": "Groom Yoni: Cow vs Bride Yoni: Horse -> 2.0 pts",
+        "groom_input": {
+          "nakshatra": "Uttara Phalguni",
+          "yoni_animal": "Cow"
+        },
+        "bride_input": {
+          "nakshatra": "Shatabhisha",
+          "yoni_animal": "Horse"
+        },
+        "intermediate_calculation": {
+          "groom_animal": "Cow",
+          "bride_animal": "Horse",
+          "points": 2.0
+        },
+        "is_dosha_present": false,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Neutral Yoni archetypes (Cow and Horse). 2.0 / 4.0 points awarded.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Slokas 6–9; BPHS Ch. 81 (v1.0)",
+        "warnings": []
+      },
+      "graha_maitri": {
+        "koota_id": "ASHTA-05",
+        "name_en": "Graha Maitri Koota",
+        "status": "FAIL",
+        "max_points": 5.0,
+        "earned_points": 0.0,
+        "raw_calculation": "Groom Lord Sun vs Bride Lord Saturn -> Mutual Enemies (0.0 pts)",
+        "groom_input": {
+          "moon_sign": "Leo",
+          "lord": "Sun"
+        },
+        "bride_input": {
+          "moon_sign": "Aquarius",
+          "lord": "Saturn"
+        },
+        "intermediate_calculation": {
+          "groom_lord": "Sun",
+          "bride_lord": "Saturn",
+          "relationship": "Mutual Enemies"
+        },
+        "is_dosha_present": false,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Moon sign lords Sun and Saturn are natural mutual enemies. 0.0 / 5.0 points awarded.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Slokas 10–12; BPHS Ch. 81 (v1.0)",
+        "warnings": []
+      },
+      "gana": {
+        "koota_id": "ASHTA-06",
+        "name_en": "Gana Koota",
+        "status": "PASS",
+        "max_points": 6.0,
+        "earned_points": 3.0,
+        "raw_calculation": "Groom Gana: Manushya vs Bride Gana: Rakshasa -> 3.0 pts",
+        "groom_input": {
+          "nakshatra": "Uttara Phalguni",
+          "gana": "Manushya"
+        },
+        "bride_input": {
+          "nakshatra": "Shatabhisha",
+          "gana": "Rakshasa"
+        },
+        "intermediate_calculation": {
+          "groom_gana": "Manushya",
+          "bride_gana": "Rakshasa",
+          "base_points": 0.0,
+          "is_mitigated": true
+        },
+        "is_dosha_present": true,
+        "is_cancelled": true,
+        "cancellation_reason": "Gana defect mitigated to 3.0 points due to Samasaptaka (7th) Moon signs per Muhurta Chintamani Ch. 6 Sloka 15.",
+        "description": "Groom Gana (Manushya) and Bride Gana (Rakshasa). Points awarded: 3.0 / 6.0. Gana defect mitigated to 3.0 points due to Samasaptaka (7th) Moon signs per Muhurta Chintamani Ch. 6 Sloka 15.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Slokas 13–15; BPHS Ch. 81 (v1.0)",
+        "warnings": []
+      },
+      "bhakoot": {
+        "koota_id": "ASHTA-07",
+        "name_en": "Bhakoot Koota",
+        "status": "PASS",
+        "max_points": 7.0,
+        "earned_points": 7.0,
+        "raw_calculation": "Moon sign distance: 7 (Leo from Aquarius) -> 7.0 pts",
+        "groom_input": {
+          "moon_sign": "Leo",
+          "sign_index": 5
+        },
+        "bride_input": {
+          "moon_sign": "Aquarius",
+          "sign_index": 11
+        },
+        "intermediate_calculation": {
+          "distance": 7,
+          "is_dosha": false,
+          "is_cancelled": false
+        },
+        "is_dosha_present": false,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Favorable Moon sign relationship (Leo is 7th from Aquarius). Full 7.0 / 7.0 Bhakoot points awarded. No Bhakoot Dosha.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Slokas 16–20; BPHS Ch. 81 (v1.0)",
+        "warnings": []
+      },
+      "nadi": {
+        "koota_id": "ASHTA-08",
+        "name_en": "Nadi Koota",
+        "status": "FAIL",
+        "max_points": 8.0,
+        "earned_points": 0.0,
+        "raw_calculation": "Groom Nadi: Adi vs Bride Nadi: Adi -> 0.0 pts",
+        "groom_input": {
+          "nakshatra": "Uttara Phalguni",
+          "nadi": "Adi",
+          "pada": 1
+        },
+        "bride_input": {
+          "nakshatra": "Shatabhisha",
+          "nadi": "Adi",
+          "pada": 3
+        },
+        "intermediate_calculation": {
+          "groom_nadi": "Adi",
+          "bride_nadi": "Adi",
+          "is_dosha": true,
+          "is_cancelled": false
+        },
+        "is_dosha_present": true,
+        "is_cancelled": false,
+        "cancellation_reason": null,
+        "description": "Active Nadi Dosha (Adi Nadi). 0.0 / 8.0 points awarded. Physiological/genetic disharmony.",
+        "classical_reference": "Muhurta Chintamani Ch. 6, Slokas 21–25; BPHS Ch. 81 (v1.0)",
+        "warnings": []
+      }
+    },
+    "total_points": 14.5,
+    "max_points": 36.0,
+    "minimum_threshold": 18.0,
+    "is_threshold_met": false,
+    "nadi_dosha_present": true,
+    "nadi_dosha_cancelled": false,
+    "bhakoot_dosha_present": false,
+    "bhakoot_dosha_cancelled": false,
+    "summary_notes": [
+      "Ashtakoota Aggregate: 14.5 / 36.0 points (Does not satisfy traditional threshold of 18.0 pts).",
+      "CRITICAL: Active, uncancelled Nadi Dosha is present (0/8 pts). Traditional remediation advised.",
+      "Bhakoot Koota is clear (7/7 pts).",
+      "Traditional note: The 36-point Ashtakoota score reflects North Indian compatibility conventions. A score >= 18 points is an indicator of alignment, not an absolute guarantee of marital outcome."
+    ]
+  },
+  "dosha_analysis": {
+    "groom_kuja": null,
+    "bride_kuja": null,
+    "samadosham": {
+      "status": "MITIGATED",
+      "mutual_balance": "GROOM_EXCESS",
+      "groom_severity": "Moderate",
+      "bride_severity": "None",
+      "groom_effective_intensity": 50.0,
+      "bride_effective_intensity": 0.0,
+      "triggering_comparison": {
+        "groom_present": true,
+        "groom_cancelled": false,
+        "groom_active": true,
+        "groom_intensity": 50.0,
+        "bride_present": false,
+        "bride_cancelled": false,
+        "bride_active": false,
+        "bride_intensity": 0.0,
+        "bride_has_counterpoise": true
+      },
+      "cancellations_or_mitigations_applied": [
+        "Bride has Saturn/Rahu counterpoise in 7th/8th house"
+      ],
+      "explanation_en": "Groom has active Kuja (50%); Bride has no active Kuja. Mitigation: Bride has Saturn/Rahu counterpoise in 7th/8th house. Verdict: MITIGATED — affliction partially offset, proceed with caution.",
+      "explanation_ta": "மணமகனுக்கு குஜதோஷம் (50%); மணமகளுக்கு இல்லை. தணிப்பு: Bride has Saturn/Rahu counterpoise in 7th/8th house. தீர்ப்பு: குறைந்த தீவிரம்.",
+      "warnings": [
+        "Groom IndividualKujaAssessment not provided; basic Kuja detection used.",
+        "Bride IndividualKujaAssessment not provided; basic Kuja detection used."
+      ]
+    },
+    "groom_papasamya": {
+      "subject_role": "groom",
+      "lagna_papam": 2.0,
+      "moon_papam": 3.0,
+      "venus_papam": 0.5,
+      "total_papam": 5.5,
+      "breakdown_by_planet": {
+        "Mars": 2.0,
+        "Saturn": 1.0,
+        "Rahu": 1.0,
+        "Ketu": 0.5,
+        "Sun": 1.0
+      },
+      "placements_detail": [
+        {
+          "frame": "Lagna",
+          "planet": "Mars",
+          "malefic_sign": 6,
+          "malefic_sign_en": "Virgo",
+          "house_from_lagna": 4,
+          "weight": 1.0
+        },
+        {
+          "frame": "Moon",
+          "planet": "Mars",
+          "malefic_sign": 6,
+          "malefic_sign_en": "Virgo",
+          "house_from_moon": 2,
+          "weight": 1.0
+        },
+        {
+          "frame": "Moon",
+          "planet": "Saturn",
+          "malefic_sign": 12,
+          "malefic_sign_en": "Pisces",
+          "house_from_moon": 8,
+          "weight": 1.0
+        },
+        {
+          "frame": "Lagna",
+          "planet": "Rahu",
+          "malefic_sign": 6,
+          "malefic_sign_en": "Virgo",
+          "house_from_lagna": 4,
+          "weight": 0.5
+        },
+        {
+          "frame": "Moon",
+          "planet": "Rahu",
+          "malefic_sign": 6,
+          "malefic_sign_en": "Virgo",
+          "house_from_moon": 2,
+          "weight": 0.5
+        },
+        {
+          "frame": "Moon",
+          "planet": "Ketu",
+          "malefic_sign": 12,
+          "malefic_sign_en": "Pisces",
+          "house_from_moon": 8,
+          "weight": 0.5
+        },
+        {
+          "frame": "Lagna",
+          "planet": "Sun",
+          "malefic_sign": 9,
+          "malefic_sign_en": "Sagittarius",
+          "house_from_lagna": 7,
+          "weight": 0.5
+        },
+        {
+          "frame": "Venus",
+          "planet": "Sun",
+          "malefic_sign": 9,
+          "malefic_sign_en": "Sagittarius",
+          "house_from_venus": 2,
+          "weight": 0.5
+        }
+      ],
+      "explanation_en": "Groom Papasamya — Lagna frame: 2.0, Moon frame: 3.0, Venus frame: 0.5. Total: 5.5 pts. Breakdown: Mars: 2.0 pts; Saturn: 1.0 pts; Rahu: 1.0 pts; Ketu: 0.5 pts; Sun: 1.0 pts.",
+      "explanation_ta": "groom பாபசமயம் — லக்னம்: 2.0, சந்திரன்: 3.0, சுக்கிரன்: 0.5. மொத்தம்: 5.5."
+    },
+    "bride_papasamya": {
+      "subject_role": "bride",
+      "lagna_papam": 1.5,
+      "moon_papam": 1.5,
+      "venus_papam": 2.5,
+      "total_papam": 5.5,
+      "breakdown_by_planet": {
+        "Mars": 1.0,
+        "Saturn": 2.0,
+        "Rahu": 0.5,
+        "Ketu": 1.5,
+        "Sun": 0.5
+      },
+      "placements_detail": [
+        {
+          "frame": "Venus",
+          "planet": "Mars",
+          "malefic_sign": 3,
+          "malefic_sign_en": "Gemini",
+          "house_from_venus": 12,
+          "weight": 1.0
+        },
+        {
+          "frame": "Lagna",
+          "planet": "Saturn",
+          "malefic_sign": 2,
+          "malefic_sign_en": "Taurus",
+          "house_from_lagna": 8,
+          "weight": 1.0
+        },
+        {
+          "frame": "Moon",
+          "planet": "Saturn",
+          "malefic_sign": 2,
+          "malefic_sign_en": "Taurus",
+          "house_from_moon": 4,
+          "weight": 1.0
+        },
+        {
+          "frame": "Venus",
+          "planet": "Rahu",
+          "malefic_sign": 4,
+          "malefic_sign_en": "Cancer",
+          "house_from_venus": 1,
+          "weight": 0.5
+        },
+        {
+          "frame": "Lagna",
+          "planet": "Ketu",
+          "malefic_sign": 10,
+          "malefic_sign_en": "Capricorn",
+          "house_from_lagna": 4,
+          "weight": 0.5
+        },
+        {
+          "frame": "Moon",
+          "planet": "Ketu",
+          "malefic_sign": 10,
+          "malefic_sign_en": "Capricorn",
+          "house_from_moon": 12,
+          "weight": 0.5
+        },
+        {
+          "frame": "Venus",
+          "planet": "Ketu",
+          "malefic_sign": 10,
+          "malefic_sign_en": "Capricorn",
+          "house_from_venus": 7,
+          "weight": 0.5
+        },
+        {
+          "frame": "Venus",
+          "planet": "Sun",
+          "malefic_sign": 4,
+          "malefic_sign_en": "Cancer",
+          "house_from_venus": 1,
+          "weight": 0.5
+        }
+      ],
+      "explanation_en": "Bride Papasamya — Lagna frame: 1.5, Moon frame: 1.5, Venus frame: 2.5. Total: 5.5 pts. Breakdown: Mars: 1.0 pts; Saturn: 2.0 pts; Rahu: 0.5 pts; Ketu: 1.5 pts; Sun: 0.5 pts.",
+      "explanation_ta": "bride பாபசமயம் — லக்னம்: 1.5, சந்திரன்: 1.5, சுக்கிரன்: 2.5. மொத்தம்: 5.5."
+    },
+    "papasamya_verdict": "FAVORABLE",
+    "papasamya_diff_percent": 0.0,
+    "papasamya_explanation_en": "Papasamya nearly equal (Groom: 5.5, Bride: 5.5, diff: 0.0 pts ≤ 0.5 threshold). Verdict: FAVORABLE — balanced malefic loads.",
+    "papasamya_explanation_ta": "பாபசமயம் சமம் (மணமகன்: 5.5, மணமகள்: 5.5). தீர்ப்பு: சாதகமான சமனிலை.",
+    "partner_dependent_doshas": {},
+    "active_doshas_with_exceptions": [],
+    "independent_vetoes_preserved": []
+  },
+  "synastry": {
+    "groom_person_id": "groom",
+    "bride_person_id": "bride",
+    "moon_to_moon": {
+      "groom_moon_sign_idx": 5,
+      "groom_moon_sign_name": "Leo",
+      "groom_moon_nakshatra_idx": 11,
+      "groom_moon_nakshatra_name": "Uttara Phalguni",
+      "groom_moon_nakshatra_pada": 1,
+      "groom_moon_lord": "Sun",
+      "bride_moon_sign_idx": 11,
+      "bride_moon_sign_name": "Aquarius",
+      "bride_moon_nakshatra_idx": 23,
+      "bride_moon_nakshatra_name": "Shatabhisha",
+      "bride_moon_nakshatra_pada": 3,
+      "bride_moon_lord": "Saturn",
+      "sign_distance_g_to_b": 7,
+      "sign_distance_b_to_g": 7,
+      "sign_relationship": "Samasaptaka (Mutual 7th Axis)",
+      "sign_assessment": "Favorable",
+      "same_nakshatra": false,
+      "nakshatra_distance_g_to_b": 13,
+      "nakshatra_distance_b_to_g": 16,
+      "pada_resonance": "Complementary",
+      "moon_lord_relationship": "Enemies",
+      "moon_lord_friendship_score": 0.0,
+      "groom_moon_aspects_bride_moon": true,
+      "bride_moon_aspects_groom_moon": true,
+      "groom_navamsa_boundary_risk": false,
+      "bride_navamsa_boundary_risk": false,
+      "groom_boundary_arcmin": 62.5,
+      "bride_boundary_arcmin": 77.74,
+      "observations": [
+        "Moon signs form a supportive Samasaptaka (Mutual 7th Axis) relationship promoting emotional rapport.",
+        "Moon sign lords (Sun & Saturn) are inimical, suggesting distinct instinctual temperaments.",
+        "Mutual direct 7th aspect between Moons fosters bilateral emotional recognition."
+      ],
+      "explanation_en": "Groom Moon in Leo (Uttara Phalguni Pada 1), Bride Moon in Aquarius (Shatabhisha Pada 3). Axis: Samasaptaka (Mutual 7th Axis) (Favorable). Moon Lords: Enemies (score 0.0).",
+      "explanation_ta": "மணமகன் சந்திரன்: சிம்மம் (உத்திரம் பாதம் 1), மணமகள் சந்திரன்: கும்பம் (சதயம் பாதம் 3). அச்சு: Samasaptaka (Mutual 7th Axis). ராசி அதிபதிகள்: Enemies.",
+      "warnings": []
+    },
+    "lagna_to_lagna": {
+      "groom_lagna_sign_idx": 3,
+      "groom_lagna_sign_name": "Gemini",
+      "groom_lagna_degree": 71.88583065611932,
+      "groom_lagna_lord": "Mercury",
+      "groom_lagna_lord_sign_idx": 9,
+      "groom_lagna_lord_dignity": "Neutral",
+      "bride_lagna_sign_idx": 7,
+      "bride_lagna_sign_name": "Libra",
+      "bride_lagna_degree": 181.80103868372214,
+      "bride_lagna_lord": "Venus",
+      "bride_lagna_lord_sign_idx": 4,
+      "bride_lagna_lord_dignity": "Inimical",
+      "lagna_sign_distance_g_to_b": 5,
+      "lagna_sign_distance_b_to_g": 9,
+      "lagna_relationship": "Trikona (Trine 5/9 Axis)",
+      "lagna_sign_assessment": "Supportive",
+      "lagna_lord_relationship": "Friends",
+      "lagna_lord_friendship_score": 1.0,
+      "groom_lagna_in_bride_chart_house": 9,
+      "bride_lagna_in_groom_chart_house": 5,
+      "groom_lord_aspects_bride_lagna": false,
+      "bride_lord_aspects_groom_lagna": false,
+      "groom_lagna_boundary_risk": false,
+      "bride_lagna_boundary_risk": false,
+      "groom_lagna_boundary_arcmin": 86.85,
+      "bride_lagna_boundary_arcmin": 91.94,
+      "observations": [
+        "Ascendants form a harmonious Trikona (Trine 5/9 Axis) axis reflecting compatible constitutional outlooks.",
+        "Lagna lords (Mercury & Venus) relate as Friends (score: 1.0).",
+        "Groom Lagna overlays Bride's 9th house; Bride Lagna overlays Groom's 5th house."
+      ],
+      "explanation_en": "Groom Lagna: Gemini (11.89°, Lord Mercury), Bride Lagna: Libra (1.80°, Lord Venus). Axis: Trikona (Trine 5/9 Axis) (Supportive). Lagna Lords: Friends.",
+      "explanation_ta": "மணமகன் லக்னம்: மிதுனம் (அதிபதி Mercury), மணமகள் லக்னம்: துலாம் (அதிபதி Venus). அச்சு: Trikona (Trine 5/9 Axis). லக்னாதிபதிகள்: Friends.",
+      "warnings": []
+    },
+    "marriage_lord_cross": {
+      "groom_7th_lord": "Jupiter",
+      "groom_7th_lord_sign_idx": 10,
+      "groom_7th_lord_in_bride_house": 4,
+      "groom_7th_lord_in_bride_dignity": "Debilitated",
+      "groom_7th_lord_aspects_bride_7th": false,
+      "groom_7th_lord_in_bride_marriage_house": true,
+      "bride_7th_lord": "Mars",
+      "bride_7th_lord_sign_idx": 3,
+      "bride_7th_lord_in_groom_house": 1,
+      "bride_7th_lord_in_groom_dignity": "Inimical",
+      "bride_7th_lord_aspects_groom_7th": true,
+      "bride_7th_lord_in_groom_marriage_house": false,
+      "seventh_lord_mutual_relationship": "Friends",
+      "seventh_lord_friendship_score": 1.0,
+      "mutual_aspect_between_7th_lords": true,
+      "observations": [
+        "Groom's 7th Lord (Jupiter) occupies Bride's 4th house (Debilitated).",
+        "Groom's 7th lord activates a key marriage house (4th) in Bride's chart.",
+        "Bride's 7th Lord (Mars) occupies Groom's 1th house (Inimical).",
+        "Bride's 7th lord aspects Groom's 7th house (Sagittarius).",
+        "7th House lords (Jupiter & Mars) are naturally Friends.",
+        "Cross-chart Parashari aspect connects both 7th lords directly."
+      ],
+      "explanation_en": "Groom 7th Lord (Jupiter) in Bride's 4th house (Debilitated); Bride 7th Lord (Mars) in Groom's 1th house (Inimical). 7th Lords Relationship: Friends (score: 1.0).",
+      "explanation_ta": "மணமகன் 7-ஆம் அதிபதி (Jupiter) மணமகளின் 4-ஆம் பாவத்தில்; மணமகள் 7-ஆம் அதிபதி (Mars) மணமகனின் 1-ஆம் பாவத்தில். 7-ஆம் அதிபதிகள் தொடர்பு: Friends.",
+      "warnings": []
+    },
+    "venus_jupiter_cross": {
+      "groom_venus_sign_idx": 8,
+      "groom_venus_sign_name": "Scorpio",
+      "groom_venus_in_bride_house": 2,
+      "groom_venus_in_bride_dignity": "Neutral",
+      "groom_venus_aspects_bride_7th": false,
+      "groom_venus_in_bride_marriage_house": true,
+      "bride_jupiter_sign_idx": 2,
+      "bride_jupiter_sign_name": "Taurus",
+      "bride_jupiter_in_groom_house": 12,
+      "bride_jupiter_in_groom_dignity": "Inimical",
+      "bride_jupiter_aspects_groom_7th": false,
+      "bride_jupiter_in_groom_marriage_house": true,
+      "venus_jupiter_relationship": "Enemies",
+      "venus_jupiter_friendship_score": 0.0,
+      "groom_venus_aspects_bride_jupiter": true,
+      "bride_jupiter_aspects_groom_venus": true,
+      "observations": [
+        "Groom's Venus (Scorpio) falls in Bride's 2th house (Neutral).",
+        "Groom's Venus occupies an auspicious marriage house (2th) in Bride's chart.",
+        "Bride's Jupiter (Taurus) falls in Groom's 12th house (Inimical).",
+        "Bride's Jupiter occupies an auspicious marriage house (12th) in Groom's chart.",
+        "Cross-aspect between Groom Venus and Bride Jupiter unites romantic desire with dharmic growth."
+      ],
+      "explanation_en": "Groom Venus in Bride's 2th house (Neutral); Bride Jupiter in Groom's 12th house (Inimical). Karaka Cross-Resonance: Venus-Jupiter Enemies.",
+      "explanation_ta": "மணமகன் சுக்கிரன் மணமகளின் 2-ஆம் பாவத்தில் (Neutral); மணமகள் குரு மணமகனின் 12-ஆம் பாவத்தில் (Inimical).",
+      "warnings": []
+    },
+    "strong_indicators": [
+      "Supportive Moon axis: Samasaptaka (Mutual 7th Axis).",
+      "Harmonious Ascendant axis: Trikona (Trine 5/9 Axis).",
+      "Friendly Lagna lords: Mercury & Venus.",
+      "Groom's 7th lord activates Bride's marriage house (4th).",
+      "Direct cross-aspect connects both 7th house lords.",
+      "Groom's Venus connects to Bride's marriage houses.",
+      "Bride's Jupiter connects to Groom's marriage houses."
+    ],
+    "mixed_indicators": [],
+    "weak_indicators": [
+      "Inimical Moon lords: Sun & Saturn."
+    ],
+    "has_boundary_sensitivity": false,
+    "boundary_sensitivity_notes": [],
+    "rule_sources": [
+      "BPHS Ch. 9 (Lagna & Rasi)",
+      "BPHS Ch. 15 (Naisargika Sambandha)",
+      "BPHS Ch. 18 (Kalatra Bhava)",
+      "BPHS Ch. 32 (Karakatwa)",
+      "Phaladeepika Ch. 10 (Kalatra Bhava Phala)",
+      "Muhurta Chintamani Ch. 6 (Vivaha Prakarana)"
+    ],
+    "analysis_warnings": []
+  },
+  "kp_marriage": {
+    "groom_analysis": {
+      "person_id": "groom",
+      "person_name": "Bala Krishnan",
+      "gender": "male",
+      "csl_7th": {
+        "person_id": "groom",
+        "cusp_number": 7,
+        "sub_lord": "Mercury",
+        "star_lord": "Ketu",
+        "sign_lord": "Jupiter",
+        "sub_sub_lord": "Venus",
+        "signified_houses": [
+          1,
+          4,
+          5,
+          6,
+          7,
+          12
+        ],
+        "supporting_houses_signified": [
+          7
+        ],
+        "denying_houses_signified": [
+          1,
+          6
+        ],
+        "verdict": "MIXED",
+        "is_valid": true,
+        "explanation_en": "7th Cuspal Sub-Lord Mercury exhibits dual significations: supporting houses [7] alongside separating houses [1, 6]. Marital promise is mixed, indicating partnership with periods of adjustment or delay.",
+        "explanation_ta": "7-ம் பாவ உப அதிபதி Mercury சாதகமான பாவங்கள் ([7]) மற்றும் தடையான பாவங்கள் ([1, 6]) இரண்டையும் குறிக்கிறார். கலவையான திருமண வாக்குறுதி.",
+        "rule_sources": [
+          "KP-MARR-01"
+        ],
+        "warnings": []
+      },
+      "significators": {
+        "person_id": "groom",
+        "target_house": 7,
+        "significators_by_house": {
+          "1": {
+            "house": 1,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [
+              "Venus"
+            ],
+            "level_d": [
+              "Mercury"
+            ],
+            "all_significators": [
+              "Venus",
+              "Mercury"
+            ]
+          },
+          "2": {
+            "house": 2,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [],
+            "level_d": [
+              "Moon"
+            ],
+            "all_significators": [
+              "Moon"
+            ]
+          },
+          "6": {
+            "house": 6,
+            "level_a": [
+              "Sun",
+              "Mercury"
+            ],
+            "level_b": [
+              "Venus"
+            ],
+            "level_c": [],
+            "level_d": [
+              "Mars"
+            ],
+            "all_significators": [
+              "Sun",
+              "Mercury",
+              "Venus",
+              "Mars"
+            ]
+          },
+          "7": {
+            "house": 7,
+            "level_a": [
+              "Moon",
+              "Mars",
+              "Rahu",
+              "Venus"
+            ],
+            "level_b": [
+              "Sun",
+              "Mercury",
+              "Jupiter"
+            ],
+            "level_c": [],
+            "level_d": [],
+            "all_significators": [
+              "Moon",
+              "Mars",
+              "Rahu",
+              "Venus",
+              "Sun",
+              "Mercury",
+              "Jupiter"
+            ]
+          },
+          "10": {
+            "house": 10,
+            "level_a": [],
+            "level_b": [
+              "Saturn",
+              "Ketu"
+            ],
+            "level_c": [],
+            "level_d": [
+              "Jupiter"
+            ],
+            "all_significators": [
+              "Saturn",
+              "Ketu",
+              "Jupiter"
+            ]
+          },
+          "11": {
+            "house": 11,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [],
+            "level_d": [
+              "Mars"
+            ],
+            "all_significators": [
+              "Mars"
+            ]
+          }
+        },
+        "all_marriage_significators": [
+          "Jupiter",
+          "Mars",
+          "Mercury",
+          "Moon",
+          "Rahu",
+          "Sun",
+          "Venus"
+        ],
+        "all_detrimental_significators": [
+          "Jupiter",
+          "Ketu",
+          "Mars",
+          "Mercury",
+          "Saturn",
+          "Sun",
+          "Venus"
+        ],
+        "explanation_en": "House 7 significators: Level A=['Moon', 'Mars', 'Rahu', 'Venus'], Level B=['Sun', 'Mercury', 'Jupiter'], Level C=[], Level D=[]. Total marriage significators (2, 7, 11): ['Jupiter', 'Mars', 'Mercury', 'Moon', 'Rahu', 'Sun', 'Venus'].",
+        "explanation_ta": "7-ம் பாவ நிருபணங்கள்: நிலை A=['Moon', 'Mars', 'Rahu', 'Venus'], நிலை B=['Sun', 'Mercury', 'Jupiter'], நிலை C=[], நிலை D=[]. மொத்த திருமண கிரகங்கள் (2, 7, 11): ['Jupiter', 'Mars', 'Mercury', 'Moon', 'Rahu', 'Sun', 'Venus'].",
+        "rule_sources": [
+          "KP-MARR-02"
+        ],
+        "warnings": []
+      },
+      "ruling_planets": {
+        "person_id": "groom",
+        "day_lord": "Mars",
+        "ascendant_sign_lord": "Mercury",
+        "ascendant_star_lord": "Rahu",
+        "ascendant_sub_lord": "Saturn",
+        "moon_sign_lord": "Sun",
+        "moon_star_lord": "Sun",
+        "moon_sub_lord": "Mars",
+        "ruling_planets_list": [
+          "Mars",
+          "Mercury",
+          "Rahu",
+          "Saturn",
+          "Sun"
+        ],
+        "shared_with_partner": [
+          "Mars",
+          "Mercury",
+          "Rahu",
+          "Saturn"
+        ],
+        "agreement_score": 0.5,
+        "explanation_en": "Ruling Planets: ['Mars', 'Mercury', 'Rahu', 'Saturn', 'Sun']. Shared with partner: ['Mars', 'Mercury', 'Rahu', 'Saturn'] (Agreement score: 0.5).",
+        "explanation_ta": "ஆளும் கிரகங்கள்: ['Mars', 'Mercury', 'Rahu', 'Saturn', 'Sun']. இணையருடன் பொதுவான கிரகங்கள்: ['Mars', 'Mercury', 'Rahu', 'Saturn'] (பொருத்த நிலை: 0.5).",
+        "rule_sources": [
+          "KP-MARR-03"
+        ],
+        "warnings": []
+      },
+      "timing": {
+        "person_id": "groom",
+        "current_mahadasha": {
+          "level": "Mahadasha",
+          "lord": "Sun",
+          "signified_houses": [
+            3,
+            5,
+            6,
+            7,
+            12
+          ],
+          "supports_marriage": true,
+          "denies_marriage": true,
+          "timing_favorability": "MIXED"
+        },
+        "current_bhukti": {
+          "level": "Antardasha",
+          "lord": "Mars",
+          "signified_houses": [
+            3,
+            6,
+            7,
+            11
+          ],
+          "supports_marriage": true,
+          "denies_marriage": true,
+          "timing_favorability": "MIXED"
+        },
+        "current_pratyantar": {
+          "level": "Pratyantardasha",
+          "lord": "Venus",
+          "signified_houses": [
+            1,
+            4,
+            5,
+            6,
+            7,
+            12
+          ],
+          "supports_marriage": true,
+          "denies_marriage": true,
+          "timing_favorability": "MIXED"
+        },
+        "upcoming_promising_periods": [
+          {
+            "level": "Mahadasha",
+            "lord": "Sun",
+            "signified_houses": [
+              3,
+              5,
+              6,
+              7,
+              12
+            ],
+            "supports_marriage": true,
+            "denies_marriage": true,
+            "timing_favorability": "MIXED"
+          },
+          {
+            "level": "Antardasha",
+            "lord": "Mars",
+            "signified_houses": [
+              3,
+              6,
+              7,
+              11
+            ],
+            "supports_marriage": true,
+            "denies_marriage": true,
+            "timing_favorability": "MIXED"
+          },
+          {
+            "level": "Pratyantardasha",
+            "lord": "Venus",
+            "signified_houses": [
+              1,
+              4,
+              5,
+              6,
+              7,
+              12
+            ],
+            "supports_marriage": true,
+            "denies_marriage": true,
+            "timing_favorability": "MIXED"
+          },
+          {
+            "level": "Sookshmadasha",
+            "lord": "Rahu",
+            "signified_houses": [
+              3,
+              4,
+              7
+            ],
+            "supports_marriage": true,
+            "denies_marriage": false,
+            "timing_favorability": "FAVORABLE"
+          },
+          {
+            "level": "Pranadasha",
+            "lord": "Rahu",
+            "signified_houses": [
+              3,
+              4,
+              7
+            ],
+            "supports_marriage": true,
+            "denies_marriage": false,
+            "timing_favorability": "FAVORABLE"
+          }
+        ],
+        "overall_timing_verdict": "MIXED",
+        "explanation_en": "Active Dasa: Sun (MIXED), Bhukti: Mars (MIXED), Anthara: Venus (MIXED). Timing alignment: MIXED for marriage manifestation.",
+        "explanation_ta": "நடப்பு தசா: Sun (MIXED), புக்தி: Mars (MIXED), அந்தரம்: Venus (MIXED). காலப் பொருத்தம்: MIXED.",
+        "rule_sources": [
+          "KP-MARR-03"
+        ],
+        "warnings": []
+      },
+      "overall_promise_verdict": "MIXED",
+      "rule_sources": [
+        "KP-MARR-01",
+        "KP-MARR-02",
+        "KP-MARR-03"
+      ],
+      "disclaimers": [
+        "KP astrological indicators represent potential astronomical and karmic tendencies rather than deterministic certainty. Planetary significations do not constitute an absolute guarantee or denial of marriage; human agency, socio-cultural context, and personal life choices remain paramount.",
+        "கே.பி ஜோதிடக் குறிப்புகள் சாத்தியமான கிரக நிலைகளையும் கர்ம போக்குகளையும் மட்டுமே குறிக்கின்றன; அவை உறுதியான விதியல்ல. கிரக நிருபணங்கள் திருமணத்தை முழுமையாக உறுதிப்படுத்தவோ அல்லது மறுக்கவோ செய்யாது; தனிநபர் முடிவுகளும் சூழ்நிலைகளும் முதன்மையானவை."
+      ],
+      "warnings": []
+    },
+    "bride_analysis": {
+      "person_id": "bride",
+      "person_name": "Saranya",
+      "gender": "female",
+      "csl_7th": {
+        "person_id": "bride",
+        "cusp_number": 7,
+        "sub_lord": "Venus",
+        "star_lord": "Ketu",
+        "sign_lord": "Mars",
+        "sub_sub_lord": "Rahu",
+        "signified_houses": [
+          1,
+          4,
+          5,
+          8,
+          10
+        ],
+        "supporting_houses_signified": [],
+        "denying_houses_signified": [
+          1,
+          10
+        ],
+        "verdict": "UNFAVORABLE",
+        "is_valid": true,
+        "explanation_en": "7th Cuspal Sub-Lord Venus signifies separating/denying houses [1, 10] (12th to marriage houses: 1, 6, 10) without supporting significations. Indicates astrological challenges or delays under classical KP principles.",
+        "explanation_ta": "7-ம் பாவ உப அதிபதி Venus பிரிவினை அல்லது சவாலான பாவங்களான [1, 10]-ஐ மட்டுமே குறிக்கிறார்; சாதக பாவங்கள் இல்லை. கே.பி விதிகளின்படி சவால்கள் அல்லது தாமதங்களைக் குறிக்கிறது.",
+        "rule_sources": [
+          "KP-MARR-01"
+        ],
+        "warnings": []
+      },
+      "significators": {
+        "person_id": "bride",
+        "target_house": 7,
+        "significators_by_house": {
+          "1": {
+            "house": 1,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [],
+            "level_d": [
+              "Venus"
+            ],
+            "all_significators": [
+              "Venus"
+            ]
+          },
+          "2": {
+            "house": 2,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [],
+            "level_d": [
+              "Mars"
+            ],
+            "all_significators": [
+              "Mars"
+            ]
+          },
+          "6": {
+            "house": 6,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [
+              "Mars",
+              "Rahu"
+            ],
+            "level_d": [
+              "Jupiter"
+            ],
+            "all_significators": [
+              "Mars",
+              "Rahu",
+              "Jupiter"
+            ]
+          },
+          "7": {
+            "house": 7,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [],
+            "level_d": [
+              "Mars"
+            ],
+            "all_significators": [
+              "Mars"
+            ]
+          },
+          "10": {
+            "house": 10,
+            "level_a": [
+              "Saturn",
+              "Ketu",
+              "Moon",
+              "Mercury"
+            ],
+            "level_b": [
+              "Sun",
+              "Venus",
+              "Rahu"
+            ],
+            "level_c": [
+              "Jupiter"
+            ],
+            "level_d": [],
+            "all_significators": [
+              "Saturn",
+              "Ketu",
+              "Moon",
+              "Mercury",
+              "Sun",
+              "Venus",
+              "Rahu",
+              "Jupiter"
+            ]
+          },
+          "11": {
+            "house": 11,
+            "level_a": [],
+            "level_b": [],
+            "level_c": [
+              "Saturn",
+              "Ketu"
+            ],
+            "level_d": [
+              "Sun"
+            ],
+            "all_significators": [
+              "Saturn",
+              "Ketu",
+              "Sun"
+            ]
+          }
+        },
+        "all_marriage_significators": [
+          "Ketu",
+          "Mars",
+          "Saturn",
+          "Sun"
+        ],
+        "all_detrimental_significators": [
+          "Jupiter",
+          "Ketu",
+          "Mars",
+          "Mercury",
+          "Moon",
+          "Rahu",
+          "Saturn",
+          "Sun",
+          "Venus"
+        ],
+        "explanation_en": "House 7 significators: Level A=[], Level B=[], Level C=[], Level D=['Mars']. Total marriage significators (2, 7, 11): ['Ketu', 'Mars', 'Saturn', 'Sun'].",
+        "explanation_ta": "7-ம் பாவ நிருபணங்கள்: நிலை A=[], நிலை B=[], நிலை C=[], நிலை D=['Mars']. மொத்த திருமண கிரகங்கள் (2, 7, 11): ['Ketu', 'Mars', 'Saturn', 'Sun'].",
+        "rule_sources": [
+          "KP-MARR-02"
+        ],
+        "warnings": []
+      },
+      "ruling_planets": {
+        "person_id": "bride",
+        "day_lord": "Jupiter",
+        "ascendant_sign_lord": "Venus",
+        "ascendant_star_lord": "Mars",
+        "ascendant_sub_lord": "Mercury",
+        "moon_sign_lord": "Saturn",
+        "moon_star_lord": "Rahu",
+        "moon_sub_lord": "Ketu",
+        "ruling_planets_list": [
+          "Jupiter",
+          "Venus",
+          "Mars",
+          "Mercury",
+          "Saturn",
+          "Rahu",
+          "Ketu"
+        ],
+        "shared_with_partner": [
+          "Mars",
+          "Mercury",
+          "Rahu",
+          "Saturn"
+        ],
+        "agreement_score": 0.5,
+        "explanation_en": "Ruling Planets: ['Jupiter', 'Venus', 'Mars', 'Mercury', 'Saturn', 'Rahu', 'Ketu']. Shared with partner: ['Mars', 'Mercury', 'Rahu', 'Saturn'] (Agreement score: 0.5).",
+        "explanation_ta": "ஆளும் கிரகங்கள்: ['Jupiter', 'Venus', 'Mars', 'Mercury', 'Saturn', 'Rahu', 'Ketu']. இணையருடன் பொதுவான கிரகங்கள்: ['Mars', 'Mercury', 'Rahu', 'Saturn'] (பொருத்த நிலை: 0.5).",
+        "rule_sources": [
+          "KP-MARR-03"
+        ],
+        "warnings": []
+      },
+      "timing": {
+        "person_id": "bride",
+        "current_mahadasha": {
+          "level": "Mahadasha",
+          "lord": "Rahu",
+          "signified_houses": [
+            3,
+            6,
+            8,
+            10
+          ],
+          "supports_marriage": false,
+          "denies_marriage": true,
+          "timing_favorability": "UNFAVORABLE"
+        },
+        "current_bhukti": {
+          "level": "Antardasha",
+          "lord": "Ketu",
+          "signified_houses": [
+            4,
+            10,
+            11
+          ],
+          "supports_marriage": true,
+          "denies_marriage": true,
+          "timing_favorability": "MIXED"
+        },
+        "current_pratyantar": {
+          "level": "Pratyantardasha",
+          "lord": "Moon",
+          "signified_houses": [
+            5,
+            10
+          ],
+          "supports_marriage": false,
+          "denies_marriage": true,
+          "timing_favorability": "UNFAVORABLE"
+        },
+        "upcoming_promising_periods": [
+          {
+            "level": "Antardasha",
+            "lord": "Ketu",
+            "signified_houses": [
+              4,
+              10,
+              11
+            ],
+            "supports_marriage": true,
+            "denies_marriage": true,
+            "timing_favorability": "MIXED"
+          }
+        ],
+        "overall_timing_verdict": "MIXED",
+        "explanation_en": "Active Dasa: Rahu (UNFAVORABLE), Bhukti: Ketu (MIXED), Anthara: Moon (UNFAVORABLE). Timing alignment: MIXED for marriage manifestation.",
+        "explanation_ta": "நடப்பு தசா: Rahu (UNFAVORABLE), புக்தி: Ketu (MIXED), அந்தரம்: Moon (UNFAVORABLE). காலப் பொருத்தம்: MIXED.",
+        "rule_sources": [
+          "KP-MARR-03"
+        ],
+        "warnings": []
+      },
+      "overall_promise_verdict": "UNFAVORABLE",
+      "rule_sources": [
+        "KP-MARR-01",
+        "KP-MARR-02",
+        "KP-MARR-03"
+      ],
+      "disclaimers": [
+        "KP astrological indicators represent potential astronomical and karmic tendencies rather than deterministic certainty. Planetary significations do not constitute an absolute guarantee or denial of marriage; human agency, socio-cultural context, and personal life choices remain paramount.",
+        "கே.பி ஜோதிடக் குறிப்புகள் சாத்தியமான கிரக நிலைகளையும் கர்ம போக்குகளையும் மட்டுமே குறிக்கின்றன; அவை உறுதியான விதியல்ல. கிரக நிருபணங்கள் திருமணத்தை முழுமையாக உறுதிப்படுத்தவோ அல்லது மறுக்கவோ செய்யாது; தனிநபர் முடிவுகளும் சூழ்நிலைகளும் முதன்மையானவை."
+      ],
+      "warnings": []
+    },
+    "shared_ruling_planets": [
+      "Mars",
+      "Mercury",
+      "Rahu",
+      "Saturn"
+    ],
+    "ruling_planets_agreement_level": "STRONG",
+    "timing_synchronicity_notes": [
+      "Dasa-Bhukti timing presents mixed or standard indicators across both birth horoscopes."
+    ],
+    "disclaimers": [
+      "KP astrological indicators represent potential astronomical and karmic tendencies rather than deterministic certainty. Planetary significations do not constitute an absolute guarantee or denial of marriage; human agency, socio-cultural context, and personal life choices remain paramount.",
+      "கே.பி ஜோதிடக் குறிப்புகள் சாத்தியமான கிரக நிலைகளையும் கர்ம போக்குகளையும் மட்டுமே குறிக்கின்றன; அவை உறுதியான விதியல்ல. கிரக நிருபணங்கள் திருமணத்தை முழுமையாக உறுதிப்படுத்தவோ அல்லது மறுக்கவோ செய்யாது; தனிநபர் முடிவுகளும் சூழ்நிலைகளும் முதன்மையானவை."
+    ],
+    "rule_sources": [
+      "KP-MARR-01",
+      "KP-MARR-02",
+      "KP-MARR-03"
+    ],
+    "warnings": []
+  },
+  "vedic_marriage": null,
+  "timing_analysis": null,
+  "groom_vedic": {
+    "subject_role": "groom",
+    "person_name": "Bala Krishnan",
+    "gender": "male",
+    "lagna_sign_index": 3,
+    "lagna_sign_name": "Gemini",
+    "lagna_sign_name_tamil": "மிதுனம்",
+    "lagna_degree": 71.88583065611932,
+    "lagna_lord": "Mercury",
+    "lagna_lord_house": 7,
+    "lagna_lord_dignity": "Neutral",
+    "houses_analysis": {
+      "2": {
+        "house_number": 2,
+        "house_name_en": "2nd House - Kutumba Bhava (Family, Household Formation & Speech)",
+        "house_name_ta": "2-ஆம் பாவம் - குடும்ப ஸ்தானம் (குடும்ப அமைதி, வாக்கு வன்மை)",
+        "sign_index": 4,
+        "sign_name_en": "Cancer",
+        "sign_name_ta": "கடகம்",
+        "cusp_degree": 90.0,
+        "lord_name": "Moon",
+        "lord_house": 3,
+        "lord_sign_index": 5,
+        "lord_sign_name": "Leo",
+        "lord_dignity": "Friendly",
+        "occupants": [],
+        "aspecting_planets": [
+          "Jupiter",
+          "Ketu",
+          "Uranus",
+          "Neptune"
+        ],
+        "supporting_influences": [
+          "House lord Moon is placed in friendly sign Leo.",
+          "Auspicious Parashari aspect from natural benefic Jupiter protects the house."
+        ],
+        "conflicting_influences": [
+          "Afflicting aspect cast by Ketu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "2nd House - Kutumba Bhava (Family, Household Formation & Speech): Ruled by Moon (Friendly in Leo, House 3). Occupants: None. Aspected by: Jupiter, Ketu, Uranus, Neptune. Positive factors: 2; Challenging factors: 1.",
+        "summary_ta": "2-ஆம் பாவம் - குடும்ப ஸ்தானம் (குடும்ப அமைதி, வாக்கு வன்மை): அதிபதி Moon (Leoல் Friendly, பாவம் 3). அமர்ந்த கிரகங்கள்: None. பார்வை தரும் கிரகங்கள்: Jupiter, Ketu, Uranus, Neptune. சுப காரணிகள்: 2; கவனிக்கத்தக்கவை: 1."
+      },
+      "4": {
+        "house_number": 4,
+        "house_name_en": "4th House - Sukha Bhava (Domestic Life, Contentment & Home Environment)",
+        "house_name_ta": "4-ஆம் பாவம் - சுக ஸ்தானம் (இல்லற அமைதி, மன நிம்மதி)",
+        "sign_index": 6,
+        "sign_name_en": "Virgo",
+        "sign_name_ta": "கன்னி",
+        "cusp_degree": 150.0,
+        "lord_name": "Mercury",
+        "lord_house": 7,
+        "lord_sign_index": 9,
+        "lord_sign_name": "Sagittarius",
+        "lord_dignity": "Neutral",
+        "occupants": [
+          "Mars",
+          "Rahu"
+        ],
+        "aspecting_planets": [
+          "Jupiter",
+          "Saturn",
+          "Ketu"
+        ],
+        "supporting_influences": [
+          "House lord Mercury is favorably situated in Kendra house 7.",
+          "House lord Mercury is retrograde, conferring strong Chesta Bala.",
+          "Auspicious Parashari aspect from natural benefic Jupiter protects the house."
+        ],
+        "conflicting_influences": [
+          "House lord Mercury is combust with Sun within classical orb.",
+          "Malefic influence of occupant Mars impacts the house.",
+          "Malefic influence of occupant Rahu impacts the house.",
+          "Afflicting aspect cast by Saturn on the house.",
+          "Afflicting aspect cast by Ketu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "4th House - Sukha Bhava (Domestic Life, Contentment & Home Environment): Ruled by Mercury (Neutral in Sagittarius, House 7). Occupants: Mars, Rahu. Aspected by: Jupiter, Saturn, Ketu. Positive factors: 3; Challenging factors: 5.",
+        "summary_ta": "4-ஆம் பாவம் - சுக ஸ்தானம் (இல்லற அமைதி, மன நிம்மதி): அதிபதி Mercury (Sagittariusல் Neutral, பாவம் 7). அமர்ந்த கிரகங்கள்: Mars, Rahu. பார்வை தரும் கிரகங்கள்: Jupiter, Saturn, Ketu. சுப காரணிகள்: 3; கவனிக்கத்தக்கவை: 5."
+      },
+      "5": {
+        "house_number": 5,
+        "house_name_en": "5th House - Putra / Purvapunya Bhava (Romance, Affection & Progeny Prospects)",
+        "house_name_ta": "5-ஆம் பாவம் - பூர்வ புண்ணியம் & புத்திர ஸ்தானம் (காதல், புத்திர பாக்கியம்)",
+        "sign_index": 7,
+        "sign_name_en": "Libra",
+        "sign_name_ta": "துலாம்",
+        "cusp_degree": 180.0,
+        "lord_name": "Venus",
+        "lord_house": 6,
+        "lord_sign_index": 8,
+        "lord_sign_name": "Scorpio",
+        "lord_dignity": "Neutral",
+        "occupants": [],
+        "aspecting_planets": [],
+        "supporting_influences": [],
+        "conflicting_influences": [
+          "House lord Venus is located in Dusthana house 6."
+        ],
+        "status": "FAIL",
+        "summary_en": "5th House - Putra / Purvapunya Bhava (Romance, Affection & Progeny Prospects): Ruled by Venus (Neutral in Scorpio, House 6). Occupants: None. Aspected by: None. Positive factors: 0; Challenging factors: 1.",
+        "summary_ta": "5-ஆம் பாவம் - பூர்வ புண்ணியம் & புத்திர ஸ்தானம் (காதல், புத்திர பாக்கியம்): அதிபதி Venus (Scorpioல் Neutral, பாவம் 6). அமர்ந்த கிரகங்கள்: None. பார்வை தரும் கிரகங்கள்: None. சுப காரணிகள்: 0; கவனிக்கத்தக்கவை: 1."
+      },
+      "7": {
+        "house_number": 7,
+        "house_name_en": "7th House - Kalatra Bhava (Primary Marriage & Partnership Union)",
+        "house_name_ta": "7-ஆம் பாவம் - களத்திர ஸ்தானம் (திருமண பந்தம், வாழ்க்கை துணை)",
+        "sign_index": 9,
+        "sign_name_en": "Sagittarius",
+        "sign_name_ta": "தனுசு",
+        "cusp_degree": 240.0,
+        "lord_name": "Jupiter",
+        "lord_house": 8,
+        "lord_sign_index": 10,
+        "lord_sign_name": "Capricorn",
+        "lord_dignity": "Debilitated",
+        "occupants": [
+          "Sun",
+          "Mercury"
+        ],
+        "aspecting_planets": [
+          "Mars",
+          "Saturn"
+        ],
+        "supporting_influences": [
+          "Natural benefic Mercury graces the house as an occupant."
+        ],
+        "conflicting_influences": [
+          "House lord Jupiter is debilitated in Capricorn.",
+          "House lord Jupiter is located in Dusthana house 8.",
+          "Malefic influence of occupant Sun impacts the house.",
+          "Afflicting aspect cast by Mars on the house.",
+          "Afflicting aspect cast by Saturn on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "7th House - Kalatra Bhava (Primary Marriage & Partnership Union): Ruled by Jupiter (Debilitated in Capricorn, House 8). Occupants: Sun, Mercury. Aspected by: Mars, Saturn. Positive factors: 1; Challenging factors: 5.",
+        "summary_ta": "7-ஆம் பாவம் - களத்திர ஸ்தானம் (திருமண பந்தம், வாழ்க்கை துணை): அதிபதி Jupiter (Capricornல் Debilitated, பாவம் 8). அமர்ந்த கிரகங்கள்: Sun, Mercury. பார்வை தரும் கிரகங்கள்: Mars, Saturn. சுப காரணிகள்: 1; கவனிக்கத்தக்கவை: 5."
+      },
+      "8": {
+        "house_number": 8,
+        "house_name_en": "8th House - Mangalya / Ayur Bhava (Marital Longevity, Shared Resources & Stability)",
+        "house_name_ta": "8-ஆம் பாவம் - மாங்கல்ய / ஆயுள் ஸ்தானம் (மாங்கல்ய பலம், ஆயுள் சௌக்கியம்)",
+        "sign_index": 10,
+        "sign_name_en": "Capricorn",
+        "sign_name_ta": "மகரம்",
+        "cusp_degree": 270.0,
+        "lord_name": "Saturn",
+        "lord_house": 10,
+        "lord_sign_index": 12,
+        "lord_sign_name": "Pisces",
+        "lord_dignity": "Neutral",
+        "occupants": [
+          "Jupiter",
+          "Uranus",
+          "Neptune"
+        ],
+        "aspecting_planets": [
+          "Rahu"
+        ],
+        "supporting_influences": [
+          "House lord Saturn is favorably situated in Kendra house 10.",
+          "Natural benefic Jupiter graces the house as an occupant."
+        ],
+        "conflicting_influences": [
+          "Afflicting aspect cast by Rahu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "8th House - Mangalya / Ayur Bhava (Marital Longevity, Shared Resources & Stability): Ruled by Saturn (Neutral in Pisces, House 10). Occupants: Jupiter, Uranus, Neptune. Aspected by: Rahu. Positive factors: 2; Challenging factors: 1.",
+        "summary_ta": "8-ஆம் பாவம் - மாங்கல்ய / ஆயுள் ஸ்தானம் (மாங்கல்ய பலம், ஆயுள் சௌக்கியம்): அதிபதி Saturn (Piscesல் Neutral, பாவம் 10). அமர்ந்த கிரகங்கள்: Jupiter, Uranus, Neptune. பார்வை தரும் கிரகங்கள்: Rahu. சுப காரணிகள்: 2; கவனிக்கத்தக்கவை: 1."
+      },
+      "12": {
+        "house_number": 12,
+        "house_name_en": "12th House - Sayana Sukha Bhava (Intimate Life, Bedroom Harmony & Subconscious Compatibility)",
+        "house_name_ta": "12-ஆம் பாவம் - அயன சயன சுக ஸ்தானம் (அந்தரங்க அமைதி, நிம்மதியான உறக்கம்)",
+        "sign_index": 2,
+        "sign_name_en": "Taurus",
+        "sign_name_ta": "ரிஷபம்",
+        "cusp_degree": 30.0,
+        "lord_name": "Venus",
+        "lord_house": 6,
+        "lord_sign_index": 8,
+        "lord_sign_name": "Scorpio",
+        "lord_dignity": "Neutral",
+        "occupants": [],
+        "aspecting_planets": [
+          "Jupiter",
+          "Venus",
+          "Saturn",
+          "Rahu",
+          "Pluto"
+        ],
+        "supporting_influences": [
+          "Auspicious Parashari aspect from natural benefic Jupiter protects the house.",
+          "Auspicious Parashari aspect from natural benefic Venus protects the house."
+        ],
+        "conflicting_influences": [
+          "House lord Venus is located in Dusthana house 6.",
+          "Afflicting aspect cast by Saturn on the house.",
+          "Afflicting aspect cast by Rahu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "12th House - Sayana Sukha Bhava (Intimate Life, Bedroom Harmony & Subconscious Compatibility): Ruled by Venus (Neutral in Scorpio, House 6). Occupants: None. Aspected by: Jupiter, Venus, Saturn, Rahu, Pluto. Positive factors: 2; Challenging factors: 3.",
+        "summary_ta": "12-ஆம் பாவம் - அயன சயன சுக ஸ்தானம் (அந்தரங்க அமைதி, நிம்மதியான உறக்கம்): அதிபதி Venus (Scorpioல் Neutral, பாவம் 6). அமர்ந்த கிரகங்கள்: None. பார்வை தரும் கிரகங்கள்: Jupiter, Venus, Saturn, Rahu, Pluto. சுப காரணிகள்: 2; கவனிக்கத்தக்கவை: 3."
+      }
+    },
+    "significators": {
+      "Venus": {
+        "planet_name": "Venus",
+        "sign_index": 8,
+        "sign_name": "Scorpio",
+        "house": 6,
+        "longitude": 234.00581675602965,
+        "natural_nature": "Benefic",
+        "functional_nature": "Functional Benefic",
+        "dignity": "Neutral",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 11,
+        "d9_sign_name": "Aquarius",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Pluto"
+        ],
+        "aspects_received": [
+          "Ketu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Venus placed in Scorpio (House 6) with Neutral dignity. Nature: Benefic, Function: Functional Benefic. Conjoined with: Pluto. Aspected by: Ketu.",
+        "summary_ta": "Venus விருச்சிகம்ல் (பாவம் 6) Neutral நிலையில் உள்ளது."
+      },
+      "Jupiter": {
+        "planet_name": "Jupiter",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "house": 8,
+        "longitude": 271.2387748191349,
+        "natural_nature": "Benefic",
+        "functional_nature": "Functional Malefic",
+        "dignity": "Debilitated",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 10,
+        "d9_sign_name": "Capricorn",
+        "is_vargottama": true,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Uranus",
+          "Neptune"
+        ],
+        "aspects_received": [
+          "Rahu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Jupiter placed in Capricorn (House 8) with Debilitated dignity. Nature: Benefic, Function: Functional Malefic. Vargottama in D9 Navamsa (resilient placement). Conjoined with: Uranus, Neptune. Aspected by: Rahu.",
+        "summary_ta": "Jupiter மகரம்ல் (பாவம் 8) Debilitated நிலையில் உள்ளது. வர்கோத்தம நவாம்சம் பெற்றுள்ளது."
+      },
+      "Moon": {
+        "planet_name": "Moon",
+        "sign_index": 5,
+        "sign_name": "Leo",
+        "house": 3,
+        "longitude": 148.95828564751184,
+        "natural_nature": "Benefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Friendly",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 9,
+        "d9_sign_name": "Sagittarius",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": true,
+        "conjunctions": [],
+        "aspects_received": [],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Moon placed in Leo (House 3) with Friendly dignity. Nature: Benefic, Function: Functional Neutral. Blessed by sacred Pushkara Navamsa position.",
+        "summary_ta": "Moon சிம்மம்ல் (பாவம் 3) Friendly நிலையில் உள்ளது. புஷ்கர நவாம்ச சுபத்துவத்தை பெற்றுள்ளது."
+      },
+      "Mars": {
+        "planet_name": "Mars",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "house": 4,
+        "longitude": 155.2542108266713,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Malefic",
+        "dignity": "Inimical",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 11,
+        "d9_sign_name": "Aquarius",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Rahu"
+        ],
+        "aspects_received": [
+          "Jupiter",
+          "Saturn",
+          "Ketu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Mars placed in Virgo (House 4) with Inimical dignity. Nature: Malefic, Function: Functional Malefic. Conjoined with: Rahu. Aspected by: Jupiter, Saturn, Ketu.",
+        "summary_ta": "Mars கன்னில் (பாவம் 4) Inimical நிலையில் உள்ளது."
+      },
+      "Saturn": {
+        "planet_name": "Saturn",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "house": 10,
+        "longitude": 337.49544803133335,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Neutral",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 6,
+        "d9_sign_name": "Virgo",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": true,
+        "conjunctions": [
+          "Ketu"
+        ],
+        "aspects_received": [
+          "Mars",
+          "Rahu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Saturn placed in Pisces (House 10) with Neutral dignity. Nature: Malefic, Function: Functional Neutral. Blessed by sacred Pushkara Navamsa position. Conjoined with: Ketu. Aspected by: Mars, Rahu.",
+        "summary_ta": "Saturn மீனம்ல் (பாவம் 10) Neutral நிலையில் உள்ளது. புஷ்கர நவாம்ச சுபத்துவத்தை பெற்றுள்ளது."
+      },
+      "Rahu": {
+        "planet_name": "Rahu",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "house": 4,
+        "longitude": 159.26644763849785,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Neutral",
+        "is_retrograde": true,
+        "is_combust": false,
+        "d9_sign_index": 12,
+        "d9_sign_name": "Pisces",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": true,
+        "conjunctions": [
+          "Mars"
+        ],
+        "aspects_received": [
+          "Jupiter",
+          "Saturn",
+          "Ketu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Rahu placed in Virgo (House 4) with Neutral dignity. Nature: Malefic, Function: Functional Neutral. Retrograde motion conferring enhanced vitality. Blessed by sacred Pushkara Navamsa position. Conjoined with: Mars. Aspected by: Jupiter, Saturn, Ketu.",
+        "summary_ta": "Rahu கன்னில் (பாவம் 4) Neutral நிலையில் உள்ளது. புஷ்கர நவாம்ச சுபத்துவத்தை பெற்றுள்ளது."
+      },
+      "Ketu": {
+        "planet_name": "Ketu",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "house": 10,
+        "longitude": 339.2664476384979,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Neutral",
+        "is_retrograde": true,
+        "is_combust": false,
+        "d9_sign_index": 6,
+        "d9_sign_name": "Virgo",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": true,
+        "conjunctions": [
+          "Saturn"
+        ],
+        "aspects_received": [
+          "Mars",
+          "Rahu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Ketu placed in Pisces (House 10) with Neutral dignity. Nature: Malefic, Function: Functional Neutral. Retrograde motion conferring enhanced vitality. Blessed by sacred Pushkara Navamsa position. Conjoined with: Saturn. Aspected by: Mars, Rahu.",
+        "summary_ta": "Ketu மீனம்ல் (பாவம் 10) Neutral நிலையில் உள்ளது. புஷ்கர நவாம்ச சுபத்துவத்தை பெற்றுள்ளது."
+      }
+    },
+    "navamsa_cross_analysis": {
+      "d9_lagna_sign_index": 10,
+      "d9_lagna_sign_name": "Capricorn",
+      "d9_lagna_lord": "Saturn",
+      "d9_7th_sign_index": 4,
+      "d9_7th_sign_name": "Cancer",
+      "d9_7th_lord": "Moon",
+      "d1_7th_lord_in_d9_sign": "Capricorn",
+      "d1_7th_lord_in_d9_house": 1,
+      "d1_7th_lord_in_d9_dignity": "Debilitated",
+      "d9_7th_lord_in_d1_sign": "Leo",
+      "d9_7th_lord_in_d1_house": 3,
+      "d9_7th_lord_in_d1_dignity": "Friendly",
+      "venus_in_d9_sign": "Aquarius",
+      "venus_in_d9_house": 2,
+      "venus_in_d9_dignity": "Friendly",
+      "jupiter_in_d9_sign": "Capricorn",
+      "jupiter_in_d9_house": 1,
+      "jupiter_in_d9_dignity": "Debilitated",
+      "navamsa_boundary_risk": false,
+      "boundary_distance_arcmin": 86.85,
+      "vargottama_planets": [
+        "Jupiter",
+        "Neptune"
+      ],
+      "pushkara_navamsa_planets": [
+        "Moon",
+        "Saturn",
+        "Rahu",
+        "Ketu",
+        "Uranus"
+      ],
+      "synthesis_notes": [
+        "D1 7th Lord (Jupiter) is placed in auspicious house 1 in D9 Navamsa.",
+        "Vargottama planets (Jupiter, Neptune) grant deep constitutional strength.",
+        "Pushkara Navamsa planets (Moon, Saturn, Rahu, Ketu, Uranus) impart benefic planetary vitality."
+      ],
+      "explanation_en": "Navamsa Lagna: Capricorn (ruled by Saturn); Navamsa 7th House: Cancer (ruled by Moon). D1 7th Lord (Jupiter) occupies Capricorn (House 1, Debilitated). Venus in D9: Aquarius (House 2); Jupiter in D9: Capricorn (House 1). Vargottama: Jupiter, Neptune; Pushkara: Moon, Saturn, Rahu, Ketu, Uranus.",
+      "explanation_ta": "நவாம்ச லக்னம்: Capricorn (அதிபதி Saturn); நவாம்ச 7-ஆம் பாவம்: Cancer (அதிபதி Moon). ராசி 7-ஆம் அதிபதி (Jupiter) நவாம்சத்தில் Capricornல் (பாவம் 1, Debilitated) உள்ளது. வர்கோத்தமம்: Jupiter, Neptune; புஷ்கரம்: Moon, Saturn, Rahu, Ketu, Uranus."
+    },
+    "kuja_dosha": {
+      "subject_role": "groom",
+      "is_present": true,
+      "is_cancelled": true,
+      "severity": "Cancelled",
+      "house_convention": "South Indian (1, 2, 4, 7, 8, 12)",
+      "mars_longitude": 155.2542108266713,
+      "mars_sign_index": 6,
+      "mars_sign_name": "Virgo",
+      "mars_degree_in_sign": 5.2542108266713115,
+      "mars_house_from_lagna": 4,
+      "mars_house_from_moon": 2,
+      "mars_house_from_venus": 11,
+      "effective_intensity_percent": 0.0,
+      "references_evaluated": {
+        "Lagna": {
+          "reference_point": "Lagna",
+          "reference_sign": "Gemini",
+          "mars_house": 4,
+          "has_dosha": true,
+          "is_cancelled": true,
+          "cancellations": [
+            "Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat",
+            "Saturn casts Parashari aspect on Mars, tempering planetary volatility"
+          ],
+          "intensity_percent": 0.0
+        },
+        "Moon": {
+          "reference_point": "Moon",
+          "reference_sign": "Leo",
+          "mars_house": 2,
+          "has_dosha": true,
+          "is_cancelled": true,
+          "cancellations": [
+            "Mars in 2nd house in Mercury's sign (Virgo) cancels 2nd-house Kuja dosha",
+            "Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat",
+            "Saturn casts Parashari aspect on Mars, tempering planetary volatility"
+          ],
+          "intensity_percent": 0.0
+        },
+        "Venus": {
+          "reference_point": "Venus",
+          "reference_sign": "Scorpio",
+          "mars_house": 11,
+          "has_dosha": false,
+          "is_cancelled": false,
+          "cancellations": [],
+          "intensity_percent": 0.0
+        }
+      },
+      "triggering_conditions": [
+        "Mars in house 4 from Lagna (Gemini)",
+        "Mars in house 2 from Moon (Leo)"
+      ],
+      "cancellations_checked": [
+        "Mars in own sign (Aries/Scorpio)",
+        "Mars in exaltation (Capricorn)",
+        "Mars debilitated in 7th/8th house",
+        "Sign-house specific classical exemptions (2nd in Gemini/Virgo, 12th in Taurus/Libra, 8th in Sagittarius/Pisces, 7/8 in Leo/Aquarius)",
+        "Yogakaraka status for Cancer and Leo Lagna",
+        "Jupiter conjunction or Parashari aspect",
+        "Moon conjunction (Chandra-Mangala)",
+        "Saturn conjunction or Parashari aspect"
+      ],
+      "cancellations_applied": [
+        "Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat",
+        "Saturn casts Parashari aspect on Mars, tempering planetary volatility",
+        "Mars in 2nd house in Mercury's sign (Virgo) cancels 2nd-house Kuja dosha"
+      ],
+      "source_and_version": "BPHS Ch. 81, Muhurta Chintamani, Brihat Samhita (v1.0)",
+      "explanation_en": "Kuja Dosha was initially triggered from Lagna, Moon, but is fully neutralized by classical cancellation rules (Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat; Saturn casts Parashari aspect on Mars, tempering planetary volatility; Mars in 2nd house in Mercury's sign (Virgo) cancels 2nd-house Kuja dosha). The native does not suffer matrimonial disharmony on account of Mars; planetary energies are channeled constructively.",
+      "explanation_ta": "செவ்வாய் தோஷம் ஆரம்பத்தில் காணப்பட்டாலும், பாரம்பரிய விதிவிலக்குகளின்படி (Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat; Saturn casts Parashari aspect on Mars, tempering planetary volatility; Mars in 2nd house in Mercury's sign (Virgo) cancels 2nd-house Kuja dosha) முழுமையாக தோஷ நிவர்த்தி பெறுகிறது. திருமண வாழ்க்கையில் பாதகமான தாக்கம் எதுவும் இருக்காது.",
+      "warnings": []
+    },
+    "provenance": {
+      "ayanamsa": "Lahiri Chitrapaksha (v1.0)",
+      "house_system": "Whole-Sign (Canonical Vedic)",
+      "coordinates": {
+        "latitude": 13.0827,
+        "longitude": 80.2707
+      },
+      "timezone": "Asia/Kolkata",
+      "birth_date": "1996-12-31",
+      "birth_time": "17:30:00"
+    },
+    "supporting_indicators": [
+      "7th House (Kalatra Bhava) is well-supported by benefic influences or strong lord disposition.",
+      "Kuja Dosha was neutralized by classical cancellations (Jupiter casts divine Parashari aspect on Mars, extinguishing malefic heat, Saturn casts Parashari aspect on Mars, tempering planetary volatility)."
+    ],
+    "conflicting_indicators": [],
+    "uncertainty_warnings": [],
+    "rule_sources": [
+      "Brihat Parashara Hora Shastra (BPHS), Ch. 9, 13, 15, 18, 20, 34, 81",
+      "Phaladeepika, Ch. 10 (Kalatra Bhava)",
+      "Muhurta Chintamani, Ch. 6 (Vivaha Prakarana)",
+      "Jataka Parijata, Ch. 1, Sloka 58 (Pushkara Navamsa)"
+    ],
+    "summary_en": "Groom (Bala Krishnan): Gemini Lagna (Lord Mercury in House 7, Neutral). 7th House in Sagittarius ruled by Jupiter. Kuja Dosha: Cancelled (Cancelled). Navamsa Lagna: Capricorn. Key strengths: 2; Areas for conscious care: 0.",
+    "summary_ta": "Groom (Bala Krishnan): மிதுனம் லக்னம் (அதிபதி Mercury பாவம் 7ல் Neutral). 7-ஆம் பாவம் தனுசுல் அதிபதி Jupiter. செவ்வாய் தோஷம்: Cancelled. நவாம்ச லக்னம்: Capricorn. சுப பலங்கள்: 2; கவனிக்கத்தக்கவை: 0."
+  },
+  "bride_vedic": {
+    "subject_role": "bride",
+    "person_name": "Saranya",
+    "gender": "female",
+    "lagna_sign_index": 7,
+    "lagna_sign_name": "Libra",
+    "lagna_sign_name_tamil": "துலாம்",
+    "lagna_degree": 181.80103868372214,
+    "lagna_lord": "Venus",
+    "lagna_lord_house": 10,
+    "lagna_lord_dignity": "Inimical",
+    "houses_analysis": {
+      "2": {
+        "house_number": 2,
+        "house_name_en": "2nd House - Kutumba Bhava (Family, Household Formation & Speech)",
+        "house_name_ta": "2-ஆம் பாவம் - குடும்ப ஸ்தானம் (குடும்ப அமைதி, வாக்கு வன்மை)",
+        "sign_index": 8,
+        "sign_name_en": "Scorpio",
+        "sign_name_ta": "விருச்சிகம்",
+        "cusp_degree": 210.0,
+        "lord_name": "Mars",
+        "lord_house": 9,
+        "lord_sign_index": 3,
+        "lord_sign_name": "Gemini",
+        "lord_dignity": "Inimical",
+        "occupants": [
+          "Pluto"
+        ],
+        "aspecting_planets": [
+          "Jupiter",
+          "Saturn",
+          "Rahu"
+        ],
+        "supporting_influences": [
+          "House lord Mars is placed in auspicious Trikona house 9.",
+          "Auspicious Parashari aspect from natural benefic Jupiter protects the house.",
+          "Protective aspect from Yogakaraka Saturn strengthens the house."
+        ],
+        "conflicting_influences": [
+          "House lord Mars is combust with Sun within classical orb.",
+          "Afflicting aspect cast by Rahu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "2nd House - Kutumba Bhava (Family, Household Formation & Speech): Ruled by Mars (Inimical in Gemini, House 9). Occupants: Pluto. Aspected by: Jupiter, Saturn, Rahu. Positive factors: 3; Challenging factors: 2.",
+        "summary_ta": "2-ஆம் பாவம் - குடும்ப ஸ்தானம் (குடும்ப அமைதி, வாக்கு வன்மை): அதிபதி Mars (Geminiல் Inimical, பாவம் 9). அமர்ந்த கிரகங்கள்: Pluto. பார்வை தரும் கிரகங்கள்: Jupiter, Saturn, Rahu. சுப காரணிகள்: 3; கவனிக்கத்தக்கவை: 2."
+      },
+      "4": {
+        "house_number": 4,
+        "house_name_en": "4th House - Sukha Bhava (Domestic Life, Contentment & Home Environment)",
+        "house_name_ta": "4-ஆம் பாவம் - சுக ஸ்தானம் (இல்லற அமைதி, மன நிம்மதி)",
+        "sign_index": 10,
+        "sign_name_en": "Capricorn",
+        "sign_name_ta": "மகரம்",
+        "cusp_degree": 270.0,
+        "lord_name": "Saturn",
+        "lord_house": 8,
+        "lord_sign_index": 2,
+        "lord_sign_name": "Taurus",
+        "lord_dignity": "Friendly",
+        "occupants": [
+          "Ketu",
+          "Uranus",
+          "Neptune"
+        ],
+        "aspecting_planets": [
+          "Sun",
+          "Mars",
+          "Jupiter",
+          "Venus",
+          "Rahu"
+        ],
+        "supporting_influences": [
+          "House lord Saturn is placed in friendly sign Taurus.",
+          "Auspicious Parashari aspect from natural benefic Jupiter protects the house.",
+          "Auspicious Parashari aspect from natural benefic Venus protects the house."
+        ],
+        "conflicting_influences": [
+          "House lord Saturn is located in Dusthana house 8.",
+          "Malefic influence of occupant Ketu impacts the house.",
+          "Afflicting aspect cast by Mars on the house.",
+          "Afflicting aspect cast by Rahu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "4th House - Sukha Bhava (Domestic Life, Contentment & Home Environment): Ruled by Saturn (Friendly in Taurus, House 8). Occupants: Ketu, Uranus, Neptune. Aspected by: Sun, Mars, Jupiter, Venus, Rahu. Positive factors: 3; Challenging factors: 4.",
+        "summary_ta": "4-ஆம் பாவம் - சுக ஸ்தானம் (இல்லற அமைதி, மன நிம்மதி): அதிபதி Saturn (Taurusல் Friendly, பாவம் 8). அமர்ந்த கிரகங்கள்: Ketu, Uranus, Neptune. பார்வை தரும் கிரகங்கள்: Sun, Mars, Jupiter, Venus, Rahu. சுப காரணிகள்: 3; கவனிக்கத்தக்கவை: 4."
+      },
+      "5": {
+        "house_number": 5,
+        "house_name_en": "5th House - Putra / Purvapunya Bhava (Romance, Affection & Progeny Prospects)",
+        "house_name_ta": "5-ஆம் பாவம் - பூர்வ புண்ணியம் & புத்திர ஸ்தானம் (காதல், புத்திர பாக்கியம்)",
+        "sign_index": 11,
+        "sign_name_en": "Aquarius",
+        "sign_name_ta": "கும்பம்",
+        "cusp_degree": 300.0,
+        "lord_name": "Saturn",
+        "lord_house": 8,
+        "lord_sign_index": 2,
+        "lord_sign_name": "Taurus",
+        "lord_dignity": "Friendly",
+        "occupants": [
+          "Moon"
+        ],
+        "aspecting_planets": [
+          "Saturn"
+        ],
+        "supporting_influences": [
+          "House lord Saturn is placed in friendly sign Taurus.",
+          "Natural benefic Moon graces the house as an occupant.",
+          "Protective aspect from Yogakaraka Saturn strengthens the house."
+        ],
+        "conflicting_influences": [
+          "House lord Saturn is located in Dusthana house 8."
+        ],
+        "status": "PASS",
+        "summary_en": "5th House - Putra / Purvapunya Bhava (Romance, Affection & Progeny Prospects): Ruled by Saturn (Friendly in Taurus, House 8). Occupants: Moon. Aspected by: Saturn. Positive factors: 3; Challenging factors: 1.",
+        "summary_ta": "5-ஆம் பாவம் - பூர்வ புண்ணியம் & புத்திர ஸ்தானம் (காதல், புத்திர பாக்கியம்): அதிபதி Saturn (Taurusல் Friendly, பாவம் 8). அமர்ந்த கிரகங்கள்: Moon. பார்வை தரும் கிரகங்கள்: Saturn. சுப காரணிகள்: 3; கவனிக்கத்தக்கவை: 1."
+      },
+      "7": {
+        "house_number": 7,
+        "house_name_en": "7th House - Kalatra Bhava (Primary Marriage & Partnership Union)",
+        "house_name_ta": "7-ஆம் பாவம் - களத்திர ஸ்தானம் (திருமண பந்தம், வாழ்க்கை துணை)",
+        "sign_index": 1,
+        "sign_name_en": "Aries",
+        "sign_name_ta": "மேஷம்",
+        "cusp_degree": 0.0,
+        "lord_name": "Mars",
+        "lord_house": 9,
+        "lord_sign_index": 3,
+        "lord_sign_name": "Gemini",
+        "lord_dignity": "Inimical",
+        "occupants": [],
+        "aspecting_planets": [],
+        "supporting_influences": [
+          "House lord Mars is placed in auspicious Trikona house 9."
+        ],
+        "conflicting_influences": [
+          "House lord Mars is combust with Sun within classical orb."
+        ],
+        "status": "PASS",
+        "summary_en": "7th House - Kalatra Bhava (Primary Marriage & Partnership Union): Ruled by Mars (Inimical in Gemini, House 9). Occupants: None. Aspected by: None. Positive factors: 1; Challenging factors: 1.",
+        "summary_ta": "7-ஆம் பாவம் - களத்திர ஸ்தானம் (திருமண பந்தம், வாழ்க்கை துணை): அதிபதி Mars (Geminiல் Inimical, பாவம் 9). அமர்ந்த கிரகங்கள்: None. பார்வை தரும் கிரகங்கள்: None. சுப காரணிகள்: 1; கவனிக்கத்தக்கவை: 1."
+      },
+      "8": {
+        "house_number": 8,
+        "house_name_en": "8th House - Mangalya / Ayur Bhava (Marital Longevity, Shared Resources & Stability)",
+        "house_name_ta": "8-ஆம் பாவம் - மாங்கல்ய / ஆயுள் ஸ்தானம் (மாங்கல்ய பலம், ஆயுள் சௌக்கியம்)",
+        "sign_index": 2,
+        "sign_name_en": "Taurus",
+        "sign_name_ta": "ரிஷபம்",
+        "cusp_degree": 30.0,
+        "lord_name": "Venus",
+        "lord_house": 10,
+        "lord_sign_index": 4,
+        "lord_sign_name": "Cancer",
+        "lord_dignity": "Inimical",
+        "occupants": [
+          "Jupiter",
+          "Saturn"
+        ],
+        "aspecting_planets": [
+          "Ketu",
+          "Pluto"
+        ],
+        "supporting_influences": [
+          "House lord Venus is favorably situated in Kendra house 10.",
+          "Natural benefic Jupiter graces the house as an occupant.",
+          "Yogakaraka Saturn occupies the house, uplifting its significations."
+        ],
+        "conflicting_influences": [
+          "Afflicting aspect cast by Ketu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "8th House - Mangalya / Ayur Bhava (Marital Longevity, Shared Resources & Stability): Ruled by Venus (Inimical in Cancer, House 10). Occupants: Jupiter, Saturn. Aspected by: Ketu, Pluto. Positive factors: 3; Challenging factors: 1.",
+        "summary_ta": "8-ஆம் பாவம் - மாங்கல்ய / ஆயுள் ஸ்தானம் (மாங்கல்ய பலம், ஆயுள் சௌக்கியம்): அதிபதி Venus (Cancerல் Inimical, பாவம் 10). அமர்ந்த கிரகங்கள்: Jupiter, Saturn. பார்வை தரும் கிரகங்கள்: Ketu, Pluto. சுப காரணிகள்: 3; கவனிக்கத்தக்கவை: 1."
+      },
+      "12": {
+        "house_number": 12,
+        "house_name_en": "12th House - Sayana Sukha Bhava (Intimate Life, Bedroom Harmony & Subconscious Compatibility)",
+        "house_name_ta": "12-ஆம் பாவம் - அயன சயன சுக ஸ்தானம் (அந்தரங்க அமைதி, நிம்மதியான உறக்கம்)",
+        "sign_index": 6,
+        "sign_name_en": "Virgo",
+        "sign_name_ta": "கன்னி",
+        "cusp_degree": 150.0,
+        "lord_name": "Mercury",
+        "lord_house": 9,
+        "lord_sign_index": 3,
+        "lord_sign_name": "Gemini",
+        "lord_dignity": "Own Sign",
+        "occupants": [],
+        "aspecting_planets": [
+          "Mars",
+          "Jupiter",
+          "Ketu"
+        ],
+        "supporting_influences": [
+          "House lord Mercury enjoys strong dignity (Own Sign) in Gemini.",
+          "House lord Mercury is placed in auspicious Trikona house 9.",
+          "Auspicious Parashari aspect from natural benefic Jupiter protects the house."
+        ],
+        "conflicting_influences": [
+          "Afflicting aspect cast by Mars on the house.",
+          "Afflicting aspect cast by Ketu on the house."
+        ],
+        "status": "PASS",
+        "summary_en": "12th House - Sayana Sukha Bhava (Intimate Life, Bedroom Harmony & Subconscious Compatibility): Ruled by Mercury (Own Sign in Gemini, House 9). Occupants: None. Aspected by: Mars, Jupiter, Ketu. Positive factors: 3; Challenging factors: 2.",
+        "summary_ta": "12-ஆம் பாவம் - அயன சயன சுக ஸ்தானம் (அந்தரங்க அமைதி, நிம்மதியான உறக்கம்): அதிபதி Mercury (Geminiல் Own Sign, பாவம் 9). அமர்ந்த கிரகங்கள்: None. பார்வை தரும் கிரகங்கள்: Mars, Jupiter, Ketu. சுப காரணிகள்: 3; கவனிக்கத்தக்கவை: 2."
+      }
+    },
+    "significators": {
+      "Venus": {
+        "planet_name": "Venus",
+        "sign_index": 4,
+        "sign_name": "Cancer",
+        "house": 10,
+        "longitude": 104.66689959214864,
+        "natural_nature": "Benefic",
+        "functional_nature": "Functional Benefic",
+        "dignity": "Inimical",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 8,
+        "d9_sign_name": "Scorpio",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Sun",
+          "Rahu"
+        ],
+        "aspects_received": [
+          "Saturn",
+          "Ketu",
+          "Uranus",
+          "Neptune"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Venus placed in Cancer (House 10) with Inimical dignity. Nature: Benefic, Function: Functional Benefic. Conjoined with: Sun, Rahu. Aspected by: Saturn, Ketu, Uranus, Neptune.",
+        "summary_ta": "Venus கடகம்ல் (பாவம் 10) Inimical நிலையில் உள்ளது."
+      },
+      "Jupiter": {
+        "planet_name": "Jupiter",
+        "sign_index": 2,
+        "sign_name": "Taurus",
+        "house": 8,
+        "longitude": 40.05941211900941,
+        "natural_nature": "Benefic",
+        "functional_nature": "Functional Malefic",
+        "dignity": "Inimical",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 1,
+        "d9_sign_name": "Aries",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Saturn"
+        ],
+        "aspects_received": [
+          "Ketu",
+          "Pluto"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Jupiter placed in Taurus (House 8) with Inimical dignity. Nature: Benefic, Function: Functional Malefic. Conjoined with: Saturn. Aspected by: Ketu, Pluto.",
+        "summary_ta": "Jupiter ரிஷபம்ல் (பாவம் 8) Inimical நிலையில் உள்ளது."
+      },
+      "Moon": {
+        "planet_name": "Moon",
+        "sign_index": 11,
+        "sign_name": "Aquarius",
+        "house": 5,
+        "longitude": 314.62905613479904,
+        "natural_nature": "Benefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Neutral",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 11,
+        "d9_sign_name": "Aquarius",
+        "is_vargottama": true,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [],
+        "aspects_received": [
+          "Saturn"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Moon placed in Aquarius (House 5) with Neutral dignity. Nature: Benefic, Function: Functional Neutral. Vargottama in D9 Navamsa (resilient placement). Aspected by: Saturn.",
+        "summary_ta": "Moon கும்பம்ல் (பாவம் 5) Neutral நிலையில் உள்ளது. வர்கோத்தம நவாம்சம் பெற்றுள்ளது."
+      },
+      "Mars": {
+        "planet_name": "Mars",
+        "sign_index": 3,
+        "sign_name": "Gemini",
+        "house": 9,
+        "longitude": 88.47483083851303,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Malefic",
+        "dignity": "Inimical",
+        "is_retrograde": false,
+        "is_combust": true,
+        "d9_sign_index": 3,
+        "d9_sign_name": "Gemini",
+        "is_vargottama": true,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Mercury"
+        ],
+        "aspects_received": [],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Mars placed in Gemini (House 9) with Inimical dignity. Nature: Malefic, Function: Functional Malefic. Afflicted by solar combustion. Vargottama in D9 Navamsa (resilient placement). Conjoined with: Mercury.",
+        "summary_ta": "Mars மிதுனம்ல் (பாவம் 9) Inimical நிலையில் உள்ளது. வர்கோத்தம நவாம்சம் பெற்றுள்ளது. அஸ்தமன தோஷம் பெற்றுள்ளது."
+      },
+      "Saturn": {
+        "planet_name": "Saturn",
+        "sign_index": 2,
+        "sign_name": "Taurus",
+        "house": 8,
+        "longitude": 34.63998075244055,
+        "natural_nature": "Malefic",
+        "functional_nature": "Yogakaraka",
+        "dignity": "Friendly",
+        "is_retrograde": false,
+        "is_combust": false,
+        "d9_sign_index": 11,
+        "d9_sign_name": "Aquarius",
+        "is_vargottama": false,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Jupiter"
+        ],
+        "aspects_received": [
+          "Ketu",
+          "Pluto"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Saturn placed in Taurus (House 8) with Friendly dignity. Nature: Malefic, Function: Yogakaraka. Conjoined with: Jupiter. Aspected by: Ketu, Pluto.",
+        "summary_ta": "Saturn ரிஷபம்ல் (பாவம் 8) Friendly நிலையில் உள்ளது."
+      },
+      "Rahu": {
+        "planet_name": "Rahu",
+        "sign_index": 4,
+        "sign_name": "Cancer",
+        "house": 10,
+        "longitude": 90.55241943942238,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Neutral",
+        "is_retrograde": true,
+        "is_combust": false,
+        "d9_sign_index": 4,
+        "d9_sign_name": "Cancer",
+        "is_vargottama": true,
+        "is_pushkara_navamsa": true,
+        "conjunctions": [
+          "Sun",
+          "Venus"
+        ],
+        "aspects_received": [
+          "Saturn",
+          "Ketu",
+          "Uranus",
+          "Neptune"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Rahu placed in Cancer (House 10) with Neutral dignity. Nature: Malefic, Function: Functional Neutral. Retrograde motion conferring enhanced vitality. Vargottama in D9 Navamsa (resilient placement). Blessed by sacred Pushkara Navamsa position. Conjoined with: Sun, Venus. Aspected by: Saturn, Ketu, Uranus, Neptune.",
+        "summary_ta": "Rahu கடகம்ல் (பாவம் 10) Neutral நிலையில் உள்ளது. வர்கோத்தம நவாம்சம் பெற்றுள்ளது. புஷ்கர நவாம்ச சுபத்துவத்தை பெற்றுள்ளது."
+      },
+      "Ketu": {
+        "planet_name": "Ketu",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "house": 4,
+        "longitude": 270.55241943942235,
+        "natural_nature": "Malefic",
+        "functional_nature": "Functional Neutral",
+        "dignity": "Neutral",
+        "is_retrograde": true,
+        "is_combust": false,
+        "d9_sign_index": 10,
+        "d9_sign_name": "Capricorn",
+        "is_vargottama": true,
+        "is_pushkara_navamsa": false,
+        "conjunctions": [
+          "Uranus",
+          "Neptune"
+        ],
+        "aspects_received": [
+          "Sun",
+          "Mars",
+          "Jupiter",
+          "Venus",
+          "Rahu"
+        ],
+        "shadbala_ratio": null,
+        "shadbala_strength": null,
+        "summary_en": "Ketu placed in Capricorn (House 4) with Neutral dignity. Nature: Malefic, Function: Functional Neutral. Retrograde motion conferring enhanced vitality. Vargottama in D9 Navamsa (resilient placement). Conjoined with: Uranus, Neptune. Aspected by: Sun, Mars, Jupiter, Venus, Rahu.",
+        "summary_ta": "Ketu மகரம்ல் (பாவம் 4) Neutral நிலையில் உள்ளது. வர்கோத்தம நவாம்சம் பெற்றுள்ளது."
+      }
+    },
+    "navamsa_cross_analysis": {
+      "d9_lagna_sign_index": 7,
+      "d9_lagna_sign_name": "Libra",
+      "d9_lagna_lord": "Venus",
+      "d9_7th_sign_index": 1,
+      "d9_7th_sign_name": "Aries",
+      "d9_7th_lord": "Mars",
+      "d1_7th_lord_in_d9_sign": "Gemini",
+      "d1_7th_lord_in_d9_house": 9,
+      "d1_7th_lord_in_d9_dignity": "Inimical",
+      "d9_7th_lord_in_d1_sign": "Gemini",
+      "d9_7th_lord_in_d1_house": 9,
+      "d9_7th_lord_in_d1_dignity": "Inimical",
+      "venus_in_d9_sign": "Scorpio",
+      "venus_in_d9_house": 2,
+      "venus_in_d9_dignity": "Neutral",
+      "jupiter_in_d9_sign": "Aries",
+      "jupiter_in_d9_house": 7,
+      "jupiter_in_d9_dignity": "Friendly",
+      "navamsa_boundary_risk": false,
+      "boundary_distance_arcmin": 91.94,
+      "vargottama_planets": [
+        "Moon",
+        "Mars",
+        "Rahu",
+        "Ketu",
+        "Pluto"
+      ],
+      "pushkara_navamsa_planets": [
+        "Mercury",
+        "Rahu"
+      ],
+      "synthesis_notes": [
+        "D1 7th Lord (Mars) is placed in auspicious house 9 in D9 Navamsa.",
+        "Vargottama planets (Moon, Mars, Rahu, Ketu, Pluto) grant deep constitutional strength.",
+        "Pushkara Navamsa planets (Mercury, Rahu) impart benefic planetary vitality."
+      ],
+      "explanation_en": "Navamsa Lagna: Libra (ruled by Venus); Navamsa 7th House: Aries (ruled by Mars). D1 7th Lord (Mars) occupies Gemini (House 9, Inimical). Venus in D9: Scorpio (House 2); Jupiter in D9: Aries (House 7). Vargottama: Moon, Mars, Rahu, Ketu, Pluto; Pushkara: Mercury, Rahu.",
+      "explanation_ta": "நவாம்ச லக்னம்: Libra (அதிபதி Venus); நவாம்ச 7-ஆம் பாவம்: Aries (அதிபதி Mars). ராசி 7-ஆம் அதிபதி (Mars) நவாம்சத்தில் Geminiல் (பாவம் 9, Inimical) உள்ளது. வர்கோத்தமம்: Moon, Mars, Rahu, Ketu, Pluto; புஷ்கரம்: Mercury, Rahu."
+    },
+    "kuja_dosha": {
+      "subject_role": "bride",
+      "is_present": true,
+      "is_cancelled": false,
+      "severity": "Mild",
+      "house_convention": "South Indian (1, 2, 4, 7, 8, 12)",
+      "mars_longitude": 88.47483083851303,
+      "mars_sign_index": 3,
+      "mars_sign_name": "Gemini",
+      "mars_degree_in_sign": 28.47483083851303,
+      "mars_house_from_lagna": 9,
+      "mars_house_from_moon": 5,
+      "mars_house_from_venus": 12,
+      "effective_intensity_percent": 50.0,
+      "references_evaluated": {
+        "Lagna": {
+          "reference_point": "Lagna",
+          "reference_sign": "Libra",
+          "mars_house": 9,
+          "has_dosha": false,
+          "is_cancelled": false,
+          "cancellations": [],
+          "intensity_percent": 0.0
+        },
+        "Moon": {
+          "reference_point": "Moon",
+          "reference_sign": "Aquarius",
+          "mars_house": 5,
+          "has_dosha": false,
+          "is_cancelled": false,
+          "cancellations": [],
+          "intensity_percent": 0.0
+        },
+        "Venus": {
+          "reference_point": "Venus",
+          "reference_sign": "Cancer",
+          "mars_house": 12,
+          "has_dosha": true,
+          "is_cancelled": false,
+          "cancellations": [],
+          "intensity_percent": 50.0
+        }
+      },
+      "triggering_conditions": [
+        "Mars in house 12 from Venus (Cancer)"
+      ],
+      "cancellations_checked": [
+        "Mars in own sign (Aries/Scorpio)",
+        "Mars in exaltation (Capricorn)",
+        "Mars debilitated in 7th/8th house",
+        "Sign-house specific classical exemptions (2nd in Gemini/Virgo, 12th in Taurus/Libra, 8th in Sagittarius/Pisces, 7/8 in Leo/Aquarius)",
+        "Yogakaraka status for Cancer and Leo Lagna",
+        "Jupiter conjunction or Parashari aspect",
+        "Moon conjunction (Chandra-Mangala)",
+        "Saturn conjunction or Parashari aspect"
+      ],
+      "cancellations_applied": [],
+      "source_and_version": "BPHS Ch. 81, Muhurta Chintamani, Brihat Samhita (v1.0)",
+      "explanation_en": "Active Kuja Dosha is identified from Venus with a severity level of Mild. Classical astrology recommends matching with a compatible partner who also possesses similar Martian balance, along with fostering patience, mutual respect, and mature communication in interpersonal relationships.",
+      "explanation_ta": "Venus வழியே செவ்வாய் தோஷம் (Mild நிலை) காணப்படுகிறது. இதேபோன்ற சமதோஷ ஜாதகத்தை பொருத்துவதும், தம்பதியிடையே பொறுமையும் பரஸ்பர புரிதலும் அமைதியான திருமண வாழ்வுக்கு நலம் பயக்கும்.",
+      "warnings": [
+        "Active individual Kuja Dosha detected with Mild severity (50.0% weighted intensity). Classical matchmaking recommends evaluating partner chart's Martian balance in Phase 5."
+      ]
+    },
+    "provenance": {
+      "ayanamsa": "Lahiri Chitrapaksha (v1.0)",
+      "house_system": "Whole-Sign (Canonical Vedic)",
+      "coordinates": {
+        "latitude": 13.0827,
+        "longitude": 80.2707
+      },
+      "timezone": "Asia/Kolkata",
+      "birth_date": "2000-07-20",
+      "birth_time": "12:00:00"
+    },
+    "supporting_indicators": [
+      "7th House (Kalatra Bhava) is well-supported by benefic influences or strong lord disposition."
+    ],
+    "conflicting_indicators": [
+      "Active Kuja Dosha present (Mild severity from Mars in house 12 from Venus (Cancer))."
+    ],
+    "uncertainty_warnings": [],
+    "rule_sources": [
+      "Brihat Parashara Hora Shastra (BPHS), Ch. 9, 13, 15, 18, 20, 34, 81",
+      "Phaladeepika, Ch. 10 (Kalatra Bhava)",
+      "Muhurta Chintamani, Ch. 6 (Vivaha Prakarana)",
+      "Jataka Parijata, Ch. 1, Sloka 58 (Pushkara Navamsa)"
+    ],
+    "summary_en": "Bride (Saranya): Libra Lagna (Lord Venus in House 10, Inimical). 7th House in Aries ruled by Mars. Kuja Dosha: Mild (Active). Navamsa Lagna: Libra. Key strengths: 1; Areas for conscious care: 1.",
+    "summary_ta": "Bride (Saranya): துலாம் லக்னம் (அதிபதி Venus பாவம் 10ல் Inimical). 7-ஆம் பாவம் மேஷம்ல் அதிபதி Mars. செவ்வாய் தோஷம்: Mild. நவாம்ச லக்னம்: Libra. சுப பலங்கள்: 1; கவனிக்கத்தக்கவை: 1."
+  },
+  "groom_chart": {
+    "ascendant": {
+      "sign_index": 3,
+      "sign_name": "Gemini",
+      "sign_name_tamil": "மிதுனம்",
+      "degree_in_sign": 11.8858
+    },
+    "planets": [
+      {
+        "name": "Sun",
+        "sign_index": 9,
+        "sign_name": "Sagittarius",
+        "sign_name_tamil": "தனுசு",
+        "degree_in_sign": 16.2827,
+        "is_retrograde": false
+      },
+      {
+        "name": "Moon",
+        "sign_index": 5,
+        "sign_name": "Leo",
+        "sign_name_tamil": "சிம்மம்",
+        "degree_in_sign": 28.9583,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mars",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "sign_name_tamil": "கன்னி",
+        "degree_in_sign": 5.2542,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mercury",
+        "sign_index": 9,
+        "sign_name": "Sagittarius",
+        "sign_name_tamil": "தனுசு",
+        "degree_in_sign": 19.9471,
+        "is_retrograde": true
+      },
+      {
+        "name": "Jupiter",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "மகரம்",
+        "degree_in_sign": 1.2388,
+        "is_retrograde": false
+      },
+      {
+        "name": "Venus",
+        "sign_index": 8,
+        "sign_name": "Scorpio",
+        "sign_name_tamil": "விருச்சிகம்",
+        "degree_in_sign": 24.0058,
+        "is_retrograde": false
+      },
+      {
+        "name": "Saturn",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "sign_name_tamil": "மீனம்",
+        "degree_in_sign": 7.4954,
+        "is_retrograde": false
+      },
+      {
+        "name": "Rahu",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "sign_name_tamil": "கன்னி",
+        "degree_in_sign": 9.2664,
+        "is_retrograde": true
+      },
+      {
+        "name": "Ketu",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "sign_name_tamil": "மீனம்",
+        "degree_in_sign": 9.2664,
+        "is_retrograde": true
+      },
+      {
+        "name": "Uranus",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "மகரம்",
+        "degree_in_sign": 9.4267,
+        "is_retrograde": false
+      },
+      {
+        "name": "Neptune",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "மகரம்",
+        "degree_in_sign": 2.9949,
+        "is_retrograde": false
+      },
+      {
+        "name": "Pluto",
+        "sign_index": 8,
+        "sign_name": "Scorpio",
+        "sign_name_tamil": "விருச்சிகம்",
+        "degree_in_sign": 10.5541,
+        "is_retrograde": false
+      }
+    ]
+  },
+  "bride_chart": {
+    "ascendant": {
+      "sign_index": 7,
+      "sign_name": "Libra",
+      "sign_name_tamil": "துலாம்",
+      "degree_in_sign": 1.801
+    },
+    "planets": [
+      {
+        "name": "Sun",
+        "sign_index": 4,
+        "sign_name": "Cancer",
+        "sign_name_tamil": "கடகம்",
+        "degree_in_sign": 3.9836,
+        "is_retrograde": false
+      },
+      {
+        "name": "Moon",
+        "sign_index": 11,
+        "sign_name": "Aquarius",
+        "sign_name_tamil": "கும்பம்",
+        "degree_in_sign": 14.6291,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mars",
+        "sign_index": 3,
+        "sign_name": "Gemini",
+        "sign_name_tamil": "மிதுனம்",
+        "degree_in_sign": 28.4748,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mercury",
+        "sign_index": 3,
+        "sign_name": "Gemini",
+        "sign_name_tamil": "மிதுனம்",
+        "degree_in_sign": 16.8654,
+        "is_retrograde": false
+      },
+      {
+        "name": "Jupiter",
+        "sign_index": 2,
+        "sign_name": "Taurus",
+        "sign_name_tamil": "ரிஷபம்",
+        "degree_in_sign": 10.0594,
+        "is_retrograde": false
+      },
+      {
+        "name": "Venus",
+        "sign_index": 4,
+        "sign_name": "Cancer",
+        "sign_name_tamil": "கடகம்",
+        "degree_in_sign": 14.6669,
+        "is_retrograde": false
+      },
+      {
+        "name": "Saturn",
+        "sign_index": 2,
+        "sign_name": "Taurus",
+        "sign_name_tamil": "ரிஷபம்",
+        "degree_in_sign": 4.64,
+        "is_retrograde": false
+      },
+      {
+        "name": "Rahu",
+        "sign_index": 4,
+        "sign_name": "Cancer",
+        "sign_name_tamil": "கடகம்",
+        "degree_in_sign": 0.5524,
+        "is_retrograde": true
+      },
+      {
+        "name": "Ketu",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "மகரம்",
+        "degree_in_sign": 0.5524,
+        "is_retrograde": true
+      },
+      {
+        "name": "Uranus",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "மகரம்",
+        "degree_in_sign": 25.8332,
+        "is_retrograde": true
+      },
+      {
+        "name": "Neptune",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "மகரம்",
+        "degree_in_sign": 11.5262,
+        "is_retrograde": true
+      },
+      {
+        "name": "Pluto",
+        "sign_index": 8,
+        "sign_name": "Scorpio",
+        "sign_name_tamil": "விருச்சிகம்",
+        "degree_in_sign": 16.5526,
+        "is_retrograde": true
+      }
+    ]
+  },
+  "groom_d9_chart": {
+    "ascendant": {
+      "sign_index": 10,
+      "sign_name": "Capricorn",
+      "sign_name_tamil": "",
+      "degree_in_sign": 0.0
+    },
+    "planets": [
+      {
+        "name": "Sun",
+        "sign_index": 5,
+        "sign_name": "Leo",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Moon",
+        "sign_index": 9,
+        "sign_name": "Sagittarius",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mars",
+        "sign_index": 11,
+        "sign_name": "Aquarius",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mercury",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Jupiter",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Venus",
+        "sign_index": 11,
+        "sign_name": "Aquarius",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Saturn",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Rahu",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Ketu",
+        "sign_index": 6,
+        "sign_name": "Virgo",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Uranus",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Neptune",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Pluto",
+        "sign_index": 7,
+        "sign_name": "Libra",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      }
+    ]
+  },
+  "bride_d9_chart": {
+    "ascendant": {
+      "sign_index": 7,
+      "sign_name": "Libra",
+      "sign_name_tamil": "",
+      "degree_in_sign": 0.0
+    },
+    "planets": [
+      {
+        "name": "Sun",
+        "sign_index": 5,
+        "sign_name": "Leo",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Moon",
+        "sign_index": 11,
+        "sign_name": "Aquarius",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mars",
+        "sign_index": 3,
+        "sign_name": "Gemini",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Mercury",
+        "sign_index": 12,
+        "sign_name": "Pisces",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Jupiter",
+        "sign_index": 1,
+        "sign_name": "Aries",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Venus",
+        "sign_index": 8,
+        "sign_name": "Scorpio",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Saturn",
+        "sign_index": 11,
+        "sign_name": "Aquarius",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": false
+      },
+      {
+        "name": "Rahu",
+        "sign_index": 4,
+        "sign_name": "Cancer",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Ketu",
+        "sign_index": 10,
+        "sign_name": "Capricorn",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Uranus",
+        "sign_index": 5,
+        "sign_name": "Leo",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Neptune",
+        "sign_index": 1,
+        "sign_name": "Aries",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      },
+      {
+        "name": "Pluto",
+        "sign_index": 8,
+        "sign_name": "Scorpio",
+        "sign_name_tamil": "",
+        "degree_in_sign": 0.0,
+        "is_retrograde": true
+      }
+    ]
+  },
+  "sivadasan_ravi_insights": {
+    "treatise_title_ta": "திருமண யோக திருமணப் பொருத்த திறவுகோல்",
+    "treatise_title_en": "Thirumana Yoga Porutha Thiravukol",
+    "author": "Siddhayogi Sivadasan Ravi (சித்தயோகி சிவதாசன் ரவி)",
+    "publisher": "Sri Aromira Prasuram, Thammampatti",
+    "dasa_porutham": {
+      "verdict": "EXCELLENT",
+      "verdict_ta": "சுப தசா பொருத்தம்",
+      "score": 1.0,
+      "is_eka_dasa": false,
+      "eka_dasa_afflicted": false,
+      "groom_mahadasha": "Rahu",
+      "bride_mahadasha": "Saturn",
+      "transition_diff_days": 2130.3,
+      "is_dasa_transition_close": false,
+      "dasa_transition_afflicted": false,
+      "findings_en": [
+        "No Eka Dasa Sandhi or transition clash: Groom is running Rahu Dasa and Bride is running Saturn Dasa. Harmonious timing."
+      ],
+      "findings_ta": [
+        "ஏக தசா சந்திப்போ, தசை மாற்றக் கண்டாந்தமோ இல்லை (மணமகன்: Rahu, மணமகள்: Saturn). தசா பொருத்தம் நன்று."
+      ]
+    },
+    "guru_balam": {
+      "status": "NO_CURRENT_GURU_BALAM",
+      "score": 0.4,
+      "label_en": "Neither possesses direct Gochara Guru Balam",
+      "label_ta": "இருவருக்கும் தற்போது நேரடி குரு பலம் அமையவில்லை",
+      "transit_jupiter_sign_en": "Cancer",
+      "transit_jupiter_sign_ta": "கடகம்",
+      "groom_house_from_moon": 12,
+      "bride_house_from_moon": 6,
+      "groom_has_balam": false,
+      "bride_has_balam": false,
+      "description_en": "Transit Jupiter is in Cancer (Groom: 12th, Bride: 6th). Sivadasan Ravi notes: Even without Guru Balam, marriages take place under favorable Dasa-Bhukthi, though seeking Lord Shiva/Dakshinamurthy blessings prior to wedding is recommended.",
+      "description_ta": "தற்போது கோட்சார குரு மணமகனுக்கு 12-லும், மணமகளுக்கு 6-லும் சஞ்சரிப்பதால் நேரடி குரு பலம் அமையவில்லை. இருப்பினும் அனுகூலமான தசா-புக்தி காலத்தில் திருமணம் நடைபெறும்; குரு பகவான் மற்றும் குலதெய்வ வழிபாடு செய்து தொடங்கலாம்."
+    },
+    "nadi_porutham": {
+      "verdict": "MODERATE",
+      "verdict_ta": "மத்திம நாடிப் பொருத்தம்",
+      "score": 0.6,
+      "groom_guru_sign": "Capricorn",
+      "groom_shukra_sign": "Scorpio",
+      "bride_shukra_sign": "Cancer",
+      "bride_sevvai_sign": "Gemini",
+      "is_shukra_harmonic": true,
+      "is_soul_harmonic": false,
+      "has_nandi_yogam": true,
+      "nandi_obstacles_en": [
+        "Saturn Nandi Yogam: Elderly family member creates subtle delays or hurdles.",
+        "Moon Nandi Yogam: Mother or mother-in-law interference requires sensitive handling.",
+        "Ketu Nandi Yogam: Philosophical differences or religious traditions need alignment."
+      ],
+      "nandi_obstacles_ta": [
+        "சனி நந்தியோகம்: குடும்பத்தில் உள்ள மூத்த நபர் ஒருவரால் திருமணத்தில் தாமதம் அல்லது தடைகள் உண்டாகலாம்.",
+        "சந்திர நந்தியோகம்: தாய் அல்லது மாமியார் வழியில் சிறு மனக்கசப்புகள் ஏற்படலாம்.",
+        "கேது நந்தியோகம்: ஆச்சார அல்லது மத வழக்க வேறுபாடுகள் வரலாம்."
+      ],
+      "summary_en": "Moderate Nadi resonance: Baseline harmony is present with secondary adjustments recommended.",
+      "summary_ta": "நடுத்தர நாடிப் பொருத்தம்: அடிப்படை இணக்கம் உண்டு; விட்டுக் கொடுத்து வாழும் பண்பு தேவைப்படும்."
+    },
+    "in_laws_nakshatras": {
+      "has_special_nakshatra": false,
+      "findings": []
+    },
+    "classical_remedies": {
+      "parikara_sthalam": {
+        "name_en": "Sri Nellaiyappar & Gandhimathi Amman Temple, Tirunelveli (Then-Kanchi)",
+        "name_ta": "ஸ்ரீ நெல்லையப்பர் - காந்திமதியம்மன் திருக்கோவில், திருநெல்வேலி (தென்காஞ்சி)",
+        "significance_en": "Unique kshetra where Lord Shiva and Divine Mother face the same direction, recreating the divine wedding darshan granted to Sage Agastya. Ideal parikara sthalam for early and blissful marriage.",
+        "significance_ta": "அகத்திய மாமுனிவருக்கு தம்பதி சமேதராக இறைவன்-இறைவி திருமணக் கோலத்தில் காட்சி தந்த புண்ணிய தலம். இருவரும் ஒரே திசையை நோக்கி அருள்பாலிக்கும் அதிசய தலம். நல்ல மணவாழ்க்கை அமைய சிறந்த பரிகார தலம்."
+      },
+      "sacred_hymns": [
+        {
+          "title_en": "Andal Kalyanam (Vaaranam Aayiram)",
+          "title_ta": "ஆண்டாள் கல்யாணம் - வாரணம் ஆயிரம் (நாச்சியார் திருமொழி)",
+          "hymn_ta": "வாரணம் ஆயிரம் சூழ வலஞ்செய்து\nநாரணன் நம்பி நடக்கின்றான் என்றெதிர்\nபூரண பொற்குடம் வைத்துப் புறமெங்கும்\nதோரணம் நாட்டக் கனாக்கண்டேன் தோழீநான்!",
+          "purpose_en": "Recited daily to remove delays, overcome doshas, and ensure auspicious, early marriage.",
+          "purpose_ta": "திருமணத் தடை நீங்கி, விரைந்து நல்ல வரன் அமைய தினமும் பாராயணம் செய்ய வேண்டிய பதிகம்."
+        },
+        {
+          "title_en": "Divya Prabandham for Family Harmony",
+          "title_ta": "குடும்பத்தில் ஒற்றுமை நிலவ - நாலாயிர திவ்ய பிரபந்தம்",
+          "hymn_ta": "நெடுமாற்கடிமை செய்வேன்போல் அவனைக்கருத வஞ்சித்துத்\nதடுமாற்றத்தீக்கதிகள் முற்றும் தவிர்ந்த சதிர்நினைந்தால்\nகொடுமாவினையேனவனடியாரடியே கூடுமிதுவல்லால்\nவிடுமாறென்பதென்னந்தோ வியன் மூவுலகுபெறினுமே.",
+          "purpose_en": "Preserves lifelong domestic peace, removes misunderstandings, and fosters mutual devotion.",
+          "purpose_ta": "தம்பதியரிடையே கருத்து வேறுபாடுகள் நீங்கி, குடும்பத்தில் அன்யோன்ய ஒற்றுமை நிலவ ஓத வேண்டிய பாடல்."
+        },
+        {
+          "title_en": "Saiva Thirumurai Thevaram for Marriage Blessings",
+          "title_ta": "திருமுறைத் திருமணம் - திருஞானசம்பந்தர் தேவாரம்",
+          "hymn_ta": "மண்ணில் நல்லவண்ணம் வாழலாம் வைகலும்\nஎண்ணில் நல்லகதிக்கு யாதுமோர் குறைவிலை\nகண்ணின் நல்லுறுறும் கழுமல வளநகர்ப்\nபெண்ணின் நல்லாளொடும் பெருந்தகை இருந்ததே!",
+          "purpose_en": "Blesses the couple with all earthly prosperity, virtue, health, and spiritual realization.",
+          "purpose_ta": "இல்லற தர்மம் இனிதே சிறக்க, சகல சம்பத்துகளும் பெற்று தம்பதியர் நீடூழி வாழ அருளும் திருமுறை பாடல்."
+        }
+      ]
+    }
+  },
+  "print_report_data": null,
+  "final_assessment": {
+    "verdict": "UNFAVOURABLE_UNDER_SELECTED_RULES",
+    "verdict_label_en": "Unfavourable Under Selected Rules",
+    "verdict_label_ta": "தேர்ந்தெடுக்கப்பட்ட விதிகளின்படி பொருத்தமற்றது",
+    "primary_strengths": [
+      "Rajju Porutham satisfied (Different Rajju - Mangalya protection preserved).",
+      "Vedha Porutham satisfied (No mutual repulsion detected).",
+      "Acceptable Porutham match score: 5.2/10.0."
+    ],
+    "primary_concerns": [
+      "Active Nadi Dosha present without classical cancellation (0/8 points).",
+      "Ashtakoota score below standard threshold or afflicted: 14.5/36.0 points.",
+      "Both prospective partners exhibit minor malefic influences on the 7th house."
+    ],
+    "decision_path": [
+      "Unfavorable verdict assigned due to tradition-specific critical veto(es): Active uncancelled Nadi Dosha (North Indian tradition critical veto per Muhurta Chintamani Ch. 6)."
+    ],
+    "scientific_disclaimer": "This compatibility assessment provides traditional astrological analysis based on classical texts and Krishnamurti Paddhati (KP) principles. It represents astronomical propensities and karmic tendencies rather than an absolute guarantee or denial of marital success. Human agency, mutual understanding, emotional maturity, socio-cultural context, and personal life choices remain paramount.",
+    "reproducibility_fingerprint": "SHA256:639a9c678d8fe0ad"
+  }
+}

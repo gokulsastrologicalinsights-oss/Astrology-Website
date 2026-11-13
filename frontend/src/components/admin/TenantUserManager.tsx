@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { formatDate } from "@/lib/date-formatter";
 import { useLanguage } from "@/lib/i18n";
 import {
   MODULE_REGISTRY,
@@ -489,7 +490,7 @@ export function TenantUserManager({ users, onRefresh }: TenantUserManagerProps) 
                       isExpired = true;
                       expiryLabel = `Expired ${Math.abs(diffDays)}d ago`;
                     } else {
-                      expiryLabel = `Expires in ${diffDays} days (${expDate.toLocaleDateString()})`;
+                      expiryLabel = `Expires in ${diffDays} days (${formatDate(expDate)})`;
                     }
                   }
 

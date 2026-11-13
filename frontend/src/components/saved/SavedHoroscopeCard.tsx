@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { SavedHoroscopeItem } from "@/lib/types";
-import { formatBirthDate, formatBirthTime, formatSerialNumber } from "@/lib/formatters";
+import { formatBirthDate, formatBirthTime, formatSerialNumber, formatDate, formatTime12 } from "@/lib/formatters";
 import {
   Calendar,
   Clock,
@@ -61,21 +61,10 @@ export function SavedHoroscopeCard({
   const birthTimeFormatted = formatBirthTime(horoscope.birth_time);
   const birthplaceText = horoscope.birthplace?.trim() || t.locationUnavailable || "Tamil Nadu";
 
-  // Creation date/time formatted
-  const createdDateStr = horoscope.created_at
-    ? new Date(horoscope.created_at).toLocaleDateString(language === "ta" ? "ta-IN" : "en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : "";
+  // Creation date/time formatted in DD/MM/YYYY
+  const createdDateStr = horoscope.created_at ? formatDate(horoscope.created_at) : "";
 
-  const createdTimeStr = horoscope.created_at
-    ? new Date(horoscope.created_at).toLocaleTimeString(language === "ta" ? "ta-IN" : "en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
+  const createdTimeStr = horoscope.created_at ? formatTime12(null, horoscope.created_at) : "";
 
   const isKp = horoscope.ayanamsa_id === 1 || horoscope.ayanamsa_id === 3;
   const ayanamsaLabel =
