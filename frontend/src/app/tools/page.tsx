@@ -137,6 +137,16 @@ interface AstrologyToolCard {
       color: "text-[#153F6B] border-[#153F6B]/30 bg-[#EBF2FE] ring-2 ring-[#153F6B]/20",
     },
     {
+      id: "love-or-arranged-marriage",
+      titleTa: "காதல் அல்லது நிச்சயிக்கப்பட்ட திருமணம் (Love vs Arranged)",
+      titleEn: "Love vs. Arranged Marriage Predictor",
+      descriptionTa: "ஜாதகத்தில் காதல் திருமணமா அல்லது பெற்றோர்களால் நிச்சயிக்கப்படும் திருமணமா என்பதை துல்லியமாக அறியும் எளிய கணிப்பான்.",
+      descriptionEn: "Instant, straightforward verdict on whether the entered horoscope indicates Love Marriage, Arranged Marriage, or Love-cum-Arranged with parental blessings.",
+      href: "/tools/love-or-arranged-marriage",
+      icon: Heart,
+      color: "text-rose-700 border-rose-300 bg-rose-50/80 ring-2 ring-rose-400/40 shadow-sm",
+    },
+    {
       id: "marriage",
       titleTa: "திருமணப் பொருத்தம் (36 அஷ்டகூடம்)",
       titleEn: "Kundli Matching & 36 Ashta Kuta",

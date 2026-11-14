@@ -7779,3 +7779,52 @@ export interface AvailableMonthItem {
   is_next: boolean;
   tag_ta: string;
 }
+
+// =========================================================================
+// Love vs Arranged Marriage Predictor Interfaces
+// =========================================================================
+
+export interface LoveOrArrangedRequest {
+  birth: {
+    birth_date: string;
+    birth_time: string;
+    timezone: string;
+    latitude: number;
+    longitude: number;
+  };
+  name?: string;
+  gender?: string;
+  chart_id?: string;
+}
+
+export interface LoveOrArrangedFactor {
+  category: string;
+  title_en: string;
+  title_ta: string;
+  influence: "LOVE" | "ARRANGED" | "NEUTRAL";
+  description_en: string;
+  description_ta: string;
+  weight: number;
+}
+
+export interface LoveOrArrangedResponse {
+  native_name?: string;
+  native_gender: string;
+  birth_summary: string;
+  verdict: string;
+  verdict_ta: string;
+  verdict_badge: "LOVE" | "ARRANGED" | "LOVE_ARRANGED";
+  love_percentage: number;
+  arranged_percentage: number;
+  summary_en: string;
+  summary_ta: string;
+  family_support: string;
+  family_support_ta: string;
+  key_factors: LoveOrArrangedFactor[];
+  fifth_house_summary: string;
+  seventh_house_summary: string;
+  kp_sublord_summary?: string;
+  venus_summary: string;
+  calculated_at: string;
+}
+

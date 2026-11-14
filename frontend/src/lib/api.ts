@@ -274,6 +274,8 @@ import {
   SpousePredictionRequest,
 
   SpousePredictionResponse,
+  LoveOrArrangedRequest,
+  LoveOrArrangedResponse,
 
   NakshatraItem,
 
@@ -5830,5 +5832,27 @@ export async function publishToFacebookPage(params: {
     body: JSON.stringify(params),
   });
 }
+
+/**
+ * 23e. Love vs Arranged Marriage Predictor (POST /api/v1/predictions/love-or-arranged-marriage)
+ */
+export async function predictLoveOrArranged(
+  req: LoveOrArrangedRequest,
+  token?: string
+): Promise<LoveOrArrangedResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<LoveOrArrangedResponse>(
+    "/api/v1/predictions/love-or-arranged-marriage",
+    {
+      method: "POST",
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(req),
+    }
+  );
+}
+
 
 

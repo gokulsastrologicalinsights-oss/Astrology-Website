@@ -27,6 +27,13 @@ from app.schemas.spouse_prediction import (
 from app.services.spouse_prediction_engine import (
     SpousePredictionService,
 )
+from app.schemas.love_marriage import (
+    LoveOrArrangedRequest,
+    LoveOrArrangedResponse,
+)
+from app.services.marriage_engine.love_arranged_service import (
+    LoveArrangedService,
+)
 
 logger = logging.getLogger("gai.api.predictions")
 security = HTTPBearer(auto_error=False)
@@ -98,3 +105,37 @@ async def predict_spouse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred during spouse prediction: {str(exc)}",
         ) from None
+
+
+@router.post(
+    "/love-or-arranged-marriage",
+    response_model=LoveOrArrangedResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Evaluate Love vs Arranged Marriage Indicator",
+    description=(
+        "Dedicated deterministic evaluation to find whether the entered horoscope indicates "
+        "Love Marriage, Arranged Marriage, or Love-cum-Arranged marriage alone, with simple, "
+        "direct probability scoring and key planetary indicators in Tamil and English."
+    ),
+)
+@router.post(
+    "/love-or-arranged",
+    response_model=LoveOrArrangedResponse,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+async def evaluate_love_or_arranged(
+    request: LoveOrArrangedRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> LoveOrArrangedResponse:
+    """Execute love vs arranged marriage evaluation pipeline."""
+    try:
+        response = LoveArrangedService.evaluate(request)
+        return response
+    except Exception as exc:
+        logger.exception("Love vs arranged marriage evaluation failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred during love vs arranged evaluation: {str(exc)}",
+        ) from None
+
