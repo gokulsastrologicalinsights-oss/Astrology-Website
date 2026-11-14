@@ -1545,11 +1545,7 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
                   <div>
                     <h3 className="text-lg font-bold flex items-center gap-2">
                       <Globe className="w-5 h-5 text-purple-600" />
-                      {periodMode === "weekly"
-                        ? isTa
-                          ? "வாராந்திர கோச்சார பலன் சுருக்கம் & கிரக நிலைகள்"
-                          : "Weekly Transit Analysis & Gochara Positions"
-                        : isTa
+                      {isTa
                         ? "மாதாந்திர கோச்சார பலன் சுருக்கம் & கிரக நிலைகள்"
                         : "Monthly Transit Analysis & Gochara Positions"}
                     </h3>
