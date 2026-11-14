@@ -77,12 +77,13 @@ function LoveOrArrangedToolContent() {
 
   // Populate from saved horoscope
   const populateFromSaved = (item: SavedHoroscopeItem) => {
-    setName(item.name || "Native");
-    if (item.gender === "female" || item.gender === "male") {
-      setGender(item.gender);
+    setName(item.person_name || "Native");
+    const rawGender = (item.calculation_result as any)?.gender || (item as any).gender;
+    if (rawGender === "female" || rawGender === "male") {
+      setGender(rawGender);
     }
-    setBirthDate(item.date_of_birth || "1995-10-24");
-    setBirthTime(item.time_of_birth || "14:30:00");
+    setBirthDate(item.birth_date || "1995-10-24");
+    setBirthTime(item.birth_time || "14:30:00");
     setLatitude(Number(item.latitude) || 13.0827);
     setLongitude(Number(item.longitude) || 80.2707);
     setTimezone(item.timezone || "Asia/Kolkata");
@@ -134,8 +135,9 @@ function LoveOrArrangedToolContent() {
     if (!q) return savedHoroscopes;
     return savedHoroscopes.filter(
       (h) =>
-        h.name.toLowerCase().includes(q) ||
-        (h.place_of_birth && h.place_of_birth.toLowerCase().includes(q))
+        (h.person_name && h.person_name.toLowerCase().includes(q)) ||
+        (h.birthplace && h.birthplace.toLowerCase().includes(q)) ||
+        (h.location_name && h.location_name.toLowerCase().includes(q))
     );
   }, [savedHoroscopes, chartSearchQuery]);
 
@@ -328,9 +330,9 @@ function LoveOrArrangedToolContent() {
                                 : "bg-white hover:bg-blue-100 text-slate-800 border border-slate-200"
                             }`}
                           >
-                            <span className="truncate">{item.name}</span>
+                            <span className="truncate">{item.person_name}</span>
                             <span className="text-[10px] opacity-75 ml-2 shrink-0">
-                              {item.date_of_birth}
+                              {item.birth_date}
                             </span>
                           </button>
                         ))}
