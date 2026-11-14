@@ -939,8 +939,8 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
                 {periodMode === "weekly"
                   ? isTa
-                    ? "12 ராசிகளுக்குமான வாராந்திர கிரகப் பெயர்ச்சிகள், கோச்சார பலன் சுருக்கம், சந்திராஷ்டமம் மற்றும் விரிவான 5 அம்ச பலன்கள்."
-                    : "Comprehensive weekly predictions for all 12 Rashis with planetary transit movements, house Gochara impacts, and Chandrashtama alerts."
+                    ? "12 ராசிகளுக்குமான வாராந்திர சுருக்க பலன், சந்திராஷ்டமம் மற்றும் பகிர்வு அறிக்கை."
+                    : "Executive weekly forecast for all 12 Rashis with Chandrashtama alerts and shareable summary."
                   : periodMode === "monthly"
                   ? isTa
                     ? "12 ராசிகளுக்குமான மாதாந்திர சூரியன், குரு, சனி உள்ளிட்ட முக்கிய பெயர்ச்சிகள், சுப தேதிகள் மற்றும் கோச்சார தாக்கம்."
@@ -1538,8 +1538,8 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
               </div>
             </div>
 
-            {/* 2. PLANETARY TRANSITS & GOCHARA ANALYSIS SECTION (WEEKLY & MONTHLY) */}
-            {(periodMode === "weekly" || periodMode === "monthly") && (
+            {/* 2. PLANETARY TRANSITS & GOCHARA ANALYSIS SECTION (MONTHLY ONLY) */}
+            {periodMode === "monthly" && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -1676,73 +1676,75 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
             )}
 
             {/* 3. All 5 Life Aspects Detailed Analysis */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
-                  {isTa ? "அனைத்து அம்சங்களின் விரிவான பலன்கள்" : "In-Depth Life Aspects Analysis"}
-                </h3>
-                <span className="text-xs text-slate-500">
-                  {isTa ? "காரகத்துவ பாவகங்கள் & கோச்சார அடிப்படையில்" : "Cuspal & Transit Breakdown"}
-                </span>
-              </div>
+            {periodMode !== "weekly" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                    {isTa ? "அனைத்து அம்சங்களின் விரிவான பலன்கள்" : "In-Depth Life Aspects Analysis"}
+                  </h3>
+                  <span className="text-xs text-slate-500">
+                    {isTa ? "காரகத்துவ பாவகங்கள் & கோச்சார அடிப்படையில்" : "Cuspal & Transit Breakdown"}
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeGenericPrediction.aspects.map((aspect) => (
-                  <div
-                    key={aspect.aspect_code}
-                    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 hover:border-purple-300 dark:hover:border-purple-800 transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
-                          {getAspectIcon(aspect.aspect_code)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activeGenericPrediction.aspects.map((aspect) => (
+                    <div
+                      key={aspect.aspect_code}
+                      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 hover:border-purple-300 dark:hover:border-purple-800 transition"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                            {getAspectIcon(aspect.aspect_code)}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                              {isTa ? aspect.aspect_name_tamil : aspect.aspect_name}
+                            </h4>
+                            <span className="text-[11px] text-slate-500">
+                              {isTa ? "பாவகங்கள்: " : "Houses: "}
+                              {aspect.signified_houses.join(", ")}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                            {isTa ? aspect.aspect_name_tamil : aspect.aspect_name}
-                          </h4>
-                          <span className="text-[11px] text-slate-500">
-                            {isTa ? "பாவகங்கள்: " : "Houses: "}
-                            {aspect.signified_houses.join(", ")}
-                          </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${getSentimentBadge(aspect.status)}`}>
+                          {aspect.status}
+                        </span>
+                      </div>
+
+                      {/* Score Bar */}
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-slate-500">{isTa ? "மதிப்பெண்" : "Score"}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{aspect.score}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-500"
+                            style={{ width: `${aspect.score}%` }}
+                          />
                         </div>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${getSentimentBadge(aspect.status)}`}>
-                        {aspect.status}
-                      </span>
-                    </div>
 
-                    {/* Score Bar */}
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-slate-500">{isTa ? "மதிப்பெண்" : "Score"}</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{aspect.score}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-500"
-                          style={{ width: `${aspect.score}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Insight */}
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {isTa ? aspect.insight_ta : aspect.insight_en}
-                    </p>
-
-                    {/* Recommendation */}
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-slate-700 dark:text-slate-300 font-medium leading-normal">
-                        {isTa ? aspect.key_recommendation_ta : aspect.key_recommendation_en}
+                      {/* Insight */}
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {isTa ? aspect.insight_ta : aspect.insight_en}
                       </p>
+
+                      {/* Recommendation */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-slate-700 dark:text-slate-300 font-medium leading-normal">
+                          {isTa ? aspect.key_recommendation_ta : aspect.key_recommendation_en}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 4. Moon Sub-Lord Hourly Transit Windows (Daily Mode Only) */}
             {periodMode === "daily" && activeDailyPrediction && (
