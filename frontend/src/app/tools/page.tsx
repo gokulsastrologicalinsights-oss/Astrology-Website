@@ -25,6 +25,7 @@ import {
   ShieldAlert,
   Flame,
   Star,
+  Crown,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 import { DasaCautionReminderModal } from "@/components/caution/DasaCautionReminderModal";
@@ -67,6 +68,16 @@ interface AstrologyToolCard {
 
   // Section 1: Astrology Tools Cards (matching Screenshot 1)
   const astrologyTools: AstrologyToolCard[] = [
+    {
+      id: "master-prediction",
+      titleTa: "மகா முழுமை கணிப்பு (Master Prediction Suite)",
+      titleEn: "Master Prediction Suite (All-In-One)",
+      descriptionTa: "ஜாதகத்தை திறந்ததும் KP நிகழ்வு கணிப்பு, 1-5 ஆண்டு காலவரிசை, திருமண கணிப்பு, அஷ்டகவர்க்கம், இரட்டை கோச்சாரம், கக்ஷா & 28 நட்சத்திர ஆய்வு அத்தனையும் ஒரே திரையில்.",
+      descriptionEn: "Complete unified predictive suite: KP Monthly Timing, Multi-Year Roadmap, Marriage Engine, Double Transit, Ashtakavarga & Kaksha, 28 Nakshatras, and Horary in a single screen.",
+      href: "/tools/master-prediction",
+      icon: Crown,
+      color: "text-amber-900 border-amber-400 bg-gradient-to-r from-amber-100/90 to-yellow-50/90 ring-2 ring-amber-500/50 shadow-md",
+    },
     {
       id: "kp-daily-horoscope",
       titleTa: "கே.பி. தினசரி, வார & மாத ராசிபலன் (கோச்சார கணிப்பு)",
