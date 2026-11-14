@@ -5646,6 +5646,156 @@ export async function getKpDailyHoroscope(params?: {
   return request<KpDailyHoroscopeResponse>(`/api/v1/kp/daily-horoscope${qs ? `?${qs}` : ""}`);
 }
 
+export interface TransitMovement {
+  planet: string;
+  planet_ta: string;
+  current_sign: string;
+  current_sign_ta: string;
+  star_name: string;
+  star_lord: string;
+  sub_lord: string;
+  house_relative: number;
+  is_favorable: boolean;
+  status: "favorable" | "neutral" | "caution";
+  is_retrograde: boolean;
+  transit_ingress_event?: string | null;
+  impact_summary_en: string;
+  impact_summary_ta: string;
+}
+
+export interface TransitSummaryPerRashi {
+  rashi_id: number;
+  rashi_name_en: string;
+  rashi_name_ta: string;
+  planet_transits: TransitMovement[];
+  transit_overview_en: string;
+  transit_overview_ta: string;
+  benefic_planets: string[];
+  challenging_planets: string[];
+  chandrashtama_period_en: string;
+  chandrashtama_period_ta: string;
+  special_yogas_en: string[];
+  special_yogas_ta: string[];
+}
+
+export interface RashiWeeklyPrediction {
+  rashi_id: number;
+  rashi_name_en: string;
+  rashi_name_ta: string;
+  sign_lord: string;
+  weekly_score: number;
+  weekly_rating_stars: number;
+  week_sentiment: string;
+  brief_statement_en: string;
+  brief_statement_ta: string;
+  peak_highlight_en: string;
+  peak_highlight_ta: string;
+  caution_trap_en: string;
+  caution_trap_ta: string;
+  lucky_days_en: string;
+  lucky_days_ta: string;
+  chandrashtama_days_en: string;
+  chandrashtama_days_ta: string;
+  lucky_color_en: string;
+  lucky_color_ta: string;
+  lucky_number: number;
+  lucky_direction_en: string;
+  lucky_direction_ta: string;
+  weekly_remedy_en: string;
+  weekly_remedy_ta: string;
+  aspects: KpAspectPrediction[];
+  transit_summary: TransitSummaryPerRashi;
+}
+
+export interface KpWeeklyHoroscopeResponse {
+  start_date: string;
+  end_date: string;
+  week_label_en: string;
+  week_label_ta: string;
+  ayanamsa_name: string;
+  total_rashis: number;
+  major_transits: TransitMovement[];
+  predictions: RashiWeeklyPrediction[];
+  calculated_at: string;
+}
+
+export interface RashiMonthlyPrediction {
+  rashi_id: number;
+  rashi_name_en: string;
+  rashi_name_ta: string;
+  sign_lord: string;
+  monthly_score: number;
+  monthly_rating_stars: number;
+  month_sentiment: string;
+  brief_statement_en: string;
+  brief_statement_ta: string;
+  peak_highlight_en: string;
+  peak_highlight_ta: string;
+  caution_trap_en: string;
+  caution_trap_ta: string;
+  auspicious_dates_en: string;
+  auspicious_dates_ta: string;
+  chandrashtama_dates_en: string;
+  chandrashtama_dates_ta: string;
+  lucky_color_en: string;
+  lucky_color_ta: string;
+  lucky_number: number;
+  lucky_direction_en: string;
+  lucky_direction_ta: string;
+  monthly_remedy_en: string;
+  monthly_remedy_ta: string;
+  aspects: KpAspectPrediction[];
+  transit_summary: TransitSummaryPerRashi;
+}
+
+export interface KpMonthlyHoroscopeResponse {
+  year: number;
+  month: number;
+  start_date: string;
+  end_date: string;
+  month_name_en: string;
+  month_name_ta: string;
+  ayanamsa_name: string;
+  total_rashis: number;
+  major_transits: TransitMovement[];
+  predictions: RashiMonthlyPrediction[];
+  calculated_at: string;
+}
+
+export async function getKpWeeklyHoroscope(params?: {
+  date?: string;
+  timezone?: string;
+  rashi?: string;
+  ayanamsa?: number;
+}): Promise<KpWeeklyHoroscopeResponse> {
+  const query = new URLSearchParams();
+  if (params?.date) query.set("date", params.date);
+  if (params?.timezone) query.set("timezone", params.timezone);
+  if (params?.rashi) query.set("rashi", params.rashi);
+  if (params?.ayanamsa !== undefined) query.set("ayanamsa", String(params.ayanamsa));
+  const qs = query.toString();
+  return request<KpWeeklyHoroscopeResponse>(`/api/v1/kp/weekly-horoscope${qs ? `?${qs}` : ""}`);
+}
+
+export async function getKpMonthlyHoroscope(params?: {
+  year?: number;
+  month?: number;
+  date?: string;
+  timezone?: string;
+  rashi?: string;
+  ayanamsa?: number;
+}): Promise<KpMonthlyHoroscopeResponse> {
+  const query = new URLSearchParams();
+  if (params?.year !== undefined) query.set("year", String(params.year));
+  if (params?.month !== undefined) query.set("month", String(params.month));
+  if (params?.date) query.set("date", params.date);
+  if (params?.timezone) query.set("timezone", params.timezone);
+  if (params?.rashi) query.set("rashi", params.rashi);
+  if (params?.ayanamsa !== undefined) query.set("ayanamsa", String(params.ayanamsa));
+  const qs = query.toString();
+  return request<KpMonthlyHoroscopeResponse>(`/api/v1/kp/monthly-horoscope${qs ? `?${qs}` : ""}`);
+}
+
 export async function getFacebookIntegrationStatus(): Promise<{
   credentials: { configured: boolean; valid?: boolean; error?: string; page_name?: string };
   scheduler: {
@@ -5660,20 +5810,11 @@ export async function getFacebookIntegrationStatus(): Promise<{
   return request("/api/v1/social/facebook/status");
 }
 
-export function getFacebookPreviewCardUrl(params: { date?: string; rashi?: string }): string {
-  const qs = new URLSearchParams();
-  if (params.date) qs.set("date", params.date);
-  if (params.rashi) qs.set("rashi", params.rashi);
-  const base = getApiBaseUrl();
-  const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return `${base}/api/v1/social/facebook/preview-card${suffix}`;
-}
-
 export async function publishToFacebookPage(params: {
   date?: string;
   rashi?: string;
   dry_run?: boolean;
-  mode?: "carousel" | "cards" | "image" | "text";
+  mode?: string;
 }): Promise<{
   success: boolean;
   post_id?: string;
@@ -5682,7 +5823,6 @@ export async function publishToFacebookPage(params: {
   target_date?: string;
   rashi?: string;
   post_mode?: string;
-  carousel_posts?: Array<{ group_index: number; rashis: string[]; success: boolean; post_id?: string; fb_url?: string }>;
 }> {
   return request("/api/v1/social/facebook/publish", {
     method: "POST",

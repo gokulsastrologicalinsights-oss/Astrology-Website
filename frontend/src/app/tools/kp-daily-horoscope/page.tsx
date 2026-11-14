@@ -6,23 +6,28 @@ import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   getKpDailyHoroscope,
-  getFacebookPreviewCardUrl,
+  getKpWeeklyHoroscope,
+  getKpMonthlyHoroscope,
   publishToFacebookPage,
   KpDailyHoroscopeResponse,
+  KpWeeklyHoroscopeResponse,
+  KpMonthlyHoroscopeResponse,
   RashiDailyPrediction,
+  RashiWeeklyPrediction,
+  RashiMonthlyPrediction,
   KpAspectPrediction,
   MoonSubLordWindow,
+  TransitMovement,
+  TransitSummaryPerRashi,
 } from "@/lib/api";
 import {
   Compass,
   Calendar,
   Clock,
   Sparkles,
-  Search,
   CheckCircle2,
   AlertTriangle,
   Star,
-  Zap,
   Briefcase,
   Coins,
   Heart,
@@ -34,15 +39,20 @@ import {
   Moon,
   TrendingUp,
   Award,
-  Info,
   ChevronRight,
+  ChevronLeft,
   Flame,
   Copy,
   Check,
   Share2,
   MessageCircle,
-  Image as ImageIcon,
+  CalendarDays,
+  Globe,
+  Radio,
+  Layers,
 } from "lucide-react";
+
+type PeriodMode = "daily" | "weekly" | "monthly";
 
 const RASHI_SYMBOLS: Record<number, string> = {
   1: "♈",
@@ -59,6 +69,18 @@ const RASHI_SYMBOLS: Record<number, string> = {
   12: "♓",
 };
 
+const PLANET_SYMBOLS: Record<string, string> = {
+  Sun: "☀️",
+  Moon: "🌙",
+  Mars: "♂️",
+  Mercury: "☿",
+  Jupiter: "♃",
+  Venus: "♀️",
+  Saturn: "♄",
+  Rahu: "☊",
+  Ketu: "☋",
+};
+
 const ASPECT_ICONS: Record<string, string> = {
   career: "💼",
   finance: "💰",
@@ -68,10 +90,10 @@ const ASPECT_ICONS: Record<string, string> = {
 };
 
 const SENTIMENT_MAP_TA: Record<string, string> = {
-  Excellent: "மிகச் சிறப்பான நாள்",
-  Favorable: "சாதகமான நாள்",
-  Mixed: "மிதமான நாள்",
-  Challenging: "சவாலான நாள்",
+  Excellent: "மிகச் சிறப்பான நிலை",
+  Favorable: "சாதகமான நிலை",
+  Mixed: "மிதமான நிலை",
+  Challenging: "சவாலான நிலை",
 };
 
 const MONTHS_TA: Record<number, string> = {
@@ -175,62 +197,156 @@ export default function KpDailyHoroscopePage() {
   const { language } = useLanguage();
   const isTa = language === "ta";
 
+  // Mode Selection State: Daily | Weekly | Monthly
+  const [periodMode, setPeriodMode] = useState<PeriodMode>("daily");
+
   // Date selection state
   const [todayStr, setTodayStr] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedWeekDate, setSelectedWeekDate] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
+  const [selectedMonth, setSelectedMonth] = useState<number>(11);
+
+  // Active Rashi selection (1-12)
   const [activeRashiId, setActiveRashiId] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [horoscopeData, setHoroscopeData] = useState<KpDailyHoroscopeResponse | null>(null);
 
-  // Initialize date on mount
+  // Data stores
+  const [horoscopeData, setHoroscopeData] = useState<KpDailyHoroscopeResponse | null>(null);
+  const [weeklyData, setWeeklyData] = useState<KpWeeklyHoroscopeResponse | null>(null);
+  const [monthlyData, setMonthlyData] = useState<KpMonthlyHoroscopeResponse | null>(null);
+
+  // Initialize dates on mount
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
+    const d = new Date();
     setTodayStr(today);
     setSelectedDate(today);
+    setSelectedWeekDate(today);
+    setSelectedYear(d.getFullYear());
+    setSelectedMonth(d.getMonth() + 1);
   }, []);
 
+  // Quick Daily navigation
   const handleTomorrow = () => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     setSelectedDate(d.toISOString().split("T")[0]);
   };
 
-  // Fetch horoscope data
-  const loadData = useCallback(async (targetDate: string) => {
-    if (!targetDate) return;
+  // Quick Weekly navigation
+  const handlePrevWeek = () => {
+    if (!selectedWeekDate) return;
+    const d = new Date(selectedWeekDate);
+    d.setDate(d.getDate() - 7);
+    setSelectedWeekDate(d.toISOString().split("T")[0]);
+  };
+
+  const handleNextWeek = () => {
+    if (!selectedWeekDate) return;
+    const d = new Date(selectedWeekDate);
+    d.setDate(d.getDate() + 7);
+    setSelectedWeekDate(d.toISOString().split("T")[0]);
+  };
+
+  const handleCurrentWeek = () => {
+    if (!todayStr) return;
+    setSelectedWeekDate(todayStr);
+  };
+
+  // Quick Monthly navigation
+  const handlePrevMonth = () => {
+    let m = selectedMonth - 1;
+    let y = selectedYear;
+    if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+    setSelectedMonth(m);
+    setSelectedYear(y);
+  };
+
+  const handleNextMonth = () => {
+    let m = selectedMonth + 1;
+    let y = selectedYear;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+    setSelectedMonth(m);
+    setSelectedYear(y);
+  };
+
+  const handleCurrentMonth = () => {
+    const d = new Date();
+    setSelectedYear(d.getFullYear());
+    setSelectedMonth(d.getMonth() + 1);
+  };
+
+  // Fetch data depending on active mode
+  const fetchHoroscope = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getKpDailyHoroscope({ date: targetDate, rashi: "all", ayanamsa: 1 });
-      setHoroscopeData(res);
+
+      if (periodMode === "daily") {
+        if (!selectedDate) return;
+        const res = await getKpDailyHoroscope({ date: selectedDate, rashi: "all", ayanamsa: 1 });
+        setHoroscopeData(res);
+      } else if (periodMode === "weekly") {
+        if (!selectedWeekDate) return;
+        const res = await getKpWeeklyHoroscope({ date: selectedWeekDate, rashi: "all", ayanamsa: 1 });
+        setWeeklyData(res);
+      } else if (periodMode === "monthly") {
+        const res = await getKpMonthlyHoroscope({
+          year: selectedYear,
+          month: selectedMonth,
+          rashi: "all",
+          ayanamsa: 1,
+        });
+        setMonthlyData(res);
+      }
     } catch (err: any) {
-      console.error("Failed to load daily KP horoscope:", err);
-      setError(err?.message || "Failed to calculate daily KP horoscope");
+      console.error(`Failed to load ${periodMode} horoscope:`, err);
+      setError(err?.message || `Failed to calculate ${periodMode} horoscope`);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [periodMode, selectedDate, selectedWeekDate, selectedYear, selectedMonth]);
 
   useEffect(() => {
-    if (selectedDate) {
-      loadData(selectedDate);
-    }
-  }, [selectedDate, loadData]);
+    fetchHoroscope();
+  }, [fetchHoroscope]);
 
-  // Current active prediction
-  const activePrediction = useMemo<RashiDailyPrediction | null>(() => {
+  // Current active prediction based on mode
+  const activeDailyPrediction = useMemo<RashiDailyPrediction | null>(() => {
     if (!horoscopeData || !horoscopeData.predictions) return null;
     return horoscopeData.predictions.find((p) => p.rashi_id === activeRashiId) || horoscopeData.predictions[0];
   }, [horoscopeData, activeRashiId]);
+
+  const activeWeeklyPrediction = useMemo<RashiWeeklyPrediction | null>(() => {
+    if (!weeklyData || !weeklyData.predictions) return null;
+    return weeklyData.predictions.find((p) => p.rashi_id === activeRashiId) || weeklyData.predictions[0];
+  }, [weeklyData, activeRashiId]);
+
+  const activeMonthlyPrediction = useMemo<RashiMonthlyPrediction | null>(() => {
+    if (!monthlyData || !monthlyData.predictions) return null;
+    return monthlyData.predictions.find((p) => p.rashi_id === activeRashiId) || monthlyData.predictions[0];
+  }, [monthlyData, activeRashiId]);
+
+  // Unified active card helper
+  const activeGenericPrediction = useMemo(() => {
+    if (periodMode === "daily") return activeDailyPrediction;
+    if (periodMode === "weekly") return activeWeeklyPrediction;
+    return activeMonthlyPrediction;
+  }, [periodMode, activeDailyPrediction, activeWeeklyPrediction, activeMonthlyPrediction]);
 
   // Copy-paste summary state
   const [copied, setCopied] = useState<boolean>(false);
   const [shareLanguage, setShareLanguage] = useState<"ta" | "en" | "bilingual">("ta");
   const [fbPosting, setFbPosting] = useState<boolean>(false);
   const [fbResult, setFbResult] = useState<{ type: "success" | "error"; text: string; url?: string } | null>(null);
-  const [showFbCardPreview, setShowFbCardPreview] = useState<boolean>(false);
-  const [fbCardTarget, setFbCardTarget] = useState<"current" | "overview">("current");
 
   // Synchronize initial shareLanguage with site language
   useEffect(() => {
@@ -239,49 +355,54 @@ export default function KpDailyHoroscopePage() {
 
   // Formatted Mini Paragraph text for WhatsApp / Client Sharing
   const miniParagraphText = useMemo(() => {
-    if (!activePrediction || !horoscopeData) return "";
+    if (!activeGenericPrediction) return "";
 
-    const rNameEn = `${activePrediction.rashi_name_en} (${activePrediction.rashi_name_ta})`;
-    const rNameTa = `${activePrediction.rashi_name_ta} (${activePrediction.rashi_name_en})`;
-    const symbol = RASHI_SYMBOLS[activePrediction.rashi_id] || "✨";
-    const starsDisplay = Math.round(activePrediction.daily_rating_stars);
-    const sentimentTa = SENTIMENT_MAP_TA[activePrediction.day_sentiment] || activePrediction.day_sentiment;
-    const sentimentEn = activePrediction.day_sentiment;
+    const symbol = RASHI_SYMBOLS[activeGenericPrediction.rashi_id] || "✨";
+    const rNameEn = `${activeGenericPrediction.rashi_name_en} (${activeGenericPrediction.rashi_name_ta})`;
+    const rNameTa = `${activeGenericPrediction.rashi_name_ta} (${activeGenericPrediction.rashi_name_en})`;
 
-    // Filter Moon Sub-Lord timings using en-dash " – "
-    const goldenTimes =
-      activePrediction.moon_sub_windows
-        .filter((w) => w.sentiment === "golden")
-        .map((w) => `${w.start_time} – ${w.end_time}`)
-        .join(", ") || (activePrediction.golden_hour_window ? activePrediction.golden_hour_window.replace(/ - /g, " – ") : "");
+    // Lucky colors
+    const luckyColorTa = activeGenericPrediction.lucky_color_ta.split("&")[0].trim() || activeGenericPrediction.lucky_color_ta;
+    const luckyColorEn = activeGenericPrediction.lucky_color_en.split("&")[0].trim() || activeGenericPrediction.lucky_color_en;
 
-    const cautionTimes =
-      activePrediction.moon_sub_windows
-        .filter((w) => w.sentiment === "caution")
-        .map((w) => `${w.start_time} – ${w.end_time}`)
-        .join(", ") || (activePrediction.caution_hour_window ? activePrediction.caution_hour_window.replace(/ - /g, " – ") : "");
+    // ------------------------------------------------------------------------
+    // 1. DAILY FORMAT
+    // ------------------------------------------------------------------------
+    if (periodMode === "daily" && activeDailyPrediction && horoscopeData) {
+      const starsDisplay = Math.round(activeDailyPrediction.daily_rating_stars);
+      const sentimentTa = SENTIMENT_MAP_TA[activeDailyPrediction.day_sentiment] || activeDailyPrediction.day_sentiment;
+      const sentimentEn = activeDailyPrediction.day_sentiment;
 
-    const luckyColorTa = activePrediction.lucky_color_ta.split("&")[0].trim() || activePrediction.lucky_color_ta;
-    const luckyColorEn = activePrediction.lucky_color_en.split("&")[0].trim() || activePrediction.lucky_color_en;
+      const goldenTimes =
+        activeDailyPrediction.moon_sub_windows
+          .filter((w) => w.sentiment === "golden")
+          .map((w) => `${w.start_time} – ${w.end_time}`)
+          .join(", ") || (activeDailyPrediction.golden_hour_window ? activeDailyPrediction.golden_hour_window.replace(/ - /g, " – ") : "");
 
-    if (shareLanguage === "ta") {
-      const formattedDateTa = formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta);
-      const aspectsTa = activePrediction.aspects
-        .map((a) => {
-          const icon = ASPECT_ICONS[a.aspect_code] || "•";
-          const body = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
-          return `${icon} ${a.aspect_name_tamil} – ${a.score}%\n${body}`;
-        })
-        .join("\n\n");
+      const cautionTimes =
+        activeDailyPrediction.moon_sub_windows
+          .filter((w) => w.sentiment === "caution")
+          .map((w) => `${w.start_time} – ${w.end_time}`)
+          .join(", ") || (activeDailyPrediction.caution_hour_window ? activeDailyPrediction.caution_hour_window.replace(/ - /g, " – ") : "");
 
-      return `தினசரி ராசிபலன்
+      if (shareLanguage === "ta") {
+        const formattedDateTa = formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta);
+        const aspectsTa = activeDailyPrediction.aspects
+          .map((a) => {
+            const icon = ASPECT_ICONS[a.aspect_code] || "•";
+            const body = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
+            return `${icon} ${a.aspect_name_tamil} – ${a.score}%\n${body}`;
+          })
+          .join("\n\n");
+
+        return `தினசரி ராசிபலன்
 📅 தேதி: ${formattedDateTa}
 
-${symbol} ${rNameTa} - ⭐ இன்றைய சாதக நிலை: ${activePrediction.daily_score}% (${starsDisplay}/5 – ${sentimentTa})
+${symbol} ${rNameTa} - ⭐ இன்றைய சாதக நிலை: ${activeDailyPrediction.daily_score}% (${starsDisplay}/5 – ${sentimentTa})
 
 🔮 இன்றைய பொதுப்பலன்:
 
-${cleanBrief(activePrediction.brief_statement_ta)}
+${cleanBrief(activeDailyPrediction.brief_statement_ta)}
 
 📊 இன்றைய விரிவான பலன்கள்:
 
@@ -294,22 +415,95 @@ ${aspectsTa}
 ⚠️ கவனமான நேரம்: ${cautionTimes || "குறிப்பிடத்தக்க எச்சரிக்கை நேரம் இல்லை"}
 
 🎨 அதிர்ஷ்ட நிறம்: ${luckyColorTa}
-
-🔢 அதிர்ஷ்ட எண்: ${activePrediction.lucky_number}
-
-🧭 அதிர்ஷ்ட திசை: ${activePrediction.lucky_direction_ta}
+🔢 அதிர்ஷ்ட எண்: ${activeDailyPrediction.lucky_number}
+🧭 அதிர்ஷ்ட திசை: ${activeDailyPrediction.lucky_direction_ta}
 
 🛡️ இன்றைய ஆலோசனை:
-
-${activePrediction.daily_remedy_ta}
+${activeDailyPrediction.daily_remedy_ta}
 
 🙏 Gokul's Astrological Insights
 Gokul Murugan | Thiruverkadu`;
+      }
+
+      if (shareLanguage === "en") {
+        const formattedDateEn = formatEnglishDate(horoscopeData.date, horoscopeData.day_of_week);
+        const aspectsEn = activeDailyPrediction.aspects
+          .map((a) => {
+            const icon = ASPECT_ICONS[a.aspect_code] || "•";
+            const body = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
+            return `${icon} ${a.aspect_name} – ${a.score}%\n${body}`;
+          })
+          .join("\n\n");
+
+        return `Daily Horoscope
+📅 Date: ${formattedDateEn}
+
+${symbol} ${rNameEn} - ⭐ Today's Energy Score: ${activeDailyPrediction.daily_score}% (${starsDisplay}/5 – ${sentimentEn} day)
+
+🔮 Today's General Outlook:
+${cleanBrief(activeDailyPrediction.brief_statement_en)}
+
+📊 Today's Detailed Breakdown:
+${aspectsEn}
+
+⏰ Today's Timing Guidance:
+🌟 Lucky Hours: ${goldenTimes || "No specific golden window"}
+⚠️ Caution Hours: ${cautionTimes || "No major caution period"}
+
+🎨 Lucky Color: ${luckyColorEn}
+🔢 Lucky Number: ${activeDailyPrediction.lucky_number}
+🧭 Lucky Direction: ${activeDailyPrediction.lucky_direction_en}
+
+🛡️ Today's Guidance:
+${activeDailyPrediction.daily_remedy_en}
+
+🙏 Gokul's Astrological Insights
+Gokul Murugan | Thiruverkadu`;
+      }
+
+      // Daily Bilingual
+      const formattedDateBi = `${formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta)} (${horoscopeData.day_of_week})`;
+      return `Daily Horoscope | தினசரி ராசிபலன்
+📅 ${formattedDateBi}
+
+${symbol} ${rNameTa} - ⭐ Score: ${activeDailyPrediction.daily_score}% (${starsDisplay}/5 – ${sentimentTa})
+
+🔮 General Outlook / பொதுப்பலன்:
+${cleanBrief(activeDailyPrediction.brief_statement_ta)}
+(${cleanBrief(activeDailyPrediction.brief_statement_en)})
+
+⏰ Timing Guidance / நேர வழிகாட்டல்:
+🌟 Lucky Hours / அதிர்ஷ்ட நேரம்: ${goldenTimes || "—"}
+⚠️ Caution Hours / கவனமான நேரம்: ${cautionTimes || "—"}
+
+🎨 Lucky Color: ${luckyColorTa} / ${luckyColorEn}
+🔢 Lucky Number: ${activeDailyPrediction.lucky_number}
+🧭 Lucky Direction: ${activeDailyPrediction.lucky_direction_ta}
+
+🛡️ Guidance / ஆலோசனை:
+${activeDailyPrediction.daily_remedy_ta}
+(${activeDailyPrediction.daily_remedy_en})
+
+🙏 Gokul's Astrological Insights | Gokul Murugan`;
     }
 
-    if (shareLanguage === "en") {
-      const formattedDateEn = formatEnglishDate(horoscopeData.date, horoscopeData.day_of_week);
-      const aspectsEn = activePrediction.aspects
+    // ------------------------------------------------------------------------
+    // 2. WEEKLY FORMAT
+    // ------------------------------------------------------------------------
+    if (periodMode === "weekly" && activeWeeklyPrediction && weeklyData) {
+      const starsDisplay = Math.round(activeWeeklyPrediction.weekly_rating_stars);
+      const sentimentTa = SENTIMENT_MAP_TA[activeWeeklyPrediction.week_sentiment] || activeWeeklyPrediction.week_sentiment;
+      const sentimentEn = activeWeeklyPrediction.week_sentiment;
+
+      const aspectsTa = activeWeeklyPrediction.aspects
+        .map((a) => {
+          const icon = ASPECT_ICONS[a.aspect_code] || "•";
+          const body = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
+          return `${icon} ${a.aspect_name_tamil} – ${a.score}%\n${body}`;
+        })
+        .join("\n\n");
+
+      const aspectsEn = activeWeeklyPrediction.aspects
         .map((a) => {
           const icon = ASPECT_ICONS[a.aspect_code] || "•";
           const body = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
@@ -317,86 +511,208 @@ Gokul Murugan | Thiruverkadu`;
         })
         .join("\n\n");
 
-      return `Daily Horoscope
-📅 Date: ${formattedDateEn}
+      if (shareLanguage === "ta") {
+        return `வார ராசிபலன் & கோச்சார சுருக்கம்
+📅 வாரம்: ${weeklyData.week_label_ta}
 
-${symbol} ${rNameEn} - ⭐ Today's Energy Score: ${activePrediction.daily_score}% (${starsDisplay}/5 – ${sentimentEn} day)
+${symbol} ${rNameTa} - ⭐ வார சாதக நிலை: ${activeWeeklyPrediction.weekly_score}% (${starsDisplay}/5 – ${sentimentTa})
 
-🔮 Today's General Outlook:
+🔮 வார பொதுப்பலன்:
+${cleanBrief(activeWeeklyPrediction.brief_statement_ta)}
 
-${cleanBrief(activePrediction.brief_statement_en)}
+🪐 வாராந்திர கோச்சார தாக்கம்:
+${activeWeeklyPrediction.transit_summary.transit_overview_ta}
 
-📊 Today's Detailed Breakdown:
+⚠️ சந்திராஷ்டம நாட்கள்: ${activeWeeklyPrediction.chandrashtama_days_ta}
+🌟 அதிர்ஷ்ட நாட்கள்: ${activeWeeklyPrediction.lucky_days_ta}
 
-${aspectsEn}
+📊 விரிவான பலன்கள்:
+${aspectsTa}
 
-⏰ Today's Timing Guidance:
+🎨 அதிர்ஷ்ட நிறம்: ${luckyColorTa}
+🔢 அதிர்ஷ்ட எண்: ${activeWeeklyPrediction.lucky_number}
+🧭 அதிர்ஷ்ட திசை: ${activeWeeklyPrediction.lucky_direction_ta}
 
-🌟 Lucky Hours: ${goldenTimes || "No specific golden window"}
-
-⚠️ Caution Hours: ${cautionTimes || "No major caution period"}
-
-🎨 Lucky Color: ${luckyColorEn}
-
-🔢 Lucky Number: ${activePrediction.lucky_number}
-
-🧭 Lucky Direction: ${activePrediction.lucky_direction_en}
-
-🛡️ Today's Guidance:
-
-${activePrediction.daily_remedy_en}
+🛡️ வார பரிகாரம்:
+${activeWeeklyPrediction.weekly_remedy_ta}
 
 🙏 Gokul's Astrological Insights
 Gokul Murugan | Thiruverkadu`;
+      }
+
+      if (shareLanguage === "en") {
+        return `Weekly Horoscope & Planetary Transit Forecast
+📅 Week: ${weeklyData.week_label_en}
+
+${symbol} ${rNameEn} - ⭐ Weekly Favorability: ${activeWeeklyPrediction.weekly_score}% (${starsDisplay}/5 – ${sentimentEn})
+
+🔮 Weekly Executive Outlook:
+${cleanBrief(activeWeeklyPrediction.brief_statement_en)}
+
+🪐 Planetary Transit Influence:
+${activeWeeklyPrediction.transit_summary.transit_overview_en}
+
+⚠️ Caution / Chandrashtama Days: ${activeWeeklyPrediction.chandrashtama_days_en}
+🌟 Favorable Days: ${activeWeeklyPrediction.lucky_days_en}
+
+📊 Life Aspects Breakdown:
+${aspectsEn}
+
+🎨 Lucky Color: ${luckyColorEn}
+🔢 Lucky Number: ${activeWeeklyPrediction.lucky_number}
+🧭 Lucky Direction: ${activeWeeklyPrediction.lucky_direction_en}
+
+🛡️ Weekly Guidance / Remedy:
+${activeWeeklyPrediction.weekly_remedy_en}
+
+🙏 Gokul's Astrological Insights
+Gokul Murugan | Thiruverkadu`;
+      }
+
+      // Weekly Bilingual
+      return `Weekly Horoscope | வார ராசிபலன்
+📅 ${weeklyData.week_label_ta} (${weeklyData.week_label_en})
+
+${symbol} ${rNameTa} - ⭐ Score: ${activeWeeklyPrediction.weekly_score}% (${starsDisplay}/5)
+
+🔮 Weekly Summary / வார சுருக்கம்:
+${cleanBrief(activeWeeklyPrediction.brief_statement_ta)}
+(${cleanBrief(activeWeeklyPrediction.brief_statement_en)})
+
+🪐 Planetary Transits / கோச்சார தாக்கம்:
+${activeWeeklyPrediction.transit_summary.transit_overview_ta}
+
+⚠️ Chandrashtama / சந்திராஷ்டமம்: ${activeWeeklyPrediction.chandrashtama_days_ta}
+🌟 Lucky Days / அதிர்ஷ்ட நாட்கள்: ${activeWeeklyPrediction.lucky_days_ta}
+
+🎨 Lucky Color: ${luckyColorTa} / ${luckyColorEn} | 🔢 No: ${activeWeeklyPrediction.lucky_number}
+🧭 Direction / திசை: ${activeWeeklyPrediction.lucky_direction_ta}
+
+🛡️ Weekly Remedy / வார பரிகாரம்:
+${activeWeeklyPrediction.weekly_remedy_ta}
+
+🙏 Gokul's Astrological Insights | Gokul Murugan`;
     }
 
-    // Bilingual format
-    const formattedDateBi = `${formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta)} (${horoscopeData.day_of_week})`;
-    const luckyColorBi = `${luckyColorTa} / ${luckyColorEn}`;
+    // ------------------------------------------------------------------------
+    // 3. MONTHLY FORMAT
+    // ------------------------------------------------------------------------
+    if (periodMode === "monthly" && activeMonthlyPrediction && monthlyData) {
+      const starsDisplay = Math.round(activeMonthlyPrediction.monthly_rating_stars);
+      const sentimentTa = SENTIMENT_MAP_TA[activeMonthlyPrediction.month_sentiment] || activeMonthlyPrediction.month_sentiment;
+      const sentimentEn = activeMonthlyPrediction.month_sentiment;
 
-    const aspectsBi = activePrediction.aspects
-      .map((a) => {
-        const icon = ASPECT_ICONS[a.aspect_code] || "•";
-        const bodyTa = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
-        const bodyEn = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
-        return `${icon} **${a.aspect_name_tamil} / ${a.aspect_name} – ${a.score}%**\n${bodyTa}\n(${bodyEn})`;
-      })
-      .join("\n\n");
+      const aspectsTa = activeMonthlyPrediction.aspects
+        .map((a) => {
+          const icon = ASPECT_ICONS[a.aspect_code] || "•";
+          const body = formatAspectTextTa(a.insight_ta, a.key_recommendation_ta);
+          return `${icon} ${a.aspect_name_tamil} – ${a.score}%\n${body}`;
+        })
+        .join("\n\n");
 
-    return `**Daily Horoscope | தினசரி ராசிபலன்**
-📅 **Date / தேதி:** ${formattedDateBi}
+      const aspectsEn = activeMonthlyPrediction.aspects
+        .map((a) => {
+          const icon = ASPECT_ICONS[a.aspect_code] || "•";
+          const body = formatAspectTextEn(a.insight_en, a.key_recommendation_en);
+          return `${icon} ${a.aspect_name} – ${a.score}%\n${body}`;
+        })
+        .join("\n\n");
 
-${symbol} **${rNameTa}** - ⭐ **Score: ${activePrediction.daily_score}%** (${starsDisplay}/5 – ${sentimentTa})
+      if (shareLanguage === "ta") {
+        return `மாத ராசிபலன் & கோச்சார சுருக்கம்
+📅 மாதம்: ${monthlyData.month_name_ta}
 
-🔮 **General Outlook / பொதுப்பலன்:**
+${symbol} ${rNameTa} - ⭐ மாதாந்திர சாதக நிலை: ${activeMonthlyPrediction.monthly_score}% (${starsDisplay}/5 – ${sentimentTa})
 
-${cleanBrief(activePrediction.brief_statement_ta)}
-(${cleanBrief(activePrediction.brief_statement_en)})
+🔮 மாதாந்திர பொதுப்பலன்:
+${cleanBrief(activeMonthlyPrediction.brief_statement_ta)}
 
-📊 **Detailed Breakdown / விரிவான பலன்கள்:**
+🪐 மாதாந்திர கோச்சார பலன்கள் & பெயர்ச்சி சுருக்கம்:
+${activeMonthlyPrediction.transit_summary.transit_overview_ta}
 
-${aspectsBi}
+⚠️ சந்திராஷ்டம தேதிகள்: ${activeMonthlyPrediction.chandrashtama_dates_ta}
+🌟 சுப தேதிகள்: ${activeMonthlyPrediction.auspicious_dates_ta}
 
-⏰ **Timing Guidance / நேர வழிகாட்டல்:**
+📊 விரிவான பலன்கள்:
+${aspectsTa}
 
-🌟 Lucky Hours / அதிர்ஷ்ட நேரம்: ${goldenTimes || "—"}
+🎨 அதிர்ஷ்ட நிறம்: ${luckyColorTa}
+🔢 அதிர்ஷ்ட எண்: ${activeMonthlyPrediction.lucky_number}
+🧭 அதிர்ஷ்ட திசை: ${activeMonthlyPrediction.lucky_direction_ta}
 
-⚠️ Caution Hours / கவனமான நேரம்: ${cautionTimes || "—"}
+🛡️ மாதாந்திர பரிகாரம்:
+${activeMonthlyPrediction.monthly_remedy_ta}
 
-🎨 Lucky Color / நிறம்: ${luckyColorBi}
+🙏 Gokul's Astrological Insights
+Gokul Murugan | Thiruverkadu`;
+      }
 
-🔢 Lucky Number / எண்: ${activePrediction.lucky_number}
+      if (shareLanguage === "en") {
+        return `Monthly Horoscope & Planetary Transit Forecast
+📅 Month: ${monthlyData.month_name_en}
 
-🧭 Lucky Direction / திசை: ${activePrediction.lucky_direction_ta} (${activePrediction.lucky_direction_en})
+${symbol} ${rNameEn} - ⭐ Monthly Favorability: ${activeMonthlyPrediction.monthly_score}% (${starsDisplay}/5 – ${sentimentEn})
 
-🛡️ **Today's Guidance / ஆலோசனை:**
+🔮 Monthly Executive Summary:
+${cleanBrief(activeMonthlyPrediction.brief_statement_en)}
 
-${activePrediction.daily_remedy_ta}
-(${activePrediction.daily_remedy_en})
+🪐 Planetary Transit Influence & Summary:
+${activeMonthlyPrediction.transit_summary.transit_overview_en}
 
-🙏 **Gokul's Astrological Insights**
-*Gokul Murugan | Thiruverkadu*`;
-  }, [activePrediction, horoscopeData, shareLanguage]);
+⚠️ Chandrashtama Dates: ${activeMonthlyPrediction.chandrashtama_dates_en}
+🌟 Auspicious Dates: ${activeMonthlyPrediction.auspicious_dates_en}
+
+📊 Life Aspects Breakdown:
+${aspectsEn}
+
+🎨 Lucky Color: ${luckyColorEn}
+🔢 Lucky Number: ${activeMonthlyPrediction.lucky_number}
+🧭 Lucky Direction: ${activeMonthlyPrediction.lucky_direction_en}
+
+🛡️ Monthly Remedy / Guidance:
+${activeMonthlyPrediction.monthly_remedy_en}
+
+🙏 Gokul's Astrological Insights
+Gokul Murugan | Thiruverkadu`;
+      }
+
+      // Monthly Bilingual
+      return `Monthly Horoscope | மாத ராசிபலன்
+📅 ${monthlyData.month_name_ta} (${monthlyData.month_name_en})
+
+${symbol} ${rNameTa} - ⭐ Score: ${activeMonthlyPrediction.monthly_score}% (${starsDisplay}/5)
+
+🔮 Monthly Outlook / மாதப் பொதுப்பலன்:
+${cleanBrief(activeMonthlyPrediction.brief_statement_ta)}
+(${cleanBrief(activeMonthlyPrediction.brief_statement_en)})
+
+🪐 Transit Overview / கோச்சார சுருக்கம்:
+${activeMonthlyPrediction.transit_summary.transit_overview_ta}
+
+⚠️ Chandrashtama / சந்திராஷ்டமம்: ${activeMonthlyPrediction.chandrashtama_dates_ta}
+🌟 Auspicious Dates / சுப தேதிகள்: ${activeMonthlyPrediction.auspicious_dates_ta}
+
+🎨 Lucky Color: ${luckyColorTa} / ${luckyColorEn} | 🔢 No: ${activeMonthlyPrediction.lucky_number}
+🧭 Direction / திசை: ${activeMonthlyPrediction.lucky_direction_ta}
+
+🛡️ Monthly Remedy / மாத பரிகாரம்:
+${activeMonthlyPrediction.monthly_remedy_ta}
+
+🙏 Gokul's Astrological Insights | Gokul Murugan`;
+    }
+
+    return "";
+  }, [
+    periodMode,
+    activeGenericPrediction,
+    activeDailyPrediction,
+    activeWeeklyPrediction,
+    activeMonthlyPrediction,
+    horoscopeData,
+    weeklyData,
+    monthlyData,
+    shareLanguage,
+  ]);
 
   const handleCopy = async () => {
     if (!miniParagraphText) return;
@@ -410,22 +726,29 @@ ${activePrediction.daily_remedy_ta}
   };
 
   const handlePostToFacebook = async (rashiTarget: string = "current") => {
-    if (!horoscopeData || !activePrediction) return;
+    if (!activeGenericPrediction) return;
     setFbPosting(true);
     setFbResult(null);
     const isAll = rashiTarget === "all";
+    const postDate =
+      periodMode === "daily"
+        ? horoscopeData?.date || todayStr
+        : periodMode === "weekly"
+        ? weeklyData?.start_date || selectedWeekDate
+        : `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`;
+
     try {
       const res = await publishToFacebookPage({
-        date: horoscopeData.date,
-        rashi: isAll ? "all" : activePrediction.rashi_name_en,
+        date: postDate,
+        rashi: isAll ? "all" : activeGenericPrediction.rashi_name_en,
       });
       if (res.success) {
         if (isAll) {
           setFbResult({
             type: "success",
             text: isTa
-              ? "12 ராசிகளின் பட அட்டைகளும் (Overview + Carousels) Facebook பக்கத்தில் பதிவிடப்பட்டன!"
-              : "All 12 Rashis published as visual Tamil cards & carousels to your Facebook Page!",
+              ? `12 ராசிகளின் ${periodMode === "weekly" ? "வார" : periodMode === "monthly" ? "மாத" : "தினசரி"} ராசிபலனும் Facebook பக்கத்தில் பதிவிடப்பட்டன!`
+              : `All 12 Rashis published to your Facebook Page!`,
           });
         } else {
           setFbResult({
@@ -459,19 +782,35 @@ ${activePrediction.daily_remedy_ta}
   const handleShareWhatsApp = (mode: "current" | "all" = "current") => {
     let textToSend = miniParagraphText;
 
-    if (mode === "all" && horoscopeData?.predictions) {
-      const formattedDateTa = formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta);
-      const listText = horoscopeData.predictions
-        .map((p) => {
+    if (mode === "all") {
+      const periodTitleTa = periodMode === "weekly" ? "வார ராசிபலன் (12 ராசிகள்)" : periodMode === "monthly" ? "மாத ராசிபலன் (12 ராசிகள்)" : "தினசரி ராசிபலன் (12 ராசிகள்)";
+      const dateHeader =
+        periodMode === "weekly"
+          ? `📅 வாரம்: ${weeklyData?.week_label_ta || ""}`
+          : periodMode === "monthly"
+          ? `📅 மாதம்: ${monthlyData?.month_name_ta || ""}`
+          : `📅 தேதி: ${horoscopeData ? formatTamilDate(horoscopeData.date, horoscopeData.day_of_week_ta) : ""}`;
+
+      const listItems: string[] = [];
+      const listData =
+        periodMode === "daily"
+          ? horoscopeData?.predictions
+          : periodMode === "weekly"
+          ? weeklyData?.predictions
+          : monthlyData?.predictions;
+
+      if (listData) {
+        for (const p of listData) {
           const rName = `${p.rashi_name_ta} (${p.rashi_name_en})`;
           const symbol = RASHI_SYMBOLS[p.rashi_id] || "✨";
-          const stars = Math.round(p.daily_rating_stars);
+          const score = (p as any).daily_score ?? (p as any).weekly_score ?? (p as any).monthly_score;
+          const stars = Math.round((p as any).daily_rating_stars ?? (p as any).weekly_rating_stars ?? (p as any).monthly_rating_stars);
           const brief = cleanBrief(p.brief_statement_ta);
-          return `${symbol} ${rName} - சாதக நிலை: ${p.daily_score}% (⭐ ${stars}/5)\n${brief}`;
-        })
-        .join("\n\n------------------------------\n\n");
+          listItems.push(`${symbol} ${rName} - சாதக நிலை: ${score}% (⭐ ${stars}/5)\n${brief}`);
+        }
+      }
 
-      textToSend = `தினசரி ராசிபலன் (12 ராசிகள்)\n📅 தேதி: ${formattedDateTa}\n\n${listText}\n\n🙏 Gokul's Astrological Insights\nGokul Murugan | Thiruverkadu`;
+      textToSend = `${periodTitleTa}\n${dateHeader}\n\n${listItems.join("\n\n------------------------------\n\n")}\n\n🙏 Gokul's Astrological Insights\nGokul Murugan | Thiruverkadu`;
     }
 
     if (!textToSend) return;
@@ -509,6 +848,38 @@ ${activePrediction.daily_remedy_ta}
     }
   };
 
+  // Helper for active predictions list to map over the 12 rashis
+  const currentRashiPredictions = useMemo(() => {
+    if (periodMode === "daily") return horoscopeData?.predictions || [];
+    if (periodMode === "weekly") return weeklyData?.predictions || [];
+    return monthlyData?.predictions || [];
+  }, [periodMode, horoscopeData, weeklyData, monthlyData]);
+
+  // Overall favorability score of active prediction
+  const activeScore = useMemo(() => {
+    if (!activeGenericPrediction) return 50;
+    if ("daily_score" in activeGenericPrediction) return activeGenericPrediction.daily_score;
+    if ("weekly_score" in activeGenericPrediction) return activeGenericPrediction.weekly_score;
+    if ("monthly_score" in activeGenericPrediction) return activeGenericPrediction.monthly_score;
+    return 50;
+  }, [activeGenericPrediction]);
+
+  const activeRatingStars = useMemo(() => {
+    if (!activeGenericPrediction) return 3.0;
+    if ("daily_rating_stars" in activeGenericPrediction) return activeGenericPrediction.daily_rating_stars;
+    if ("weekly_rating_stars" in activeGenericPrediction) return activeGenericPrediction.weekly_rating_stars;
+    if ("monthly_rating_stars" in activeGenericPrediction) return activeGenericPrediction.monthly_rating_stars;
+    return 3.0;
+  }, [activeGenericPrediction]);
+
+  const activeSentiment = useMemo(() => {
+    if (!activeGenericPrediction) return "Favorable";
+    if ("day_sentiment" in activeGenericPrediction) return activeGenericPrediction.day_sentiment;
+    if ("week_sentiment" in activeGenericPrediction) return activeGenericPrediction.week_sentiment;
+    if ("month_sentiment" in activeGenericPrediction) return activeGenericPrediction.month_sentiment;
+    return "Favorable";
+  }, [activeGenericPrediction]);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Top Breadcrumb & Hero */}
@@ -518,72 +889,267 @@ ${activePrediction.daily_remedy_ta}
             items={[
               { label: isTa ? "முகப்பு" : "Home", href: "/" },
               { label: isTa ? "ஜோதிடக் கருவிகள்" : "Tools", href: "/tools" },
-              { label: isTa ? "கே.பி. தினசரி ராசிபலன்" : "KP Daily Horoscope", href: "/tools/kp-daily-horoscope" },
+              {
+                label:
+                  periodMode === "weekly"
+                    ? isTa
+                      ? "வார ராசிபலன்"
+                      : "Weekly Horoscope"
+                    : periodMode === "monthly"
+                    ? isTa
+                      ? "மாத ராசிபலன்"
+                      : "Monthly Horoscope"
+                    : isTa
+                    ? "தினசரி ராசிபலன்"
+                    : "Daily Horoscope",
+                href: "/tools/kp-daily-horoscope",
+              },
             ]}
           />
 
           <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-                  {isTa ? "கே.பி. 249 உப-அதிபதி முறை" : "KP 249 Sub-Lord System"}
+                  {isTa ? "கே.பி. & கோச்சார முறை" : "KP & Transit Forecaster"}
                 </span>
                 <span className="text-xs text-slate-500 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {isTa ? "நிகழ்நேர கோச்சாரம்" : "Real-time Transits"}
+                  <Globe className="w-3.5 h-3.5 text-purple-500" />
+                  {isTa ? "நிகழ்நேர கிரகப் பெயர்ச்சிகள்" : "Live Planetary Transits"}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold mt-1 text-slate-900 dark:text-white">
-                {isTa ? "தினசரி கே.பி. ராசிபலன்" : "KP Daily Transit Horoscope"}
+              <h1 className="text-2xl sm:text-3xl font-bold mt-1 text-slate-900 dark:text-white flex items-center gap-2.5">
+                {periodMode === "weekly" ? (
+                  <>
+                    <CalendarDays className="w-7 h-7 text-purple-600" />
+                    <span>{isTa ? "வார ராசிபலன் & கோச்சார சுருக்கம்" : "Weekly Horoscope & Transit Prediction"}</span>
+                  </>
+                ) : periodMode === "monthly" ? (
+                  <>
+                    <Layers className="w-7 h-7 text-indigo-600" />
+                    <span>{isTa ? "மாத ராசிபலன் & கோச்சார சுருக்கம்" : "Monthly Horoscope & Transit Forecast"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-7 h-7 text-purple-600" />
+                    <span>{isTa ? "தினசரி கே.பி. ராசிபலன்" : "KP Daily Transit Horoscope"}</span>
+                  </>
+                )}
               </h1>
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-                {isTa
+                {periodMode === "weekly"
+                  ? isTa
+                    ? "12 ராசிகளுக்குமான வாராந்திர கிரகப் பெயர்ச்சிகள், கோச்சார பலன் சுருக்கம், சந்திராஷ்டமம் மற்றும் விரிவான 5 அம்ச பலன்கள்."
+                    : "Comprehensive weekly predictions for all 12 Rashis with planetary transit movements, house Gochara impacts, and Chandrashtama alerts."
+                  : periodMode === "monthly"
+                  ? isTa
+                    ? "12 ராசிகளுக்குமான மாதாந்திர சூரியன், குரு, சனி உள்ளிட்ட முக்கிய பெயர்ச்சிகள், சுப தேதிகள் மற்றும் கோச்சார தாக்கம்."
+                    : "In-depth monthly forecasts with major planetary shifts (Sun, Jupiter, Saturn, Rahu-Ketu), auspicious dates, and transit synthesis."
+                  : isTa
                   ? "சந்திரனின் 249 உப-அதிபதி கோச்சாரம் மற்றும் பாவ காரகத்துவங்களின் அடிப்படையில் துல்லியமான தினசரி வழிகாட்டுதல்."
                   : "Accurate daily predictive forecast for all 12 Rashis based on real-time Moon sub-lord ingress and KP cuspal house significations."}
               </p>
             </div>
 
-            {/* Date Quick Switcher */}
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setSelectedDate(todayStr)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  selectedDate === todayStr
-                    ? "bg-purple-600 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {isTa ? "இன்று" : "Today"}
-              </button>
-              <button
-                type="button"
-                onClick={handleTomorrow}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  selectedDate && selectedDate !== todayStr
-                    ? "bg-purple-600 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {isTa ? "நாளை" : "Tomorrow"}
-              </button>
-              <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300 dark:border-slate-700">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-200 cursor-pointer"
-                />
+            {/* PERIOD MODE TABS (Daily / Weekly / Monthly) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setPeriodMode("daily")}
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    periodMode === "daily"
+                      ? "bg-purple-600 text-white shadow-sm scale-[1.02]"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{isTa ? "தினசரி" : "Daily"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPeriodMode("weekly")}
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    periodMode === "weekly"
+                      ? "bg-purple-600 text-white shadow-sm scale-[1.02]"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  <span>{isTa ? "வார ராசிபலன்" : "Weekly"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPeriodMode("monthly")}
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    periodMode === "monthly"
+                      ? "bg-purple-600 text-white shadow-sm scale-[1.02]"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>{isTa ? "மாத ராசிபலன்" : "Monthly"}</span>
+                </button>
               </div>
+            </div>
+          </div>
+
+          {/* DATE / PERIOD NAVIGATION BAR */}
+          <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3">
+            {periodMode === "daily" ? (
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(todayStr)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                    selectedDate === todayStr
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {isTa ? "இன்று" : "Today"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTomorrow}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                    selectedDate && selectedDate !== todayStr
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {isTa ? "நாளை" : "Tomorrow"}
+                </button>
+                <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300 dark:border-slate-700">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-200 cursor-pointer"
+                  />
+                </div>
+              </div>
+            ) : periodMode === "weekly" ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={handlePrevWeek}
+                    className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    title={isTa ? "முந்தைய வாரம்" : "Previous Week"}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCurrentWeek}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/60 transition"
+                  >
+                    {isTa ? "இந்த வாரம்" : "Current Week"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextWeek}
+                    className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    title={isTa ? "அடுத்த வாரம்" : "Next Week"}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {weeklyData && (
+                  <span className="px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-xs font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5 shadow-sm">
+                    <CalendarDays className="w-3.5 h-3.5 text-purple-600" />
+                    {isTa ? weeklyData.week_label_ta : weeklyData.week_label_en}
+                  </span>
+                )}
+
+                <div className="flex items-center gap-1.5 pl-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <span className="text-[11px] text-slate-500 font-medium">{isTa ? "வாரம் மாற்ற:" : "Jump to:"}</span>
+                  <input
+                    type="date"
+                    value={selectedWeekDate}
+                    onChange={(e) => setSelectedWeekDate(e.target.value)}
+                    className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-200 cursor-pointer"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={handlePrevMonth}
+                    className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    title={isTa ? "முந்தைய மாதம்" : "Previous Month"}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCurrentMonth}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition"
+                  >
+                    {isTa ? "இந்த மாதம்" : "Current Month"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextMonth}
+                    className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    title={isTa ? "அடுத்த மாதம்" : "Next Month"}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {monthlyData && (
+                  <span className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 shadow-sm">
+                    <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                    {isTa ? monthlyData.month_name_ta : monthlyData.month_name_en}
+                  </span>
+                )}
+
+                {/* Month Picker dropdown */}
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
+                    className="bg-transparent font-medium text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                      <option key={m} value={m} className="dark:bg-slate-900">
+                        {isTa ? MONTHS_TA[m] : MONTHS_EN[m]}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+                    className="bg-transparent font-medium text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer border-l border-slate-300 dark:border-slate-700 pl-1.5"
+                  >
+                    {[2024, 2025, 2026, 2027, 2028].map((y) => (
+                      <option key={y} value={y} className="dark:bg-slate-900">
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className="text-xs text-slate-500 font-medium">
+              {isTa ? "துல்லியமான கே.பி. & எபிமெரிஸ் கணிப்பு" : "KP Ephemeris & Gochara Engine"}
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Planetary Overview Banner */}
-        {horoscopeData && (
+        {/* Planetary Overview Banner (Daily Mode) */}
+        {periodMode === "daily" && horoscopeData && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
@@ -635,6 +1201,56 @@ ${activePrediction.daily_remedy_ta}
           </div>
         )}
 
+        {/* Major Transits Highlight Bar (Weekly / Monthly Mode) */}
+        {periodMode !== "daily" && (
+          <div className="bg-gradient-to-r from-purple-950/70 via-indigo-950/70 to-slate-900 rounded-2xl p-4 sm:p-5 border border-purple-800/50 shadow-md text-white">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-600/40 text-purple-300 border border-purple-500/40">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    {periodMode === "weekly"
+                      ? isTa
+                        ? "வாராந்திர கிரகப் பெயர்ச்சி நிலைகள்"
+                        : "Planetary Transits for the Week"
+                      : isTa
+                      ? "மாதாந்திர முக்கிய கிரகப் பெயர்ச்சிகள்"
+                      : "Major Planetary Shifts of the Month"}
+                  </h3>
+                  <p className="text-xs text-purple-200 mt-0.5">
+                    {periodMode === "weekly"
+                      ? isTa
+                        ? `${weeklyData?.week_label_ta || ""} வாரத்தில் நிகழ்நேர கிரக நிலைகள் & பெயர்ச்சி சுருக்கம்.`
+                        : `Real-time transit ingresses & Gochara alignments for ${weeklyData?.week_label_en || ""}.`
+                      : isTa
+                      ? `${monthlyData?.month_name_ta || ""} மாதத்தில் சூரியன், குரு, சனி உள்ளிட்ட முக்கிய கோச்சாரம்.`
+                      : `Major transit alignments governing ${monthlyData?.month_name_en || ""}.`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Major Transits tags */}
+              <div className="flex flex-wrap items-center gap-2">
+                {((periodMode === "weekly" ? weeklyData?.major_transits : monthlyData?.major_transits) || [])
+                  .slice(0, 4)
+                  .map((tm, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-xl bg-white/10 text-[11px] font-semibold border border-white/15 text-purple-200 flex items-center gap-1.5"
+                    >
+                      <span>{PLANET_SYMBOLS[tm.planet] || "🪐"}</span>
+                      <span>
+                        {isTa ? tm.planet_ta : tm.planet}: {isTa ? tm.current_sign_ta : tm.current_sign}
+                      </span>
+                    </span>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 12 Rashis Selector Carousel / Grid */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -643,13 +1259,25 @@ ${activePrediction.daily_remedy_ta}
               {isTa ? "ராசியைத் தேர்ந்தெடுக்கவும்" : "Select Your Rashi (Moon / Lagna Sign)"}
             </h2>
             <span className="text-xs text-slate-500">
-              {isTa ? "12 ராசிகளின் கே.பி. கணிப்பு" : "12 Signs Available"}
+              {periodMode === "weekly"
+                ? isTa
+                  ? "12 ராசிகளின் வார ராசிபலன்"
+                  : "Weekly Predictions for All 12 Signs"
+                : periodMode === "monthly"
+                ? isTa
+                  ? "12 ராசிகளின் மாத ராசிபலன்"
+                  : "Monthly Predictions for All 12 Signs"
+                : isTa
+                ? "12 ராசிகளின் தினசரி கே.பி. கணிப்பு"
+                : "12 Signs Available"}
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-            {horoscopeData?.predictions.map((p) => {
+            {currentRashiPredictions.map((p) => {
               const isActive = p.rashi_id === activeRashiId;
+              const score = (p as any).daily_score ?? (p as any).weekly_score ?? (p as any).monthly_score ?? 50;
+
               return (
                 <button
                   key={p.rashi_id}
@@ -672,7 +1300,7 @@ ${activePrediction.daily_remedy_ta}
                         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                     }`}
                   >
-                    {p.daily_score}%
+                    {score}%
                   </span>
                 </button>
               );
@@ -685,7 +1313,17 @@ ${activePrediction.daily_remedy_ta}
           <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
             <RefreshCw className="w-8 h-8 text-purple-600 animate-spin mb-3" />
             <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {isTa ? "கே.பி. உப-அதிபதி கோச்சாரம் கணக்கிடப்படுகிறது..." : "Calculating KP 249 sub-lord transits..."}
+              {periodMode === "weekly"
+                ? isTa
+                  ? "வார ராசிபலன் & கோச்சார பெயர்ச்சிகள் கணக்கிடப்படுகிறது..."
+                  : "Calculating weekly horoscope and planetary transits..."
+                : periodMode === "monthly"
+                ? isTa
+                  ? "மாத ராசிபலன் & கோச்சார பலன்கள் கணக்கிடப்படுகிறது..."
+                  : "Calculating monthly horoscope and Gochara transits..."
+                : isTa
+                ? "கே.பி. உப-அதிபதி கோச்சாரம் கணக்கிடப்படுகிறது..."
+                : "Calculating KP 249 sub-lord transits..."}
             </p>
           </div>
         )}
@@ -698,25 +1336,35 @@ ${activePrediction.daily_remedy_ta}
         )}
 
         {/* Active Prediction Main View */}
-        {!loading && activePrediction && (
+        {!loading && activeGenericPrediction && (
           <div className="space-y-8">
-            {/* 1. Daily Executive Brief Statement Hero Card */}
+            {/* 1. Executive Brief Statement Hero Card */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-950 text-white p-6 sm:p-8 shadow-xl">
               <div className="relative z-10 space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
                   <div className="flex items-center gap-3">
-                    <span className="text-4xl">{RASHI_SYMBOLS[activePrediction.rashi_id]}</span>
+                    <span className="text-4xl">{RASHI_SYMBOLS[activeGenericPrediction.rashi_id]}</span>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-2xl font-bold tracking-tight">
-                          {isTa ? activePrediction.rashi_name_ta : activePrediction.rashi_name_en}
+                          {isTa ? activeGenericPrediction.rashi_name_ta : activeGenericPrediction.rashi_name_en}
                         </h3>
                         <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/15 text-purple-200 font-medium">
-                          {isTa ? `ராசி நாதன்: ${activePrediction.sign_lord}` : `Lord: ${activePrediction.sign_lord}`}
+                          {isTa ? `ராசி நாதன்: ${activeGenericPrediction.sign_lord}` : `Lord: ${activeGenericPrediction.sign_lord}`}
                         </span>
                       </div>
                       <p className="text-xs text-purple-200 mt-0.5">
-                        {isTa ? "இன்றைய தினசரி கே.பி. வழிகாட்டல்" : "Today's KP Executive Brief"}
+                        {periodMode === "weekly"
+                          ? isTa
+                            ? `வார ராசிபலன் வழிகாட்டல் (${weeklyData?.week_label_ta || ""})`
+                            : `Weekly Forecast (${weeklyData?.week_label_en || ""})`
+                          : periodMode === "monthly"
+                          ? isTa
+                            ? `மாத ராசிபலன் வழிகாட்டல் (${monthlyData?.month_name_ta || ""})`
+                            : `Monthly Forecast (${monthlyData?.month_name_en || ""})`
+                          : isTa
+                          ? "இன்றைய தினசரி கே.பி. வழிகாட்டல்"
+                          : "Today's KP Executive Brief"}
                       </p>
                     </div>
                   </div>
@@ -724,20 +1372,30 @@ ${activePrediction.daily_remedy_ta}
                   <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15">
                     <div>
                       <p className="text-[11px] text-purple-200 uppercase font-semibold">
-                        {isTa ? "சாதக நிலை" : "Day Favorability"}
+                        {periodMode === "weekly"
+                          ? isTa
+                            ? "வார சாதக நிலை"
+                            : "Week Favorability"
+                          : periodMode === "monthly"
+                          ? isTa
+                            ? "மாத சாதக நிலை"
+                            : "Month Favorability"
+                          : isTa
+                          ? "சாதக நிலை"
+                          : "Day Favorability"}
                       </p>
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-extrabold text-amber-300">
-                          {activePrediction.daily_score}%
+                          {activeScore}%
                         </span>
                         <div className="flex items-center text-amber-300 text-sm">
                           <Star className="w-4 h-4 fill-amber-300" />
-                          <span className="ml-1 text-xs font-bold text-white">{activePrediction.daily_rating_stars}</span>
+                          <span className="ml-1 text-xs font-bold text-white">{activeRatingStars}</span>
                         </div>
                       </div>
                     </div>
                     <span className="px-3 py-1 rounded-xl text-xs font-bold uppercase bg-white/20 text-white">
-                      {activePrediction.day_sentiment}
+                      {activeSentiment}
                     </span>
                   </div>
                 </div>
@@ -746,10 +1404,20 @@ ${activePrediction.daily_remedy_ta}
                 <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15 space-y-2">
                   <p className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
                     <Flame className="w-4 h-4 text-amber-300" />
-                    {isTa ? "இன்றைய முக்கிய தாரக மந்திரம் / ஒரு வரி சுருக்கம்" : "Core Daily Punchline"}
+                    {periodMode === "weekly"
+                      ? isTa
+                        ? "வாரத்தின் முக்கிய தாரக மந்திரம் / பொதுப்பலன்"
+                        : "Weekly Executive Punchline"
+                      : periodMode === "monthly"
+                      ? isTa
+                        ? "மாதாந்திர முக்கிய தாரக மந்திரம் / பொதுப்பலன்"
+                        : "Monthly Executive Punchline"
+                      : isTa
+                      ? "இன்றைய முக்கிய தாரக மந்திரம் / ஒரு வரி சுருக்கம்"
+                      : "Core Daily Punchline"}
                   </p>
                   <p className="text-base sm:text-lg font-semibold leading-relaxed text-slate-100">
-                    "{isTa ? activePrediction.brief_statement_ta : activePrediction.brief_statement_en}"
+                    "{isTa ? activeGenericPrediction.brief_statement_ta : activeGenericPrediction.brief_statement_en}"
                   </p>
                 </div>
 
@@ -761,10 +1429,10 @@ ${activePrediction.daily_remedy_ta}
                     </div>
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-                        {isTa ? "வெற்றி வாய்ப்பு (சிறப்பான அம்சம்)" : "Peak Opportunity (Where You Win)"}
+                        {isTa ? "வெற்றி வாய்ப்பு (சிறப்பான திருப்புமுனை)" : "Peak Opportunity (Where You Win)"}
                       </h4>
                       <p className="text-xs text-slate-200 mt-1 leading-relaxed">
-                        {isTa ? activePrediction.peak_highlight_ta : activePrediction.peak_highlight_en}
+                        {isTa ? activeGenericPrediction.peak_highlight_ta : activeGenericPrediction.peak_highlight_en}
                       </p>
                     </div>
                   </div>
@@ -778,7 +1446,7 @@ ${activePrediction.daily_remedy_ta}
                         {isTa ? "கவனிக்க வேண்டிய பகுதி (தவிர்க்க வேண்டியவை)" : "Watch Out / Caution Trap"}
                       </h4>
                       <p className="text-xs text-slate-200 mt-1 leading-relaxed">
-                        {isTa ? activePrediction.caution_trap_ta : activePrediction.caution_trap_en}
+                        {isTa ? activeGenericPrediction.caution_trap_ta : activeGenericPrediction.caution_trap_en}
                       </p>
                     </div>
                   </div>
@@ -786,40 +1454,228 @@ ${activePrediction.daily_remedy_ta}
 
                 {/* Auspicious Slots & Lucky Attributes */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                    <p className="text-[11px] text-purple-200">{isTa ? "பொன்னான நேரம்" : "Golden Hours"}</p>
-                    <p className="text-xs font-bold text-amber-300 mt-0.5">{activePrediction.golden_hour_window}</p>
-                  </div>
-                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                    <p className="text-[11px] text-purple-200">{isTa ? "கவன நேரம்" : "Caution Hours"}</p>
-                    <p className="text-xs font-bold text-rose-300 mt-0.5">{activePrediction.caution_hour_window}</p>
-                  </div>
+                  {periodMode === "daily" && activeDailyPrediction ? (
+                    <>
+                      <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                        <p className="text-[11px] text-purple-200">{isTa ? "பொன்னான நேரம்" : "Golden Hours"}</p>
+                        <p className="text-xs font-bold text-amber-300 mt-0.5">{activeDailyPrediction.golden_hour_window}</p>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                        <p className="text-[11px] text-purple-200">{isTa ? "கவன நேரம்" : "Caution Hours"}</p>
+                        <p className="text-xs font-bold text-rose-300 mt-0.5">{activeDailyPrediction.caution_hour_window}</p>
+                      </div>
+                    </>
+                  ) : periodMode === "weekly" && activeWeeklyPrediction ? (
+                    <>
+                      <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                        <p className="text-[11px] text-purple-200">{isTa ? "அதிர்ஷ்ட நாட்கள்" : "Favorable Days"}</p>
+                        <p className="text-xs font-bold text-amber-300 mt-0.5">{isTa ? activeWeeklyPrediction.lucky_days_ta : activeWeeklyPrediction.lucky_days_en}</p>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                        <p className="text-[11px] text-purple-200">{isTa ? "சந்திராஷ்டம நாட்கள்" : "Caution / Chandrashtama"}</p>
+                        <p className="text-xs font-bold text-rose-300 mt-0.5">{isTa ? activeWeeklyPrediction.chandrashtama_days_ta : activeWeeklyPrediction.chandrashtama_days_en}</p>
+                      </div>
+                    </>
+                  ) : activeMonthlyPrediction ? (
+                    <>
+                      <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                        <p className="text-[11px] text-purple-200">{isTa ? "சுப தேதிகள்" : "Auspicious Dates"}</p>
+                        <p className="text-xs font-bold text-amber-300 mt-0.5">{isTa ? activeMonthlyPrediction.auspicious_dates_ta : activeMonthlyPrediction.auspicious_dates_en}</p>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                        <p className="text-[11px] text-purple-200">{isTa ? "சந்திராஷ்டம தேதிகள்" : "Chandrashtama Dates"}</p>
+                        <p className="text-xs font-bold text-rose-300 mt-0.5">{isTa ? activeMonthlyPrediction.chandrashtama_dates_ta : activeMonthlyPrediction.chandrashtama_dates_en}</p>
+                      </div>
+                    </>
+                  ) : null}
+
                   <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                     <p className="text-[11px] text-purple-200">{isTa ? "அதிர்ஷ்ட நிறம் & எண்" : "Lucky Color & No."}</p>
                     <p className="text-xs font-bold text-slate-100 mt-0.5">
-                      {isTa ? activePrediction.lucky_color_ta : activePrediction.lucky_color_en} (#{activePrediction.lucky_number})
+                      {isTa ? activeGenericPrediction.lucky_color_ta : activeGenericPrediction.lucky_color_en} (#{activeGenericPrediction.lucky_number})
                     </p>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                     <p className="text-[11px] text-purple-200">{isTa ? "அதிர்ஷ்ட திசை" : "Lucky Direction"}</p>
                     <p className="text-xs font-bold text-slate-100 mt-0.5">
-                      {isTa ? activePrediction.lucky_direction_ta : activePrediction.lucky_direction_en}
+                      {isTa ? activeGenericPrediction.lucky_direction_ta : activeGenericPrediction.lucky_direction_en}
                     </p>
                   </div>
                 </div>
 
-                {/* KP Daily Remedy */}
+                {/* Period Remedy */}
                 <div className="bg-purple-950/60 border border-purple-500/30 p-3.5 rounded-2xl flex items-center gap-3">
                   <ShieldCheck className="w-5 h-5 text-purple-300 flex-shrink-0" />
                   <p className="text-xs text-purple-200">
-                    <span className="font-bold text-white mr-1.5">{isTa ? "கே.பி. பரிகார வழிகாட்டல்:" : "KP Daily Action:"}</span>
-                    {isTa ? activePrediction.daily_remedy_ta : activePrediction.daily_remedy_en}
+                    <span className="font-bold text-white mr-1.5">
+                      {periodMode === "weekly"
+                        ? isTa
+                          ? "வார பரிகார வழிகாட்டல்:"
+                          : "Weekly Remedy & Guidance:"
+                        : periodMode === "monthly"
+                        ? isTa
+                          ? "மாதாந்திர பரிகார வழிகாட்டல்:"
+                          : "Monthly Remedy & Guidance:"
+                        : isTa
+                        ? "கே.பி. தினசரி பரிகாரம்:"
+                        : "KP Daily Action:"}
+                    </span>
+                    {periodMode === "weekly" && activeWeeklyPrediction
+                      ? isTa
+                        ? activeWeeklyPrediction.weekly_remedy_ta
+                        : activeWeeklyPrediction.weekly_remedy_en
+                      : periodMode === "monthly" && activeMonthlyPrediction
+                      ? isTa
+                        ? activeMonthlyPrediction.monthly_remedy_ta
+                        : activeMonthlyPrediction.monthly_remedy_en
+                      : activeDailyPrediction
+                      ? isTa
+                        ? activeDailyPrediction.daily_remedy_ta
+                        : activeDailyPrediction.daily_remedy_en
+                      : ""}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* 2. All 5 Life Aspects Detailed Analysis */}
+            {/* 2. PLANETARY TRANSITS & GOCHARA ANALYSIS SECTION (WEEKLY & MONTHLY) */}
+            {(periodMode === "weekly" || periodMode === "monthly") && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-purple-600" />
+                      {periodMode === "weekly"
+                        ? isTa
+                          ? "வாராந்திர கோச்சார பலன் சுருக்கம் & கிரக நிலைகள்"
+                          : "Weekly Transit Analysis & Gochara Positions"
+                        : isTa
+                        ? "மாதாந்திர கோச்சார பலன் சுருக்கம் & கிரக நிலைகள்"
+                        : "Monthly Transit Analysis & Gochara Positions"}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isTa
+                        ? "உங்கள் ராசிக்குரிய 9 கிரகங்களின் கோச்சார அமைப்புகள், சுப பலன்கள் மற்றும் எச்சரிக்கை வழிகாட்டல்."
+                        : "House-by-house planetary Gochara influence and executive transit synthesis for your sign."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Synthesis Overview Card */}
+                {("transit_summary" in activeGenericPrediction) && (
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-purple-950/40 rounded-2xl border border-purple-200 dark:border-purple-800/60 p-5 shadow-sm space-y-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        {isTa ? "கோச்சார தாக்கம் & பலன் சுருக்கம்" : "Planetary Transit Synthesis & Impact Summary"}
+                      </p>
+                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-2 leading-relaxed">
+                        {isTa
+                          ? activeGenericPrediction.transit_summary.transit_overview_ta
+                          : activeGenericPrediction.transit_summary.transit_overview_en}
+                      </p>
+                    </div>
+
+                    {/* Special Yogas & Chandrashtama Badges */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-200/50 dark:border-purple-800/50">
+                      {activeGenericPrediction.transit_summary.special_yogas_ta &&
+                        (isTa
+                          ? activeGenericPrediction.transit_summary.special_yogas_ta
+                          : activeGenericPrediction.transit_summary.special_yogas_en
+                        ).map((yoga, yIdx) => (
+                          <span
+                            key={yIdx}
+                            className="px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 text-xs font-semibold border border-purple-300 dark:border-purple-700 flex items-center gap-1"
+                          >
+                            <Award className="w-3.5 h-3.5 text-purple-600 dark:text-purple-300" />
+                            {yoga}
+                          </span>
+                        ))}
+
+                      {activeGenericPrediction.transit_summary.chandrashtama_period_ta && (
+                        <span className="px-2.5 py-1 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 text-xs font-semibold border border-rose-300 dark:border-rose-800 flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                          <span>
+                            {isTa ? "சந்திராஷ்டமம்:" : "Chandrashtama:"}{" "}
+                            {isTa
+                              ? activeGenericPrediction.transit_summary.chandrashtama_period_ta
+                              : activeGenericPrediction.transit_summary.chandrashtama_period_en}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Planetary Movements Grid */}
+                    <div className="pt-2">
+                      <p className="text-xs font-semibold text-slate-500 mb-2.5">
+                        {isTa ? "கிரகங்களின் கோச்சார ஸ்தானங்கள் & பலன்கள்:" : "Individual Planetary Placements & Influences:"}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {activeGenericPrediction.transit_summary.planet_transits.map((tm, tmIdx) => {
+                          const isFav = tm.status === "favorable";
+                          const isCaution = tm.status === "caution";
+                          return (
+                            <div
+                              key={tmIdx}
+                              className={`p-3.5 rounded-xl border transition-all ${
+                                isFav
+                                  ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
+                                  : isCaution
+                                  ? "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800"
+                                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base">{PLANET_SYMBOLS[tm.planet] || "🪐"}</span>
+                                  <div>
+                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                      {isTa ? tm.planet_ta : tm.planet}
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 ml-1.5">
+                                      ({isTa ? tm.current_sign_ta : tm.current_sign})
+                                    </span>
+                                  </div>
+                                </div>
+                                <span
+                                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                    isFav
+                                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                      : isCaution
+                                      ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                                      : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                  }`}
+                                >
+                                  {isTa
+                                    ? isFav
+                                      ? `${tm.house_relative}-ம் பாவம் (நன்மை)`
+                                      : isCaution
+                                      ? `${tm.house_relative}-ம் பாவம் (கவனம்)`
+                                      : `${tm.house_relative}-ம் பாவம் (சமம்)`
+                                    : `${tm.house_relative}th House (${tm.status})`}
+                                </span>
+                              </div>
+
+                              {tm.transit_ingress_event && (
+                                <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mb-1">
+                                  ⚡ {tm.transit_ingress_event}
+                                </p>
+                              )}
+
+                              <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+                                {isTa ? tm.impact_summary_ta : tm.impact_summary_en}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. All 5 Life Aspects Detailed Analysis */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -827,12 +1683,12 @@ ${activePrediction.daily_remedy_ta}
                   {isTa ? "அனைத்து அம்சங்களின் விரிவான பலன்கள்" : "In-Depth Life Aspects Analysis"}
                 </h3>
                 <span className="text-xs text-slate-500">
-                  {isTa ? "காரகத்துவ பாவகங்கள் அடிப்படையில்" : "Cuspal Significations Breakdown"}
+                  {isTa ? "காரகத்துவ பாவகங்கள் & கோச்சார அடிப்படையில்" : "Cuspal & Transit Breakdown"}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activePrediction.aspects.map((aspect) => (
+                {activeGenericPrediction.aspects.map((aspect) => (
                   <div
                     key={aspect.aspect_code}
                     className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 hover:border-purple-300 dark:hover:border-purple-800 transition"
@@ -888,88 +1744,90 @@ ${activePrediction.daily_remedy_ta}
               </div>
             </div>
 
-            {/* 3. Moon Sub-Lord Hourly Transit Windows */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-purple-600" />
-                    {isTa ? "சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை" : "Moon's Hourly KP Sub-Lord Schedule"}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {isTa
-                      ? "ஒவ்வொரு மணி நேரத்திலும் சந்திரனின் உப-அதிபதி மாற்றத்தால் ஏற்படும் நன்மை / எச்சரிக்கை நேரங்கள்."
-                      : "Hourly shifts in the Moon's sub-lord triggering specific house combinations for your sign."}
-                  </p>
+            {/* 4. Moon Sub-Lord Hourly Transit Windows (Daily Mode Only) */}
+            {periodMode === "daily" && activeDailyPrediction && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-purple-600" />
+                      {isTa ? "சந்திரனின் மணி நேர உப-அதிபதி கால அட்டவணை" : "Moon's Hourly KP Sub-Lord Schedule"}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isTa
+                        ? "ஒவ்வொரு மணி நேரத்திலும் சந்திரனின் உப-அதிபதி மாற்றத்தால் ஏற்படும் நன்மை / எச்சரிக்கை நேரங்கள்."
+                        : "Hourly shifts in the Moon's sub-lord triggering specific house combinations for your sign."}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      {isTa ? "பொன்னான நேரம்" : "Golden"}
+                    </span>
+                    <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      {isTa ? "கவன நேரம்" : "Caution"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    {isTa ? "பொன்னான நேரம்" : "Golden"}
-                  </span>
-                  <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-rose-500" />
-                    {isTa ? "கவன நேரம்" : "Caution"}
-                  </span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {activePrediction.moon_sub_windows.map((win, idx) => {
-                  const isGolden = win.sentiment === "golden";
-                  const isCaution = win.sentiment === "caution";
-                  return (
-                    <div
-                      key={idx}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        isGolden
-                          ? "bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800"
-                          : isCaution
-                          ? "bg-rose-50/60 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800"
-                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-purple-500" />
-                          {win.start_time} - {win.end_time}
-                        </span>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                            isGolden
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                              : isCaution
-                              ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                          }`}
-                        >
-                          {win.sentiment}
-                        </span>
-                      </div>
-
-                      <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          {win.sub_lord} Sub
-                        </span>{" "}
-                        ({win.star_name} - {win.star_lord} Star)
-                        {win.activated_houses.length > 0 && (
-                          <span className="ml-1 text-slate-500">
-                            • {isTa ? "பாவகங்கள்: " : "Houses: "}
-                            {win.activated_houses.join(", ")}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {activeDailyPrediction.moon_sub_windows.map((win, idx) => {
+                    const isGolden = win.sentiment === "golden";
+                    const isCaution = win.sentiment === "caution";
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          isGolden
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800"
+                            : isCaution
+                            ? "bg-rose-50/60 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800"
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-purple-500" />
+                            {win.start_time} - {win.end_time}
                           </span>
-                        )}
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                              isGolden
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                : isCaution
+                                ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
+                          >
+                            {win.sentiment}
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+                          <span className="font-semibold text-slate-900 dark:text-white">
+                            {win.sub_lord} Sub
+                          </span>{" "}
+                          ({win.star_name} - {win.star_lord} Star)
+                          {win.activated_houses.length > 0 && (
+                            <span className="ml-1 text-slate-500">
+                              • {isTa ? "பாவகங்கள்: " : "Houses: "}
+                              {win.activated_houses.join(", ")}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                          {isTa ? win.advice_ta : win.advice_en}
+                        </p>
                       </div>
-
-                      <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                        {isTa ? win.advice_ta : win.advice_en}
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* 4. WhatsApp / Client Shareable Mini Summary Card (Copy & Paste Model) */}
+            {/* 5. WhatsApp / Client Shareable Mini Summary Card (Copy & Paste Model) */}
             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-purple-950/40 rounded-3xl border border-purple-200 dark:border-purple-800/60 p-6 sm:p-7 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-200/60 dark:border-purple-800/60 pb-4">
                 <div className="flex items-center gap-2.5">
@@ -978,18 +1836,20 @@ ${activePrediction.daily_remedy_ta}
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      {isTa ? "வாட்ஸ்அப் / வாடிக்கையாளர் ஒருவரி சுருக்கம் (Copy & Paste)" : "Shareable Mini Paragraph Summary (Copy & Paste)"}
+                      {isTa
+                        ? `${periodMode === "weekly" ? "வார" : periodMode === "monthly" ? "மாத" : "தினசரி"} ராசிபலன் பகிர்வு (Copy & Paste)`
+                        : `Shareable ${periodMode === "weekly" ? "Weekly" : periodMode === "monthly" ? "Monthly" : "Daily"} Summary (Copy & Paste)`}
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {isTa
-                        ? "வாடிக்கையாளர்கள் அல்லது குடும்பத்தினருக்கு பகிர ஒரே கிளிக்கில் நகலெடுக்கக்கூடிய தினசரி அறிக்கை."
+                        ? "வாடிக்கையாளர்கள் அல்லது சமூக ஊடகங்களில் பகிர ஒரே கிளிக்கில் நகலெடுக்கக்கூடிய முழுமையான அறிக்கை."
                         : "One-click copy-ready format perfect for WhatsApp, SMS, or client briefings."}
                     </p>
                   </div>
                 </div>
 
                 {/* Language Format Toggle + Copy Button */}
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
                   <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
                     <button
                       type="button"
@@ -1066,16 +1926,6 @@ ${activePrediction.daily_remedy_ta}
 
                   <button
                     type="button"
-                    onClick={() => setShowFbCardPreview((prev) => !prev)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
-                    title={isTa ? "Facebook பட அட்டையைப் பார்வையிடு" : "Preview Branded Facebook Image Card"}
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span>{isTa ? "பட அட்டை பார்" : "Preview Card"}</span>
-                  </button>
-
-                  <button
-                    type="button"
                     disabled={fbPosting}
                     onClick={() => handlePostToFacebook("current")}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition active:scale-95"
@@ -1092,16 +1942,6 @@ ${activePrediction.daily_remedy_ta}
                         <span>{isTa ? "FB-ல் பதிவிடு" : "Post to Facebook"}</span>
                       </>
                     )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowFbCardPreview((prev) => !prev)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition active:scale-95"
-                    title={isTa ? "Facebook பட அட்டையைப் பார்வையிடு" : "Preview Branded Facebook Image Card"}
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span>{isTa ? "பட அட்டை பார்" : "Preview Card"}</span>
                   </button>
 
                   <button
@@ -1156,61 +1996,7 @@ ${activePrediction.daily_remedy_ta}
                 </div>
               )}
 
-              {/* Facebook Branded Image Card Preview */}
-              {showFbCardPreview && horoscopeData && activePrediction && (
-                <div className="p-4 rounded-xl bg-slate-950/90 border border-amber-500/30 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setFbCardTarget("current")}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                          fbCardTarget === "current"
-                            ? "bg-amber-500 text-slate-950"
-                            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                        }`}
-                      >
-                        {activePrediction.rashi_name_ta} ({activePrediction.rashi_name_en})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFbCardTarget("overview")}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                          fbCardTarget === "overview"
-                            ? "bg-amber-500 text-slate-950"
-                            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                        }`}
-                      >
-                        {isTa ? "12 ராசிகள் சுருக்கம் (Slide 1)" : "12-Rashi Overview"}
-                      </button>
-                    </div>
-                    <a
-                      href={getFacebookPreviewCardUrl({
-                        date: horoscopeData.date,
-                        rashi: fbCardTarget === "overview" ? "overview" : activePrediction.rashi_name_en,
-                      })}
-                      download={`raasi_palan_${fbCardTarget === "overview" ? "overview" : activePrediction.rashi_name_en.toLowerCase()}_${horoscopeData.date}.png`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-semibold text-amber-400 hover:text-amber-300 underline"
-                    >
-                      {isTa ? "PNG பதிவிறக்கு ↗" : "Open / Download PNG ↗"}
-                    </a>
-                  </div>
-                  <div className="flex justify-center">
-                    <img
-                      src={getFacebookPreviewCardUrl({
-                        date: horoscopeData.date,
-                        rashi: fbCardTarget === "overview" ? "overview" : activePrediction.rashi_name_en,
-                      })}
-                      alt={`Facebook Card Preview - ${fbCardTarget === "overview" ? "Overview" : activePrediction.rashi_name_en}`}
-                      className="max-h-[480px] w-auto rounded-xl border border-amber-500/20 shadow-lg"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* The Preformatted Text Box */}
+              {/* Preformatted Text Box */}
               <div className="relative">
                 <pre className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed shadow-inner overflow-x-auto">
                   {miniParagraphText}

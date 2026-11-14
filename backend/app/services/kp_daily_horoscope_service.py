@@ -1049,3 +1049,10 @@ def compute_kp_daily_horoscope(
         predictions=predictions,
         calculated_at=now_local.isoformat(),
     )
+
+
+# Re-export weekly & monthly calculators for unified service access
+from app.services.kp_period_horoscope_service import (
+    compute_kp_weekly_horoscope,
+    compute_kp_monthly_horoscope,
+)

@@ -92,3 +92,147 @@ class KpDailyHoroscopeResponse(BaseModel):
     total_rashis: int = Field(..., description="Count of returned rashis")
     predictions: List[RashiDailyPrediction] = Field(..., description="Daily predictions per Rashi")
     calculated_at: str = Field(..., description="ISO calculation timestamp")
+
+
+class TransitMovement(BaseModel):
+    """Planetary transit details during a weekly or monthly period."""
+    planet: str = Field(..., description="Planet name in English (e.g. Sun, Jupiter)")
+    planet_ta: str = Field(..., description="Planet name in Tamil (e.g. சூரியன், குரு)")
+    current_sign: str = Field(..., description="Zodiac sign occupied (e.g. Scorpio)")
+    current_sign_ta: str = Field(..., description="Zodiac sign occupied in Tamil (e.g. விருச்சிகம்)")
+    star_name: str = Field(..., description="Nakshatra name")
+    star_lord: str = Field(..., description="Nakshatra ruler")
+    sub_lord: str = Field(..., description="KP Sub-Lord")
+    house_relative: int = Field(..., ge=1, le=12, description="House occupied relative to this Rashi (1-12)")
+    is_favorable: bool = Field(..., description="True if transit is benefic according to Gochara rules")
+    status: str = Field(..., description="favorable | neutral | caution")
+    is_retrograde: bool = Field(default=False, description="Whether the planet is in retrograde motion")
+    transit_ingress_event: Optional[str] = Field(None, description="Notable sign change event if any during this period")
+    impact_summary_en: str = Field(..., description="Specific transit impact on this Rashi in English")
+    impact_summary_ta: str = Field(..., description="Specific transit impact on this Rashi in Tamil")
+
+
+class TransitSummaryPerRashi(BaseModel):
+    """Executive synthesis of all planetary transits and their impact on a Rashi."""
+    rashi_id: int = Field(..., ge=1, le=12)
+    rashi_name_en: str = Field(...)
+    rashi_name_ta: str = Field(...)
+    planet_transits: List[TransitMovement] = Field(default_factory=list, description="All 9 planetary positions & houses")
+    transit_overview_en: str = Field(..., description="Synthesized transit prediction narrative in English")
+    transit_overview_ta: str = Field(..., description="Synthesized transit prediction narrative in Tamil")
+    benefic_planets: List[str] = Field(default_factory=list, description="Planets delivering auspicious transit results")
+    challenging_planets: List[str] = Field(default_factory=list, description="Planets requiring vigilance or remedies")
+    chandrashtama_period_en: str = Field(..., description="Chandrashtama days/dates in English")
+    chandrashtama_period_ta: str = Field(..., description="Chandrashtama days/dates in Tamil")
+    special_yogas_en: List[str] = Field(default_factory=list, description="Special astrological formations or alerts in English")
+    special_yogas_ta: List[str] = Field(default_factory=list, description="Special astrological formations or alerts in Tamil")
+
+
+class RashiWeeklyPrediction(BaseModel):
+    """Weekly horoscope prediction for a single Rashi with transit synthesis."""
+    rashi_id: int = Field(..., ge=1, le=12)
+    rashi_name_en: str = Field(...)
+    rashi_name_ta: str = Field(...)
+    sign_lord: str = Field(...)
+    weekly_score: int = Field(..., ge=0, le=100, description="Overall favorability score 0-100")
+    weekly_rating_stars: float = Field(..., ge=1.0, le=5.0, description="Overall stars 1.0 - 5.0")
+    week_sentiment: str = Field(..., description="Excellent | Favorable | Mixed | Challenging")
+    brief_statement_en: str = Field(..., description="Weekly executive summary in English")
+    brief_statement_ta: str = Field(..., description="Weekly executive summary in Tamil")
+    peak_highlight_en: str = Field(..., description="The brightest opportunity of the week in English")
+    peak_highlight_ta: str = Field(..., description="The brightest opportunity of the week in Tamil")
+    caution_trap_en: str = Field(..., description="Key vulnerability or warning in English")
+    caution_trap_ta: str = Field(..., description="Key vulnerability or warning in Tamil")
+    lucky_days_en: str = Field(..., description="Best days of the week in English")
+    lucky_days_ta: str = Field(..., description="Best days of the week in Tamil")
+    chandrashtama_days_en: str = Field(..., description="Days requiring caution in English")
+    chandrashtama_days_ta: str = Field(..., description="Days requiring caution in Tamil")
+    lucky_color_en: str = Field(...)
+    lucky_color_ta: str = Field(...)
+    lucky_number: int = Field(...)
+    lucky_direction_en: str = Field(...)
+    lucky_direction_ta: str = Field(...)
+    weekly_remedy_en: str = Field(..., description="Weekly remedy and guidance in English")
+    weekly_remedy_ta: str = Field(..., description="Weekly remedy and guidance in Tamil")
+    aspects: List[KpAspectPrediction] = Field(default_factory=list)
+    transit_summary: TransitSummaryPerRashi = Field(..., description="Transit movements & comprehensive summary")
+
+
+class KpWeeklyHoroscopeRequest(BaseModel):
+    """Request payload for KP Weekly Horoscope."""
+    target_date: Optional[str] = Field(None, description="Any date within the target week in YYYY-MM-DD")
+    timezone: Optional[str] = Field("Asia/Kolkata")
+    latitude: Optional[float] = Field(13.0827)
+    longitude: Optional[float] = Field(80.2707)
+    rashi: Optional[str] = Field("all")
+    ayanamsa: Optional[int] = Field(1)
+
+
+class KpWeeklyHoroscopeResponse(BaseModel):
+    """Response payload containing weekly KP horoscopes & transit summaries."""
+    start_date: str = Field(..., description="Week start date (YYYY-MM-DD)")
+    end_date: str = Field(..., description="Week end date (YYYY-MM-DD)")
+    week_label_en: str = Field(..., description="e.g. Nov 16, 2026 - Nov 22, 2026")
+    week_label_ta: str = Field(..., description="e.g. 16 நவம்பர் 2026 – 22 நவம்பர் 2026")
+    ayanamsa_name: str = Field(...)
+    total_rashis: int = Field(...)
+    major_transits: List[TransitMovement] = Field(default_factory=list, description="Key planetary transit movements in the week")
+    predictions: List[RashiWeeklyPrediction] = Field(...)
+    calculated_at: str = Field(...)
+
+
+class RashiMonthlyPrediction(BaseModel):
+    """Monthly horoscope prediction for a single Rashi with transit synthesis."""
+    rashi_id: int = Field(..., ge=1, le=12)
+    rashi_name_en: str = Field(...)
+    rashi_name_ta: str = Field(...)
+    sign_lord: str = Field(...)
+    monthly_score: int = Field(..., ge=0, le=100, description="Overall favorability score 0-100")
+    monthly_rating_stars: float = Field(..., ge=1.0, le=5.0, description="Overall stars 1.0 - 5.0")
+    month_sentiment: str = Field(..., description="Excellent | Favorable | Mixed | Challenging")
+    brief_statement_en: str = Field(..., description="Monthly executive summary in English")
+    brief_statement_ta: str = Field(..., description="Monthly executive summary in Tamil")
+    peak_highlight_en: str = Field(..., description="Major breakthrough of the month in English")
+    peak_highlight_ta: str = Field(..., description="Major breakthrough of the month in Tamil")
+    caution_trap_en: str = Field(..., description="Key caution for the month in English")
+    caution_trap_ta: str = Field(..., description="Key caution for the month in Tamil")
+    auspicious_dates_en: str = Field(..., description="Auspicious dates of the month in English")
+    auspicious_dates_ta: str = Field(..., description="Auspicious dates of the month in Tamil")
+    chandrashtama_dates_en: str = Field(..., description="Chandrashtama dates in English")
+    chandrashtama_dates_ta: str = Field(..., description="Chandrashtama dates in Tamil")
+    lucky_color_en: str = Field(...)
+    lucky_color_ta: str = Field(...)
+    lucky_number: int = Field(...)
+    lucky_direction_en: str = Field(...)
+    lucky_direction_ta: str = Field(...)
+    monthly_remedy_en: str = Field(..., description="Monthly remedy and guidance in English")
+    monthly_remedy_ta: str = Field(..., description="Monthly remedy and guidance in Tamil")
+    aspects: List[KpAspectPrediction] = Field(default_factory=list)
+    transit_summary: TransitSummaryPerRashi = Field(..., description="Transit movements & comprehensive summary")
+
+
+class KpMonthlyHoroscopeRequest(BaseModel):
+    """Request payload for KP Monthly Horoscope."""
+    year: Optional[int] = Field(None, description="Year (e.g. 2026)")
+    month: Optional[int] = Field(None, description="Month (1-12)")
+    target_date: Optional[str] = Field(None, description="Any date within the target month in YYYY-MM-DD")
+    timezone: Optional[str] = Field("Asia/Kolkata")
+    latitude: Optional[float] = Field(13.0827)
+    longitude: Optional[float] = Field(80.2707)
+    rashi: Optional[str] = Field("all")
+    ayanamsa: Optional[int] = Field(1)
+
+
+class KpMonthlyHoroscopeResponse(BaseModel):
+    """Response payload containing monthly KP horoscopes & transit summaries."""
+    year: int = Field(...)
+    month: int = Field(...)
+    start_date: str = Field(..., description="Month start date (YYYY-MM-DD)")
+    end_date: str = Field(..., description="Month end date (YYYY-MM-DD)")
+    month_name_en: str = Field(..., description="e.g. November 2026")
+    month_name_ta: str = Field(..., description="e.g. நவம்பர் 2026")
+    ayanamsa_name: str = Field(...)
+    total_rashis: int = Field(...)
+    major_transits: List[TransitMovement] = Field(default_factory=list, description="Key planetary transit movements in the month")
+    predictions: List[RashiMonthlyPrediction] = Field(...)
+    calculated_at: str = Field(...)

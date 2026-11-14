@@ -360,214 +360,18 @@ def test_startup_catchup_syncs_state_without_reposting_when_all_12_on_facebook(m
     assert state_file.is_file()
 
 
-def test_render_rashi_daily_card_png_and_overview():
-    """Verifies HarfBuzz + ReportLab + PyPDFium2 generates 1080x1350 Tamil PNG cards."""
-    from io import BytesIO
-    from PIL import Image
-    from app.services.facebook_card_renderer import (
-        render_daily_overview_card_png,
-        render_rashi_daily_card_png,
-    )
-
-    horoscope_data = compute_kp_daily_horoscope(
-        target_date="2026-11-12",
-        timezone_str="Asia/Kolkata",
-        rashi_filter="all",
-    )
-    for idx in (0, 9, 11):  # Aries, Capricorn, Pisces
-        png_bytes = render_rashi_daily_card_png(
-            horoscope_data,
-            horoscope_data.predictions[idx],
-            slide_index=idx + 1,
-            total_slides=12,
-        )
-        assert png_bytes[:8] == b"\x89PNG\r\n\x1a\n"
-        with Image.open(BytesIO(png_bytes)) as img:
-            assert img.size == (1080, 1350)
-
-    overview_png = render_daily_overview_card_png(horoscope_data)
-    assert overview_png[:8] == b"\x89PNG\r\n\x1a\n"
-    with Image.open(BytesIO(overview_png)) as img:
-        assert img.size == (1080, 1350)
-
-
-def test_facebook_preview_card_endpoint():
-    """Tests GET /api/v1/social/facebook/preview-card for both Rashi and Overview cards."""
-    from io import BytesIO
-    from PIL import Image
-
-    r1 = client.get("/api/v1/social/facebook/preview-card?date=2026-11-10&rashi=Aries")
-    assert r1.status_code == 200
-    assert r1.headers["content-type"] == "image/png"
-    with Image.open(BytesIO(r1.content)) as img:
-        assert img.size == (1080, 1350)
-
-    r2 = client.get("/api/v1/social/facebook/preview-card?date=2026-11-10&rashi=overview")
-    assert r2.status_code == 200
-    assert r2.headers["content-type"] == "image/png"
-    with Image.open(BytesIO(r2.content)) as img:
-        assert img.size == (1080, 1350)
-
-
-def test_fetch_posted_rashis_detects_carousel_posts(monkeypatch):
-    """Detects all 4 Rashis inside a single carousel feed post and ignores overview-only header."""
-    import asyncio
-    from app.config import settings
-    from app.services import facebook_publisher
-
-    class _FakeResponse:
-        status_code = 200
-
-        def json(self):
-            return {
-                "data": [
-                    {
-                        "id": "page_overview",
-                        "created_time": "2026-11-12T00:34:00+0000",
-                        "message": "தினசரி ராசிபலன் – 12 ராசிகள் சுருக்கம்\n📅 தேதி: 12 நவம்பர் 2026 – வியாழக்கிழமை",
-                    },
-                    {
-                        "id": "page_carousel_1",
-                        "created_time": "2026-11-12T00:35:00+0000",
-                        "message": (
-                            "தினசரி ராசிபலன் (மேஷம் – கடகம்) [1/3]\n"
-                            "📅 தேதி: 12 நவம்பர் 2026 – வியாழக்கிழமை\n\n"
-                            "♈ மேஷம் (Aries) - ⭐ 25%\n"
-                            "♉ ரிஷபம் (Taurus) - ⭐ 63%\n"
-                            "♊ மிதுனம் (Gemini) - ⭐ 53%\n"
-                            "♋ கடகம் (Cancer) - ⭐ 62%"
-                        ),
-                    },
-                ]
-            }
-
-    class _FakeAsyncClient:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            return False
-
-        async def get(self, url, params=None):
-            return _FakeResponse()
-
-    monkeypatch.setattr(settings, "fb_page_id", "1408545542343822")
-    monkeypatch.setattr(settings, "fb_page_access_token", "fake-token")
-    monkeypatch.setattr(facebook_publisher.httpx, "AsyncClient", _FakeAsyncClient)
-
-    posted, overview_seen = asyncio.run(facebook_publisher._fetch_feed_state_for_date("2026-11-12"))
-    assert overview_seen is True
-    assert set(posted.keys()) == {"aries", "taurus", "gemini", "cancer"}
-    assert posted["cancer"]["post_id"] == "page_carousel_1"
-
-
-def test_post_all_12_carousel_mode_publishes_overview_and_3_groups(monkeypatch):
-    """Default carousel mode publishes 1 Overview card + 3 carousels of 4 Rashis each."""
+def test_single_rashi_posts_text(monkeypatch):
+    """Single-Rashi publish generates Tamil text post and publishes via post_to_facebook."""
     import asyncio
     from app.services import facebook_publisher
 
-    photo_calls = []
-    carousel_calls = []
+    posted_messages = []
 
-    async def _fake_fetch(target_date, **kwargs):
-        return {}
+    async def _fake_post_text(message, **kwargs):
+        posted_messages.append(message)
+        return {"success": True, "post_id": "fb_aries_txt", "fb_url": "https://www.facebook.com/fb_aries_txt"}
 
-    async def _fake_feed_state(target_date, **kwargs):
-        return {}, False
-
-    async def _fake_post_photo(image_bytes, caption, filename="card.png", published=True, **kwargs):
-        photo_calls.append({"size": len(image_bytes), "filename": filename, "caption": caption})
-        return {"success": True, "post_id": "fb_overview_1", "fb_url": "https://www.facebook.com/fb_overview_1"}
-
-    async def _fake_post_carousel(photos, message, **kwargs):
-        carousel_calls.append({"count": len(photos), "message": message, "filenames": [p[1] for p in photos]})
-        pid = f"fb_car_{len(carousel_calls)}"
-        return {"success": True, "post_id": pid, "fb_url": f"https://www.facebook.com/{pid}"}
-
-    monkeypatch.setattr(facebook_publisher, "fetch_posted_rashis_for_date", _fake_fetch)
-    monkeypatch.setattr(facebook_publisher, "_fetch_feed_state_for_date", _fake_feed_state)
-    monkeypatch.setattr(facebook_publisher, "post_photo_to_facebook", _fake_post_photo)
-    monkeypatch.setattr(facebook_publisher, "post_carousel_to_facebook", _fake_post_carousel)
-
-    res = asyncio.run(
-        facebook_publisher.post_all_12_raasi_palans(
-            target_date="2026-11-12",
-            delay_seconds=0,
-            dry_run=False,
-            skip_if_already_posted=True,
-            post_mode="carousel",
-        )
-    )
-    assert res["success"] is True
-    assert res["post_mode"] == "carousel"
-    assert res["total_attempted"] == 12
-    assert res["successful_posts"] == 12
-    assert res["newly_posted"] == 12
-    assert res["failed_posts"] == 0
-    assert len(photo_calls) == 1
-    assert "12 ராசிகள் சுருக்கம்" in photo_calls[0]["caption"]
-    assert len(carousel_calls) == 3
-    assert [c["count"] for c in carousel_calls] == [4, 4, 4]
-
-
-def test_post_all_12_carousel_mode_skips_completed_group(monkeypatch):
-    """If Group 1 (Aries-Cancer) is already posted, skips Overview + Group 1 and publishes only Groups 2 & 3."""
-    import asyncio
-    from app.services import facebook_publisher
-
-    photo_calls = []
-    carousel_calls = []
-
-    async def _fake_fetch(target_date, **kwargs):
-        return {
-            name: {"post_id": "fb_car_1", "fb_url": "https://www.facebook.com/fb_car_1"}
-            for name in ("aries", "taurus", "gemini", "cancer")
-        }
-
-    async def _fake_post_photo(image_bytes, caption, **kwargs):
-        photo_calls.append(caption)
-        return {"success": True, "post_id": "fb_p", "fb_url": "https://www.facebook.com/fb_p"}
-
-    async def _fake_post_carousel(photos, message, **kwargs):
-        carousel_calls.append(len(photos))
-        pid = f"fb_car_{len(carousel_calls) + 1}"
-        return {"success": True, "post_id": pid, "fb_url": f"https://www.facebook.com/{pid}"}
-
-    monkeypatch.setattr(facebook_publisher, "fetch_posted_rashis_for_date", _fake_fetch)
-    monkeypatch.setattr(facebook_publisher, "post_photo_to_facebook", _fake_post_photo)
-    monkeypatch.setattr(facebook_publisher, "post_carousel_to_facebook", _fake_post_carousel)
-
-    res = asyncio.run(
-        facebook_publisher.post_all_12_raasi_palans(
-            target_date="2026-11-12",
-            delay_seconds=0,
-            dry_run=False,
-            skip_if_already_posted=True,
-            post_mode="carousel",
-        )
-    )
-    assert res["success"] is True
-    assert res["skipped_existing"] == 4
-    assert res["newly_posted"] == 8
-    assert len(photo_calls) == 0
-    assert carousel_calls == [4, 4]
-
-
-def test_single_rashi_defaults_to_image_card(monkeypatch):
-    """Single-Rashi publish renders a PNG card and uploads via post_photo_to_facebook."""
-    import asyncio
-    from app.services import facebook_publisher
-
-    uploaded = []
-
-    async def _fake_post_photo(image_bytes, caption, filename="card.png", **kwargs):
-        uploaded.append((image_bytes, caption, filename))
-        return {"success": True, "post_id": "fb_aries_img", "fb_url": "https://www.facebook.com/fb_aries_img"}
-
-    monkeypatch.setattr(facebook_publisher, "post_photo_to_facebook", _fake_post_photo)
+    monkeypatch.setattr(facebook_publisher, "post_to_facebook", _fake_post_text)
 
     res = asyncio.run(
         facebook_publisher.generate_and_post_daily_raasi_palan(
@@ -577,8 +381,47 @@ def test_single_rashi_defaults_to_image_card(monkeypatch):
         )
     )
     assert res["success"] is True
-    assert res["post_mode"] == "image"
-    assert res["post_id"] == "fb_aries_img"
-    assert len(uploaded) == 1
-    assert uploaded[0][0][:8] == b"\x89PNG\r\n\x1a\n"
-    assert "மேஷம் (Aries)" in uploaded[0][1]
+    assert res["post_mode"] == "text"
+    assert res["post_id"] == "fb_aries_txt"
+    assert len(posted_messages) == 1
+    assert "மேஷம் (Aries)" in posted_messages[0]
+    assert "தினசரி ராசிபலன்" in posted_messages[0]
+
+
+def test_post_all_12_publishes_all_rashis_as_text(monkeypatch):
+    """Batch publishing posts all 12 Rashis as individual Tamil text posts."""
+    import asyncio
+    from app.services import facebook_publisher
+
+    posted_messages = []
+
+    async def _fake_fetch(target_date, **kwargs):
+        return {}
+
+    async def _fake_post_text(message, **kwargs):
+        posted_messages.append(message)
+        pid = f"fb_txt_{len(posted_messages)}"
+        return {"success": True, "post_id": pid, "fb_url": f"https://www.facebook.com/{pid}"}
+
+    monkeypatch.setattr(facebook_publisher, "fetch_posted_rashis_for_date", _fake_fetch)
+    monkeypatch.setattr(facebook_publisher, "post_to_facebook", _fake_post_text)
+
+    res = asyncio.run(
+        facebook_publisher.post_all_12_raasi_palans(
+            target_date="2026-11-12",
+            delay_seconds=0,
+            dry_run=False,
+            skip_if_already_posted=True,
+            post_mode="text",
+        )
+    )
+    assert res["success"] is True
+    assert res["post_mode"] == "text"
+    assert res["total_attempted"] == 12
+    assert res["successful_posts"] == 12
+    assert res["newly_posted"] == 12
+    assert res["failed_posts"] == 0
+    assert len(posted_messages) == 12
+    assert any("மேஷம்" in m for m in posted_messages)
+    assert any("மீனம்" in m for m in posted_messages)
+
