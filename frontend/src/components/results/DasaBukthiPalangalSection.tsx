@@ -22,7 +22,6 @@ import {
   GkTransitAnalysisResult,
 } from "@/lib/gk-transit-engine";
 import { GkTransitMatchingCard } from "@/components/results/GkTransitMatchingCard";
-import { Recent15DayPastEventsCard } from "@/components/results/Recent15DayPastEventsCard";
 import { MarcBoneyMilestonesCard } from "@/components/results/MarcBoneyMilestonesCard";
 import {
   Sparkles,
@@ -313,14 +312,6 @@ export function DasaBukthiPalangalSection({
           </div>
         </div>
       </div>
-
-      {/* 1b. Recent 15-Day Past Events Flashback & Client Verification */}
-      <Recent15DayPastEventsCard
-        horoscope={horoscope}
-        dasa={dasa}
-        liveTransits={liveTransits}
-        defaultExpanded={true}
-      />
 
       {/* 2. Interactive Navigator with Level Mode Switcher */}
       <div className="rounded-xl border border-[#D9DEE7] bg-white p-4 shadow-2xs space-y-4">

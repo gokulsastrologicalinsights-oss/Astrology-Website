@@ -32,7 +32,6 @@ import { AshtakavargaSection } from "@/components/results/AshtakavargaSection";
 import { AstrologicalPredictionsSection } from "@/components/results/AstrologicalPredictionsSection";
 import { DasaBukthiPalangalSection } from "@/components/results/DasaBukthiPalangalSection";
 import { GkTransitMatchingCard } from "@/components/results/GkTransitMatchingCard";
-import { Recent15DayPastEventsCard } from "@/components/results/Recent15DayPastEventsCard";
 import { MarcBoneyMilestonesCard } from "@/components/results/MarcBoneyMilestonesCard";
 import { GemstoneDownload } from "@/components/results/GemstoneDownload";
 import { BrighuNaadiSection } from "@/components/results/BrighuNaadiSection";
@@ -1345,13 +1344,6 @@ function HoroscopeResultsContent() {
           {/* MAIN TAB 1: HOROSCOPE */}
           {mainTab === "horoscope" && (
             <div className="space-y-5">
-              {/* Recent 15-Day Past Events Flashback & Client Verification */}
-              <Recent15DayPastEventsCard
-                horoscope={horoscope}
-                dasa={dasa}
-                liveTransits={liveTransitsData}
-              />
-
               {/* Secondary Tabs (Screenshot 3 Reference: ஜாதகம் | உண்மைகள் | கிரக நிலைகள் | தசா புத்தி | அஷ்டகவர்க பலன்கள் | யோகங்கள் | விதி அட்டை) */}
               <div className="flex items-center gap-2 border-b border-[#D9DEE7] overflow-x-auto pb-0.5 text-xs font-semibold">
                 <button
