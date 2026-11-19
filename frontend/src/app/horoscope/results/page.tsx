@@ -37,6 +37,7 @@ import { GemstoneDownload } from "@/components/results/GemstoneDownload";
 import { BrighuNaadiSection } from "@/components/results/BrighuNaadiSection";
 import { NatchathiraAnalysisSection } from "@/components/results/NatchathiraAnalysisSection";
 import { KnRaoAdvancedPredictionsSection } from "@/components/results/KnRaoAdvancedPredictionsSection";
+import { PlanetaryHousePredictionsSection } from "@/components/results/PlanetaryHousePredictionsSection";
 import { calculateKnRaoResearch } from "@/lib/api";
 import { KnRaoAdvancedResearchResponse, HoroscopeRequest } from "@/lib/types";
 import { AstrologerCockpit } from "@/components/results/AstrologerCockpit";
@@ -88,6 +89,7 @@ import {
   Star,
   Radio,
   Gem,
+  Crown,
 } from "lucide-react";
 
 function HoroscopeResultsContent() {
@@ -114,11 +116,14 @@ function HoroscopeResultsContent() {
   // Main Tabs: "horoscope" (ஜாதகம்) | "consultation" (ஆலோசனை) | "reports" (அறிக்கைகள் மற்றும் பதிவிறக்கங்கள்)
   const [mainTab, setMainTab] = useState<"horoscope" | "consultation" | "reports">("horoscope");
 
-  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi" | "natchathira" | "kn-rao"
+  // Secondary Tabs under Horoscope: "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "sthana-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi" | "natchathira" | "kn-rao"
   const [secondaryTab, setSecondaryTab] = useState<
-    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi" | "natchathira" | "kn-rao"
+    "chart" | "facts" | "planets" | "dasa" | "dasa-palangal" | "sthana-palangal" | "transits" | "milestones" | "ashtakavarga" | "yogas" | "medical" | "doshas" | "gemstone-download" | "brighu-naadi" | "natchathira" | "kn-rao"
   >(() => {
-    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download", "brighu-naadi", "natchathira", "kn-rao"];
+    const validSecondary = ["chart", "facts", "planets", "dasa", "dasa-palangal", "sthana-palangal", "transits", "milestones", "ashtakavarga", "yogas", "medical", "doshas", "gemstone-download", "brighu-naadi", "natchathira", "kn-rao"];
+    if (tabParam && ["sthana", "sthana-palangal", "sthana_palangal", "house-predictions", "house-placement", "house_placements", "raman"].includes(tabParam.toLowerCase())) {
+      return "sthana-palangal";
+    }
     if (tabParam && (validSecondary.includes(tabParam) || ["dasa_palangal", "palangal", "dasa-bukthi-palangal"].includes(tabParam))) {
       return (tabParam === "dasa_palangal" || tabParam === "palangal" || tabParam === "dasa-bukthi-palangal") ? "dasa-palangal" : (tabParam as any);
     }
@@ -1410,6 +1415,24 @@ function HoroscopeResultsContent() {
 
                 <button
                   type="button"
+                  onClick={() => setSecondaryTab("sthana-palangal")}
+                  className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
+                    secondaryTab === "sthana-palangal"
+                      ? "border-b-2 border-[#B4872B] text-[#153F6B] font-bold bg-[#FAF2DE]/40"
+                      : "text-[#153F6B] hover:text-[#B4872B] font-bold"
+                  }`}
+                  title={
+                    language === "ta"
+                      ? "கிரகங்களின் ஸ்தான பலன்கள் (டாக்டர் பி. வி. ராமன் & சாராவளி முறை)"
+                      : "Planetary House Placement Predictions (Dr. B. V. Raman & Saravali)"
+                  }
+                >
+                  <Crown className="w-3.5 h-3.5 text-[#B4872B]" />
+                  <span>{language === "ta" ? "கிரக ஸ்தான பலன்கள்" : "House Placements"}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSecondaryTab("transits")}
                   className={`pb-2 px-3 transition-all cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5 ${
                     secondaryTab === "transits"
@@ -1843,6 +1866,12 @@ function HoroscopeResultsContent() {
                     </button>
                   </div>
 
+                  {/* Planetary House Placement Predictions (Dr. B. V. Raman System) directly below charts */}
+                  <PlanetaryHousePredictionsSection
+                    horoscope={horoscope}
+                    language={language}
+                  />
+
                   {/* Astrological Conditions & Predictions Engine directly below D1 & D9 charts */}
                   <AstrologicalPredictionsSection
                     horoscopeResult={result}
@@ -1955,6 +1984,16 @@ function HoroscopeResultsContent() {
                     liveTransits={liveTransitsData}
                     isLoadingTransits={isLoadingTransits}
                     onFetchTransits={fetchLiveTransits}
+                  />
+                </div>
+              )}
+
+              {/* Sub-Tab 4b-2: PLANETARY HOUSE PLACEMENT PREDICTIONS (Dr. B. V. Raman & Classical Saravali) */}
+              {secondaryTab === "sthana-palangal" && (
+                <div className="max-w-7xl mx-auto w-full space-y-4">
+                  <PlanetaryHousePredictionsSection
+                    horoscope={horoscope}
+                    language={language}
                   />
                 </div>
               )}
