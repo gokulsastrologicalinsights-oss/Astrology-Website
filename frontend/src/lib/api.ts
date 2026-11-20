@@ -268,6 +268,7 @@ import {
 
   MarriageCompatibilityPdfReportRequest,
   SinglePageHoroscopePdfRequest,
+  HoroscopePdfReportRequest,
 
   SavedHoroscopeWritingListResponse,
 
@@ -4917,6 +4918,44 @@ export async function downloadMarriageCompatibilityPdf(
  * 23b. Life Partner & Spouse Prediction (POST /api/v1/predictions/spouse)
 
  */
+
+/**
+ * 23aa. Download Comprehensive 9-Page Vedic Horoscope PDF Report (POST /api/v1/reports/horoscope/pdf)
+ */
+export async function downloadComprehensiveHoroscopePdf(
+  req: HoroscopePdfReportRequest,
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return requestBlob("/api/v1/reports/horoscope/pdf", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+/**
+ * 23ab. Download Saved Comprehensive 9-Page Vedic Horoscope PDF Report (GET /api/v1/reports/horoscope/pdf/{id})
+ */
+export async function downloadSavedComprehensiveHoroscopePdf(
+  horoscopeId: string,
+  language = "en",
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return requestBlob(
+    `/api/v1/reports/horoscope/pdf/${encodeURIComponent(horoscopeId)}?language=${encodeURIComponent(language)}`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeaders,
+      },
+    }
+  );
+}
 
 /**
  * 23c. Download 1-Page Traditional Tamil Horoscope PDF (POST /api/v1/reports/horoscope/single-page-pdf)

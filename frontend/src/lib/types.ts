@@ -7237,6 +7237,22 @@ export interface SinglePageHoroscopePdfRequest {
   font_family?: string;
 }
 
+export interface HoroscopePdfReportRequest {
+  birth_input?: {
+    birth_date: string;
+    birth_time: string;
+    timezone: string;
+    latitude: number;
+    longitude: number;
+  };
+  saved_horoscope_id?: string;
+  native_name?: string;
+  gender?: string;
+  language?: "en" | "ta" | string;
+  ayanamsa?: number;
+  house_system?: number;
+}
+
 
 
 // ============================================================================

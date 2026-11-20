@@ -43,6 +43,7 @@ import { KnRaoAdvancedResearchResponse, HoroscopeRequest } from "@/lib/types";
 import { AstrologerCockpit } from "@/components/results/AstrologerCockpit";
 import {
   downloadSinglePageHoroscopePdf,
+  downloadComprehensiveHoroscopePdf,
   calculateNabhasha,
   calculateAshtakavarga,
   calculateVedicYogas,
@@ -343,6 +344,52 @@ function HoroscopeResultsContent() {
   // Notes Modal state
 
   const [isDownloadingSinglePdf, setIsDownloadingSinglePdf] = useState<boolean>(false);
+  const [isDownloadingComprehensivePdf, setIsDownloadingComprehensivePdf] = useState<boolean>(false);
+  const [comprehensivePdfLang, setComprehensivePdfLang] = useState<"en" | "ta">("en");
+
+  const handleDownloadComprehensivePdf = async (reqLang?: "en" | "ta") => {
+    const langToUse = reqLang || comprehensivePdfLang;
+    try {
+      setIsDownloadingComprehensivePdf(true);
+      const bDate = clientInputs?.birthDate || (horoscope?.metadata ? horoscope.metadata.birth_utc_iso.split("T")[0] : "");
+      const bTime = clientInputs?.birthTime || (horoscope?.metadata ? horoscope.metadata.birth_utc_iso.split("T")[1]?.slice(0, 8) : "12:00:00");
+      const lat = clientInputs?.latitude ?? (horoscope?.metadata?.coordinates?.latitude ?? 13.0827);
+      const lon = clientInputs?.longitude ?? (horoscope?.metadata?.coordinates?.longitude ?? 80.2707);
+      const tz = clientInputs?.timezone || horoscope?.metadata?.local_timezone || "Asia/Kolkata";
+
+      const blob = await downloadComprehensiveHoroscopePdf({
+        birth_input: {
+          birth_date: bDate,
+          birth_time: bTime.length === 5 ? `${bTime}:00` : bTime,
+          timezone: tz,
+          latitude: Number(lat),
+          longitude: Number(lon),
+        },
+        saved_horoscope_id: idParam || (result as any)?.savedId || undefined,
+        native_name: clientInputs?.fullName || (result as any)?.clientInputs?.fullName || "Native",
+        gender: clientInputs?.gender || "male",
+        language: langToUse,
+        ayanamsa: clientInputs?.ayanamsaId ?? 0,
+        house_system: clientInputs?.houseSystemId ?? 0,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cleanName = (clientInputs?.fullName || "Horoscope").replace(/\s+/g, "_");
+      a.download = `Comprehensive_Vedic_Horoscope_${cleanName}_${langToUse.toUpperCase()}_9Pages.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Failed to download 9-page comprehensive Vedic horoscope PDF:", err);
+      alert(language === "ta" ? "9-பக்க விரிவான ஜாதக PDF பதிவிறக்கம் செய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்." : "Failed to download 9-Page Comprehensive Vedic Report. Please try again.");
+    } finally {
+      setIsDownloadingComprehensivePdf(false);
+    }
+  };
+
   const [selectedPdfFont, setSelectedPdfFont] = useState<string>("auto");
 
   const handleDownloadSinglePagePdf = async () => {
@@ -1130,6 +1177,34 @@ function HoroscopeResultsContent() {
               <FileText className="w-3.5 h-3.5 text-[#B4872B]" />
               <span>{language === "ta" ? "குறிப்புகள்" : "Notes"}</span>
             </button>
+
+            {/* 9-Page Comprehensive Vedic PDF Download Action */}
+            <div className="relative inline-flex items-center rounded-lg border border-[#B4872B] bg-gradient-to-r from-[#153F6B] to-[#1E568F] text-white shadow-2xs overflow-hidden">
+              <button
+                type="button"
+                onClick={() => handleDownloadComprehensivePdf(language === "ta" ? "ta" : "en")}
+                disabled={isDownloadingComprehensivePdf}
+                title={language === "ta" ? "9-பக்க விரிவான வேத ஜாதக PDF அறிக்கை பதிவிறக்கம்" : "Download 9-Page Comprehensive Vedic Horoscope PDF"}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold hover:bg-black/15 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isDownloadingComprehensivePdf ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                )}
+                <span>{language === "ta" ? "9-பக்க விரிவான PDF" : "9-Page Vedic PDF"}</span>
+              </button>
+              <div className="h-4 w-[1px] bg-white/20" />
+              <button
+                type="button"
+                onClick={() => handleDownloadComprehensivePdf(language === "ta" ? "en" : "ta")}
+                disabled={isDownloadingComprehensivePdf}
+                title={language === "ta" ? "Download in English (9-Page PDF)" : "தமிழில் பதிவிறக்கு (9 பக்கங்கள்)"}
+                className="px-2 py-1.5 text-[10px] font-bold text-amber-200 hover:text-white hover:bg-black/15 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {language === "ta" ? "EN" : "தமிழ்"}
+              </button>
+            </div>
 
             {/* Single-Page Traditional Tamil PDF Download Button */}
             <button
@@ -2192,6 +2267,76 @@ function HoroscopeResultsContent() {
           {mainTab === "reports" && (
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 0A. Comprehensive 9-Page Vedic Horoscope Report (English / Tamil) */}
+                <div className="bg-gradient-to-b from-[#FAF2DE] to-white rounded-xl border-2 border-[#B4872B] p-5 shadow-sm space-y-3 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-[#B4872B] text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-bl shadow-2xs">
+                    {language === "ta" ? "முழுமையான 9 பக்கங்கள்" : "PREMIUM 9-PAGES"}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-10 h-10 rounded-lg bg-[#FAF2DE] border border-[#B4872B]/40 flex items-center justify-center text-[#B4872B]">
+                      <Sparkles className="w-5 h-5 text-[#B4872B]" />
+                    </div>
+                    <h3 className="font-bold text-sm text-[#183047]">
+                      {language === "ta" ? "9-பக்க விரிவான வேத ஜாதக அறிக்கை" : "9-Page Comprehensive Vedic Report"}
+                    </h3>
+                    <p className="text-xs text-[#52667E] leading-relaxed">
+                      {language === "ta"
+                        ? "சுத்த திருக்கணித முறையில் ராசி, நவாம்சம், தசாம்சம் (D10), சப்தவர்க்க பலம், ஷட்பலம் 6 அடுக்குகள், அஷ்டகவர்க்கம் (337 பிந்துக்கள்), 60+ யோகங்கள் & பங்கங்கள், தோஷங்கள் (செவ்வாய், காலசர்ப்பம், ஏழரை சனி) மற்றும் பரிகாரங்களுடன் கூடிய பிரத்யேக வெக்டார் PDF அறிக்கை."
+                        : "Vector PDF with D1 Rasi, D9 Navamsa, D10 Dasamsa, Shodashvarga, complete 6-fold Shadbala, Ashtakavarga 337-bindu invariant, 60+ Yogas with cancellations, Doshas (Kuja, Kaal Sarp, Sadesati), Vimshottari Dasa timeline, and Shastric remedies."}
+                    </p>
+
+                    <div className="pt-2 space-y-1.5">
+                      <label className="text-[10px] font-semibold text-[#52667E] block">
+                        {language === "ta" ? "அறிக்கை மொழி (Report Language):" : "Report Language:"}
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setComprehensivePdfLang("en")}
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                            comprehensivePdfLang === "en"
+                              ? "bg-[#153F6B] text-white border-[#153F6B] shadow-2xs"
+                              : "bg-white text-[#183047] border-[#D9DEE7] hover:bg-[#F2F3F5]"
+                          }`}
+                        >
+                          English
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setComprehensivePdfLang("ta")}
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                            comprehensivePdfLang === "ta"
+                              ? "bg-[#153F6B] text-white border-[#153F6B] shadow-2xs"
+                              : "bg-white text-[#183047] border-[#D9DEE7] hover:bg-[#F2F3F5]"
+                          }`}
+                        >
+                          தமிழ் (Tamil)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadComprehensivePdf()}
+                    disabled={isDownloadingComprehensivePdf}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#153F6B] to-[#1E568F] hover:from-[#0F3155] hover:to-[#153F6B] text-white text-xs font-bold shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isDownloadingComprehensivePdf ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5 text-amber-300" />
+                    )}
+                    <span>
+                      {isDownloadingComprehensivePdf
+                        ? (language === "ta" ? "உருவாக்கப்படுகிறது..." : "Generating 9-Page PDF...")
+                        : (language === "ta"
+                            ? `9-பக்க PDF பதிவிறக்கு (${comprehensivePdfLang === "ta" ? "தமிழ்" : "English"})`
+                            : `Download 9-Page PDF (${comprehensivePdfLang === "ta" ? "Tamil" : "English"})`)}
+                    </span>
+                  </button>
+                </div>
+
                 {/* 0. Single-Page Traditional Tamil Horoscope PDF */}
                 <div className="bg-white rounded-xl border-2 border-[#153F6B] p-5 shadow-2xs space-y-3 flex flex-col justify-between relative overflow-hidden">
                   <div className="absolute top-0 right-0 bg-[#153F6B] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl">
