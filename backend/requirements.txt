@@ -7,8 +7,8 @@ fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 pydantic>=2.8.0
 
-# Ephemeris & Astronomy
-pyswisseph>=2.10.3.2
+# Ephemeris & Astronomy (Native Rust clean-room engine, Apache 2.0)
+# Compiled via maturin: xalen-ephemeris (zero GPL/pyswisseph runtime dependency)
 
 # PDF Report Generation & Tamil Typography
 reportlab>=4.2.0

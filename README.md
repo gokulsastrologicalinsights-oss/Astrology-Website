@@ -57,7 +57,7 @@
 Unlike contemporary astrology apps that rely on Large Language Models (LLMs) or generative chat bots that suffer from mathematical hallucinations, **GAI is 100% deterministic and rule-based**:
 - **Zero Generative AI**: Every planetary coordinate, house cusp, dasha balance, yoga evaluation, and dosha classification is derived from pure mathematical formulas and canonical Sanskrit/Tamil shastric algorithms.
 - **Authoritative Classical Foundations**: Adheres strictly to foundational treatises including *Brihat Parasara Hora Sastra (BPHS)*, *Jataka Parijata*, *Phaladeepika*, *Saravali*, and the late Prof. K.S. Krishnamurti's 6 KP Readers.
-- **Sub-Arcsecond Astronomical Accuracy**: Powered by high-precision ephemerides (Swiss Ephemeris and the native Rust `XALEN` engine) with precise IANA timezone handling and historical Daylight Saving / War Time conversions.
+- **Sub-Arcsecond Astronomical Accuracy**: Powered exclusively by the clean-room native Rust `XALEN` engine (Apache 2.0) with precise IANA timezone handling and historical Daylight Saving / War Time conversions. Zero GPL/pyswisseph dependencies.
 
 ### Key Highlights & Capabilities
 - **Dual Astrological Paradigm**: Full, uncompromised support for both **Classical Parashari Vedic Astrology** (Whole Sign, Lahiri Chitrapaksha ayanamsa, Vimshottari dasha) and **Krishnamurti Paddhati (KP)** (Placidus unequal cusps, KP ayanamsa, 249 sub-lords, 2,193 sub-sub-lords, ABCD significators, Horary 1–249).
@@ -128,7 +128,7 @@ flowchart TD
 3. **Frontend Request Forwarding**: The Next.js frontend sends requests to `/api/v1/...`. The Next.js rewrite engine proxies this directly to the FastAPI service running at `http://127.0.0.1:8000`.
 4. **Ephemeris Calculation**:
    - Timestamps are converted into UTC and astronomical Julian Day Numbers (`swe_julday`).
-   - Planetary positions (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu, and outer planets) are calculated using Swiss Ephemeris / Rust XALEN with Lahiri or KP Ayanamsa.
+   - Planetary positions (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu, and outer planets) are calculated using the native Rust XALEN engine with Lahiri or KP Ayanamsa.
    - House cusps are projected: **Whole Sign** for classical Parashari, and **Placidus Semi-Arc** for KP.
 5. **Rule Execution & Synthesis**:
    - The appropriate engine processes the coordinates (e.g., Shadbala computes 6 planetary strengths; KP assigns 249 sub-lords and ABCD significator levels; Ashtakavarga constructs the $12 \times 8$ Prastara grid).
@@ -147,7 +147,7 @@ flowchart TD
 | **Styling & Icons** | **Tailwind CSS v4**, **Lucide React 1.59.0** | Responsive mobile/desktop layout, warm ivory/cream palette, antique-gold accents, deep navy typography. |
 | **Authentication & Session** | **@supabase/ssr 0.12.7**, **@supabase/supabase-js 2.118.0** | Cookie-based session storage, password resets, role-based admin access control, RLS token propagation. |
 | **Backend Framework** | **FastAPI 0.143.3**, **Python 3.12 / 3.13**, **Pydantic v2** | High-concurrency ASGI REST API, schema validation, rate limiting, CORS management, error handling. |
-| **High-Precision Ephemeris** | **xalen 0.6.0** (Rust PyO3), **pyswisseph 2.10.3.2** | Planetary longitudes, speeds, retrograde motions, Julian day numbers, house cusp bisection, ayanamsas. |
+| **High-Precision Ephemeris** | **xalen 0.6.0** (Native Rust PyO3, Apache 2.0) | Planetary longitudes, speeds, retrograde motions, Julian day numbers, Placidus house cusp bisection, ayanamsas. 100% commercially unencumbered. |
 | **PDF Generation Engine** | **ReportLab 5.0.1**, **Pillow 13.0**, **pypdf 6.21**, **uharfbuzz** | Fixed-layout 9-page and 6-page vector PDFs, Tamil glyph shaping, custom canvas headers/footers. |
 | **Database & Persistence** | **Supabase (PostgreSQL 15+)** | Relational schemas, Row-Level Security (RLS), trigger-based timestamp updates, foreign keys. |
 | **Testing & Quality Assurance** | **pytest 9.1**, **pytest-asyncio**, **Playwright 1.64**, Node.js test runners | 400+ backend automated tests, live browser validation, ephemeris precision verification. |
@@ -300,7 +300,7 @@ GAI-Astrology-Website/
 │   │   ├── routers/                    # 18 REST API Routers (Horoscope, KP, Dasa, etc.)
 │   │   ├── schemas/                    # Pydantic v2 request & response schemas
 │   │   └── services/                   # Core Astrological & Astronomical Business Logic
-│   │       ├── ephemeris.py            # Swiss Ephemeris / XALEN ephemeris bridge
+│   │       ├── ephemeris.py            # Native Rust XALEN ephemeris bridge
 │   │       ├── ashtakavarga_engine/    # BAV, SAV 337 invariant, Kaksha transits
 │   │       ├── dosha_engine/           # Kuja, Kaal Sarp, Sadesati, Pitru doshas
 │   │       ├── horoscope_writing/      # Traditional Tamil horoscope generator

@@ -13,7 +13,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Any, Dict, List, Optional, Tuple, Set
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-import swisseph as swe
+import xalen.swe as swe
 import xalen
 from app.schemas.kp import (
     HoraryKpRequest,

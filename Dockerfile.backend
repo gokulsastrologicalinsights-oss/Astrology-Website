@@ -45,7 +45,7 @@ FROM python:3.12-slim-bookworm AS runtime
 
 WORKDIR /app
 
-# Install runtime C libraries required by Swiss Ephemeris and ReportLab/HarfBuzz, plus curl for health checks
+# Install runtime C libraries required by ReportLab/HarfBuzz, plus curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \

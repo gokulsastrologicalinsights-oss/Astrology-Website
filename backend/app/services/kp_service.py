@@ -19,7 +19,7 @@ from app.schemas.kp import (
     HoraryKpResponse,
     HoraryDivisionDetail,
 )
-import swisseph as swe
+import xalen.swe as swe
 from app.services.timezone_utils import resolve_birth_datetime
 from app.services.kp_engine import compute_chart, BirthInfo
 from app.services.kp_engine.ephemeris import SwissEphemeris

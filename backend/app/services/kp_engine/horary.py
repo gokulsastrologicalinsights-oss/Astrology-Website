@@ -144,7 +144,7 @@ def find_armc_for_ascendant(target_trop_asc: float, latitude: float, eps: float)
     Uses a coarse sweep in 5-degree increments to bracket the target, then performs
     bisection to locate the exact ARMC within sub-micro-arcsecond tolerance.
     """
-    import swisseph as swe
+    import xalen.swe as swe
 
     target = target_trop_asc % 360.0
     best_step = 0
@@ -190,7 +190,7 @@ def compute_horary_cusps(
 
     Returns (cusps_12, ascendant, midheaven).
     """
-    import swisseph as swe
+    import xalen.swe as swe
 
     target_trop = (target_sidereal_asc + ayanamsa_val) % 360.0
     armc = find_armc_for_ascendant(target_trop, latitude, eps)
