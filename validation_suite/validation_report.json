@@ -1,10 +1,10 @@
 {
-  "execution_time_seconds": 1.374720811843872,
+  "execution_time_seconds": 1.4884417057037354,
   "environment": {
-    "python": "E:\\GAI\\Astrology Website\\.venv\\Scripts\\python.exe",
+    "python": "D:\\GAI\\Astrology Website\\.venv\\Scripts\\python.exe",
     "swisseph_version": "2.10.03",
     "swisseph_package": 20230604,
-    "xalen_location": "E:\\GAI\\Astrology Website\\xalen-ephemeris\\crates\\xalen-python\\xalen"
+    "xalen_location": "D:\\GAI\\Astrology Website\\xalen-ephemeris\\crates\\xalen-python\\xalen"
   },
   "pytest_exit_code": 0,
   "categorized_features": {

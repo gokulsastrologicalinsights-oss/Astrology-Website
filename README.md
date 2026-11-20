@@ -384,7 +384,7 @@ GAI-Astrology-Website/
 2. **Python**: Version **3.11**, **3.12**, or **3.13** (Python 3.12 recommended).
 3. **Rust Toolchain**: `rustc` and `cargo` (Required to compile the high-performance native `xalen` ephemeris module). Install via [rustup.rs](https://rustup.rs/).
 4. **C/C++ Build Tools**:
-   - *Windows*: Visual Studio Build Tools (with "Desktop development with C++" workload installed) for compiling `pyswisseph`.
+   - *Windows*: Visual Studio Build Tools (or C++ Build Tools for native wheels)
    - *Linux*: `sudo apt install build-essential python3-dev`
    - *macOS*: `xcode-select --install`
 5. **Supabase PostgreSQL Account**: A free cloud instance at [supabase.com](https://supabase.com) or a local instance running via the Supabase CLI.
@@ -786,7 +786,7 @@ npm run test:destiny-card
 ```
 
 ### Running Astronomical & Time-Oracle Validation
-To verify Swiss Ephemeris and XALEN against standard astronomical test fixtures:
+To verify the XALEN astronomical engine against standard astronomical test fixtures:
 
 ```bash
 python validation_suite/run_validation.py
@@ -828,12 +828,11 @@ maturin develop --release
 cd ../../..
 ```
 
-### Q2: `pyswisseph` fails to install with C++ compiler errors
-**Cause**: Missing C/C++ compiler required to build Python native extensions.  
+### Q2: Native Rust extension compilation issues
+**Cause**: Missing Rust toolchain or build tools.  
 **Solution**:
-- **Windows**: Install the [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select the "Desktop development with C++" workload.
-- **Linux**: Run `sudo apt-get install build-essential python3-dev`.
-- **macOS**: Run `xcode-select --install`.
+- Install `rustup` from [rustup.rs](https://rustup.rs/).
+- Run `cd xalen-ephemeris/crates/xalen-python && maturin develop --release`.
 
 ### Q3: Next.js frontend shows `CORS Error` or `Failed to fetch` when talking to backend
 **Cause**: The backend's `ALLOWED_ORIGINS` setting does not include the frontend's origin URL.  
@@ -864,10 +863,10 @@ Log in via `/login`. When calling the backend directly from external tools (e.g.
 
 ---
 
-## 12. Licensing & Attribution
+## 12. Licensing & Commercial Authorization
 
 - **Gokul's Astrological Insights**: Proprietary Software. All rights reserved.
-- **Swiss Ephemeris**: The Swiss Ephemeris (`pyswisseph`) is licensed under the GNU AGPL v3 (or commercial license from Astrodienst AG). Projects using the Swiss Ephemeris module must comply with AGPL v3 terms or acquire a commercial license.
-- **XALEN Astronomical Engine**: Clean-room native Rust ephemeris engine licensed under the Apache 2.0 / MIT license.
+- **XALEN Astronomical Engine**: Clean-room native Rust ephemeris engine licensed under the **Apache License 2.0**. Free and fully permitted for commercial SaaS, paid subscriptions, and proprietary closed-source deployment with zero GPL copyleft obligations or license fees.
+- **Frontend & Backend Stacks**: Next.js 16, React 19, FastAPI, Tailwind CSS, ReportLab, Supabase (MIT / BSD / Apache 2.0). All fully permitted for commercial use.
 - **Noto Sans Tamil Font**: Copyright Google LLC. Licensed under the [SIL Open Font License, Version 1.1](http://scripts.sil.org/OFL).
 - **Lohit Tamil Font**: Licensed under the SIL Open Font License, Version 1.1.
