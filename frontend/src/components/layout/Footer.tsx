@@ -19,9 +19,9 @@ export function Footer() {
   return (
     <footer className="w-full border-t border-[#DDE5F0] bg-white text-[#52667E] mt-auto print:hidden">
       <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand & Mission */}
-          <div className="md:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-[#B8862B]/30 shadow-xs bg-[#090d2e] shrink-0">
                 <Image
@@ -45,11 +45,11 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Quick Links (Hidden on Login Screen) */}
+          {/* Quick Links */}
           {!isLoginPage ? (
             <div>
               <h5 className="text-xs font-bold uppercase tracking-wider text-[#102A4C] mb-3">
-                {language === "ta" ? "முக்கிய வழிகாட்டல்" : "Application Navigation"}
+                {language === "ta" ? "முக்கிய வழிகாட்டல்" : "Application"}
               </h5>
               <ul className="space-y-2 text-xs">
                 <li>
@@ -99,9 +99,43 @@ export function Footer() {
             </h5>
             <ul className="space-y-2 text-xs text-[#64748B]">
               <li>{language === "ta" ? "சித்ரபக்ஷ லஹரி அயனாம்சம்" : "Lahiri (Chitrapaksha) Sidereal"}</li>
-              <li>{language === "ta" ? "கே.பி கிருஷ்ணமூர்த்தி பத்தாதி (249)" : "KP Krishnamurti Paddhati (249)"}</li>
-              <li>{language === "ta" ? "விம்சோத்தரி தசை (365.25 நாள்/ஆண்டு)" : "Vimshottari Dasa (365.25d)"}</li>
+              <li>{language === "ta" ? "கே.பி பத்தாதி (249 உப அதிபதிகள்)" : "KP Krishnamurti (249 Sub-Lords)"}</li>
+              <li>{language === "ta" ? "விம்சோத்தரி தசை (365.25 நாள்)" : "Vimshottari Dasa (365.25d)"}</li>
               <li>{language === "ta" ? "தென்/வடஇந்திய கட்ட அமைப்புகள்" : "South & North Indian Charts"}</li>
+            </ul>
+          </div>
+
+          {/* Legal & Policies (Crucial for Commercial Compliance & Payment Gateways) */}
+          <div>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] mb-3">
+              {language === "ta" ? "சட்டம் & கொள்கைகள்" : "Legal & Compliance"}
+            </h5>
+            <ul className="space-y-2 text-xs text-[#64748B]">
+              <li>
+                <Link href="/disclaimer" className="hover:text-[#3478F6] transition-colors">
+                  {language === "ta" ? "பொறுப்புத் துறப்பு (Disclaimer)" : "Methodology Disclaimer"}
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-[#3478F6] transition-colors">
+                  {language === "ta" ? "விதிமுறைகள் (Terms of Service)" : "Terms of Service"}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-[#3478F6] transition-colors">
+                  {language === "ta" ? "தனியுரிமை (Privacy Policy)" : "Privacy Policy (DPDP/GDPR)"}
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="hover:text-[#3478F6] transition-colors">
+                  {language === "ta" ? "பணத் திரும்பப் பெறல் (Refund Policy)" : "Refund & Cancellation"}
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-[#3478F6] transition-colors font-medium text-[#2563EB]">
+                  {language === "ta" ? "தொடர்பு & உதவி (Contact Us)" : "Contact & Support Desk"}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
