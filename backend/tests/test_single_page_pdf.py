@@ -44,7 +44,7 @@ def test_single_page_pdf_exact_one_page():
     assert "Gokul (#001)" in extracted_text
     assert "Murugan" in extracted_text
     assert "Nirmala" in extracted_text
-    assert "03-Jan-1999" in extracted_text
+    assert "03/01/1999" in extracted_text
     assert "Current Dasa:" in extracted_text
     assert "Current Bukthi:" in extracted_text
 

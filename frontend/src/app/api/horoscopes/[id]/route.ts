@@ -10,6 +10,7 @@ import {
 import { isHoroscopePinned, removeHoroscopePin } from "@/lib/pinned-horoscopes-service";
 import { invalidateHoroscopesPageCache } from "@/lib/horoscope-page-cache";
 import { invalidateCautionCache } from "@/lib/dasa-caution-service";
+import { displayToHtmlDate } from "@/lib/date-formatter";
 
 /**
  * GET /api/horoscopes/[id]
@@ -207,12 +208,16 @@ export async function PUT(
         { status: 400 }
       );
     }
-    if (!birth_date || typeof birth_date !== "string") {
+    if (!birth_date || typeof birth_date !== "string" || !birth_date.trim()) {
       return NextResponse.json(
-        { error: "birth_date is required (YYYY-MM-DD)." },
+        { error: "birth_date is required (DD/MM/YYYY)." },
         { status: 400 }
       );
     }
+    const trimmedDob = birth_date.trim();
+    const effectiveBirthDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmedDob)
+      ? displayToHtmlDate(trimmedDob)
+      : trimmedDob;
     if (!birth_time || typeof birth_time !== "string") {
       return NextResponse.json(
         { error: "birth_time is required." },
@@ -259,7 +264,7 @@ export async function PUT(
       const { customer } = await getOrCreateCustomerRecord(existing.user_id, {
         customerId: existingCustId,
         fullName: person_name.trim(),
-        birthDate: birth_date,
+        birthDate: effectiveBirthDate,
         countryCode: effectiveCountryCode,
         phoneNumber: customer_phone,
       });
@@ -294,7 +299,7 @@ export async function PUT(
         calculatedAt: body.calculation_result.calculatedAt || new Date().toISOString(),
         clientInputs: body.calculation_result.clientInputs || {
           fullName: person_name.trim(),
-          birthDate: birth_date,
+          birthDate: effectiveBirthDate,
           birthTime: birth_time,
           isTimeConfirmed: true,
           locationName: (birthplace || "Unknown Location").trim(),
@@ -328,7 +333,7 @@ export async function PUT(
           gender: effectiveGender,
           ...(existing.calculation_result?.clientInputs || {}),
           fullName: person_name.trim(),
-          birthDate: birth_date,
+          birthDate: effectiveBirthDate,
           birthTime: birth_time,
           locationName: (birthplace || "Unknown Location").trim(),
           latitude,
@@ -356,7 +361,7 @@ export async function PUT(
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const updatePayload: Record<string, any> = {
       person_name: person_name.trim(),
-      birth_date,
+      birth_date: effectiveBirthDate,
       birth_time,
       timezone: (timezone || "UTC").trim(),
       birthplace: (birthplace || "Unknown Location").trim(),

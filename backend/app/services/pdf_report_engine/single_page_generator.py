@@ -605,7 +605,7 @@ class SinglePageHoroscopePdfGenerator:
                 noto_bold_b64 = "data:font/truetype;base64," + base64.b64encode(f.read()).decode("utf-8")
 
         b = self.birth_input
-        dob_str = b.birth_date.strftime("%d-%b-%Y")
+        dob_str = b.birth_date.strftime("%d/%m/%Y")
         tob_dt = datetime.combine(b.birth_date, b.birth_time)
         tob_str = tob_dt.strftime("%I:%M %p")
         ta_weekdays = ["திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி", "ஞாயிறு"]
@@ -638,13 +638,13 @@ class SinglePageHoroscopePdfGenerator:
             sr_vedic, ss_vedic, _ = calculate_solar_sunrise_sunset(vedic_date, b.latitude, b.longitude)
             sr_local = sr_vedic.astimezone(ZoneInfo(b.timezone))
             ss_local = ss_vedic.astimezone(ZoneInfo(b.timezone))
-            sunrise_str = f"{vedic_date.strftime('%d-%b-%Y')} {sr_local.strftime('%H:%M')}"
-            sunset_str = f"{vedic_date.strftime('%d-%b-%Y')} {ss_local.strftime('%H:%M')}"
+            sunrise_str = f"{vedic_date.strftime('%d/%m/%Y')} {sr_local.strftime('%H:%M')}"
+            sunset_str = f"{vedic_date.strftime('%d/%m/%Y')} {ss_local.strftime('%H:%M')}"
         else:
             sr_local = sr_dt_raw.astimezone(ZoneInfo(b.timezone))
             ss_local = ss_dt_raw.astimezone(ZoneInfo(b.timezone))
-            sunrise_str = f"{b.birth_date.strftime('%d-%b-%Y')} {sr_local.strftime('%H:%M')}"
-            sunset_str = f"{b.birth_date.strftime('%d-%b-%Y')} {ss_local.strftime('%H:%M')}"
+            sunrise_str = f"{b.birth_date.strftime('%d/%m/%Y')} {sr_local.strftime('%H:%M')}"
+            sunset_str = f"{b.birth_date.strftime('%d/%m/%Y')} {ss_local.strftime('%H:%M')}"
 
         asc = horo.ascendant
         moon_p = next((p for p in horo.planets if p.name == "Moon"), None)
@@ -778,13 +778,13 @@ class SinglePageHoroscopePdfGenerator:
         for m in dasa_res.dasa_tree:
             if m.is_active:
                 m_lord_ta = NAKSHATRA_LORD_ABBR_TA.get(m.lord, m.lord)
-                end_d = datetime.fromisoformat(m.end_date_iso).strftime("%d-%b-%Y") if m.end_date_iso else ""
+                end_d = datetime.fromisoformat(m.end_date_iso).strftime("%d/%m/%Y") if m.end_date_iso else ""
                 curr_dasa_str = f"{m_lord_ta} upto {end_d}"
 
                 for sub in m.sub_periods:
                     if sub.is_active:
                         sub_lord_ta = NAKSHATRA_LORD_ABBR_TA.get(sub.lord, sub.lord)
-                        sub_end = datetime.fromisoformat(sub.end_date_iso).strftime("%d-%b-%Y") if sub.end_date_iso else ""
+                        sub_end = datetime.fromisoformat(sub.end_date_iso).strftime("%d/%m/%Y") if sub.end_date_iso else ""
                         curr_bukthi_str = f"{sub_lord_ta} upto {sub_end}"
                         break
                 break
@@ -1243,9 +1243,9 @@ class SinglePageHoroscopePdfGenerator:
         trad_p1 = data["trad"].get("page1_birth_details", {})
         mandi = data["mandi"]
 
-        # Formatted Birth Date & Time: 03-Jan-1999 05:58 AM ஞாயிறு
+        # Formatted Birth Date & Time: 03/01/1999 05:58 AM ஞாயிறு
         b_dt = datetime.combine(b.birth_date, b.birth_time)
-        b_dt_str = b_dt.strftime("%d-%b-%Y %I:%M %p")
+        b_dt_str = b_dt.strftime("%d/%m/%Y %I:%M %p")
         # Calendar weekday
         cal_weekday_idx = b_dt.weekday()  # Mon=0, Sun=6
         cal_weekday_names = ["திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி", "ஞாயிறு"]
@@ -1261,13 +1261,13 @@ class SinglePageHoroscopePdfGenerator:
             # Local time in native timezone
             sr_local = sr_vedic.astimezone(ZoneInfo(b.timezone))
             ss_local = ss_vedic.astimezone(ZoneInfo(b.timezone))
-            sr_display = f"{vedic_date.strftime('%d-%b-%Y')} {sr_local.strftime('%H:%M')}"
-            ss_display = f"{vedic_date.strftime('%d-%b-%Y')} {ss_local.strftime('%H:%M')}"
+            sr_display = f"{vedic_date.strftime('%d/%m/%Y')} {sr_local.strftime('%H:%M')}"
+            ss_display = f"{vedic_date.strftime('%d/%m/%Y')} {ss_local.strftime('%H:%M')}"
         else:
             sr_local = sr_dt_raw.astimezone(ZoneInfo(b.timezone))
             ss_local = ss_dt_raw.astimezone(ZoneInfo(b.timezone))
-            sr_display = f"{b.birth_date.strftime('%d-%b-%Y')} {sr_local.strftime('%H:%M')}"
-            ss_display = f"{b.birth_date.strftime('%d-%b-%Y')} {ss_local.strftime('%H:%M')}"
+            sr_display = f"{b.birth_date.strftime('%d/%m/%Y')} {sr_local.strftime('%H:%M')}"
+            ss_display = f"{b.birth_date.strftime('%d/%m/%Y')} {ss_local.strftime('%H:%M')}"
 
         # Tamil Year Month Date Weekday: பிரமாதி · மார்கழி 19 · சனி
         t_year = trad_p1.get("tamil_year", "")
@@ -1544,13 +1544,13 @@ class SinglePageHoroscopePdfGenerator:
         for m in dasa_res.dasa_tree:
             if m.is_active:
                 m_lord_ta = NAKSHATRA_LORD_ABBR_TA.get(m.lord, m.lord)
-                end_d = datetime.fromisoformat(m.end_date_iso).strftime("%d-%b-%Y") if m.end_date_iso else ""
+                end_d = datetime.fromisoformat(m.end_date_iso).strftime("%d/%m/%Y") if m.end_date_iso else ""
                 curr_dasa_str = f"{m_lord_ta} upto {end_d}"
 
                 for sub in m.sub_periods:
                     if sub.is_active:
                         sub_lord_ta = NAKSHATRA_LORD_ABBR_TA.get(sub.lord, sub.lord)
-                        sub_end = datetime.fromisoformat(sub.end_date_iso).strftime("%d-%b-%Y") if sub.end_date_iso else ""
+                        sub_end = datetime.fromisoformat(sub.end_date_iso).strftime("%d/%m/%Y") if sub.end_date_iso else ""
                         curr_bukthi_str = f"{sub_lord_ta} upto {sub_end}"
                         break
                 break

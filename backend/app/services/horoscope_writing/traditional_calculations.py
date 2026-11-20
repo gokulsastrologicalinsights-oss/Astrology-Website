@@ -621,8 +621,8 @@ def calculate_traditional_horoscope_writing_data(
         "lord_ta": nak_lord_ta,
         "total_years": dasa_full_years,
         "balance_str": dasa_iruppu_str,
-        "start_date": birth_date.strftime("%d-%m-%Y"),
-        "end_date": first_end_date.strftime("%d-%m-%Y"),
+        "start_date": birth_date.strftime("%d/%m/%Y"),
+        "end_date": first_end_date.strftime("%d/%m/%Y"),
         "duration_years": round(rem_years_fl, 2),
     })
 
@@ -637,8 +637,8 @@ def calculate_traditional_horoscope_writing_data(
             "lord_ta": GRAHA_NAMES_TA.get(lord, lord),
             "total_years": dur_y,
             "balance_str": f"{dur_y} ஆண்டுகள்",
-            "start_date": iter_start_date.strftime("%d-%m-%Y"),
-            "end_date": iter_end_date.strftime("%d-%m-%Y"),
+            "start_date": iter_start_date.strftime("%d/%m/%Y"),
+            "end_date": iter_end_date.strftime("%d/%m/%Y"),
             "duration_years": dur_y,
         })
         iter_start_date = iter_end_date
@@ -755,7 +755,7 @@ def calculate_traditional_horoscope_writing_data(
             "hijri_year": f"{cal_data['hijri_year']} ஹிஜிரி",
             "kollam_year": f"{cal_data['kollam_year']} கொல்லம் ஆண்டு",
             "english_year": birth_date.year,
-            "english_date": birth_date.strftime("%d-%m-%Y"),
+            "english_date": birth_date.strftime("%d/%m/%Y"),
             "tamil_month_date": f"{cal_data['tamil_month_ta']} {cal_data['tamil_date']}",
             "panchangam": "திருக்கணிதம்" if panchanga_system == "thirukanitha" else "வாக்கியம்",
             "calculation_method": cal_data["calculation_method"],
@@ -803,7 +803,7 @@ def calculate_traditional_horoscope_writing_data(
             "rasi": rasi_name_ta,
             "nakshatra": nak_name_ta,
             "lagna": lagna_name_ta,
-            "birth_date": birth_date.strftime("%d-%m-%Y"),
+            "birth_date": birth_date.strftime("%d/%m/%Y"),
             "tamil_date": f"{cal_data['tamil_month_ta']} {cal_data['tamil_date']}",
             # Active values (with astrologer overrides applied)
             "entrance_direction": active_entrance_dir,

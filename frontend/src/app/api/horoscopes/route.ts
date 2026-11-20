@@ -14,6 +14,7 @@ import {
   invalidateHoroscopesPageCache,
 } from "@/lib/horoscope-page-cache";
 import { invalidateCautionCache } from "@/lib/dasa-caution-service";
+import { displayToHtmlDate } from "@/lib/date-formatter";
 
 /**
  * GET /api/horoscopes
@@ -356,12 +357,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!birth_date || typeof birth_date !== "string") {
+    if (!birth_date || typeof birth_date !== "string" || !birth_date.trim()) {
       return NextResponse.json(
-        { error: "Date of Birth is required (YYYY-MM-DD)." },
+        { error: "Date of Birth is required (DD/MM/YYYY)." },
         { status: 400 }
       );
     }
+    const trimmedDob = birth_date.trim();
+    const effectiveBirthDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmedDob)
+      ? displayToHtmlDate(trimmedDob)
+      : trimmedDob;
 
     // 2. Optional Customer WhatsApp Number & Country Code
     const effectiveCountryCode = (country_code || "+91").trim();
@@ -386,7 +391,7 @@ export async function POST(request: NextRequest) {
     const { customer: authoritativeCustomer } = await getOrCreateCustomerRecord(user.id, {
       customerId: customer_id,
       fullName: finalCustomerName,
-      birthDate: birth_date,
+      birthDate: effectiveBirthDate,
       countryCode: effectiveCountryCode,
       phoneNumber: rawCustomerPhone || undefined,
     });
@@ -480,7 +485,7 @@ export async function POST(request: NextRequest) {
         ? { ...calculation_result.clientInputs, gender: effectiveGender }
         : {
             fullName: trimmedName,
-            birthDate: birth_date,
+            birthDate: effectiveBirthDate,
             birthTime: birth_time,
             gender: effectiveGender,
             isTimeConfirmed: true,
@@ -541,7 +546,7 @@ export async function POST(request: NextRequest) {
     const insertPayload: Record<string, any> = {
       user_id: user.id,
       person_name: trimmedName,
-      birth_date,
+      birth_date: effectiveBirthDate,
       birth_time,
       timezone: (timezone || "UTC").trim(),
       birthplace: (birthplace || "Unknown Location").trim(),

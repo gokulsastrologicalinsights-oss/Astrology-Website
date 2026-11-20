@@ -263,7 +263,7 @@ def calculate_astronomical_tamil_calendar(
         "kollam_year": kollam_year,
         "hijri_year": hijri_year,
         "gregorian_year": birth_date.year,
-        "gregorian_date_str": birth_date.strftime("%d-%m-%Y"),
+        "gregorian_date_str": birth_date.strftime("%d/%m/%Y"),
         "panchangam_system": "திருக்கணிதம் (Drik Siddhanta)",
         "calculation_method": "சித்ரபக்ஷ லஹரி அயனாம்சம், திருக்கணித வானியல் முறை",
     }

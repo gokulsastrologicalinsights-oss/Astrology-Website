@@ -121,7 +121,7 @@ def test_traditional_horoscope_calculations_page1_to_page6():
     assert "ஹிஜிரி" in p2["hijri_year"]
     assert "கொல்லம்" in p2["kollam_year"]
     assert p2["english_year"] == 1995
-    assert p2["english_date"] == "20-08-1995"
+    assert p2["english_date"] == "20/08/1995"
 
     # Page 3 checks (Vimshottari Dasa in Nazhigai)
     p3 = result["page3_udumaka_dasa"]
