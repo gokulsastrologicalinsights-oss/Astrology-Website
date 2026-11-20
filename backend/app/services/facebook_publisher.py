@@ -667,6 +667,22 @@ async def post_daily_carousel_3_posts(
     success_count = sum(1 for r in results if r.get("success"))
     failed_count = len(results) - success_count
 
+    # Also post to Instagram if configured
+    ig_summary = None
+    if settings.ig_auto_post_enabled:
+        try:
+            from app.services.instagram_publisher import post_daily_instagram_carousels
+            logger.info("Instagram auto-post is enabled: Publishing carousels to Instagram...")
+            ig_summary = await post_daily_instagram_carousels(
+                horoscope_data=horoscope_data,
+                target_date=target_date,
+                delay_seconds=delay_seconds,
+                dry_run=dry_run,
+            )
+        except Exception as ig_err:
+            logger.error(f"Failed to publish Instagram carousels: {ig_err}")
+            ig_summary = {"success": False, "error": str(ig_err)}
+
     individual_posts = [
         {
             "rashi_id": prediction.rashi_id,
@@ -689,6 +705,7 @@ async def post_daily_carousel_3_posts(
         "newly_posted": newly_posted,
         "failed_posts": failed_count,
         "results": results,
+        "instagram": ig_summary,
     }
 
 

@@ -436,7 +436,7 @@ function AshtakavargaContent() {
             <div>
               <label className="block font-semibold text-[#334155] mb-1">
                 <Calendar className="w-3.5 h-3.5 inline mr-1 text-[#B8862B]" />
-                Birth Date (YYYY-MM-DD)
+                Birth Date (DD/MM/YYYY)
               </label>
               <input
                 type="date"

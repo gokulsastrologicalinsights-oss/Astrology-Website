@@ -405,6 +405,7 @@ function MarriageCompatibilityContent() {
     return savedHoroscopes.filter((item) => {
       const name = (item.person_name || "").toLowerCase();
       const birthDate = (item.birth_date || "").toLowerCase();
+      const birthDateFormatted = formatDate(item.birth_date).toLowerCase();
       const birthTime = (item.birth_time || "").toLowerCase();
       const place = (item.birthplace || item.location_name || "").toLowerCase();
       const dispNum = item.display_number ? String(item.display_number) : "";
@@ -419,6 +420,7 @@ function MarriageCompatibilityContent() {
       return (
         name.includes(q) ||
         birthDate.includes(q) ||
+        birthDateFormatted.includes(q) ||
         birthTime.includes(q) ||
         place.includes(q) ||
         dispNum === q ||
@@ -436,6 +438,7 @@ function MarriageCompatibilityContent() {
     return savedHoroscopes.filter((item) => {
       const name = (item.person_name || "").toLowerCase();
       const birthDate = (item.birth_date || "").toLowerCase();
+      const birthDateFormatted = formatDate(item.birth_date).toLowerCase();
       const birthTime = (item.birth_time || "").toLowerCase();
       const place = (item.birthplace || item.location_name || "").toLowerCase();
       const dispNum = item.display_number ? String(item.display_number) : "";
@@ -450,6 +453,7 @@ function MarriageCompatibilityContent() {
       return (
         name.includes(q) ||
         birthDate.includes(q) ||
+        birthDateFormatted.includes(q) ||
         birthTime.includes(q) ||
         place.includes(q) ||
         dispNum === q ||
@@ -898,7 +902,7 @@ function MarriageCompatibilityContent() {
                           placeholder={
                             language === "ta"
                               ? "பெயர், பிறந்த தேதி, இடம் அல்லது எண் மூலம் தேடுக..."
-                              : "Search by name, DOB (YYYY-MM-DD), place, or chart #..."
+                              : "Search by name, DOB (DD/MM/YYYY), place, or chart #..."
                           }
                           className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B] shadow-2xs"
                         />
@@ -970,7 +974,7 @@ function MarriageCompatibilityContent() {
                       {filteredGroomSavedHoroscopes.map((h) => (
                         <option key={h.id} value={h.id}>
                           {h.display_number ? `#${h.display_number} - ` : ""}
-                          {h.person_name || "Horoscope"} ({h.birth_date} {h.birth_time})
+                          {h.person_name || "Horoscope"} ({formatDate(h.birth_date)} {h.birth_time})
                           {h.birthplace ? ` - ${h.birthplace}` : ""}
                         </option>
                       ))}
@@ -997,7 +1001,7 @@ function MarriageCompatibilityContent() {
                               </span>
                             </div>
                             <div className="text-blue-800 text-xs mt-1 flex flex-wrap gap-x-3.5 gap-y-1">
-                              <span>📅 {selectedGroomHoroscope.birth_date}</span>
+                              <span>📅 {formatDate(selectedGroomHoroscope.birth_date)}</span>
                               <span>⏰ {selectedGroomHoroscope.birth_time}</span>
                               <span>
                                 📍 {selectedGroomHoroscope.birthplace || "Coordinates"}
@@ -1222,7 +1226,7 @@ function MarriageCompatibilityContent() {
                           placeholder={
                             language === "ta"
                               ? "பெயர், பிறந்த தேதி, இடம் அல்லது எண் மூலம் தேடுக..."
-                              : "Search by name, DOB (YYYY-MM-DD), place, or chart #..."
+                              : "Search by name, DOB (DD/MM/YYYY), place, or chart #..."
                           }
                           className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#B4872B] focus:ring-1 focus:ring-[#B4872B] shadow-2xs"
                         />
@@ -1294,7 +1298,7 @@ function MarriageCompatibilityContent() {
                       {filteredBrideSavedHoroscopes.map((h) => (
                         <option key={h.id} value={h.id}>
                           {h.display_number ? `#${h.display_number} - ` : ""}
-                          {h.person_name || "Horoscope"} ({h.birth_date} {h.birth_time})
+                          {h.person_name || "Horoscope"} ({formatDate(h.birth_date)} {h.birth_time})
                           {h.birthplace ? ` - ${h.birthplace}` : ""}
                         </option>
                       ))}
@@ -1321,7 +1325,7 @@ function MarriageCompatibilityContent() {
                               </span>
                             </div>
                             <div className="text-amber-800 text-xs mt-1 flex flex-wrap gap-x-3.5 gap-y-1">
-                              <span>📅 {selectedBrideHoroscope.birth_date}</span>
+                              <span>📅 {formatDate(selectedBrideHoroscope.birth_date)}</span>
                               <span>⏰ {selectedBrideHoroscope.birth_time}</span>
                               <span>
                                 📍 {selectedBrideHoroscope.birthplace || "Coordinates"}

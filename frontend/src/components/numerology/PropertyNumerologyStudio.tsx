@@ -646,7 +646,7 @@ export function PropertyNumerologyStudio() {
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Birth Date (YYYY-MM-DD)
+                  Birth Date (DD/MM/YYYY)
                 </label>
                 <input
                   type="date"
@@ -747,7 +747,7 @@ export function PropertyNumerologyStudio() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground block mb-1">Birth Date (YYYY-MM-DD)</label>
+                <label className="text-[11px] text-muted-foreground block mb-1">Birth Date (DD/MM/YYYY)</label>
                 <input
                   type="date"
                   value={newResDob}

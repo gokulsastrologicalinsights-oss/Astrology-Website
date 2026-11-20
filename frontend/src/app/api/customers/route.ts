@@ -4,6 +4,7 @@ import {
   listCustomersForUser,
   getOrCreateCustomerRecord,
 } from "@/lib/customer-service";
+import { displayToHtmlDate } from "@/lib/date-formatter";
 
 /**
  * GET /api/customers
@@ -79,19 +80,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!birth_date || typeof birth_date !== "string") {
+    if (!birth_date || typeof birth_date !== "string" || !birth_date.trim()) {
       return NextResponse.json(
-        { error: "Customer birth date is required (YYYY-MM-DD)." },
+        { error: "Customer birth date is required (DD/MM/YYYY)." },
         { status: 400 }
       );
     }
+
+    const trimmedDob = birth_date.trim();
+    const normalizedBirthDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmedDob)
+      ? displayToHtmlDate(trimmedDob)
+      : trimmedDob;
 
     const rawPhone = (phone_number || "").toString().trim();
 
     const { customer, isNew } = await getOrCreateCustomerRecord(user.id, {
       customerId: customer_id,
       fullName: full_name,
-      birthDate: birth_date,
+      birthDate: normalizedBirthDate,
       countryCode: country_code || "+91",
       phoneNumber: rawPhone || undefined,
     });

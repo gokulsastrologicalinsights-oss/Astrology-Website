@@ -7,10 +7,11 @@ KP Daily Raasi Palan publications to a connected Facebook Page.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from app.config import settings
@@ -18,6 +19,7 @@ from app.services.facebook_publisher import (
     generate_and_post_daily_raasi_palan,
     verify_facebook_credentials,
 )
+from app.services.instagram_publisher import verify_instagram_credentials
 from app.services.facebook_scheduler import (
     get_scheduler_status,
     run_and_record_daily_publish,
@@ -46,13 +48,33 @@ class SchedulerToggleRequest(BaseModel):
 
 @router.get("/status", summary="Check Facebook Integration and Scheduler Status")
 async def get_facebook_status():
-    """Returns Facebook configuration status and daily scheduler state."""
+    """Returns Facebook & Instagram configuration status and daily scheduler state."""
     cred_status = await verify_facebook_credentials()
+    ig_status = await verify_instagram_credentials()
     scheduler_status = get_scheduler_status()
     return {
         "credentials": cred_status,
+        "instagram": ig_status,
         "scheduler": scheduler_status,
     }
+
+
+@router.get("/posters/{target_date}/{filename}", summary="Serve public poster image for Instagram and Facebook crawlers")
+async def get_poster_image(target_date: str, filename: str):
+    """Serves the generated 1:1 square poster image file for Meta's Instagram crawler."""
+    data_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "data",
+        "generated_posters",
+        target_date,
+    )
+    file_path = os.path.join(data_dir, filename)
+    if not os.path.isfile(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Poster image {filename} not found for date {target_date}",
+        )
+    return FileResponse(file_path, media_type="image/png")
 
 
 @router.get("/preview", summary="Preview KP Daily Raasi Palan Facebook Post")

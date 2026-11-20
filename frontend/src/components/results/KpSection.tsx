@@ -5,7 +5,7 @@ import Link from "next/link";
 import { KpResponse, DasaResponse, HoroscopeResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { getGrahaName, getRasiName, getLordName } from "@/lib/translations";
-import { formatDms } from "@/lib/formatters";
+import { formatDms, formatDate } from "@/lib/formatters";
 import { KpEventAnalysisSection } from "./KpEventAnalysisSection";
 
 interface KpSectionProps {
@@ -13,11 +13,6 @@ interface KpSectionProps {
   dasa?: DasaResponse;
   horoscope?: HoroscopeResponse;
   savedHoroscopeId?: string;
-}
-
-function formatDate(isoStr?: string): string {
-  if (!isoStr) return "—";
-  return isoStr.split("T")[0];
 }
 
 function formatDays(days?: number): string {

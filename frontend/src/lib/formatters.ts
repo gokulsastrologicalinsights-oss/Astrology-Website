@@ -60,56 +60,15 @@ export function formatSerialNumber(num: number | null | undefined): string {
 }
 
 /**
- * Formats birth date string (YYYY-MM-DD) into canonical display format (e.g. "15 January 1998").
+ * Formats birth date string (YYYY-MM-DD or any valid input) into canonical display format DD/MM/YYYY.
  * Parses date string directly without Date object timezone conversion to preserve exact birth date.
  */
 export function formatBirthDate(
   dateStr: string | null | undefined,
-  language: "en" | "ta" = "en"
+  _language: "en" | "ta" = "en"
 ): string {
   if (!dateStr || typeof dateStr !== "string") return "—";
-  const clean = dateStr.trim();
-  const parts = clean.split("-");
-  if (parts.length !== 3) return clean;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const day = parseInt(parts[2], 10);
-  if (isNaN(year) || isNaN(month) || isNaN(day)) return clean;
-
-  const monthsEn = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const monthsTa = [
-    "ஜனவரி",
-    "பிப்ரவரி",
-    "மார்ச்",
-    "ஏப்ரல்",
-    "மே",
-    "ஜூன்",
-    "ஜூலை",
-    "ஆகஸ்ட்",
-    "செப்டம்பர்",
-    "அக்டோபர்",
-    "நவம்பர்",
-    "டிசம்பர்",
-  ];
-
-  if (month >= 1 && month <= 12) {
-    const monthName = language === "ta" ? monthsTa[month - 1] : monthsEn[month - 1];
-    return `${day} ${monthName} ${year}`;
-  }
-  return clean;
+  return formatDate(dateStr, "/");
 }
 
 /**

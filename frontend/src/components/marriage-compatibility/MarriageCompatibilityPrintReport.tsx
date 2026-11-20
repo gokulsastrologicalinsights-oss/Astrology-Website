@@ -629,9 +629,8 @@ function formatBirthDateWithAge(dateStr?: string): string {
   if (!dateStr) return "-";
   const parsed = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
   if (isNaN(parsed.getTime())) return dateStr;
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const dd = String(parsed.getDate()).padStart(2, "0");
-  const mmm = months[parsed.getMonth()];
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
   const yyyy = parsed.getFullYear();
 
   const today = new Date();
@@ -640,7 +639,7 @@ function formatBirthDateWithAge(dateStr?: string): string {
   if (mDiff < 0 || (mDiff === 0 && today.getDate() < parsed.getDate())) {
     age--;
   }
-  return `${dd}-${mmm}-${yyyy} (${Math.max(0, age)} Yrs)`;
+  return `${dd}/${mm}/${yyyy} (${Math.max(0, age)} Yrs)`;
 }
 
 function getSignTa(signEn?: string, signTa?: string): string {

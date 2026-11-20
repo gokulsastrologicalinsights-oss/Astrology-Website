@@ -466,7 +466,7 @@ export function VehicleNumberStudio() {
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  {language === "ta" ? "பிறந்த தேதி (YYYY-MM-DD)" : "Owner Birth Date (DOB)"}
+                  {language === "ta" ? "பிறந்த தேதி (DD/MM/YYYY)" : "Owner Birth Date (DD/MM/YYYY)"}
                 </label>
                 <input
                   type="date"
@@ -567,7 +567,9 @@ export function VehicleNumberStudio() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground block mb-1">Birth Date (YYYY-MM-DD)</label>
+                <label className="text-[11px] text-muted-foreground block mb-1">
+                  {language === "ta" ? "பிறந்த தேதி (DD/MM/YYYY)" : "Birth Date (DD/MM/YYYY)"}
+                </label>
                 <input
                   type="date"
                   value={newCoDob}

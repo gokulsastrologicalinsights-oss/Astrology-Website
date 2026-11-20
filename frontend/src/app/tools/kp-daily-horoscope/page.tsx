@@ -125,10 +125,9 @@ function formatTamilDate(dateStr: string, dayTa: string): string {
     const parts = dateStr.split("-");
     if (parts.length === 3) {
       const year = parts[0];
-      const month = parseInt(parts[1], 10);
-      const day = parseInt(parts[2], 10);
-      const mName = MONTHS_TA[month] || parts[1];
-      return `${day} ${mName} ${year} – ${dayTa}`;
+      const month = String(parseInt(parts[1], 10)).padStart(2, "0");
+      const day = String(parseInt(parts[2], 10)).padStart(2, "0");
+      return `${day}/${month}/${year} – ${dayTa}`;
     }
   } catch {}
   return `${dateStr} – ${dayTa}`;
@@ -139,10 +138,9 @@ function formatEnglishDate(dateStr: string, dayEn: string): string {
     const parts = dateStr.split("-");
     if (parts.length === 3) {
       const year = parts[0];
-      const month = parseInt(parts[1], 10);
-      const day = parseInt(parts[2], 10);
-      const mName = MONTHS_EN[month] || parts[1];
-      return `${day} ${mName} ${year} – ${dayEn}`;
+      const month = String(parseInt(parts[1], 10)).padStart(2, "0");
+      const day = String(parseInt(parts[2], 10)).padStart(2, "0");
+      return `${day}/${month}/${year} – ${dayEn}`;
     }
   } catch {}
   return `${dateStr} – ${dayEn}`;

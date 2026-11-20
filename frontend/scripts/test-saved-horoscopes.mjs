@@ -74,22 +74,22 @@ async function runTask3TestSuite() {
   // TEST 2: Birth Date & Time Formatting (Timezone shift prevention)
   // ---------------------------------------------------------------------------
   try {
-    // English
+    // DD/MM/YYYY standardized across all languages
     assert.strictEqual(
       formatBirthDate("1998-01-15", "en"),
-      "15 January 1998",
-      "Exact birth date must be preserved as 15 January 1998"
+      "15/01/1998",
+      "Exact birth date must be preserved as 15/01/1998"
     );
     assert.strictEqual(
       formatBirthDate("2000-08-22", "en"),
-      "22 August 2000",
-      "Exact birth date must be preserved as 22 August 2000"
+      "22/08/2000",
+      "Exact birth date must be preserved as 22/08/2000"
     );
     // Tamil
     assert.strictEqual(
       formatBirthDate("1998-01-15", "ta"),
-      "15 ஜனவரி 1998",
-      "Tamil birth date must format as 15 ஜனவரி 1998"
+      "15/01/1998",
+      "Tamil birth date must format as 15/01/1998"
     );
     // Time formatting
     assert.strictEqual(formatBirthTime("10:30:00"), "10:30 AM", "10:30:00 must format as 10:30 AM");

@@ -76,6 +76,7 @@ export function SavedChartSearchModal({
     return savedHoroscopes.filter((item) => {
       const name = (item.person_name || "").toLowerCase();
       const birthDate = (item.birth_date || "").toLowerCase();
+      const birthDateFormatted = formatDate(item.birth_date).toLowerCase();
       const birthTime = (item.birth_time || "").toLowerCase();
       const place = (item.birthplace || item.location_name || "").toLowerCase();
       const dispNum = item.display_number ? String(item.display_number) : "";
@@ -90,6 +91,7 @@ export function SavedChartSearchModal({
       return (
         name.includes(q) ||
         birthDate.includes(q) ||
+        birthDateFormatted.includes(q) ||
         birthTime.includes(q) ||
         place.includes(q) ||
         dispNum === q ||
@@ -248,7 +250,7 @@ export function SavedChartSearchModal({
               <p className="text-slate-500">
                 {language === "ta"
                   ? "பெயர், பிறந்த தேதி அல்லது ஜாதக எண் மூலம் மீண்டும் தேடவும்."
-                  : "Try searching with a different name, date of birth (YYYY-MM-DD), or chart number."}
+                  : "Try searching with a different name, date of birth (DD/MM/YYYY), or chart number."}
               </p>
               <button
                 type="button"
@@ -291,7 +293,7 @@ export function SavedChartSearchModal({
                     <div className="text-xs text-slate-600 flex flex-wrap gap-x-3.5 gap-y-1 pt-0.5">
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-slate-400" />
-                        {h.birth_date}
+                        {formatDate(h.birth_date)}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Clock className="w-3 h-3 text-slate-400" />

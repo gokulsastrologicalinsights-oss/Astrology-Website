@@ -12,7 +12,10 @@ from datetime import datetime, timezone as dt_timezone
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import swisseph as xswe
+try:
+    import xalen.swe as xswe
+except ImportError:
+    import swisseph as xswe
 from app.schemas.common import BirthInput
 from app.schemas.love_marriage import (
     LoveOrArrangedFactor,

@@ -3,16 +3,12 @@
 import React, { useState } from "react";
 import { KpDasaBalance, KpDasaPeriod } from "@/lib/types";
 import { getLordName } from "@/lib/translations";
+import { formatDate } from "@/lib/date-formatter";
 import { Calendar, ChevronDown, ChevronRight, Clock, Layers } from "lucide-react";
 
 interface KpDasaTimelineTabProps {
   dasaHierarchy?: KpDasaBalance;
   language: "en" | "ta";
-}
-
-function formatDate(isoStr?: string): string {
-  if (!isoStr) return "—";
-  return isoStr.split("T")[0];
 }
 
 export function KpDasaTimelineTab({ dasaHierarchy, language }: KpDasaTimelineTabProps) {

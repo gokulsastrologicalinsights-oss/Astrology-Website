@@ -73,6 +73,12 @@ class Settings(BaseModel):
     fb_post_mode: str = "carousel"    # Carousel of 4 Rasis per post (3 posts total)
     fb_carousel_group_size: int = 4
 
+    # Instagram Direct Publishing Integration
+    ig_user_id: str = ""
+    ig_access_token: str = ""
+    ig_auto_post_enabled: bool = False
+    public_backend_url: str = "https://gai-astrology-backend.onrender.com"
+
     def __init__(self, **data):
         super().__init__(**data)
         env_origins = os.getenv("ALLOWED_ORIGINS")
@@ -113,6 +119,12 @@ class Settings(BaseModel):
         env_group = os.getenv("FB_CAROUSEL_GROUP_SIZE", "4").strip()
         parsed_group = int(env_group) if env_group.isdigit() else 4
         self.fb_carousel_group_size = max(1, min(10, parsed_group))
+
+        # Instagram settings
+        self.ig_user_id = os.getenv("IG_USER_ID", "").strip()
+        self.ig_access_token = os.getenv("IG_ACCESS_TOKEN", "").strip()
+        self.ig_auto_post_enabled = os.getenv("IG_AUTO_POST_ENABLED", "false").lower() in ("true", "1", "yes")
+        self.public_backend_url = os.getenv("PUBLIC_BACKEND_URL", "https://gai-astrology-backend.onrender.com").rstrip("/")
 
 
 settings = Settings()

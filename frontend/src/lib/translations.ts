@@ -500,7 +500,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     fieldIncludeOuterPlanets: "Include Outer Planets (Uranus, Neptune, Pluto)",
     submitButton: "Calculate Complete Horoscope",
 
-    valDateRequired: "Please enter a valid birth date (YYYY-MM-DD).",
+    valDateRequired: "Please enter a valid birth date (DD/MM/YYYY).",
     valTimeRequired: "Please enter a valid birth time (e.g. 10:30 or 10:30:00).",
     valPlaceRequired: "Please enter or select a birth location.",
     valLatInvalid: "Latitude must be between -90.0 and +90.0 degrees.",
@@ -945,7 +945,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     fieldIncludeOuterPlanets: "வெளிப்புற கிரகங்களைச் சேர்க்கவும் (யுரேனஸ், நெப்டியூன், புளூட்டோ)",
     submitButton: "முழு ஜாதகத்தைக் கணிக்க",
 
-    valDateRequired: "சரியான பிறந்த தேதியை உள்ளிடவும் (YYYY-MM-DD).",
+    valDateRequired: "சரியான பிறந்த தேதியை உள்ளிடவும் (DD/MM/YYYY).",
     valTimeRequired: "சரியான பிறந்த நேரத்தை உள்ளிடவும் (எ.கா: 10:30 அல்லது 10:30:00).",
     valPlaceRequired: "பிறந்த ஊர் அல்லது நகரத்தைத் தேர்ந்தெடுக்கவும்.",
     valLatInvalid: "அட்சரேகை -90.0 முதல் +90.0 பாகைக்குள் இருக்க வேண்டும்.",

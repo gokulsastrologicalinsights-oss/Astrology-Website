@@ -15,6 +15,7 @@ import {
 } from "@/lib/types";
 import { SpouseSivadasanRaviCard } from "@/components/marriage-prediction/SpouseSivadasanRaviCard";
 import { predictMarriageEvent, predictSpouseEvent, ApiError } from "@/lib/api";
+import { formatDate, displayToHtmlDate } from "@/lib/date-formatter";
 import {
   Heart,
   Compass,
@@ -188,6 +189,7 @@ function MarriagePredictionContent() {
     return savedHoroscopes.filter((item) => {
       const name = (item.person_name || "").toLowerCase();
       const birthDate = (item.birth_date || "").toLowerCase();
+      const birthDateFormatted = formatDate(item.birth_date).toLowerCase();
       const birthTime = (item.birth_time || "").toLowerCase();
       const place = (item.birthplace || "").toLowerCase();
       const dispNum = item.display_number ? String(item.display_number) : "";
@@ -195,6 +197,7 @@ function MarriagePredictionContent() {
       return (
         name.includes(q) ||
         birthDate.includes(q) ||
+        birthDateFormatted.includes(q) ||
         birthTime.includes(q) ||
         place.includes(q) ||
         dispNum === q ||
@@ -213,12 +216,14 @@ function MarriagePredictionContent() {
     const errors: Record<string, string> = {};
 
     // 1. Date of birth
-    if (!birthDate.trim()) {
+    const trimmedDob = birthDate.trim();
+    if (!trimmedDob) {
       errors.birthDate = "Birth date is required.";
-    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate.trim())) {
-      errors.birthDate = "Format must be YYYY-MM-DD.";
+    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDob) && !/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmedDob)) {
+      errors.birthDate = "Format must be DD/MM/YYYY.";
     } else {
-      const d = new Date(birthDate);
+      const isoDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmedDob) ? displayToHtmlDate(trimmedDob) : trimmedDob;
+      const d = new Date(isoDate);
       if (isNaN(d.getTime())) {
         errors.birthDate = "Invalid calendar date.";
       }
@@ -285,9 +290,13 @@ function MarriagePredictionContent() {
     const formattedTime = birthTime.trim().length === 5 ? `${birthTime.trim()}:00` : birthTime.trim();
     const isForce = forceScanOverride !== undefined ? forceScanOverride : forceTimingScan;
 
+    const normalizedBirthDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(birthDate.trim())
+      ? displayToHtmlDate(birthDate.trim())
+      : birthDate.trim();
+
     const payload: UnifiedMarriageRequest = {
       birth: {
-        birth_date: birthDate.trim(),
+        birth_date: normalizedBirthDate,
         birth_time: formattedTime,
         timezone: timezone.trim(),
         latitude: parseFloat(latitude),
@@ -532,8 +541,8 @@ function MarriagePredictionContent() {
                   onChange={(e) => setChartSearchQuery(e.target.value)}
                   placeholder={
                     language === "ta"
-                      ? "வாடிக்கையாளர் பெயர், பிறந்த தேதி (YYYY-MM-DD), இடம் அல்லது ஜாதக எண் மூலம் தேடுக..."
-                      : "Search saved charts by customer name, birth date (YYYY-MM-DD), place, or chart #..."
+                      ? "வாடிக்கையாளர் பெயர், பிறந்த தேதி (DD/MM/YYYY), இடம் அல்லது ஜாதக எண் மூலம் தேடுக..."
+                      : "Search saved charts by customer name, birth date (DD/MM/YYYY), place, or chart #..."
                   }
                   className="w-full pl-9 pr-9 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-[#153F6B] focus:ring-1 focus:ring-[#153F6B] shadow-2xs"
                 />
@@ -611,7 +620,7 @@ function MarriagePredictionContent() {
                       </option>
                       {filteredSavedHoroscopes.map((h) => (
                         <option key={h.id} value={h.id}>
-                          {h.display_number ? `#${h.display_number} - ` : ""}{h.person_name} ({h.birth_date} {h.birth_time}) - {h.birthplace || "Location"}
+                          {h.display_number ? `#${h.display_number} - ` : ""}{h.person_name} ({formatDate(h.birth_date)} {h.birth_time}) - {h.birthplace || "Location"}
                         </option>
                       ))}
                     </select>
@@ -632,7 +641,7 @@ function MarriagePredictionContent() {
                             )}
                           </div>
                           <div className="text-emerald-800 text-xs mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
-                            <span>📅 {selectedHoroscope.birth_date}</span>
+                            <span>📅 {formatDate(selectedHoroscope.birth_date)}</span>
                             <span>⏰ {selectedHoroscope.birth_time}</span>
                             <span>📍 {selectedHoroscope.birthplace || "Coordinates"} ({Number(selectedHoroscope.latitude).toFixed(2)}°, {Number(selectedHoroscope.longitude).toFixed(2)}°)</span>
                             <span>🌐 {selectedHoroscope.timezone}</span>
