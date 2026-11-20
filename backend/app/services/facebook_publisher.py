@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+import json
 import logging
+import os
 import re
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -21,6 +23,7 @@ import httpx
 from app.config import settings
 from app.schemas.kp_daily_horoscope import KpDailyHoroscopeResponse, RashiDailyPrediction
 from app.services.kp_daily_horoscope_service import compute_kp_daily_horoscope
+from app.services.daily_poster_generator import generate_single_poster, generate_all_12_posters
 
 logger = logging.getLogger("gai.facebook")
 if not logger.handlers:
@@ -181,7 +184,16 @@ def _raise_for_graph_error(resp: httpx.Response, resp_data: Dict[str, Any], pid:
 
 
 def _resolve_post_mode(requested_mode: Optional[str] = None, is_batch: bool = False) -> str:
-    """Always resolves to 'text' as daily raasi palan image format is removed."""
+    """Resolves post mode: 'carousel' (for batch of 12 rashis), 'text', or 'image'."""
+    if requested_mode:
+        mode = requested_mode.strip().lower()
+        if mode in ("carousel", "image", "photos"):
+            return "carousel"
+        if mode == "text":
+            return "text"
+    if is_batch:
+        mode = (settings.fb_post_mode or "carousel").strip().lower()
+        return "carousel" if mode in ("carousel", "image", "photos") else "text"
     return "text"
 
 
@@ -309,6 +321,115 @@ async def post_to_facebook(
             "post_type": "text",
             "fb_url": f"https://www.facebook.com/{post_id}" if post_id else None,
         }
+
+
+async def post_single_photo_to_facebook(
+    image_path: str,
+    message: str,
+    page_id: Optional[str] = None,
+    access_token: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Posts a single image with caption to Facebook Page."""
+    pid, token = _resolve_credentials(page_id, access_token)
+    if not os.path.isfile(image_path):
+        raise FileNotFoundError(f"Poster image not found at {image_path}")
+
+    url = f"{FACEBOOK_API_BASE}/{settings.fb_graph_api_version}/{pid}/photos"
+    async with httpx.AsyncClient(timeout=45.0) as client:
+        with open(image_path, "rb") as f:
+            photo_bytes = f.read()
+        resp = await client.post(
+            url,
+            data={"caption": message, "access_token": token},
+            files={"source": (os.path.basename(image_path), photo_bytes, "image/png")},
+        )
+        resp_data = resp.json()
+        _raise_for_graph_error(resp, resp_data, pid)
+        post_id = resp_data.get("post_id") or resp_data.get("id")
+        return {
+            "success": True,
+            "post_id": post_id,
+            "page_id": pid,
+            "post_type": "photo",
+            "fb_url": f"https://www.facebook.com/{post_id}" if post_id else None,
+        }
+
+
+async def post_photo_carousel_to_facebook(
+    image_paths: Sequence[str],
+    message: str,
+    page_id: Optional[str] = None,
+    access_token: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Uploads multiple images as unpublished photos and publishes a single multi-photo feed post."""
+    pid, token = _resolve_credentials(page_id, access_token)
+    photo_ids: List[str] = []
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        for img_path in image_paths:
+            if not os.path.isfile(img_path):
+                raise FileNotFoundError(f"Poster image not found at {img_path}")
+            with open(img_path, "rb") as f:
+                photo_bytes = f.read()
+
+            upload_url = f"{FACEBOOK_API_BASE}/{settings.fb_graph_api_version}/{pid}/photos"
+            resp = await client.post(
+                upload_url,
+                data={"published": "false", "access_token": token},
+                files={"source": (os.path.basename(img_path), photo_bytes, "image/png")},
+            )
+            resp_data = resp.json()
+            _raise_for_graph_error(resp, resp_data, pid)
+            photo_id = resp_data.get("id")
+            if photo_id:
+                photo_ids.append(str(photo_id))
+
+        if not photo_ids:
+            raise RuntimeError("No photo IDs returned from Facebook photo uploads.")
+
+        feed_url = f"{FACEBOOK_API_BASE}/{settings.fb_graph_api_version}/{pid}/feed"
+        attached_media = [{"media_fbid": pid_str} for pid_str in photo_ids]
+        feed_resp = await client.post(
+            feed_url,
+            data={
+                "message": message,
+                "attached_media": json.dumps(attached_media),
+                "access_token": token,
+            },
+        )
+        feed_data = feed_resp.json()
+        _raise_for_graph_error(feed_resp, feed_data, pid)
+        post_id = feed_data.get("id")
+        logger.info(f"Successfully posted carousel ({len(photo_ids)} photos) to Facebook Page {pid}. Post ID: {post_id}")
+        return {
+            "success": True,
+            "post_id": post_id,
+            "page_id": pid,
+            "post_type": "carousel",
+            "photo_count": len(photo_ids),
+            "fb_url": f"https://www.facebook.com/{post_id}" if post_id else None,
+        }
+
+
+def format_carousel_caption(
+    horoscope_data: KpDailyHoroscopeResponse,
+    group_index: int,
+    predictions_group: Sequence[RashiDailyPrediction],
+) -> str:
+    """Formats engaging Tamil caption for a 4-Rasi carousel post."""
+    formatted_date = format_tamil_date(horoscope_data.date, horoscope_data.day_of_week_ta)
+    rashi_names = ", ".join(p.rashi_name_ta for p in predictions_group)
+    hashtags = " ".join(f"#{p.rashi_name_en}" for p in predictions_group)
+
+    return (
+        f"✨ இன்றைய தினசரி ராசிபலன் – பகுதி {group_index} ({rashi_names})\n"
+        f"📅 தேதி: {formatted_date}\n\n"
+        f"{rashi_names} ராசிகளுக்கான விரிவான சாதக நிலை, தொழில், தனம், குடும்ப பலன்கள், "
+        f"அதிர்ஷ்ட நேரம் மற்றும் பரிகாரங்களை மேலே உள்ள படங்களில் காண்க! 👆\n\n"
+        f"🙏 Gokul's Astrological Insights\n"
+        f"Gokul Murugan | Thiruverkadu\n\n"
+        f"#தினசரிராசிபலன் #DailyHoroscope #TamilAstrology {hashtags} #GokulsAstrologicalInsights"
+    )
 
 
 async def _fetch_feed_state_for_date(
@@ -484,6 +605,93 @@ async def _post_all_12_sequential_unlocked(
     return _build_batch_summary(target_date, "text", results, newly_posted, skipped_existing)
 
 
+async def post_daily_carousel_3_posts(
+    horoscope_data: KpDailyHoroscopeResponse,
+    target_date: str,
+    delay_seconds: float = 15.0,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Renders 12 1:1 square posters and publishes 3 carousel posts (4 Rasis each) to Facebook."""
+    loop = asyncio.get_running_loop()
+    posters_meta = await loop.run_in_executor(None, generate_all_12_posters, horoscope_data)
+    poster_map = {m[0]: m[3] for m in posters_meta}
+
+    group_size = settings.fb_carousel_group_size or 4
+    predictions = horoscope_data.predictions
+    groups = [predictions[i : i + group_size] for i in range(0, len(predictions), group_size)]
+
+    results: List[Dict[str, Any]] = []
+    newly_posted = 0
+
+    for idx, group in enumerate(groups, start=1):
+        group_names = ", ".join(f"{p.rashi_name_ta} ({p.rashi_name_en})" for p in group)
+        image_paths = [poster_map[p.rashi_id] for p in group if p.rashi_id in poster_map]
+        caption = format_carousel_caption(horoscope_data, idx, group)
+
+        if dry_run:
+            results.append({
+                "post_part": idx,
+                "rashis": group_names,
+                "photo_count": len(image_paths),
+                "image_paths": image_paths,
+                "caption": caption,
+                "dry_run": True,
+                "success": True,
+            })
+            continue
+
+        try:
+            logger.info(f"Publishing Carousel Post {idx}/{len(groups)} ({group_names}) to Facebook...")
+            post_res = await post_photo_carousel_to_facebook(image_paths, caption)
+            newly_posted += 1
+            results.append({
+                "post_part": idx,
+                "rashis": group_names,
+                "success": True,
+                "post_id": post_res.get("post_id"),
+                "fb_url": post_res.get("fb_url"),
+                "photo_count": len(image_paths),
+            })
+        except Exception as exc:
+            logger.error(f"Failed to publish Carousel Post {idx}/{len(groups)} ({group_names}): {exc}")
+            results.append({
+                "post_part": idx,
+                "rashis": group_names,
+                "success": False,
+                "error": str(exc),
+            })
+
+        if idx < len(groups) and delay_seconds > 0:
+            await asyncio.sleep(delay_seconds)
+
+    success_count = sum(1 for r in results if r.get("success"))
+    failed_count = len(results) - success_count
+
+    individual_posts = [
+        {
+            "rashi_id": prediction.rashi_id,
+            "rashi_name": f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})",
+            "image_path": poster_map.get(prediction.rashi_id),
+            "message": format_kp_daily_tamil_post(horoscope_data, prediction),
+        }
+        for prediction in predictions
+    ]
+
+    return {
+        "success": failed_count == 0 and (success_count > 0 or dry_run),
+        "dry_run": dry_run,
+        "target_date": target_date,
+        "post_mode": "carousel",
+        "total_posts": len(groups),
+        "total_rashis": len(predictions),
+        "posts": individual_posts,
+        "successful_posts": success_count,
+        "newly_posted": newly_posted,
+        "failed_posts": failed_count,
+        "results": results,
+    }
+
+
 async def generate_and_post_daily_raasi_palan(
     target_date: Optional[str] = None,
     rashi: Optional[str] = None,
@@ -491,12 +699,13 @@ async def generate_and_post_daily_raasi_palan(
     skip_if_already_posted: Optional[bool] = None,
     post_mode: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Generates today's KP Daily Raasi Palan in Tamil and posts it as text to Facebook."""
+    """Generates today's KP Daily Raasi Palan in Tamil and posts it as carousel image posts (or text) to Facebook."""
     if not target_date:
         ist_now = datetime.now(ZoneInfo("Asia/Kolkata"))
         target_date = ist_now.strftime("%Y-%m-%d")
 
     target_rashi = (rashi or settings.fb_post_rashi or "all").strip()
+    effective_mode = _resolve_post_mode(post_mode, is_batch=(target_rashi.lower() == "all"))
 
     if target_rashi.lower() == "all":
         skip_dup = True if skip_if_already_posted is None else skip_if_already_posted
@@ -505,7 +714,7 @@ async def generate_and_post_daily_raasi_palan(
             delay_seconds=settings.fb_post_delay_seconds,
             dry_run=dry_run,
             skip_if_already_posted=skip_dup,
-            post_mode="text",
+            post_mode=effective_mode,
         )
 
     horoscope_data = compute_kp_daily_horoscope(
@@ -521,14 +730,24 @@ async def generate_and_post_daily_raasi_palan(
     post_text = format_kp_daily_tamil_post(horoscope_data, prediction)
     rashi_label = f"{prediction.rashi_name_ta} ({prediction.rashi_name_en})"
 
+    loop = asyncio.get_running_loop()
+    output_base = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "data",
+        "generated_posters",
+        horoscope_data.date,
+    )
+    poster_path = await loop.run_in_executor(None, generate_single_poster, horoscope_data, prediction, output_base)
+
     if dry_run:
         return {
             "success": True,
             "dry_run": True,
             "target_date": target_date,
             "rashi": rashi_label,
-            "post_mode": "text",
-            "has_image": False,
+            "post_mode": effective_mode,
+            "has_image": True if effective_mode == "carousel" else False,
+            "image_path": poster_path if effective_mode == "carousel" else None,
             "message": post_text,
         }
 
@@ -549,11 +768,16 @@ async def generate_and_post_daily_raasi_palan(
                     "rashi": rashi_label,
                 }
 
-        post_result = await post_to_facebook(post_text)
+        if effective_mode == "carousel":
+            caption = f"✨ {prediction.rashi_name_ta} ({prediction.rashi_name_en}) - இன்றைய தினசரி ராசிபலன் 🗓️ {target_date}\n\n#DailyHoroscope #{prediction.rashi_name_en}"
+            post_result = await post_single_photo_to_facebook(poster_path, caption)
+        else:
+            post_result = await post_to_facebook(post_text)
+
         post_result.update({
             "target_date": target_date,
             "rashi": rashi_label,
-            "post_mode": "text",
+            "post_mode": effective_mode,
             "posted_at": datetime.now(ZoneInfo("Asia/Kolkata")).isoformat(),
             "preview_text": post_text[:200] + "...",
         })
@@ -567,16 +791,27 @@ async def post_all_12_raasi_palans(
     skip_if_already_posted: bool = True,
     post_mode: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Computes and posts KP Daily Raasi Palan for all 12 Rashis as clean Tamil text posts."""
+    """Computes and posts KP Daily Raasi Palan for all 12 Rashis as carousel posts (or text)."""
     if not target_date:
         ist_now = datetime.now(ZoneInfo("Asia/Kolkata"))
         target_date = ist_now.strftime("%Y-%m-%d")
+
+    effective_mode = _resolve_post_mode(post_mode, is_batch=True)
 
     horoscope_data = compute_kp_daily_horoscope(
         target_date=target_date,
         timezone_str="Asia/Kolkata",
         rashi_filter="all",
     )
+
+    if effective_mode == "carousel":
+        async with _get_publish_lock():
+            return await post_daily_carousel_3_posts(
+                horoscope_data=horoscope_data,
+                target_date=target_date,
+                delay_seconds=delay_seconds,
+                dry_run=dry_run,
+            )
 
     if dry_run:
         messages = [

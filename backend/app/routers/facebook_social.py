@@ -37,7 +37,7 @@ class PublishRequest(BaseModel):
     dry_run: bool = False
     background: bool = False
     force: bool = False
-    mode: Optional[str] = "text"
+    mode: Optional[str] = "carousel"
 
 
 class SchedulerToggleRequest(BaseModel):
@@ -58,16 +58,16 @@ async def get_facebook_status():
 @router.get("/preview", summary="Preview KP Daily Raasi Palan Facebook Post")
 async def preview_post(
     target_date: Optional[str] = Query(None, alias="date", description="YYYY-MM-DD (defaults to today in IST)"),
-    rashi: str = Query("Aries", description="Rashi name (e.g. Aries, Mesha, Taurus, or all)"),
-    mode: Optional[str] = Query("text", description="Post mode (text)"),
+    rashi: str = Query("all", description="Rashi name (e.g. all, Aries, Taurus)"),
+    mode: Optional[str] = Query("carousel", description="Post mode (carousel or text)"),
 ):
-    """Generates the formatted Tamil post text without publishing to Facebook."""
+    """Generates the formatted Tamil post cards or text preview without publishing to Facebook."""
     try:
         return await generate_and_post_daily_raasi_palan(
             target_date=target_date,
             rashi=rashi,
             dry_run=True,
-            post_mode="text",
+            post_mode=mode or "carousel",
         )
     except Exception as exc:
         logger.exception(f"Error previewing Facebook post: {exc}")

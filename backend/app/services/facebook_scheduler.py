@@ -127,6 +127,10 @@ def _summarize_publish_result(result: Dict[str, Any]) -> str:
     """Builds a concise status label for scheduler telemetry."""
     if result.get("post_id"):
         return str(result["post_id"])
+    if result.get("post_mode") == "carousel":
+        ok = result.get("successful_posts", 0)
+        tot = result.get("total_posts", 3)
+        return f"{ok}/{tot} carousel posts published"
     total = result.get("total_attempted", 12)
     ok = result.get("successful_posts", 0)
     skipped = result.get("skipped_existing", 0)

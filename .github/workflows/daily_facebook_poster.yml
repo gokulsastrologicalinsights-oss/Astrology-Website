@@ -27,11 +27,11 @@ jobs:
           echo "Target Date (IST): $TODAY_IST"
           echo "==========================================================="
 
-          # 1. Wake up Render Free Tier container and wait until /health returns 200 OK
+          # 1. Wake up Render container and wait until /health returns 200 OK
           READY=0
-          for i in $(seq 1 24); do
+          for i in $(seq 1 36); do
             CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$BASE_URL/health" || echo "000")
-            echo "Health check attempt $i/24: HTTP $CODE"
+            echo "Health check attempt $i/36: HTTP $CODE"
             if [ "$CODE" = "200" ]; then
               READY=1
               break
@@ -40,7 +40,7 @@ jobs:
           done
 
           if [ "$READY" -ne 1 ]; then
-            echo "Backend did not become healthy within 120 seconds."
+            echo "Backend did not become healthy within 180 seconds."
             exit 1
           fi
 
@@ -63,7 +63,7 @@ jobs:
             echo "Triggering non-blocking background publish for $TODAY_IST..."
             RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL/api/v1/social/facebook/publish" \
               -H "Content-Type: application/json" \
-              -d "{\"date\": \"$TODAY_IST\", \"rashi\": \"all\", \"background\": true}" \
+              -d "{\"date\": \"$TODAY_IST\", \"rashi\": \"all\", \"mode\": \"carousel\", \"background\": true}" \
               --max-time 30 || echo -e "\nHTTP_STATUS:000")
 
             BODY=$(echo "$RESPONSE" | sed -e '$d')

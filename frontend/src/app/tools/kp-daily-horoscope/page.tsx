@@ -28,16 +28,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   Star,
-  Briefcase,
-  Coins,
-  Heart,
-  Activity,
-  Plane,
   ShieldCheck,
   RefreshCw,
   Sun,
   Moon,
-  TrendingUp,
   Award,
   ChevronRight,
   ChevronLeft,
@@ -818,36 +812,6 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
   };
 
-  const getAspectIcon = (code: string) => {
-    switch (code) {
-      case "career":
-        return <Briefcase className="w-5 h-5 text-blue-500" />;
-      case "finance":
-        return <Coins className="w-5 h-5 text-emerald-500" />;
-      case "love":
-        return <Heart className="w-5 h-5 text-rose-500" />;
-      case "health":
-        return <Activity className="w-5 h-5 text-amber-500" />;
-      case "travel":
-        return <Plane className="w-5 h-5 text-indigo-500" />;
-      default:
-        return <Sparkles className="w-5 h-5 text-purple-500" />;
-    }
-  };
-
-  const getSentimentBadge = (sentiment: string) => {
-    switch (sentiment.toLowerCase()) {
-      case "excellent":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
-      case "favorable":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800";
-      case "mixed":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800";
-      default:
-        return "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-800";
-    }
-  };
-
   // Helper for active predictions list to map over the 12 rashis
   const currentRashiPredictions = useMemo(() => {
     if (periodMode === "daily") return horoscopeData?.predictions || [];
@@ -1538,211 +1502,7 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
               </div>
             </div>
 
-            {/* 2. PLANETARY TRANSITS & GOCHARA ANALYSIS SECTION (MONTHLY ONLY) */}
-            {periodMode === "monthly" && (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-lg font-bold flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-purple-600" />
-                      {isTa
-                        ? "மாதாந்திர கோச்சார பலன் சுருக்கம் & கிரக நிலைகள்"
-                        : "Monthly Transit Analysis & Gochara Positions"}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {isTa
-                        ? "உங்கள் ராசிக்குரிய 9 கிரகங்களின் கோச்சார அமைப்புகள், சுப பலன்கள் மற்றும் எச்சரிக்கை வழிகாட்டல்."
-                        : "House-by-house planetary Gochara influence and executive transit synthesis for your sign."}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Synthesis Overview Card */}
-                {("transit_summary" in activeGenericPrediction) && (
-                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-purple-950/40 rounded-2xl border border-purple-200 dark:border-purple-800/60 p-5 shadow-sm space-y-4">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-purple-600" />
-                        {isTa ? "கோச்சார தாக்கம் & பலன் சுருக்கம்" : "Planetary Transit Synthesis & Impact Summary"}
-                      </p>
-                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 mt-2 leading-relaxed">
-                        {isTa
-                          ? activeGenericPrediction.transit_summary.transit_overview_ta
-                          : activeGenericPrediction.transit_summary.transit_overview_en}
-                      </p>
-                    </div>
-
-                    {/* Special Yogas & Chandrashtama Badges */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-200/50 dark:border-purple-800/50">
-                      {activeGenericPrediction.transit_summary.special_yogas_ta &&
-                        (isTa
-                          ? activeGenericPrediction.transit_summary.special_yogas_ta
-                          : activeGenericPrediction.transit_summary.special_yogas_en
-                        ).map((yoga, yIdx) => (
-                          <span
-                            key={yIdx}
-                            className="px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 text-xs font-semibold border border-purple-300 dark:border-purple-700 flex items-center gap-1"
-                          >
-                            <Award className="w-3.5 h-3.5 text-purple-600 dark:text-purple-300" />
-                            {yoga}
-                          </span>
-                        ))}
-
-                      {activeGenericPrediction.transit_summary.chandrashtama_period_ta && (
-                        <span className="px-2.5 py-1 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 text-xs font-semibold border border-rose-300 dark:border-rose-800 flex items-center gap-1">
-                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-                          <span>
-                            {isTa ? "சந்திராஷ்டமம்:" : "Chandrashtama:"}{" "}
-                            {isTa
-                              ? activeGenericPrediction.transit_summary.chandrashtama_period_ta
-                              : activeGenericPrediction.transit_summary.chandrashtama_period_en}
-                          </span>
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Planetary Movements Grid */}
-                    <div className="pt-2">
-                      <p className="text-xs font-semibold text-slate-500 mb-2.5">
-                        {isTa ? "கிரகங்களின் கோச்சார ஸ்தானங்கள் & பலன்கள்:" : "Individual Planetary Placements & Influences:"}
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {activeGenericPrediction.transit_summary.planet_transits.map((tm, tmIdx) => {
-                          const isFav = tm.status === "favorable";
-                          const isCaution = tm.status === "caution";
-                          return (
-                            <div
-                              key={tmIdx}
-                              className={`p-3.5 rounded-xl border transition-all ${
-                                isFav
-                                  ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
-                                  : isCaution
-                                  ? "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800"
-                                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-base">{PLANET_SYMBOLS[tm.planet] || "🪐"}</span>
-                                  <div>
-                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                      {isTa ? tm.planet_ta : tm.planet}
-                                    </span>
-                                    <span className="text-[11px] text-slate-500 ml-1.5">
-                                      ({isTa ? tm.current_sign_ta : tm.current_sign})
-                                    </span>
-                                  </div>
-                                </div>
-                                <span
-                                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                                    isFav
-                                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                                      : isCaution
-                                      ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                                      : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                  }`}
-                                >
-                                  {isTa
-                                    ? isFav
-                                      ? `${tm.house_relative}-ம் பாவம் (நன்மை)`
-                                      : isCaution
-                                      ? `${tm.house_relative}-ம் பாவம் (கவனம்)`
-                                      : `${tm.house_relative}-ம் பாவம் (சமம்)`
-                                    : `${tm.house_relative}th House (${tm.status})`}
-                                </span>
-                              </div>
-
-                              {tm.transit_ingress_event && (
-                                <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mb-1">
-                                  ⚡ {tm.transit_ingress_event}
-                                </p>
-                              )}
-
-                              <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                                {isTa ? tm.impact_summary_ta : tm.impact_summary_en}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 3. All 5 Life Aspects Detailed Analysis */}
-            {periodMode !== "weekly" && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-purple-600" />
-                    {isTa ? "அனைத்து அம்சங்களின் விரிவான பலன்கள்" : "In-Depth Life Aspects Analysis"}
-                  </h3>
-                  <span className="text-xs text-slate-500">
-                    {isTa ? "காரகத்துவ பாவகங்கள் & கோச்சார அடிப்படையில்" : "Cuspal & Transit Breakdown"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeGenericPrediction.aspects.map((aspect) => (
-                    <div
-                      key={aspect.aspect_code}
-                      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 hover:border-purple-300 dark:hover:border-purple-800 transition"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
-                            {getAspectIcon(aspect.aspect_code)}
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                              {isTa ? aspect.aspect_name_tamil : aspect.aspect_name}
-                            </h4>
-                            <span className="text-[11px] text-slate-500">
-                              {isTa ? "பாவகங்கள்: " : "Houses: "}
-                              {aspect.signified_houses.join(", ")}
-                            </span>
-                          </div>
-                        </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${getSentimentBadge(aspect.status)}`}>
-                          {aspect.status}
-                        </span>
-                      </div>
-
-                      {/* Score Bar */}
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-500">{isTa ? "மதிப்பெண்" : "Score"}</span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">{aspect.score}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-500"
-                            style={{ width: `${aspect.score}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Insight */}
-                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {isTa ? aspect.insight_ta : aspect.insight_en}
-                      </p>
-
-                      {/* Recommendation */}
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-slate-700 dark:text-slate-300 font-medium leading-normal">
-                          {isTa ? aspect.key_recommendation_ta : aspect.key_recommendation_en}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 4. Moon Sub-Lord Hourly Transit Windows (Daily Mode Only) */}
+            {/* 2. Moon Sub-Lord Hourly Transit Windows (Daily Mode Only) */}
             {periodMode === "daily" && activeDailyPrediction && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -1825,7 +1585,7 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
               </div>
             )}
 
-            {/* 5. WhatsApp / Client Shareable Mini Summary Card (Copy & Paste Model) */}
+            {/* 3. WhatsApp / Client Shareable Mini Summary Card (Copy & Paste Model) */}
             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-purple-950/40 rounded-3xl border border-purple-200 dark:border-purple-800/60 p-6 sm:p-7 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-200/60 dark:border-purple-800/60 pb-4">
                 <div className="flex items-center gap-2.5">

@@ -45,13 +45,16 @@ FROM python:3.12-slim-bookworm AS runtime
 
 WORKDIR /app
 
-# Install runtime C libraries required by ReportLab/HarfBuzz, plus curl for health checks
+# Install runtime C libraries required by ReportLab/HarfBuzz, Chromium for poster rendering, plus curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     libfreetype6 \
     libharfbuzz0b \
     libfribidi0 \
+    chromium \
+    fonts-noto-core \
+    fonts-noto-extra \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy backend requirements and install dependencies
