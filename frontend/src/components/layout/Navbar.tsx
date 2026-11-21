@@ -38,6 +38,7 @@ import {
   Heart,
   Star,
   Lock,
+  Crown,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 

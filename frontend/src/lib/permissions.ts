@@ -15,7 +15,7 @@ export type PermissionKey =
   | "crm"
   | "pdf_export";
 
-export type SubscriptionTier = "trial" | "basic" | "pro" | "enterprise" | "custom";
+export type SubscriptionTier = "trial" | "basic" | "tamil_specialist" | "pro" | "enterprise" | "custom";
 export type SubscriptionStatus = "active" | "suspended" | "expired" | "pending";
 
 export interface UserPermissions {
@@ -219,7 +219,7 @@ export const PLAN_PRESETS: Record<
   tamil_specialist: {
     nameEn: "Tamil Horoscope Specialist (தமிழ் ஜாதகம்)",
     nameTa: "தமிழ் ஜாதகப் பிரதியாளர் திட்டம்",
-    tier: "pro",
+    tier: "tamil_specialist",
     monthlyPriceInr: 1999,
     yearlyPriceInr: 19999,
     permissions: TAMIL_SPECIALIST_PERMISSIONS,
