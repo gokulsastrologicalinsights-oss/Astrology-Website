@@ -102,22 +102,28 @@ export function DateInputDMY({
   const [displayText, setDisplayText] = useState(() => toDisplayDMY(value));
   const [isOpen, setIsOpen] = useState(false);
 
-  // Calendar navigation state
-  const today = new Date();
+  // Calendar navigation state (initialized deterministically to prevent Next.js prerender errors)
+  const [todayDateStr, setTodayDateStr] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState(() => {
     const parts = parseDateInput(value);
-    return parts ? parts.year : today.getFullYear();
+    return parts ? parts.year : 2000;
   });
   const [viewMonth, setViewMonth] = useState(() => {
     const parts = parseDateInput(value);
-    return parts ? parts.month - 1 : today.getMonth(); // 0-based
+    return parts ? parts.month - 1 : 0; // 0-based
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Synchronize internal display when value prop changes externally
+  // Synchronize internal display when value prop changes externally, and detect client-side today
   useEffect(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    setTodayDateStr(`${y}-${m}-${d}`);
+
     const formatted = toDisplayDMY(value);
     setDisplayText(formatted);
     if (value) {
@@ -126,6 +132,9 @@ export function DateInputDMY({
         setViewYear(parts.year);
         setViewMonth(parts.month - 1);
       }
+    } else {
+      setViewYear(now.getFullYear());
+      setViewMonth(now.getMonth());
     }
   }, [value]);
 
@@ -257,10 +266,9 @@ export function DateInputDMY({
       ? currentParts.day
       : null;
 
-  // Year choices range: 1900 to 2050
+  // Year choices range: 1920 to 2040 (fixed bounds to ensure deterministic SSR prerendering)
   const yearOptions: number[] = [];
-  const currentYear = today.getFullYear();
-  for (let y = currentYear + 10; y >= 1920; y--) {
+  for (let y = 2040; y >= 1920; y--) {
     yearOptions.push(y);
   }
 
@@ -383,10 +391,8 @@ export function DateInputDMY({
             {Array.from({ length: daysInViewMonth }).map((_, i) => {
               const dayNum = i + 1;
               const isSelected = selectedDay === dayNum;
-              const isToday =
-                today.getFullYear() === viewYear &&
-                today.getMonth() === viewMonth &&
-                today.getDate() === dayNum;
+              const dayIso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+              const isToday = todayDateStr === dayIso;
 
               return (
                 <button

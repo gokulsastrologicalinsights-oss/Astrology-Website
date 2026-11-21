@@ -12,7 +12,10 @@
     "test": "npm --prefix frontend run test"
   },
   "allowScripts": {
-    "unrs-resolver": true
+    "unrs-resolver": true,
+    "@eslint/eslintrc@3.3.7": true,
+    "@humanwhocodes/module-importer@1.0.1": true,
+    "@humanfs/node@0.16.8": true
   },
   "pnpm": {
     "onlyBuiltDependencies": [
