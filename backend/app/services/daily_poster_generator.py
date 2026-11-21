@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import logging
 import os
+import pathlib
 import re
 import shutil
 import subprocess
+import tempfile
 from typing import Dict, List, Optional, Tuple
 
 from app.schemas.kp_daily_horoscope import KpDailyHoroscopeResponse, RashiDailyPrediction
@@ -567,7 +569,9 @@ def generate_single_poster(
     """Renders a single Rashi's 1080x1080 PNG poster and returns its path."""
     os.makedirs(output_dir, exist_ok=True)
     browser_bin = find_browser_executable()
-    user_data = temp_user_data or os.path.join(os.environ.get("TEMP", "C:/Temp"), "edge_rasipalan_render")
+    default_temp = tempfile.gettempdir()
+    user_data = temp_user_data or os.path.join(default_temp, "rasipalan_render_profile")
+    os.makedirs(user_data, exist_ok=True)
 
     html_path = os.path.join(output_dir, f"rashi_{prediction.rashi_id}_{prediction.rashi_name_en.lower()}.html")
     png_path = os.path.join(output_dir, f"rashi_{prediction.rashi_id}_{prediction.rashi_name_en.lower()}.png")
@@ -576,24 +580,28 @@ def generate_single_poster(
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    file_url = "file:///" + html_path.replace("\\", "/")
+    file_url = pathlib.Path(html_path).resolve().as_uri()
     cmd = [
         browser_bin,
         "--headless=new",
         "--no-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--no-first-run",
+        "--no-default-browser-check",
         f"--user-data-dir={user_data}",
         f"--screenshot={png_path}",
         "--window-size=1080,1080",
         "--hide-scrollbars",
-        "--run-all-compositor-stages-before-draw",
         file_url,
     ]
 
-    res = subprocess.run(cmd, capture_output=True, timeout=20)
+    res = subprocess.run(cmd, capture_output=True, timeout=45)
     if not os.path.isfile(png_path):
-        raise RuntimeError(f"Failed to render poster for Rashi {prediction.rashi_id}: {res.stderr.decode('utf-8', errors='ignore')}")
+        err_msg = res.stderr.decode("utf-8", errors="ignore") if res.stderr else "Unknown browser error"
+        raise RuntimeError(f"Failed to render poster for Rashi {prediction.rashi_id}: {err_msg}")
 
     return png_path
 
