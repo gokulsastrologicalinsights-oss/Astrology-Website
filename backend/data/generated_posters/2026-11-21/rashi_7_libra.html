@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Mukta+Malar:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    background-color: #080c16;
+    font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Nirmala UI', sans-serif;
+    color: #e2e8f0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bg-ambient {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 10%, #171c3d 0%, #0a0e1c 55%, #050711 100%);
+    z-index: 1;
+  }
+
+  .glow-top {
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(234, 179, 8, 0.12) 0%, transparent 70%);
+    filter: blur(40px);
+    z-index: 2;
+  }
+
+  .outer-frame {
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(234, 179, 8, 0.22);
+    border-radius: 20px;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .container {
+    position: relative;
+    z-index: 3;
+    width: 1080px;
+    height: 1080px;
+    padding: 32px 40px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+  }
+
+  .date-badge {
+    font-size: 19px;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  .brand-pill {
+    padding: 5px 18px;
+    background: rgba(234, 179, 8, 0.15);
+    border: 1.5px solid rgba(234, 179, 8, 0.45);
+    border-radius: 20px;
+    color: #facc15;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .sign-hero {
+    background: #111827;
+    border: 2px solid rgba(234, 179, 8, 0.4);
+    border-radius: 20px;
+    padding: 16px 26px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  }
+
+  .sign-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .zodiac-glyph {
+    font-size: 56px;
+    color: #fbbf24;
+    line-height: 1;
+    text-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
+  }
+
+  .sign-name {
+    font-size: 40px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+  }
+
+  .sign-english {
+    font-size: 18px;
+    color: #cbd5e1;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+
+  .score-badge {
+    text-align: right;
+    background: rgba(22, 101, 52, 0.35);
+    border: 1.5px solid rgba(74, 222, 128, 0.5);
+    border-radius: 16px;
+    padding: 10px 22px;
+  }
+
+  .score-val {
+    font-size: 32px;
+    font-weight: 900;
+    color: #4ade80;
+    line-height: 1;
+  }
+
+  .score-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #86efac;
+    margin-top: 3px;
+  }
+
+  .outlook-box {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 14px 22px;
+    font-size: 18.5px;
+    line-height: 1.5;
+    color: #f8fafc;
+  }
+
+  .outlook-box strong {
+    color: #fde047;
+    font-size: 19px;
+  }
+
+  .aspects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .aspect-card {
+    background: #111827;
+    border: 1.5px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 13px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .aspect-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 17.5px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    color: #ffffff;
+  }
+
+  .aspect-pct {
+    font-weight: 900;
+    font-size: 20px;
+  }
+
+  .meter-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: 5px;
+  }
+
+  .aspect-hint {
+    font-size: 15.5px;
+    color: #cbd5e1;
+    line-height: 1.45;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 44px;
+    font-weight: 500;
+  }
+
+  .timing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .timing-card {
+    background: #111827;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .timing-icon {
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  .timing-label {
+    font-size: 14.5px;
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  .timing-val {
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-top: 2px;
+  }
+
+  .lucky-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .lucky-pill {
+    background: #111827;
+    border: 1.5px solid rgba(234, 179, 8, 0.28);
+    border-radius: 14px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .lucky-title {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  .lucky-text {
+    font-size: 18.5px;
+    font-weight: 900;
+    color: #fde047;
+    margin-top: 2px;
+  }
+
+  .remedy-strip {
+    background: linear-gradient(135deg, rgba(88, 28, 135, 0.25) 0%, rgba(30, 27, 75, 0.45) 100%);
+    border: 1.5px solid rgba(192, 132, 252, 0.35);
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .remedy-icon {
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .remedy-body {
+    font-size: 16.5px;
+    line-height: 1.45;
+    color: #f8fafc;
+  }
+
+  .remedy-body strong {
+    color: #d8b4fe;
+    font-size: 17px;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 10px;
+  }
+
+  .footer-brand {
+    font-size: 17.5px;
+    font-weight: 800;
+    color: #fde047;
+  }
+
+  .footer-sub {
+    font-size: 15px;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-ambient"></div>
+<div class="glow-top"></div>
+<div class="outer-frame"></div>
+
+<div class="container">
+
+  <div class="top-bar">
+    <div class="date-badge">🗓️ 2026-11-21 – சனிக்கிழமை</div>
+    <div class="brand-pill">தினசரி ராசிபலன்</div>
+  </div>
+
+  <div class="sign-hero">
+    <div class="sign-left">
+      <div class="zodiac-glyph">♎</div>
+      <div>
+        <div class="sign-name">துலாம்</div>
+        <div class="sign-english">Libra • சுக்கிரன் ஆட்சி</div>
+      </div>
+    </div>
+    <div class="score-badge">
+      <div class="score-val">50%</div>
+      <div class="score-label">3 / 5 மிதமான நாள்</div>
+    </div>
+  </div>
+
+  <div class="outlook-box">
+    🔮 <strong>இன்றைய சுருக்கம்:</strong> எதிர்ப்புகளையும் போட்டிகளையும் எளிதில் முறியடிக்கும் நாள். நிலுவைக் கடன்கள் வசூலாகும்; வேலைகளில் சுறுசுறுப்பு கூடும்.
+  </div>
+
+  <div class="aspects-grid">
+    
+        <div class="aspect-card">
+          <div class="aspect-header">
+            <span>தொழில் & உத்தியோகம்</span>
+            <span class="aspect-pct" style="color: #38bdf8;">62%</span>
+          </div>
+          <div class="meter-bar">
+            <div class="meter-fill" style="width: 62%; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div>
+          </div>
+          <div class="aspect-hint">நிலுவையில் உள்ள பணிகளை முடிப்பதில் கவனம் செலுத்துங்கள்; புதிய திட்டங்களை திட்டமிடுங்கள்.</div>
+        </div>
+        
+        <div class="aspect-card">
+          <div class="aspect-header">
+            <span>தனம் & பணவரவு</span>
+            <span class="aspect-pct" style="color: #facc15;">73%</span>
+          </div>
+          <div class="meter-bar">
+            <div class="meter-fill" style="width: 73%; background: linear-gradient(90deg, #ca8a04, #facc15);"></div>
+          </div>
+          <div class="aspect-hint">வர வேண்டிய பாக்கிகளை வசூலிக்க முயற்சி செய்யவும்; சேமிப்பைத் திட்டமிட உகந்த நாள்.</div>
+        </div>
+        
+        <div class="aspect-card">
+          <div class="aspect-header">
+            <span>குடும்பம் & உறவுகள்</span>
+            <span class="aspect-pct" style="color: #f472b6;">24%</span>
+          </div>
+          <div class="meter-bar">
+            <div class="meter-fill" style="width: 24%; background: linear-gradient(90deg, #db2777, #f472b6);"></div>
+          </div>
+          <div class="aspect-hint">பழைய கசப்பான விஷயங்களைப் பேச வேண்டாம்; அமைதியான அணுகுமுறை நலம் பயக்கும்.</div>
+        </div>
+        
+        <div class="aspect-card">
+          <div class="aspect-header">
+            <span>உடல்நலம் & உற்சாகம்</span>
+            <span class="aspect-pct" style="color: #4ade80;">20%</span>
+          </div>
+          <div class="meter-bar">
+            <div class="meter-fill" style="width: 20%; background: linear-gradient(90deg, #16a34a, #4ade80);"></div>
+          </div>
+          <div class="aspect-hint">எண்ணெய் உணவுகளைத் தவிர்க்கவும்; போதுமான உறக்கம் மற்றும் ஓய்வு அவசியம்.</div>
+        </div>
+        
+  </div>
+
+  <div class="timing-grid">
+    <div class="timing-card">
+      <div class="timing-icon">🌟</div>
+      <div>
+        <div class="timing-label">அதிர்ஷ்ட நேரம்</div>
+        <div class="timing-val">03:20 PM–04:40 PM, 06:20 PM–07:40 PM</div>
+      </div>
+    </div>
+    <div class="timing-card">
+      <div class="timing-icon">⚠️</div>
+      <div>
+        <div class="timing-label">கவனமான நேரம்</div>
+        <div class="timing-val">11:40 AM–03:20 PM</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lucky-strip">
+    <div class="lucky-pill">
+      <div class="lucky-title">🎨 நிறம்</div>
+      <div class="lucky-text">தூய வெள்ளை</div>
+    </div>
+    <div class="lucky-pill">
+      <div class="lucky-title">🔢 எண்</div>
+      <div class="lucky-text">6</div>
+    </div>
+    <div class="lucky-pill">
+      <div class="lucky-title">🧭 திசை</div>
+      <div class="lucky-text">மேற்கு</div>
+    </div>
+  </div>
+
+  <div class="remedy-strip">
+    <div class="remedy-icon">🪔</div>
+    <div class="remedy-body">
+      <strong>இன்றைய பரிகாரம்:</strong> பேச்சுவார்த்தைகளில் நிதானம் மற்றும் இனிமை காக்கவும்; கலை மற்றும் கூட்டாண்மை பணிகளுக்கு சிறந்தது.
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-brand">🙏 Gokul's Astrological Insights</div>
+    <div class="footer-sub">Gokul Murugan | Thiruverkadu</div>
+  </div>
+
+</div>
+
+</body>
+</html>

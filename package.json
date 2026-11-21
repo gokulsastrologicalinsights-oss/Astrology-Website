@@ -10,5 +10,13 @@
     "lint": "npm --prefix frontend run lint",
     "type-check": "npm --prefix frontend run type-check",
     "test": "npm --prefix frontend run test"
+  },
+  "allowScripts": {
+    "unrs-resolver": true
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "unrs-resolver"
+    ]
   }
 }
