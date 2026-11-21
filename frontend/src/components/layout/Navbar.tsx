@@ -206,6 +206,14 @@ export function Navbar() {
       ],
     },
     {
+      id: "pricing",
+      label: language === "ta" ? "திட்டங்கள் & கட்டணம்" : "Pricing & Plans",
+      icon: Crown,
+      href: "/pricing",
+      isActive: pathname === "/pricing",
+      hasDropdown: false,
+    },
+    {
       id: "training",
       label: language === "ta" ? "பயிற்சி" : "Training",
       icon: GraduationCap,
@@ -343,46 +351,77 @@ export function Navbar() {
               {!isLoading && (
                 <>
                   {isAuthenticated && user ? (
-                    <div className="relative" ref={dropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                        className="w-8 h-8 rounded-full bg-[#153F6B] text-white border-2 border-[#B4872B] flex items-center justify-center font-bold text-xs shadow-xs hover:scale-105 transition-transform cursor-pointer"
-                        aria-expanded={userDropdownOpen}
-                        aria-label="User Profile"
-                        title={user.displayName || user.username}
-                      >
-                        {user.username?.charAt(0).toUpperCase() || "G"}
-                      </button>
-
-                      {userDropdownOpen && (
-                        <div
-                          className="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl bg-white border border-[#D9DEE7] py-2 z-50 divide-y divide-[#F2F3F5] animate-in fade-in duration-150"
+                    <div className="flex items-center gap-2">
+                      {user.role !== "admin" && user.subscription?.tier !== "pro" && (
+                        <Link
+                          href="/pricing"
+                          className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-stone-950 shadow-xs hover:shadow transition-all shrink-0"
+                          title={language === "ta" ? "கட்டண சேவைகளுக்கு மாறுக" : "Upgrade to Pro"}
                         >
-                          <div className="px-4 py-2.5 text-xs">
-                            <div className="font-bold text-[#183047] truncate">
-                              {user.displayName || user.username}
-                            </div>
-                            <div className="truncate text-[11px] text-[#8190A6]">
-                              {user.email || `@${user.username}`}
-                            </div>
-                            <div className="mt-1 flex items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#EBF2FE] text-[#153F6B] border border-[#BFDBFE]">
-                                <Shield className="w-2.5 h-2.5 text-[#153F6B]" />
-                                {user.role === "admin" ? "Administrator" : "Standard User"}
-                              </span>
-                            </div>
-                          </div>
+                          <Crown className="w-3 h-3 text-stone-900" />
+                          <span>{language === "ta" ? "புரோ திட்டம்" : "Go Pro"}</span>
+                        </Link>
+                      )}
 
-                          <div className="py-1">
-                            <Link
-                              href="/dashboard"
-                              onClick={() => setUserDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] transition-colors"
-                            >
-                              <LayoutDashboard className="w-3.5 h-3.5 text-[#153F6B]" />
-                              <span>{t.navDashboard || "Dashboard"}</span>
-                            </Link>
+                      <div className="relative" ref={dropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                          className="w-8 h-8 rounded-full bg-[#153F6B] text-white border-2 border-[#B4872B] flex items-center justify-center font-bold text-xs shadow-xs hover:scale-105 transition-transform cursor-pointer"
+                          aria-expanded={userDropdownOpen}
+                          aria-label="User Profile"
+                          title={user.displayName || user.username}
+                        >
+                          {user.username?.charAt(0).toUpperCase() || "G"}
+                        </button>
+
+                        {userDropdownOpen && (
+                          <div
+                            className="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl bg-white border border-[#D9DEE7] py-2 z-50 divide-y divide-[#F2F3F5] animate-in fade-in duration-150"
+                          >
+                            <div className="px-4 py-2.5 text-xs">
+                              <div className="font-bold text-[#183047] truncate">
+                                {user.displayName || user.username}
+                              </div>
+                              <div className="truncate text-[11px] text-[#8190A6]">
+                                {user.email || `@${user.username}`}
+                              </div>
+                              <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#EBF2FE] text-[#153F6B] border border-[#BFDBFE]">
+                                  <Shield className="w-2.5 h-2.5 text-[#153F6B]" />
+                                  {user.role === "admin" ? "Administrator" : "Standard User"}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300">
+                                  <Crown className="w-2.5 h-2.5 text-amber-600" />
+                                  {user.role === "admin"
+                                    ? "Enterprise"
+                                    : user.subscription?.tier === "pro"
+                                    ? "Pro Studio"
+                                    : user.subscription?.tier === "tamil_specialist"
+                                    ? "Tamil Specialist"
+                                    : "Basic"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="py-1">
+                              <Link
+                                href="/pricing"
+                                onClick={() => setUserDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-4 py-2 text-xs text-amber-800 hover:bg-amber-50 font-semibold transition-colors"
+                              >
+                                <Crown className="w-3.5 h-3.5 text-amber-600" />
+                                <span>{language === "ta" ? "திட்டங்கள் & கட்டண சேவை" : "Plans & Subscriptions"}</span>
+                              </Link>
+
+                              <Link
+                                href="/dashboard"
+                                onClick={() => setUserDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#183047] hover:bg-[#F2F3F5] transition-colors"
+                              >
+                                <LayoutDashboard className="w-3.5 h-3.5 text-[#153F6B]" />
+                                <span>{t.navDashboard || "Dashboard"}</span>
+                              </Link>
 
                             <Link
                               href="/horoscopes"
@@ -421,7 +460,8 @@ export function Navbar() {
                         </div>
                       )}
                     </div>
-                  ) : (
+                  </div>
+                ) : (
                     !isLoginPage && (
                       <Link
                         href="/login"

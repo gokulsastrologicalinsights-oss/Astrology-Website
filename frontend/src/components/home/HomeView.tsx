@@ -27,6 +27,9 @@ import {
   CalendarCheck,
   ShieldAlert,
   Flame,
+  Crown,
+  Zap,
+  Lock,
 } from "lucide-react";
 import { BirthdayReminderModal } from "@/components/birthday/BirthdayReminderModal";
 import { DasaCautionReminderModal } from "@/components/caution/DasaCautionReminderModal";
@@ -215,6 +218,13 @@ interface AstrologyToolCard {
 
         <div className="flex items-center gap-2.5 flex-wrap">
           <Link
+            href="/pricing"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-stone-900 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 shadow-xs transition-all"
+          >
+            <Crown className="w-3.5 h-3.5" />
+            <span>{language === "ta" ? "கட்டண சேவைகள்" : "Paid Plans"}</span>
+          </Link>
+          <Link
             href="/horoscope"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#153F6B] hover:bg-[#0F3155] shadow-xs transition-colors"
           >
@@ -229,6 +239,34 @@ interface AstrologyToolCard {
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
+      </div>
+
+      {/* Paid Service Subscription Callout Banner */}
+      <div className="rounded-2xl bg-gradient-to-r from-[#153F6B] via-[#1E4E82] to-[#B4872B] p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-5">
+        <div className="space-y-1.5 text-center md:text-left">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/30 text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+            <Zap className="w-3 h-3 text-amber-300" />
+            <span>{language === "ta" ? "தொழில்முறை ஜோதிட மென்பொருள் கருவிகள்" : "Professional Software Tools Suite"}</span>
+          </div>
+          <h2 className="text-base sm:text-lg font-bold">
+            {language === "ta"
+              ? "பாரம்பரிய தமிழ் ஜாதக ஏடு, உயர்நிலை கே.பி 249 & பிரசன்னம் — கட்டணச் சந்தா"
+              : "Traditional Tamil Booklets, Advanced KP 249 & Horary — Available as Paid Service"}
+          </h2>
+          <p className="text-xs text-slate-200 max-w-2xl leading-relaxed">
+            {language === "ta"
+              ? "அடிப்படை (₹999/மாதம்), தமிழ் பிரதியாளர் (₹1,999/மாதம்) & புரோ ஸ்டுடியோ (₹2,999/மாதம்) திட்டங்கள் மூலம் அளவற்ற கணிப்புகள் & பிடிஎஃப் பிரிண்டிங் உரிமைகளைப் பெறுங்கள்."
+              : "Choose from Basic (₹999/mo), Tamil Specialist (₹1,999/mo), and Pro Studio (₹2,999/mo) with instant Razorpay UPI/Cards activation."}
+          </p>
+        </div>
+
+        <Link
+          href="/pricing"
+          className="shrink-0 py-3 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-900 font-extrabold text-xs sm:text-sm tracking-wide shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+        >
+          <span>{language === "ta" ? "திட்டங்கள் & கட்டணம் அறிய" : "View Plans & Pricing"}</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* 2. Section 1: ஜோதிடக் கருவிகள் (Astrology Tools Cards) */}

@@ -68,6 +68,11 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/pricing" className="hover:text-[#3478F6] text-[#B8862B] font-semibold transition-colors">
+                    {language === "ta" ? "கட்டண திட்டங்கள் (Pricing)" : "Plans & Pricing"}
+                  </Link>
+                </li>
+                <li>
                   <Link href="/tools/horoscope" className="hover:text-[#3478F6] transition-colors">
                     Horoscope / KP System
                   </Link>
