@@ -209,7 +209,7 @@ def build_rashi_square_html(
     z-index: 3;
     width: 1080px;
     height: 1080px;
-    padding: 32px 40px 24px 40px;
+    padding: 28px 34px 22px 34px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -219,30 +219,30 @@ def build_rashi_square_html(
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 10px;
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 12px;
   }}
 
   .date-badge {{
-    font-size: 19px;
+    font-size: 22px;
     font-weight: 700;
     color: #e2e8f0;
   }}
 
   .brand-pill {{
-    padding: 5px 18px;
-    background: rgba(234, 179, 8, 0.15);
-    border: 1.5px solid rgba(234, 179, 8, 0.45);
+    padding: 6px 20px;
+    background: rgba(234, 179, 8, 0.18);
+    border: 1.5px solid rgba(234, 179, 8, 0.55);
     border-radius: 20px;
-    color: #facc15;
-    font-size: 16px;
+    color: #fde047;
+    font-size: 19px;
     font-weight: 800;
     letter-spacing: 0.5px;
   }}
 
   .sign-hero {{
     background: #111827;
-    border: 2px solid rgba(234, 179, 8, 0.4);
+    border: 2px solid rgba(234, 179, 8, 0.45);
     border-radius: 20px;
     padding: 16px 26px;
     display: flex;
@@ -254,18 +254,18 @@ def build_rashi_square_html(
   .sign-left {{
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 20px;
   }}
 
   .zodiac-glyph {{
-    font-size: 56px;
+    font-size: 68px;
     color: #fbbf24;
     line-height: 1;
-    text-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
+    text-shadow: 0 0 18px rgba(251, 191, 36, 0.55);
   }}
 
   .sign-name {{
-    font-size: 40px;
+    font-size: 48px;
     font-weight: 900;
     color: #ffffff;
     line-height: 1.1;
@@ -273,47 +273,47 @@ def build_rashi_square_html(
   }}
 
   .sign-english {{
-    font-size: 18px;
+    font-size: 21px;
     color: #cbd5e1;
-    font-weight: 600;
+    font-weight: 700;
     margin-top: 3px;
   }}
 
   .score-badge {{
     text-align: right;
-    background: rgba(22, 101, 52, 0.35);
-    border: 1.5px solid rgba(74, 222, 128, 0.5);
-    border-radius: 16px;
-    padding: 10px 22px;
+    background: rgba(22, 101, 52, 0.45);
+    border: 2px solid rgba(74, 222, 128, 0.6);
+    border-radius: 18px;
+    padding: 12px 24px;
   }}
 
   .score-val {{
-    font-size: 32px;
+    font-size: 38px;
     font-weight: 900;
     color: #4ade80;
     line-height: 1;
   }}
 
   .score-label {{
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 17.5px;
+    font-weight: 800;
     color: #86efac;
-    margin-top: 3px;
+    margin-top: 4px;
   }}
 
   .outlook-box {{
-    background: rgba(15, 23, 42, 0.75);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
     padding: 14px 22px;
-    font-size: 18.5px;
+    font-size: 21px;
     line-height: 1.5;
     color: #f8fafc;
   }}
 
   .outlook-box strong {{
     color: #fde047;
-    font-size: 19px;
+    font-size: 22px;
   }}
 
   .aspects-grid {{
@@ -324,9 +324,9 @@ def build_rashi_square_html(
 
   .aspect-card {{
     background: #111827;
-    border: 1.5px solid rgba(255, 255, 255, 0.09);
+    border: 1.5px solid rgba(255, 255, 255, 0.11);
     border-radius: 16px;
-    padding: 13px 18px;
+    padding: 12px 18px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -336,7 +336,7 @@ def build_rashi_square_html(
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 17.5px;
+    font-size: 21px;
     font-weight: 800;
     margin-bottom: 6px;
     color: #ffffff;
@@ -344,34 +344,34 @@ def build_rashi_square_html(
 
   .aspect-pct {{
     font-weight: 900;
-    font-size: 20px;
+    font-size: 23px;
   }}
 
   .meter-bar {{
     width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
+    height: 9px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
     overflow: hidden;
     margin-bottom: 8px;
   }}
 
   .meter-fill {{
     height: 100%;
-    border-radius: 5px;
+    border-radius: 6px;
   }}
 
   .aspect-hint {{
-    font-size: 15.5px;
-    color: #cbd5e1;
+    font-size: 17.5px;
+    color: #e2e8f0;
     line-height: 1.45;
     word-break: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 44px;
-    font-weight: 500;
+    min-height: 48px;
+    font-weight: 600;
   }}
 
   .timing-grid {{
@@ -382,27 +382,27 @@ def build_rashi_square_html(
 
   .timing-card {{
     background: #111827;
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     padding: 12px 18px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
   }}
 
   .timing-icon {{
-    font-size: 30px;
+    font-size: 34px;
     line-height: 1;
   }}
 
   .timing-label {{
-    font-size: 14.5px;
+    font-size: 16px;
     color: #94a3b8;
     font-weight: 700;
   }}
 
   .timing-val {{
-    font-size: 16.5px;
+    font-size: 19px;
     font-weight: 800;
     color: #f8fafc;
     margin-top: 2px;
@@ -416,28 +416,28 @@ def build_rashi_square_html(
 
   .lucky-pill {{
     background: #111827;
-    border: 1.5px solid rgba(234, 179, 8, 0.28);
-    border-radius: 14px;
+    border: 1.5px solid rgba(234, 179, 8, 0.32);
+    border-radius: 16px;
     padding: 10px 8px;
     text-align: center;
   }}
 
   .lucky-title {{
-    font-size: 14px;
+    font-size: 16px;
     color: #94a3b8;
     font-weight: 700;
   }}
 
   .lucky-text {{
-    font-size: 18.5px;
+    font-size: 22px;
     font-weight: 900;
     color: #fde047;
     margin-top: 2px;
   }}
 
   .remedy-strip {{
-    background: linear-gradient(135deg, rgba(88, 28, 135, 0.25) 0%, rgba(30, 27, 75, 0.45) 100%);
-    border: 1.5px solid rgba(192, 132, 252, 0.35);
+    background: linear-gradient(135deg, rgba(88, 28, 135, 0.3) 0%, rgba(30, 27, 75, 0.5) 100%);
+    border: 1.5px solid rgba(192, 132, 252, 0.4);
     border-radius: 16px;
     padding: 12px 20px;
     display: flex;
@@ -446,38 +446,38 @@ def build_rashi_square_html(
   }}
 
   .remedy-icon {{
-    font-size: 32px;
+    font-size: 36px;
     line-height: 1;
   }}
 
   .remedy-body {{
-    font-size: 16.5px;
+    font-size: 18.5px;
     line-height: 1.45;
     color: #f8fafc;
   }}
 
   .remedy-body strong {{
     color: #d8b4fe;
-    font-size: 17px;
+    font-size: 20px;
   }}
 
   .footer {{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.12);
     padding-top: 10px;
   }}
 
   .footer-brand {{
-    font-size: 17.5px;
+    font-size: 19.5px;
     font-weight: 800;
     color: #fde047;
   }}
 
   .footer-sub {{
-    font-size: 15px;
-    color: #94a3b8;
+    font-size: 16.5px;
+    color: #cbd5e1;
     font-weight: 600;
   }}
 </style>
