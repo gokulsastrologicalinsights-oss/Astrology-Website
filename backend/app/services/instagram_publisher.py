@@ -94,6 +94,31 @@ def build_public_poster_url(target_date: str, image_filename: str) -> str:
     return f"{base}/api/v1/social/facebook/posters/{target_date}/{image_filename}"
 
 
+def get_or_upload_public_poster_url(target_date: str, local_image_path: str) -> str:
+    """Uploads the poster to Supabase Storage ('daily-posters') to provide an instant high-speed public CDN URL, or falls back to public_backend_url."""
+    filename = os.path.basename(local_image_path)
+    try:
+        from app.services.auth_service import get_supabase_client
+        sb = get_supabase_client()
+        if sb and os.path.isfile(local_image_path):
+            storage_path = f"{target_date}/{filename}"
+            with open(local_image_path, "rb") as f:
+                data = f.read()
+            sb.storage.from_("daily-posters").upload(
+                storage_path,
+                data,
+                file_options={"content-type": "image/png", "upsert": "true"}
+            )
+            public_url = sb.storage.from_("daily-posters").get_public_url(storage_path)
+            if public_url:
+                logger.info(f"Uploaded {filename} to Supabase CDN: {public_url}")
+                return str(public_url)
+    except Exception as exc:
+        logger.warning(f"Failed to upload poster {filename} to Supabase storage: {exc}")
+
+    return build_public_poster_url(target_date, filename)
+
+
 async def create_ig_carousel_item(
     image_url: str,
     ig_user_id: str,
@@ -191,7 +216,7 @@ async def post_daily_instagram_carousels(
     """Generates 12 posters and publishes the 3 carousel posts to Instagram."""
     loop = asyncio.get_running_loop()
     posters_meta = await loop.run_in_executor(None, generate_all_12_posters, horoscope_data)
-    poster_map = {m[0]: os.path.basename(m[3]) for m in posters_meta}
+    poster_map = {m[0]: m[3] for m in posters_meta}
 
     group_size = settings.fb_carousel_group_size or 4
     predictions = horoscope_data.predictions
@@ -203,7 +228,7 @@ async def post_daily_instagram_carousels(
     for idx, group in enumerate(groups, start=1):
         group_names = ", ".join(f"{p.rashi_name_ta} ({p.rashi_name_en})" for p in group)
         image_urls = [
-            build_public_poster_url(target_date, poster_map[p.rashi_id])
+            get_or_upload_public_poster_url(target_date, poster_map[p.rashi_id])
             for p in group
             if p.rashi_id in poster_map
         ]
