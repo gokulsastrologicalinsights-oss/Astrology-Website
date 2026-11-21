@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -138,8 +139,7 @@ export default function BrighuNaadiToolPage() {
                   {isTa ? "பிறந்த தேதி:" : "Date of Birth:"}
                 </label>
                 <div className="relative">
-                  <input
-                    type="date"
+                  <DateInputDMY
                     required
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}

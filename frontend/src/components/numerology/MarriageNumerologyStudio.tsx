@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { analyzeMarriageNumerology, saveNumerologyReport, exportNumerologyPdf } from "@/lib/api";
@@ -306,8 +307,7 @@ export function MarriageNumerologyStudio() {
                 <label className="block text-[11px] font-semibold text-[#52667E] mb-1">
                   {language === "ta" ? "பிறந்த தேதி *" : "Birth Date *"}
                 </label>
-                <input
-                  type="date"
+                <DateInputDMY
                   required
                   value={personADob}
                   onChange={(e) => setPersonADob(e.target.value)}
@@ -360,8 +360,7 @@ export function MarriageNumerologyStudio() {
                 <label className="block text-[11px] font-semibold text-[#52667E] mb-1">
                   {language === "ta" ? "பிறந்த தேதி *" : "Birth Date *"}
                 </label>
-                <input
-                  type="date"
+                <DateInputDMY
                   required
                   value={personBDob}
                   onChange={(e) => setPersonBDob(e.target.value)}

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -617,8 +618,7 @@ function InstantRevelationContent() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">பிறந்த தேதி (Birth Date)</label>
-              <input
-                type="date"
+              <DateInputDMY
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#B4872B] focus:border-transparent outline-none"

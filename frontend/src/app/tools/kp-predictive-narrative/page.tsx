@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -506,8 +507,7 @@ function KpPredictiveNarrativeContent() {
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                     {uiLang === "ta" ? "கணிப்பு தொடக்க தேதி" : "Target Reference Date"}
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#153F6B]/20 focus:border-[#153F6B]"
@@ -536,8 +536,7 @@ function KpPredictiveNarrativeContent() {
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
                       {uiLang === "ta" ? "பிறந்த தேதி" : "Birth Date"}
                     </label>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={manualDate}
                       onChange={(e) => setManualDate(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:border-[#153F6B]"
@@ -599,8 +598,7 @@ function KpPredictiveNarrativeContent() {
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
                       {uiLang === "ta" ? "கணிப்பு தொடக்க தேதி" : "Target Reference Date"}
                     </label>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={targetDate}
                       onChange={(e) => setTargetDate(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white"

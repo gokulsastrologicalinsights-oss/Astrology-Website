@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -436,8 +437,7 @@ function PanchaPakshiStudioInner() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={dateStr}
                   onChange={(e) => setDateStr(e.target.value)}
                   className="w-full px-3 py-1.5 rounded-xl border border-[#DDE5F0] bg-white text-xs font-semibold text-[#102A4C]"

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -278,8 +279,7 @@ function DailySastraContent() {
                 <label className="text-sm font-bold text-gray-700 whitespace-nowrap">
                   {isTa ? "தேதியைத் தேர்ந்தெடுக்கவும்:" : "Select Date:"}
                 </label>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:outline-none"

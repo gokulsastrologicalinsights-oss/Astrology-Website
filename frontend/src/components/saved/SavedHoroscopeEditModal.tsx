@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { SavedHoroscopeItem } from "@/lib/types";
@@ -352,8 +353,7 @@ export function SavedHoroscopeEditModal({
                 <Calendar className="w-3.5 h-3.5 text-[#B8860B]" />
                 <span>{t.fieldDate} *</span>
               </label>
-              <input
-                type="date"
+              <DateInputDMY
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B8860B]/20 transition-all ${

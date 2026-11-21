@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import {
   HoraryKpRequest,
@@ -313,8 +314,7 @@ export function HoraryPrashnaTab({ language, onSavedRecord }: HoraryPrashnaTabPr
               <label className="block text-xs font-bold text-[#52667E]">
                 {language === "ta" ? "கேள்வி தேதி*" : "Question Date*"}
               </label>
-              <input
-                type="date"
+              <DateInputDMY
                 required
                 value={questionDate}
                 onChange={(e) => setQuestionDate(e.target.value)}

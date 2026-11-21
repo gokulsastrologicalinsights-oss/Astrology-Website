@@ -15,6 +15,7 @@ import { COMMON_TIMEZONES } from "@/lib/cities";
 import { prepareCalculationSnapshot } from "@/lib/horoscope-storage-utils";
 import { SUPPORTED_COUNTRY_CODES, validateAndNormalizePhone } from "@/lib/phone-utils";
 import { parse12HourTimeTo24, parse24To12 } from "@/lib/formatters";
+import { DateInputDMY } from "@/components/common/DateInputDMY";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useAuth } from "@/lib/auth-context";
@@ -980,14 +981,14 @@ function HoroscopeFormContent() {
               <label htmlFor="birthDate" className="block text-xs font-semibold text-[#334155] mb-1">
                 {t.fieldDate} <span className="text-rose-600">*</span>
               </label>
-              <input
+              <DateInputDMY
                 id="birthDate"
                 name="birth_date_clean"
-                type="date"
                 required
                 autoComplete="off"
                 data-form-type="other"
                 data-lpignore="true"
+                language={language}
                 value={birthDate}
                 onChange={(e) => {
                   setBirthDate(e.target.value);

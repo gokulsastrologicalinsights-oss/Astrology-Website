@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
@@ -605,8 +606,7 @@ function MasterPredictionContent() {
                 onChange={(e) => setManualName(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-900/80 border border-white/20 text-xs text-white"
               />
-              <input
-                type="date"
+              <DateInputDMY
                 value={manualDate}
                 onChange={(e) => setManualDate(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-900/80 border border-white/20 text-xs text-white"

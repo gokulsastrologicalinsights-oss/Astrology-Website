@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -393,8 +394,7 @@ function LoveOrArrangedToolContent() {
                       <Calendar className="w-3.5 h-3.5 text-slate-500" />
                       {language === "ta" ? "பிறந்த தேதி" : "Birth Date"}
                     </label>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
                       required

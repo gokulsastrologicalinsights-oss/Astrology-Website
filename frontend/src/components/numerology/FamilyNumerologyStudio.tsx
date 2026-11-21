@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { analyzeFamilyNumerology, saveNumerologyReport, exportNumerologyPdf } from "@/lib/api";
@@ -360,8 +361,7 @@ export function FamilyNumerologyStudio() {
                       onChange={(e) => handleUpdateMember(m.id, "name", e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     />
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={m.birth_date}
                       onChange={(e) => handleUpdateMember(m.id, "birth_date", e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
@@ -425,8 +425,7 @@ export function FamilyNumerologyStudio() {
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
                     {language === "ta" ? "குழந்தையின் பிறந்த தேதி (விருப்பத்தேர்வு)" : "Baby DOB (Optional)"}
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={babyDob}
                     onChange={(e) => setBabyDob(e.target.value)}
                     className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"

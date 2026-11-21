@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -727,8 +728,7 @@ export function NumerologySectionView() {
                   <label className="block text-[11px] font-semibold text-[#52667E] mb-1">
                     Date of Birth
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={partner1Dob}
                     onChange={(e) => setPartner1Dob(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-[#DDE5F0] text-xs text-[#102A4C] bg-white"
@@ -757,8 +757,7 @@ export function NumerologySectionView() {
                   <label className="block text-[11px] font-semibold text-[#52667E] mb-1">
                     Date of Birth
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={partner2Dob}
                     onChange={(e) => setPartner2Dob(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-[#DDE5F0] text-xs text-[#102A4C] bg-white"

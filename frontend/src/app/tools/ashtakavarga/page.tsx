@@ -20,6 +20,7 @@ import {
   calculateKakshaTransit,
 } from "@/lib/api";
 import { formatDm } from "@/lib/formatters";
+import { DateInputDMY } from "@/components/common/DateInputDMY";
 import {
   Grid,
   Compass,
@@ -438,8 +439,7 @@ function AshtakavargaContent() {
                 <Calendar className="w-3.5 h-3.5 inline mr-1 text-[#B8862B]" />
                 Birth Date (DD/MM/YYYY)
               </label>
-              <input
-                type="date"
+              <DateInputDMY
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#102A4C] font-mono focus:outline-hidden focus:border-[#B8862B]"

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -439,8 +440,7 @@ export function BusinessNumerologyStudio() {
 
                   <div className="sm:col-span-3 space-y-1">
                     <label className="block text-[10px] font-bold text-[#64748B] uppercase">Birth Date</label>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={founder.birth_date || ""}
                       onChange={(e) => updateFounder(idx, "birth_date", e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium text-[#0F172A] bg-white"

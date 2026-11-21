@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -456,8 +457,7 @@ function KpEventsPredictionContent() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block font-semibold text-[#102A4C] mb-1">Birth Date</label>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={manualDate}
                       onChange={(e) => setManualDate(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] focus:ring-2 focus:ring-[#B8862B]"
@@ -614,8 +614,7 @@ function KpEventsPredictionContent() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block font-semibold text-[#102A4C] mb-1">Start Date</label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] focus:ring-2 focus:ring-[#B8862B]"
@@ -623,8 +622,7 @@ function KpEventsPredictionContent() {
                 </div>
                 <div>
                   <label className="block font-semibold text-[#102A4C] mb-1">End Date</label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] focus:ring-2 focus:ring-[#B8862B]"

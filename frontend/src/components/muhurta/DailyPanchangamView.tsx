@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { useLanguage } from "@/lib/i18n";
 import { getDailyPanchang } from "@/lib/api";
 import {
@@ -87,8 +88,7 @@ export function DailyPanchangamView() {
             <label className="block text-[11px] font-bold text-[#52667E] mb-1">
               {language === "ta" ? "தேதி / Date" : "Date"}
             </label>
-            <input
-              type="date"
+            <DateInputDMY
               value={dateStr}
               onChange={(e) => setDateStr(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] bg-white text-[#102A4C] font-medium focus:outline-hidden focus:border-[#3478F6]"

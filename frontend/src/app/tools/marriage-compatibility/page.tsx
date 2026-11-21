@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -1065,8 +1066,7 @@ function MarriageCompatibilityContent() {
                         <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                           {language === "ta" ? "பிறந்த தேதி" : "Birth Date"} *
                         </label>
-                        <input
-                          type="date"
+                        <DateInputDMY
                           value={groomDate}
                           onChange={(e) => setGroomDate(e.target.value)}
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#153F6B] focus:border-[#153F6B]"
@@ -1389,8 +1389,7 @@ function MarriageCompatibilityContent() {
                         <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                           {language === "ta" ? "பிறந்த தேதி" : "Birth Date"} *
                         </label>
-                        <input
-                          type="date"
+                        <DateInputDMY
                           value={brideDate}
                           onChange={(e) => setBrideDate(e.target.value)}
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4872B] focus:border-[#B4872B]"

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -648,8 +649,7 @@ export function PropertyNumerologyStudio() {
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Birth Date (DD/MM/YYYY)
                 </label>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={primaryBirthDate}
                   onChange={(e) => setPrimaryBirthDate(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm"
@@ -748,8 +748,7 @@ export function PropertyNumerologyStudio() {
               </div>
               <div>
                 <label className="text-[11px] text-muted-foreground block mb-1">Birth Date (DD/MM/YYYY)</label>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={newResDob}
                   onChange={(e) => setNewResDob(e.target.value)}
                   className="w-full px-3 py-1.5 rounded-lg border border-input bg-background text-xs"

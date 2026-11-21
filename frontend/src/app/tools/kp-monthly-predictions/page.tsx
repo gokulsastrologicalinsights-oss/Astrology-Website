@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -375,8 +376,7 @@ ${predictionData.favorable_events.map((e) => `• ${e.title_ta}\n  காலம�
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">பிறந்த தேதி (Date)</label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={manualDate}
                     onChange={(e) => setManualDate(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100"

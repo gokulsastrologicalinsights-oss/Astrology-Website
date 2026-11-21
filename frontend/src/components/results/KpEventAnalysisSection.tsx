@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import {
   KpResponse,
   DasaResponse,
@@ -584,8 +585,7 @@ export function KpEventAnalysisSection({
             <label className="text-[10px] font-bold text-[#64748B] uppercase block mb-1">
               {language === "ta" ? "ஆரம்ப தேதி" : "From Date"}
             </label>
-            <input
-              type="date"
+            <DateInputDMY
               value={startDateFilter}
               onChange={(e) => setStartDateFilter(e.target.value)}
               className="w-full px-2.5 py-1.5 rounded-lg border border-[#E2DCD5] bg-white text-xs text-[#0F172A] focus:outline-hidden focus:ring-1 focus:ring-[#B8860B]"
@@ -597,8 +597,7 @@ export function KpEventAnalysisSection({
             <label className="text-[10px] font-bold text-[#64748B] uppercase block mb-1">
               {language === "ta" ? "முடிவு தேதி" : "To Date"}
             </label>
-            <input
-              type="date"
+            <DateInputDMY
               value={endDateFilter}
               onChange={(e) => setEndDateFilter(e.target.value)}
               className="w-full px-2.5 py-1.5 rounded-lg border border-[#E2DCD5] bg-white text-xs text-[#0F172A] focus:outline-hidden focus:ring-1 focus:ring-[#B8860B]"

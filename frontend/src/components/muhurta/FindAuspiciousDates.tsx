@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { getOccasions, findMuhurtas, saveMuhurtaSelection } from "@/lib/api";
@@ -435,8 +436,7 @@ export function FindAuspiciousDates() {
                 {language === "ta" ? "தொடக்கத் தேதி" : "Search Start Date"}
               </label>
               <div className="relative">
-                <input
-                  type="date"
+                <DateInputDMY
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-800"
@@ -451,8 +451,7 @@ export function FindAuspiciousDates() {
                 {language === "ta" ? "முடிவுத் தேதி" : "Search End Date"}
               </label>
               <div className="relative">
-                <input
-                  type="date"
+                <DateInputDMY
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-800"

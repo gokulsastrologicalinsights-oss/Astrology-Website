@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
@@ -254,8 +255,7 @@ export default function DestinyMatrixPage() {
               </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="date"
+                <DateInputDMY
                   required
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
@@ -317,8 +317,7 @@ export default function DestinyMatrixPage() {
                       <label className="block text-[11px] font-semibold text-[#334155] mb-1">
                         Partner Date of Birth *
                       </label>
-                      <input
-                        type="date"
+                      <DateInputDMY
                         required={enableCompatibility}
                         value={partnerBirthDate}
                         onChange={(e) => setPartnerBirthDate(e.target.value)}

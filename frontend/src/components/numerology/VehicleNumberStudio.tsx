@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -468,8 +469,7 @@ export function VehicleNumberStudio() {
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   {language === "ta" ? "பிறந்த தேதி (DD/MM/YYYY)" : "Owner Birth Date (DD/MM/YYYY)"}
                 </label>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={primaryBirthDate}
                   onChange={(e) => setPrimaryBirthDate(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border border-input bg-background text-sm focus:ring-2 focus:ring-amber-500"
@@ -570,8 +570,7 @@ export function VehicleNumberStudio() {
                 <label className="text-[11px] text-muted-foreground block mb-1">
                   {language === "ta" ? "பிறந்த தேதி (DD/MM/YYYY)" : "Birth Date (DD/MM/YYYY)"}
                 </label>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={newCoDob}
                   onChange={(e) => setNewCoDob(e.target.value)}
                   className="w-full px-3 py-1.5 rounded-lg border border-input bg-background text-xs"

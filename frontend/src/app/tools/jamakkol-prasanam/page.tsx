@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -227,8 +228,7 @@ function JamakkolPrasanamInner() {
                 <Calendar className="w-3.5 h-3.5 text-blue-600" />
                 <span>{language === "ta" ? "தேதி" : "Query Date"}</span>
               </label>
-              <input
-                type="date"
+              <DateInputDMY
                 value={dateInput}
                 onChange={(e) => setDateInput(e.target.value)}
                 className="w-full text-sm rounded-xl border border-slate-300 px-3 py-2 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#153F6B] focus:border-transparent font-medium"

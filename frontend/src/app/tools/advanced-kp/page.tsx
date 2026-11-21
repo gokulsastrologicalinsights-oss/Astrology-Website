@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -562,8 +563,7 @@ function AdvancedKpContent() {
 
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-[#52667E]">Birth Date*</label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     required
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}

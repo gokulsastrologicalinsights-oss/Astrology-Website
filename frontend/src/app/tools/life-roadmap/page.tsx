@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense, useMemo } from "react";
+import React, { useState, useEffect, useCallback, Suspense, useMemo } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -434,8 +435,7 @@ function LifeRoadmapContent() {
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Birth Date</label>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={manualDate}
                   onChange={(e) => setManualDate(e.target.value)}
                   className="w-full text-xs rounded-xl border-slate-300 px-3 py-2 border focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
@@ -528,8 +528,7 @@ function LifeRoadmapContent() {
               {/* Start Date */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500">Starting from:</span>
-                <input
-                  type="date"
+                <DateInputDMY
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="text-xs rounded-lg border-slate-300 px-2.5 py-1 border bg-white focus:ring-2 focus:ring-amber-500 focus:outline-hidden"

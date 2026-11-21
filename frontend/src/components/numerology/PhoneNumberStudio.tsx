@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -294,8 +295,7 @@ export function PhoneNumberStudio() {
                 <User className="w-3.5 h-3.5 text-[#3478F6]" />
                 <span>{language === "ta" ? "பிறந்த தேதி (தனிநபர் இணக்கம்)" : "Owner Birth Date (Personal Match)"}</span>
               </label>
-              <input
-                type="date"
+              <DateInputDMY
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] text-xs font-medium text-[#0F172A] bg-white focus:outline-hidden focus:ring-2 focus:ring-[#3478F6]"

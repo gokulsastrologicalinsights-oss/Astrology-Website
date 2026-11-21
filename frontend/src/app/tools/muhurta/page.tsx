@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -442,8 +443,7 @@ function MuhurtaStudioInner() {
               <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
                 {language === "ta" ? "தொடக்கத் தேதி / Start Date" : "Start Date"}
               </label>
-              <input
-                type="date"
+              <DateInputDMY
                 value={startDateStr}
                 onChange={(e) => setStartDateStr(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] font-medium text-[#102A4C]"
@@ -469,8 +469,7 @@ function MuhurtaStudioInner() {
                   ))}
                 </div>
               </div>
-              <input
-                type="date"
+              <DateInputDMY
                 value={endDateStr}
                 onChange={(e) => setEndDateStr(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] font-medium text-[#102A4C]"

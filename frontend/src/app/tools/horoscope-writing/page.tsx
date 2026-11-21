@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -656,8 +657,7 @@ function HoroscopeWritingContent() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">பிறந்த தேதி:</label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-[#153F6B]"

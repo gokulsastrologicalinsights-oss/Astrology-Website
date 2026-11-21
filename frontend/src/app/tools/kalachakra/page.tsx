@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -659,8 +660,7 @@ ${predictionData.overall_month_summary_ta || "Maintain balanced effort and align
                   </div>
                   <div>
                     <label className="text-xs text-slate-400">{isTa ? "பிறந்த தேதி" : "Birth Date"}</label>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={manualDate}
                       onChange={(e) => setManualDate(e.target.value)}
                       className="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"

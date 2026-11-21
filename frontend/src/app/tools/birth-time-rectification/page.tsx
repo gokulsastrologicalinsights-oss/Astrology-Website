@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
@@ -498,8 +499,7 @@ export default function BirthTimeRectificationPage() {
                   <label className="block text-xs font-semibold text-[#475569] mb-1">
                     {language === "ta" ? "பிறந்த தேதி" : "Birth Date"}
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
                     className="w-full text-xs font-mono px-3 py-2 border border-[#CBD5E1] rounded-lg focus:ring-2 focus:ring-[#102A4C] outline-none"
@@ -658,8 +658,7 @@ export default function BirthTimeRectificationPage() {
                       </div>
                       <div className="sm:col-span-6">
                         <label className="block text-[10px] font-semibold text-[#64748B] uppercase">Event Date</label>
-                        <input
-                          type="date"
+                        <DateInputDMY
                           value={ev.event_date}
                           onChange={(e) => updateEvent(idx, "event_date", e.target.value)}
                           className="w-full text-xs font-mono px-2.5 py-1.5 border border-[#CBD5E1] rounded-md bg-white outline-none"

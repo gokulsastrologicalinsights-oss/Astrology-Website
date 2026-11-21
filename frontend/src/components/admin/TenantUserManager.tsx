@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import { formatDate } from "@/lib/date-formatter";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -1052,8 +1053,7 @@ export function TenantUserManager({ users, onRefresh }: TenantUserManagerProps) 
                   <label className="block text-xs font-bold text-[#334155] mb-1">
                     Subscription Valid Until (Date)
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={formData.customValidUntil}
                     onChange={(e) => setFormData({ ...formData, customValidUntil: e.target.value })}
                     className="w-full rounded-xl border border-[#CBD5E1] px-3 py-2 text-xs text-[#0F172A] focus:border-amber-600 focus:outline-none"

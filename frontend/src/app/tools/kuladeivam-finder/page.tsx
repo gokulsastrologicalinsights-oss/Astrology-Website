@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -278,8 +279,7 @@ export default function KuladeivamFinderPage() {
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     {isTa ? "பிறந்த தேதி (Date of Birth)" : "Date of Birth"}
                   </label>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"

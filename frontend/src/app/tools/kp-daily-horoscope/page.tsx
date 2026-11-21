@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -986,8 +987,7 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
                 </button>
                 <div className="flex items-center gap-1.5 pl-2 border-l border-slate-300 dark:border-slate-700">
                   <Calendar className="w-4 h-4 text-slate-400" />
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-200 cursor-pointer"
@@ -1031,8 +1031,7 @@ ${activeMonthlyPrediction.monthly_remedy_ta}
 
                 <div className="flex items-center gap-1.5 pl-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
                   <span className="text-[11px] text-slate-500 font-medium">{isTa ? "வாரம் மாற்ற:" : "Jump to:"}</span>
-                  <input
-                    type="date"
+                  <DateInputDMY
                     value={selectedWeekDate}
                     onChange={(e) => setSelectedWeekDate(e.target.value)}
                     className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-200 cursor-pointer"

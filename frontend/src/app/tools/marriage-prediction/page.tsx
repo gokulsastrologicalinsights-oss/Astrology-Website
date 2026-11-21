@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
@@ -704,9 +705,8 @@ function MarriagePredictionContent() {
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                     <Calendar className="h-4 w-4" />
                   </div>
-                  <input
+                  <DateInputDMY
                     id="birth-date"
-                    type="date"
                     value={birthDate}
                     onChange={(e) => {
                       setBirthDate(e.target.value);

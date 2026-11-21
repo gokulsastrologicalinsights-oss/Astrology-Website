@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import Link from "next/link";
 import { FullHoroscopeResult, ShadbalaResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
@@ -1538,8 +1539,7 @@ export function HoroscopeFactsPanel({
                       <Calendar className="w-3.5 h-3.5 text-[#B4872B]" />
                       <span>கோசார தேதி:</span>
                     </span>
-                    <input
-                      type="date"
+                    <DateInputDMY
                       value={transitDate}
                       onChange={(e) => setTransitDate(e.target.value)}
                       className="px-2.5 py-1 text-xs border border-[#D9DEE7] rounded-md bg-white text-[#183047] font-mono focus:outline-none focus:ring-1 focus:ring-[#153F6B]"

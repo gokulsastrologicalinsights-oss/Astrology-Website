@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import {
   HoroscopeResponse,
   DasaResponse,
@@ -936,8 +937,7 @@ export function AstrologerCockpit({
             <span className="text-xs font-semibold text-[#52667E] hidden sm:inline">
               {language === "ta" ? "தேதி மாற்றி:" : "Date Anchor:"}
             </span>
-            <input
-              type="date"
+            <DateInputDMY
               value={activeDate}
               onChange={(e) => setActiveDate(e.target.value)}
               className="text-xs px-2.5 py-1.5 rounded-lg border border-[#D9DEE7] bg-[#F2F3F5]/40 text-[#183047] font-semibold focus:outline-none focus:ring-1 focus:ring-[#153F6B]"

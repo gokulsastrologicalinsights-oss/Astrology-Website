@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+
 import {
   DasaResponse,
   DasaPeriodNode,
@@ -1041,8 +1042,7 @@ export function DasaTimeline({
             {/* Target Date Picker */}
             <div className="flex items-center gap-1 bg-[#F2F3F5] px-2 py-1 rounded-lg border border-[#D9DEE7]">
               <Calendar className="w-3.5 h-3.5 text-[#8190A6]" />
-              <input
-                type="date"
+              <DateInputDMY
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="bg-transparent text-xs text-[#183047] font-semibold outline-none cursor-pointer"
