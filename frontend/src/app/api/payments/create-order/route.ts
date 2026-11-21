@@ -2,6 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PLAN_PRESETS } from "@/lib/permissions";
 
+const SINGLE_SERVICE_PRICES: Record<
+  string,
+  { nameEn: string; nameTa: string; priceInr: number }
+> = {
+  single_tamil_booklet: {
+    nameEn: "Traditional Tamil 6-Page Booklet PDF",
+    nameTa: "பாரம்பரிய தமிழ் 6-பக்க ஜாதக புத்தகம்",
+    priceInr: 199,
+  },
+  single_marriage_matching: {
+    nameEn: "Marriage Compatibility Report",
+    nameTa: "திருமணப் பொருத்த விரிவான அறிக்கை",
+    priceInr: 149,
+  },
+  single_kp_report: {
+    nameEn: "Advanced KP Sub-Lord Analysis",
+    nameTa: "உயர்நிலை கே.பி. உப-அதிபதி அறிக்கை",
+    priceInr: 249,
+  },
+  single_vedic_kundli: {
+    nameEn: "Full Vedic Kundli & Predictions",
+    nameTa: "முழுமையான வேத ஜாதக அறிக்கை",
+    priceInr: 299,
+  },
+  single_tool_unlock: {
+    nameEn: "Instant Single Tool Report Unlock",
+    nameTa: "உடனடி ஒற்றை அறிக்கை கட்டணம்",
+    priceInr: 199,
+  },
+};
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -12,26 +43,39 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authentication required. Please sign in to purchase a software subscription." },
+        { error: "Authentication required. Please sign in to complete payment." },
         { status: 401 }
       );
     }
 
     const body = await request.json();
-    const { planId = "pro", billingCycle = "monthly" } = body;
+    const { planId = "pro", billingCycle = "monthly", singleItemKey } = body;
 
-    const preset = PLAN_PRESETS[planId];
-    if (!preset) {
+    let amountInr = 1999;
+    let planNameEn = "Tamil Horoscope Specialist";
+    let planNameTa = "தமிழ் ஜாதகப் பிரதியாளர் திட்டம்";
+    let isSingleService = false;
+
+    if (singleItemKey && SINGLE_SERVICE_PRICES[singleItemKey]) {
+      const item = SINGLE_SERVICE_PRICES[singleItemKey];
+      amountInr = item.priceInr;
+      planNameEn = item.nameEn;
+      planNameTa = item.nameTa;
+      isSingleService = true;
+    } else if (PLAN_PRESETS[planId]) {
+      const preset = PLAN_PRESETS[planId];
+      const isYearly = billingCycle === "yearly";
+      amountInr = isYearly ? preset.yearlyPriceInr : preset.monthlyPriceInr;
+      planNameEn = preset.nameEn;
+      planNameTa = preset.nameTa;
+    } else {
       return NextResponse.json(
-        { error: `Invalid subscription plan '${planId}' specified.` },
+        { error: `Invalid subscription plan or service item '${planId}'.` },
         { status: 400 }
       );
     }
 
-    const isYearly = billingCycle === "yearly";
-    const amountInr = isYearly ? preset.yearlyPriceInr : preset.monthlyPriceInr;
     const amountInPaise = amountInr * 100;
-
     const keyId =
       process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -40,14 +84,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Razorpay payment gateway credentials are not configured on the server. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables.",
+            "Razorpay payment gateway credentials are not configured on the server. Please check your environment variables.",
         },
         { status: 500 }
       );
     }
 
     // Generate unique receipt reference (max 40 chars for Razorpay)
-    const receipt = `gai_${user.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 10)}_${Date.now()}`.slice(0, 40);
+    const receipt = `gai_${user.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8)}_${Date.now()}`.slice(0, 40);
 
     const authHeader = `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`;
 
@@ -58,8 +102,9 @@ export async function POST(request: NextRequest) {
       notes: {
         userId: user.id,
         userEmail: user.email || "",
-        planId,
-        billingCycle,
+        planId: isSingleService ? singleItemKey : planId,
+        billingCycle: isSingleService ? "one-time" : billingCycle,
+        type: isSingleService ? "single_service" : "subscription",
         service: "Gokul Astrological Insights Software Tools",
       },
     };
@@ -93,10 +138,11 @@ export async function POST(request: NextRequest) {
       amount: orderData.amount,
       currency: orderData.currency || "INR",
       keyId,
-      planId,
-      planNameEn: preset.nameEn,
-      planNameTa: preset.nameTa,
-      billingCycle,
+      planId: isSingleService ? singleItemKey : planId,
+      planNameEn,
+      planNameTa,
+      billingCycle: isSingleService ? "one-time" : billingCycle,
+      isSingleService,
       user: {
         id: user.id,
         email: user.email,
