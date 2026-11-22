@@ -583,6 +583,11 @@ def generate_single_poster(
     html_path = os.path.join(output_dir, f"rashi_{prediction.rashi_id}_{prediction.rashi_name_en.lower()}.html")
     png_path = os.path.join(output_dir, f"rashi_{prediction.rashi_id}_{prediction.rashi_name_en.lower()}.png")
 
+    # If already rendered and valid, reuse immediately to avoid duplicate browser invocations
+    if os.path.isfile(png_path) and os.path.getsize(png_path) > 1024:
+        logger.info(f"Reusing existing cached poster on disk: {png_path}")
+        return png_path
+
     html_content = build_rashi_square_html(horoscope_data, prediction)
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_content)

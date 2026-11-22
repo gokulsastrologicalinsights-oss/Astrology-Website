@@ -425,3 +425,47 @@ def test_post_all_12_publishes_all_rashis_as_text(monkeypatch):
     assert any("மேஷம்" in m for m in posted_messages)
     assert any("மீனம்" in m for m in posted_messages)
 
+
+def test_post_daily_carousel_deduplication_skips_existing_parts(monkeypatch):
+    """Carousel publishing checks Facebook feed and skips already published carousel parts."""
+    import asyncio
+    from app.services import facebook_publisher
+    from app.services.kp_daily_horoscope_service import compute_kp_daily_horoscope
+
+    horoscope_data = compute_kp_daily_horoscope("2026-11-22", "Asia/Kolkata", "all")
+    posted_fb = []
+
+    async def _fake_fetch_parts(target_date, **kwargs):
+        # Part 1 and Part 2 already posted
+        return {
+            1: {"post_id": "fb_carousel_part_1", "fb_url": "https://fb.com/p1"},
+            2: {"post_id": "fb_carousel_part_2", "fb_url": "https://fb.com/p2"},
+        }
+
+    async def _fake_post_carousel(image_paths, message, **kwargs):
+        posted_fb.append(message)
+        return {"success": True, "post_id": "fb_carousel_part_3", "fb_url": "https://fb.com/p3"}
+
+    monkeypatch.setattr(facebook_publisher, "fetch_posted_carousel_parts_for_date", _fake_fetch_parts)
+    monkeypatch.setattr(facebook_publisher, "post_photo_carousel_to_facebook", _fake_post_carousel)
+
+    dummy_posters = {i: f"/tmp/poster_{i}.png" for i in range(1, 13)}
+
+    res = asyncio.run(
+        facebook_publisher.post_daily_carousel_3_posts(
+            horoscope_data=horoscope_data,
+            target_date="2026-11-22",
+            delay_seconds=0,
+            dry_run=False,
+            skip_if_already_posted=True,
+            posters_map=dummy_posters,
+        )
+    )
+
+    assert res["success"] is True
+    assert res["newly_posted"] == 1
+    assert res["skipped_existing"] == 2
+    assert len(posted_fb) == 1
+    assert "பகுதி 3" in posted_fb[0]
+
+

@@ -98,6 +98,28 @@ MONTHS_TA: Dict[int, str] = {
 
 _RASHI_HEADER_RE = re.compile(r"\(([A-Za-z]+)\)\s*-\s*⭐")
 
+RASHI_TA_TO_EN: Dict[str, str] = {
+    "மேஷம்": "aries",
+    "ரிஷபம்": "taurus",
+    "மிதுனம்": "gemini",
+    "கடகம்": "cancer",
+    "சிம்மம்": "leo",
+    "கன்னி": "virgo",
+    "துலாம்": "libra",
+    "விருச்சிகம்": "scorpio",
+    "தனுசு": "sagittarius",
+    "மகரம்": "capricorn",
+    "கும்பம்": "aquarius",
+    "மீனம்": "pisces",
+}
+ALL_RASHIS_EN = set(RASHI_TA_TO_EN.values())
+
+CAROUSEL_PART_TO_RASHIS: Dict[int, List[str]] = {
+    1: ["aries", "taurus", "gemini", "cancer"],
+    2: ["leo", "virgo", "libra", "scorpio"],
+    3: ["sagittarius", "capricorn", "aquarius", "pisces"],
+}
+
 
 def format_tamil_date_prefix(date_str: str) -> str:
     """Formats YYYY-MM-DD into '10 நவம்பர் 2026' without weekday."""
@@ -437,14 +459,14 @@ async def _fetch_feed_state_for_date(
     page_id: Optional[str] = None,
     access_token: Optional[str] = None,
     limit: int = 40,
-) -> Tuple[Dict[str, Dict[str, Any]], bool]:
-    """Reads recent Page posts and returns (posted_rashis_map, overview_posted_today)."""
+) -> Tuple[Dict[str, Dict[str, Any]], bool, Dict[int, Dict[str, Any]]]:
+    """Reads recent Page posts and returns (posted_rashis_map, overview_posted_today, posted_parts_map)."""
     pid = (page_id or settings.fb_page_id or "").strip()
     token = (access_token or settings.fb_page_access_token or "").strip()
     if not pid or not token:
-        return {}, False
+        return {}, False, {}
 
-    date_marker = f"📅 தேதி: {format_tamil_date_prefix(target_date)}"
+    date_prefix = format_tamil_date_prefix(target_date)
     url = f"{FACEBOOK_API_BASE}/{settings.fb_graph_api_version}/{pid}/posts"
     params = {
         "fields": "id,created_time,message,permalink_url",
@@ -459,32 +481,61 @@ async def _fetch_feed_state_for_date(
             if resp.status_code != 200 or "error" in data:
                 err_msg = data.get("error", {}).get("message", f"HTTP {resp.status_code}")
                 logger.warning(f"Could not read existing Facebook Page posts for deduplication: {err_msg}")
-                return {}, False
+                return {}, False, {}
     except Exception as exc:
         logger.warning(f"Error reading existing Facebook Page posts for deduplication: {exc}")
-        return {}, False
+        return {}, False, {}
 
     posted: Dict[str, Dict[str, Any]] = {}
+    posted_parts: Dict[int, Dict[str, Any]] = {}
     overview_posted = False
 
     for item in data.get("data", []):
         msg = item.get("message") or ""
-        if "தினசரி ராசிபலன்" not in msg or date_marker not in msg:
+        is_daily_horoscope = ("தினசரி ராசிபலன்" in msg or "ராசிபலன்" in msg or "DailyHoroscope" in msg)
+        is_matching_date = (date_prefix in msg or target_date in msg)
+        if not (is_daily_horoscope and is_matching_date):
             continue
+
         if OVERVIEW_MARKER in msg:
             overview_posted = True
+
         post_id = item.get("id")
         fb_url = item.get("permalink_url") or (f"https://www.facebook.com/{post_id}" if post_id else None)
+        entry = {
+            "post_id": post_id,
+            "fb_url": fb_url,
+            "created_time": item.get("created_time"),
+        }
+
+        # 1. Detect Carousel Part (பகுதி 1, பகுதி 2, பகுதி 3)
+        part_match = re.search(r"பகுதி\s*(\d+)", msg)
+        if part_match:
+            part_num = int(part_match.group(1))
+            if part_num not in posted_parts:
+                posted_parts[part_num] = entry
+            for rk in CAROUSEL_PART_TO_RASHIS.get(part_num, []):
+                if rk not in posted:
+                    posted[rk] = entry
+
+        # 2. Detect text post headers: (Aries) - ⭐
         for match in _RASHI_HEADER_RE.finditer(msg):
             rashi_key = match.group(1).strip().lower()
             if rashi_key not in posted:
-                posted[rashi_key] = {
-                    "post_id": post_id,
-                    "fb_url": fb_url,
-                    "created_time": item.get("created_time"),
-                }
+                posted[rashi_key] = entry
 
-    return posted, overview_posted
+        # 3. Detect hashtags: #Aries, #Taurus, etc.
+        for tag in re.findall(r"#([A-Za-z]+)", msg):
+            tag_low = tag.lower()
+            if tag_low in ALL_RASHIS_EN and tag_low not in posted:
+                posted[tag_low] = entry
+
+        # 4. Detect Tamil Rashi names
+        for ta_name, en_name in RASHI_TA_TO_EN.items():
+            if ta_name in msg and en_name not in posted:
+                posted[en_name] = entry
+
+    return posted, overview_posted, posted_parts
 
 
 async def fetch_posted_rashis_for_date(
@@ -494,13 +545,29 @@ async def fetch_posted_rashis_for_date(
     limit: int = 40,
 ) -> Dict[str, Dict[str, Any]]:
     """Checks the Facebook Page feed for Rashis already posted for target_date (YYYY-MM-DD)."""
-    posted, _ = await _fetch_feed_state_for_date(
+    posted, _, _ = await _fetch_feed_state_for_date(
         target_date=target_date,
         page_id=page_id,
         access_token=access_token,
         limit=limit,
     )
     return posted
+
+
+async def fetch_posted_carousel_parts_for_date(
+    target_date: str,
+    page_id: Optional[str] = None,
+    access_token: Optional[str] = None,
+    limit: int = 40,
+) -> Dict[int, Dict[str, Any]]:
+    """Checks Facebook Page for carousel parts (1, 2, 3) already posted for target_date."""
+    _, _, parts = await _fetch_feed_state_for_date(
+        target_date=target_date,
+        page_id=page_id,
+        access_token=access_token,
+        limit=limit,
+    )
+    return parts
 
 
 def _skipped_result(prediction: RashiDailyPrediction, existing: Dict[str, Any]) -> Dict[str, Any]:
@@ -610,18 +677,44 @@ async def post_daily_carousel_3_posts(
     target_date: str,
     delay_seconds: float = 15.0,
     dry_run: bool = False,
+    skip_if_already_posted: bool = True,
+    posters_map: Optional[Dict[int, str]] = None,
 ) -> Dict[str, Any]:
-    """Renders 12 1:1 square posters and publishes 3 carousel posts (4 Rasis each) to Facebook."""
-    loop = asyncio.get_running_loop()
-    posters_meta = await loop.run_in_executor(None, generate_all_12_posters, horoscope_data)
-    poster_map = {m[0]: m[3] for m in posters_meta}
+    """Renders 12 1:1 square posters and publishes 3 carousel posts (4 Rasis each) to Facebook.
 
+    Guarantees strict deduplication: checks Facebook and Instagram feed before posting to prevent duplicate spam.
+    """
     group_size = settings.fb_carousel_group_size or 4
     predictions = horoscope_data.predictions
     groups = [predictions[i : i + group_size] for i in range(0, len(predictions), group_size)]
 
+    # 1. Deduplication check: Query Facebook feed for already-posted carousel parts
+    posted_parts: Dict[int, Dict[str, Any]] = {}
+    if skip_if_already_posted and not dry_run:
+        try:
+            posted_parts = await fetch_posted_carousel_parts_for_date(target_date)
+            if posted_parts:
+                logger.info(
+                    f"Facebook deduplication check: Found {len(posted_parts)}/{len(groups)} carousel part(s) already posted on Facebook for {target_date}: {list(posted_parts.keys())}"
+                )
+        except Exception as dedup_exc:
+            logger.warning(f"Error checking Facebook feed for duplicate carousel parts: {dedup_exc}")
+
+    parts_to_publish_fb = [
+        idx for idx in range(1, len(groups) + 1)
+        if not (skip_if_already_posted and not dry_run and idx in posted_parts)
+    ]
+
+    # Only generate posters if needed (or if posters_map not provided)
+    poster_map: Dict[int, str] = posters_map or {}
+    if not poster_map and (dry_run or parts_to_publish_fb or settings.ig_auto_post_enabled):
+        loop = asyncio.get_running_loop()
+        posters_meta = await loop.run_in_executor(None, generate_all_12_posters, horoscope_data)
+        poster_map = {m[0]: m[3] for m in posters_meta}
+
     results: List[Dict[str, Any]] = []
     newly_posted = 0
+    skipped_existing = 0
 
     for idx, group in enumerate(groups, start=1):
         group_names = ", ".join(f"{p.rashi_name_ta} ({p.rashi_name_en})" for p in group)
@@ -637,6 +730,24 @@ async def post_daily_carousel_3_posts(
                 "caption": caption,
                 "dry_run": True,
                 "success": True,
+            })
+            continue
+
+        if skip_if_already_posted and idx in posted_parts:
+            existing = posted_parts[idx]
+            skipped_existing += 1
+            logger.info(
+                f"Skipping Carousel Post Part {idx}/{len(groups)} ({group_names}) - already posted on Facebook (ID: {existing.get('post_id')})."
+            )
+            results.append({
+                "post_part": idx,
+                "rashis": group_names,
+                "success": True,
+                "skipped": True,
+                "reason": "already_posted_today",
+                "post_id": existing.get("post_id"),
+                "fb_url": existing.get("fb_url"),
+                "photo_count": len(image_paths),
             })
             continue
 
@@ -661,23 +772,29 @@ async def post_daily_carousel_3_posts(
                 "error": str(exc),
             })
 
-        if idx < len(groups) and delay_seconds > 0:
+        has_more_to_publish = any(
+            next_idx > idx and next_idx in parts_to_publish_fb
+            for next_idx in range(idx + 1, len(groups) + 1)
+        )
+        if has_more_to_publish and delay_seconds > 0:
             await asyncio.sleep(delay_seconds)
 
     success_count = sum(1 for r in results if r.get("success"))
     failed_count = len(results) - success_count
 
-    # Also post to Instagram if configured
+    # Also post to Instagram if configured, passing existing posters and deduplication check
     ig_summary = None
     if settings.ig_auto_post_enabled:
         try:
             from app.services.instagram_publisher import post_daily_instagram_carousels
-            logger.info("Instagram auto-post is enabled: Publishing carousels to Instagram...")
+            logger.info("Instagram auto-post is enabled: Publishing carousels to Instagram with deduplication check...")
             ig_summary = await post_daily_instagram_carousels(
                 horoscope_data=horoscope_data,
                 target_date=target_date,
                 delay_seconds=delay_seconds,
                 dry_run=dry_run,
+                skip_if_already_posted=skip_if_already_posted,
+                posters_map=poster_map,
             )
         except Exception as ig_err:
             logger.error(f"Failed to publish Instagram carousels: {ig_err}")
@@ -703,6 +820,7 @@ async def post_daily_carousel_3_posts(
         "posts": individual_posts,
         "successful_posts": success_count,
         "newly_posted": newly_posted,
+        "skipped_existing": skipped_existing,
         "failed_posts": failed_count,
         "results": results,
         "instagram": ig_summary,
@@ -828,6 +946,7 @@ async def post_all_12_raasi_palans(
                 target_date=target_date,
                 delay_seconds=delay_seconds,
                 dry_run=dry_run,
+                skip_if_already_posted=skip_if_already_posted,
             )
 
     if dry_run:
