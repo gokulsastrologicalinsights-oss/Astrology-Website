@@ -142,6 +142,20 @@ async def publish_to_facebook(payload: PublishRequest):
         )
 
 
+@router.get("/trigger", summary="Cron Webhook to Trigger Daily Raasi Palan")
+async def trigger_cron_publish(
+    force: bool = False,
+    mode: Optional[str] = "carousel",
+):
+    """Lightweight GET webhook for external cron providers (e.g. cron-job.org) to wake Render and trigger daily Raasi Palan."""
+    queued = trigger_background_publish(
+        rashi="all",
+        force=force,
+        post_mode=mode or "carousel",
+    )
+    return JSONResponse(status_code=status.HTTP_200_OK, content=queued)
+
+
 @router.post("/scheduler/toggle", summary="Enable or Disable Daily Facebook Auto-Poster")
 async def toggle_scheduler(payload: SchedulerToggleRequest):
     """Enables or disables the background daily post scheduler."""
