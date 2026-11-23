@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";import { DateInputDMY } from "@/components/common/DateInputDMY";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { DateInputDMY } from "@/components/common/DateInputDMY";
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -11,8 +12,16 @@ import {
   AntaraSlot,
   YamamSlot,
   BirdItem,
+  SavedHoroscopeItem,
 } from "@/lib/types";
-import { calculatePanchaPakshi, getPanchaPakshiBirds, downloadPanchaPakshiPdf, triggerBlobDownload } from "@/lib/api";
+import {
+  calculatePanchaPakshi,
+  getPanchaPakshiBirds,
+  downloadPanchaPakshiPdf,
+  triggerBlobDownload,
+  calculateHoroscope,
+} from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import {
   Sparkles,
   Clock,
@@ -37,6 +46,12 @@ import {
   ArrowRight,
   HelpCircle,
   Download,
+  Search,
+  FolderOpen,
+  User,
+  X,
+  Database,
+  Check,
 } from "lucide-react";
 
 interface CityPreset {
@@ -90,9 +105,73 @@ const NAKSHATRAS = [
   { index: 27, name_en: "Revati", name_ta: "ரேவதி" },
 ];
 
+/**
+ * Extracts Moon Janma Nakshatra index (1..27) and Paksha ("shukla" | "krishna")
+ * from a calculated horoscope snapshot or record.
+ */
+function extractNakshatraAndPaksha(horo: any): { nakshatra: number; paksha: "shukla" | "krishna" } | null {
+  if (!horo) return null;
+  const snap = horo.calculation_result?.horoscope || horo.horoscope || horo;
+  const planets = snap?.planets || [];
+  const moon = Array.isArray(planets) ? planets.find((p: any) => p?.name?.toLowerCase() === "moon") : null;
+  const sun = Array.isArray(planets) ? planets.find((p: any) => p?.name?.toLowerCase() === "sun") : null;
+
+  let nakshatraIdx: number | null = null;
+  if (moon?.nakshatra?.index && moon.nakshatra.index >= 1 && moon.nakshatra.index <= 27) {
+    nakshatraIdx = moon.nakshatra.index;
+  } else if (typeof moon?.longitude === "number") {
+    nakshatraIdx = Math.floor((((moon.longitude % 360) + 360) % 360) / (360 / 27)) + 1;
+  } else if (snap?.panchang?.nakshatra) {
+    const rawNak = String(snap.panchang.nakshatra).toLowerCase().trim();
+    const found = NAKSHATRAS.find((n) => n.name_en.toLowerCase() === rawNak || n.name_ta === rawNak);
+    if (found) nakshatraIdx = found.index;
+  }
+
+  let paksha: "shukla" | "krishna" = "shukla";
+  const rawPaksha = snap?.panchang?.tithi?.paksha || "";
+  if (rawPaksha) {
+    if (
+      rawPaksha.toLowerCase().includes("krishna") ||
+      rawPaksha.includes("தேய்") ||
+      rawPaksha.toLowerCase().includes("waning")
+    ) {
+      paksha = "krishna";
+    } else {
+      paksha = "shukla";
+    }
+  } else if (typeof moon?.longitude === "number" && typeof sun?.longitude === "number") {
+    const diff = ((moon.longitude - sun.longitude) % 360 + 360) % 360;
+    paksha = diff >= 180 ? "krishna" : "shukla";
+  }
+
+  if (nakshatraIdx && nakshatraIdx >= 1 && nakshatraIdx <= 27) {
+    return { nakshatra: nakshatraIdx, paksha };
+  }
+  return null;
+}
+
 function PanchaPakshiStudioInner() {
   const { language } = useLanguage();
   const searchParams = useSearchParams();
+  const { session, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Mode: "saved" (load client chart) | "manual" (direct star & paksha)
+  const [inputMode, setInputMode] = useState<"saved" | "manual">("manual");
+  const [nativeName, setNativeName] = useState<string>(() => {
+    return searchParams?.get("native_name") || searchParams?.get("name") || "Native";
+  });
+
+  // Saved horoscopes state
+  const [savedHoroscopes, setSavedHoroscopes] = useState<SavedHoroscopeItem[]>([]);
+  const [loadingSavedList, setLoadingSavedList] = useState<boolean>(false);
+  const [selectedChart, setSelectedChart] = useState<SavedHoroscopeItem | null>(null);
+  const [loadingChartDetails, setLoadingChartDetails] = useState<boolean>(false);
+  const [chartLoadError, setChartLoadError] = useState<string | null>(null);
+
+  // Search input & manual filter state
+  const [chartSearchQuery, setChartSearchQuery] = useState<string>("");
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState<string>("");
+  const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
 
   // Inputs state - safely initialize with fallback from searchParams or defaults
   const [dateStr, setDateStr] = useState<string>(() => {
@@ -158,10 +237,196 @@ function PanchaPakshiStudioInner() {
   const [nowTime, setNowTime] = useState<Date>(new Date());
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
 
+  // Filtered horoscopes for search
+  const filteredHoroscopes = useMemo(() => {
+    const q = (submittedSearchQuery || chartSearchQuery).trim().toLowerCase();
+    if (!q) return savedHoroscopes;
+
+    return savedHoroscopes.filter((item) => {
+      const name = (item.person_name || "").toLowerCase();
+      const birthDate = (item.birth_date || "").toLowerCase();
+      const birthTime = (item.birth_time || "").toLowerCase();
+      const place = (item.birthplace || item.location_name || "").toLowerCase();
+      const dispNum = item.display_number ? String(item.display_number) : "";
+      const phone = (
+        item.customer_phone ||
+        item.normalized_phone ||
+        item.phone_number ||
+        item.whatsapp_number ||
+        ""
+      ).toLowerCase();
+
+      return (
+        name.includes(q) ||
+        birthDate.includes(q) ||
+        birthTime.includes(q) ||
+        place.includes(q) ||
+        dispNum === q ||
+        `#${dispNum}` === q ||
+        phone.includes(q)
+      );
+    });
+  }, [savedHoroscopes, chartSearchQuery, submittedSearchQuery]);
+
+  const handleManualSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSubmittedSearchQuery(chartSearchQuery.trim());
+  };
+
+  const handleClearSearch = () => {
+    setChartSearchQuery("");
+    setSubmittedSearchQuery("");
+  };
+
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showSearchModal) {
+        setShowSearchModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showSearchModal]);
+
+  // Fetch saved horoscopes list
+  const fetchSavedHoroscopes = useCallback(async () => {
+    if (!session?.access_token) return [];
+    setLoadingSavedList(true);
+    try {
+      const resp = await fetch("/api/horoscopes?page=1&limit=1000", {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        cache: "no-store",
+      });
+      if (resp.ok) {
+        const resData = await resp.json();
+        const items: SavedHoroscopeItem[] = resData.horoscopes || [];
+        setSavedHoroscopes(items);
+        return items;
+      }
+    } catch (err) {
+      console.warn("Could not load saved horoscopes:", err);
+    } finally {
+      setLoadingSavedList(false);
+    }
+    return [];
+  }, [session?.access_token]);
+
+  // Handler to select and load a saved chart
+  const handleSelectSavedChart = async (chart: SavedHoroscopeItem) => {
+    setSelectedChart(chart);
+    setLoadingChartDetails(true);
+    setChartLoadError(null);
+    const resolvedName = chart.person_name?.trim() || "Client";
+    setNativeName(resolvedName);
+    setShowSearchModal(false);
+
+    try {
+      let fullRecord: any = chart;
+      // If calculation_result is missing from the list item, fetch the full horoscope record
+      if (!chart.calculation_result && session?.access_token) {
+        try {
+          const resp = await fetch(`/api/horoscopes/${chart.id}`, {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+          if (resp.ok) {
+            const json = await resp.json();
+            if (json.horoscope) {
+              fullRecord = json.horoscope;
+            }
+          }
+        } catch (fErr) {
+          console.warn("Could not fetch full horoscope snapshot:", fErr);
+        }
+      }
+
+      // Try extracting nakshatra and paksha
+      let extracted = extractNakshatraAndPaksha(fullRecord);
+
+      // If not present in snapshot, calculate on the fly
+      if (!extracted && fullRecord.birth_date && fullRecord.latitude && fullRecord.longitude) {
+        try {
+          let bTime = fullRecord.birth_time || "12:00:00";
+          if (bTime.trim().length === 5) bTime += ":00";
+          const calcRes = await calculateHoroscope({
+            birth_date: fullRecord.birth_date,
+            birth_time: bTime,
+            latitude: Number(fullRecord.latitude),
+            longitude: Number(fullRecord.longitude),
+            timezone: fullRecord.timezone || "Asia/Kolkata",
+            ayanamsa: fullRecord.ayanamsa_id || 1,
+            house_system: fullRecord.house_system_id || 1,
+            include_panchang: true,
+            include_outer_planets: false,
+          });
+          extracted = extractNakshatraAndPaksha(calcRes);
+        } catch (cErr) {
+          console.warn("calculateHoroscope fallback failed:", cErr);
+        }
+      }
+
+      if (extracted) {
+        setBirthNakshatra(extracted.nakshatra);
+        setBirthPaksha(extracted.paksha);
+      } else {
+        setChartLoadError(
+          language === "ta"
+            ? "ஜாதகரின் நட்சத்திரம் மற்றும் பக்ஷம் தானாக அறிய இயலவில்லை. தயவுசெய்து கீழே நேரடியாக தேர்வு செய்யவும்."
+            : "Could not auto-determine birth star/paksha. Please select manually below."
+        );
+      }
+
+      // Match city preset if close, or adopt latitude/longitude
+      if (typeof fullRecord.latitude === "number" && typeof fullRecord.longitude === "number") {
+        const matchCity = CITY_PRESETS.find(
+          (c) => Math.abs(c.lat - fullRecord.latitude) < 0.25 && Math.abs(c.lon - fullRecord.longitude) < 0.25
+        );
+        if (matchCity) {
+          setSelectedCity(matchCity);
+          setLatitude(matchCity.lat);
+          setLongitude(matchCity.lon);
+          setTimezoneStr(matchCity.tz);
+        } else {
+          setLatitude(fullRecord.latitude);
+          setLongitude(fullRecord.longitude);
+          if (fullRecord.timezone) setTimezoneStr(fullRecord.timezone);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error loading saved chart for Pancha Pakshi:", err);
+      setChartLoadError(err?.message || "Failed to load saved chart particulars.");
+    } finally {
+      setLoadingChartDetails(false);
+    }
+  };
+
+  // Initial load of saved horoscopes & auto-open if ?saved_id=... is in URL
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSavedHoroscopes().then((items) => {
+        const savedIdParam = searchParams?.get("saved_id") || searchParams?.get("id");
+        if (savedIdParam && items && items.length > 0) {
+          const found = items.find((h) => h.id === savedIdParam);
+          if (found) {
+            setInputMode("saved");
+            handleSelectSavedChart(found);
+          }
+        }
+      });
+    }
+  }, [isAuthenticated, fetchSavedHoroscopes, searchParams]);
+
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true);
     try {
       const nakObj = NAKSHATRAS.find((n) => n.index === birthNakshatra);
+      const clientName = nativeName?.trim() || selectedChart?.person_name?.trim() || "Native";
       const blob = await downloadPanchaPakshiPdf({
         nakshatra: nakObj?.name_en || "Rohini",
         paksha: birthPaksha,
@@ -169,10 +434,11 @@ function PanchaPakshiStudioInner() {
         latitude: latitude,
         longitude: longitude,
         location_name: selectedCity.name_en,
-        native_name: "Native",
+        native_name: clientName,
         language: language === "ta" ? "ta" : "en",
       });
-      triggerBlobDownload(blob, `Agastya_Pancha_Pakshi_24Hr_${dateStr}.pdf`);
+      const safeName = clientName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_") || "Native";
+      triggerBlobDownload(blob, `Agastya_Pancha_Pakshi_24Hr_${safeName}_${dateStr}.pdf`);
     } catch (err: any) {
       alert(err?.message || "Failed to download Pancha Pakshi PDF report.");
     } finally {
@@ -341,7 +607,26 @@ function PanchaPakshiStudioInner() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setInputMode("saved");
+                  setShowSearchModal(true);
+                }}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#DDE5F0] hover:bg-slate-50 text-[#102A4C] text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-amber-600" />
+                <span>
+                  {language === "ta" ? "சேமித்த ஜாதகம் திற" : "Open Saved Chart"}
+                </span>
+                {savedHoroscopes.length > 0 && (
+                  <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-slate-100 text-[#52667E] text-[10px] font-mono">
+                    {savedHoroscopes.length}
+                  </span>
+                )}
+              </button>
+
               <button
                 type="button"
                 onClick={handleDownloadPdf}
@@ -373,66 +658,430 @@ function PanchaPakshiStudioInner() {
       <div className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6 sm:py-8 space-y-8">
         {/* INPUTS & BIRTH BIRD SELECTOR BAR */}
         <div className="p-6 rounded-3xl bg-white border border-[#DDE5F0] shadow-xs space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            {/* Birth Nakshatra */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
-                {language === "ta" ? "பிறந்த நட்சத்திரம் (Janma Star)" : "Birth Star (Janma Nakshatra)"}
-              </label>
-              <select
-                value={birthNakshatra}
-                onChange={(e) => setBirthNakshatra(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] bg-white font-medium text-[#102A4C]"
-              >
-                {NAKSHATRAS.map((nak) => (
-                  <option key={nak.index} value={nak.index}>
-                    #{nak.index} {nak.name_en} ({nak.name_ta})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Birth Paksha Toggle */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
-                {language === "ta" ? "பிறந்த பக்ஷம் (Birth Paksha)" : "Birth Paksha"}
-              </label>
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0]">
-                <button
-                  type="button"
-                  onClick={() => setBirthPaksha("shukla")}
-                  className={`py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
-                    birthPaksha === "shukla"
-                      ? "bg-white text-[#102A4C] shadow-2xs"
-                      : "text-[#52667E] hover:text-[#102A4C]"
-                  }`}
-                >
-                  {language === "ta" ? "வளர்பிறை (சுக்ல)" : "Waxing (Shukla)"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBirthPaksha("krishna")}
-                  className={`py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
-                    birthPaksha === "krishna"
-                      ? "bg-white text-[#102A4C] shadow-2xs"
-                      : "text-[#52667E] hover:text-[#102A4C]"
-                  }`}
-                >
-                  {language === "ta" ? "தேய்பிறை (கிருஷ்ண)" : "Waning (Krishna)"}
-                </button>
+          {/* Top Switcher: Saved Chart vs Manual Selection */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#E2E8F0] gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-300 flex items-center justify-center text-amber-800">
+                <Sparkles className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-[#102A4C]">
+                  {language === "ta" ? "ஜாதக தேர்வு & பஞ்ச பட்சி அளவுருக்கள்" : "Horoscope & Bio-Rhythm Parameters"}
+                </h2>
+                <p className="text-[11px] text-[#52667E]">
+                  {language === "ta"
+                    ? "சேமித்த ஜாதகத்தை திறக்கவும் அல்லது நேரடியாக நட்சத்திரம் & பக்ஷம் தேர்வு செய்யவும்"
+                    : "Open a saved client chart with search, or select star and paksha manually"}
+                </p>
               </div>
             </div>
 
+            {/* Mode Switcher Tabs */}
+            <div className="inline-flex p-1 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] text-xs self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setInputMode("saved")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  inputMode === "saved"
+                    ? "bg-white text-[#102A4C] shadow-2xs"
+                    : "text-[#52667E] hover:text-[#102A4C]"
+                }`}
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-amber-600" />
+                <span>{language === "ta" ? "சேமித்த ஜாதகம்" : "Saved Chart"}</span>
+                {savedHoroscopes.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-[#102A4C] text-[10px] font-mono">
+                    {savedHoroscopes.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode("manual")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  inputMode === "manual"
+                    ? "bg-white text-[#102A4C] shadow-2xs"
+                    : "text-[#52667E] hover:text-[#102A4C]"
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5 text-blue-600" />
+                <span>{language === "ta" ? "நேரடி தேர்வு" : "Manual Selection"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* If Saved Chart Mode */}
+          {inputMode === "saved" && (
+            <div className="space-y-4">
+              {/* Search Bar with Manual Search Button */}
+              <div className="bg-[#FAF8F5] p-3.5 sm:p-4 rounded-2xl border border-[#E5E0D5] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#102A4C] flex items-center gap-1.5">
+                    <Search className="w-3.5 h-3.5 text-amber-700" />
+                    <span>
+                      {language === "ta" ? "சேமித்த ஜாதகத்தைத் தேடுக" : "Search Saved Client Charts"}
+                    </span>
+                  </label>
+                  <span className="text-[11px] font-mono text-[#64748B]">
+                    {savedHoroscopes.length} {language === "ta" ? "ஜாதகங்கள்" : "saved charts"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <form onSubmit={handleManualSearch} className="flex-1 flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={chartSearchQuery}
+                        onChange={(e) => setChartSearchQuery(e.target.value)}
+                        placeholder={
+                          language === "ta"
+                            ? "ஜாதகர் பெயர், ஊர், பிறந்த தேதி (YYYY-MM-DD), எண் மூலம் தேடுக..."
+                            : "Search by client name, place, date (YYYY-MM-DD), or chart #..."
+                        }
+                        className="w-full text-xs pl-9 pr-8 py-2.5 border border-[#CBD5E1] rounded-xl outline-none focus:ring-2 focus:ring-[#102A4C] bg-white text-[#102A4C]"
+                      />
+                      {chartSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={handleClearSearch}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                          title="Clear"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Manual Search Button */}
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#102A4C] hover:bg-[#16365C] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer shrink-0"
+                    >
+                      <Search className="w-3.5 h-3.5" />
+                      <span>{language === "ta" ? "கண்டுபிடி" : "Search"}</span>
+                    </button>
+                  </form>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowSearchModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-slate-50 text-xs font-semibold text-[#102A4C] shadow-2xs transition-all cursor-pointer"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{language === "ta" ? "அனைத்தையும் காண்க" : "Browse All"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fetchSavedHoroscopes()}
+                      disabled={loadingSavedList}
+                      title={language === "ta" ? "புதுப்பி" : "Refresh saved charts list"}
+                      className="p-2.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingSavedList ? "animate-spin text-amber-600" : ""}`} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-[#52667E] px-0.5">
+                  <span>
+                    {language === "ta"
+                      ? `காண்பிக்கப்படுகிறது: ${filteredHoroscopes.length} / ${savedHoroscopes.length}`
+                      : `Showing ${filteredHoroscopes.length} of ${savedHoroscopes.length} charts`}
+                  </span>
+                  {(submittedSearchQuery || chartSearchQuery) && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="text-amber-700 hover:underline font-medium cursor-pointer"
+                    >
+                      {language === "ta" ? "அனைத்தையும் காட்டு" : "Show all"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Loading chart star/paksha indicator */}
+              {loadingChartDetails && (
+                <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                  <span>
+                    {language === "ta"
+                      ? "ஜாதகரின் நட்சத்திரம் மற்றும் பக்ஷம் கணக்கிடப்படுகிறது..."
+                      : "Deriving birth star and paksha from saved chart..."}
+                  </span>
+                </div>
+              )}
+
+              {/* Chart Load Error Notification */}
+              {chartLoadError && (
+                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>{chartLoadError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setChartLoadError(null)}
+                    className="text-amber-800 hover:text-amber-950 font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Active Selected Saved Chart Confirmation Card */}
+              {selectedChart && (
+                <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-amber-300 shadow-2xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-300 flex items-center justify-center shrink-0 text-amber-800">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-[#102A4C]">
+                            {selectedChart.person_name || "Client Chart"}
+                          </span>
+                          {selectedChart.display_number && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-mono font-bold">
+                              #{selectedChart.display_number}
+                            </span>
+                          )}
+                          {selectedChart.is_pinned && <span title="Pinned">📌</span>}
+                        </div>
+                        <div className="text-[11px] text-[#52667E] flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span>📅 {selectedChart.birth_date}</span>
+                          <span>• ⏰ {selectedChart.birth_time}</span>
+                          <span className="truncate">📍 {selectedChart.birthplace || selectedChart.location_name || `${selectedChart.latitude.toFixed(2)}, ${selectedChart.longitude.toFixed(2)}`}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setShowSearchModal(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-white hover:bg-amber-50 text-amber-900 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "வேறு ஜாதகம் மாற்று" : "Change Chart"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedChart(null);
+                          setInputMode("manual");
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 text-xs transition-colors cursor-pointer"
+                        title="Clear"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>{language === "ta" ? "நீக்கு" : "Clear"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Derived Pancha Pakshi Particulars */}
+                  <div className="pt-3 border-t border-amber-200/70 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div className="p-2.5 rounded-xl bg-white border border-amber-200/60 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-[#52667E] uppercase tracking-wider mb-0.5">
+                        {language === "ta" ? "ஜென்ம நட்சத்திரம் (Janma Star)" : "Birth Star (Janma Nakshatra)"}
+                      </span>
+                      <span className="font-bold text-[#102A4C]">
+                        #{birthNakshatra} {NAKSHATRAS.find((n) => n.index === birthNakshatra)?.name_en} ({NAKSHATRAS.find((n) => n.index === birthNakshatra)?.name_ta})
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-amber-200/60 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-[#52667E] uppercase tracking-wider mb-0.5">
+                        {language === "ta" ? "பிறந்த பக்ஷம் (Birth Paksha)" : "Birth Paksha"}
+                      </span>
+                      <span className="font-bold text-[#102A4C]">
+                        {birthPaksha === "shukla"
+                          ? (language === "ta" ? "வளர்பிறை (சுக்ல)" : "Waxing (Shukla)")
+                          : (language === "ta" ? "தேய்பிறை (கிருஷ்ண)" : "Waning (Krishna)")}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-0.5">
+                        {language === "ta" ? "ஜென்ம பட்சி (Birth Bird)" : "Birth Bird (Janma Pakshi)"}
+                      </span>
+                      <span className="font-bold">
+                        {data?.birth_bird?.name_ta || data?.birth_bird?.name_en || (language === "ta" ? "கணக்கிடப்படுகிறது..." : "Calculating...")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Not Authenticated Prompt */}
+              {!isAuthenticated && !authLoading && (
+                <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div>
+                    <strong className="font-bold block">
+                      {language === "ta"
+                        ? "சேமிக்கப்பட்ட ஜாதகங்களைப் பார்க்க உள்நுழையவும்"
+                        : "Sign in to access and search your saved client charts"}
+                    </strong>
+                    <span className="text-amber-800">
+                      {language === "ta"
+                        ? "உங்கள் கணக்கில் சேமிக்கப்பட்ட ஜாதகங்களிலிருந்து நேரடியாக நட்சத்திரம் & பக்ஷத்தை பெறலாம்."
+                        : "Automatically import birth star and paksha directly from your client database."}
+                    </span>
+                  </div>
+                  <Link
+                    href="/login?redirect=/tools/pancha-pakshi"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#102A4C] text-white text-xs font-semibold shrink-0 shadow-xs"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>{language === "ta" ? "உள்நுழைக" : "Sign In"}</span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Quick Pick Cards (if no chart is selected yet) */}
+              {!selectedChart && isAuthenticated && (
+                <div>
+                  <div className="text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-2">
+                    {language === "ta" ? "விரைவாகத் தேர்வு செய்க (அல்லது மேலே தேடவும்):" : "Quick Select (or search above):"}
+                  </div>
+                  {loadingSavedList ? (
+                    <div className="py-8 text-center text-xs text-[#52667E] flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
+                      <span>{language === "ta" ? "ஜாதகங்கள் ஏற்றப்படுகின்றன..." : "Loading saved charts..."}</span>
+                    </div>
+                  ) : filteredHoroscopes.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-600 space-y-1">
+                      <p className="font-semibold">
+                        {language === "ta"
+                          ? `"${chartSearchQuery}" என்ற பெயரில் ஜாதகங்கள் இல்லை.`
+                          : `No saved charts match "${chartSearchQuery}".`}
+                      </p>
+                      {chartSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={handleClearSearch}
+                          className="text-amber-700 font-bold underline cursor-pointer"
+                        >
+                          {language === "ta" ? "தேடலை அழி" : "Clear Search"}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                      {filteredHoroscopes.slice(0, 12).map((h) => {
+                        const isSel = (selectedChart as SavedHoroscopeItem | null)?.id === h.id;
+                        return (
+                          <div
+                            key={h.id}
+                            onClick={() => handleSelectSavedChart(h)}
+                            className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
+                              isSel
+                                ? "bg-[#FAF7F0] border-amber-500 ring-1 ring-amber-500/30"
+                                : "hover:bg-slate-50 border-[#E2E8F0] bg-white"
+                            }`}
+                          >
+                            <div className="min-w-0 pr-2">
+                              <div className="font-bold text-[#102A4C] truncate flex items-center gap-1.5">
+                                <span>{h.person_name || "Client"}</span>
+                                {h.display_number && (
+                                  <span className="font-mono text-[10px] text-slate-500">
+                                    #{h.display_number}
+                                  </span>
+                                )}
+                                {h.is_pinned && <span title="Pinned">📌</span>}
+                              </div>
+                              <div className="text-[10px] text-[#64748B] truncate mt-0.5">
+                                {h.birth_date} • {h.birthplace || h.location_name || "Location"}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#102A4C] hover:text-white text-[#102A4C] text-[11px] font-semibold transition-all cursor-pointer"
+                            >
+                              {language === "ta" ? "திற" : "Open"}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* If Manual Selection Mode */}
+          {inputMode === "manual" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              {/* Birth Nakshatra */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
+                  {language === "ta" ? "பிறந்த நட்சத்திரம் (Janma Star)" : "Birth Star (Janma Nakshatra)"}
+                </label>
+                <select
+                  value={birthNakshatra}
+                  onChange={(e) => setBirthNakshatra(parseInt(e.target.value) || 1)}
+                  className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] bg-white font-medium text-[#102A4C]"
+                >
+                  {NAKSHATRAS.map((nak) => (
+                    <option key={nak.index} value={nak.index}>
+                      #{nak.index} {nak.name_en} ({nak.name_ta})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Birth Paksha Toggle */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
+                  {language === "ta" ? "பிறந்த பக்ஷம் (Birth Paksha)" : "Birth Paksha"}
+                </label>
+                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0]">
+                  <button
+                    type="button"
+                    onClick={() => setBirthPaksha("shukla")}
+                    className={`py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                      birthPaksha === "shukla"
+                        ? "bg-white text-[#102A4C] shadow-2xs"
+                        : "text-[#52667E] hover:text-[#102A4C]"
+                    }`}
+                  >
+                    {language === "ta" ? "வளர்பிறை (சுக்ல)" : "Waxing (Shukla)"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBirthPaksha("krishna")}
+                    className={`py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                      birthPaksha === "krishna"
+                        ? "bg-white text-[#102A4C] shadow-2xs"
+                        : "text-[#52667E] hover:text-[#102A4C]"
+                    }`}
+                  >
+                    {language === "ta" ? "தேய்பிறை (கிருஷ்ண)" : "Waning (Krishna)"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Target Calculation Date & Location (Shared across both modes) */}
+          <div className="pt-3 border-t border-[#E2E8F0] grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             {/* Target Date */}
             <div>
               <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
-                {language === "ta" ? "கணிப்பு தேதி / Target Date" : "Target Date"}
+                {language === "ta" ? "கணிப்பு தேதி / Target Date" : "Target Calculation Date"}
               </label>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => shiftDate(-1)}
-                  className="p-2 rounded-xl border border-[#DDE5F0] hover:bg-[#F8FAFC] text-[#102A4C]"
+                  className="p-2 rounded-xl border border-[#DDE5F0] hover:bg-[#F8FAFC] text-[#102A4C] cursor-pointer"
                   title="Previous Day"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -445,10 +1094,17 @@ function PanchaPakshiStudioInner() {
                 <button
                   type="button"
                   onClick={() => shiftDate(1)}
-                  className="p-2 rounded-xl border border-[#DDE5F0] hover:bg-[#F8FAFC] text-[#102A4C]"
+                  className="p-2 rounded-xl border border-[#DDE5F0] hover:bg-[#F8FAFC] text-[#102A4C] cursor-pointer"
                   title="Next Day"
                 >
                   <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={resetToToday}
+                  className="px-2.5 py-1.5 rounded-xl border border-[#DDE5F0] hover:bg-[#F8FAFC] text-[11px] font-semibold text-[#52667E] hover:text-[#102A4C] cursor-pointer shrink-0"
+                >
+                  {language === "ta" ? "இன்று" : "Today"}
                 </button>
               </div>
             </div>
@@ -456,7 +1112,7 @@ function PanchaPakshiStudioInner() {
             {/* City Preset */}
             <div>
               <label className="block text-[11px] font-bold text-[#52667E] uppercase tracking-wider mb-1">
-                {language === "ta" ? "நகரம் / Location" : "Location"}
+                {language === "ta" ? "கணிப்பு நகரம் / Location" : "Target Calculation Location"}
               </label>
               <select
                 value={selectedCity.name_en}
@@ -1069,6 +1725,238 @@ function PanchaPakshiStudioInner() {
                 type="button"
                 onClick={() => setSelectedAntaraModal(null)}
                 className="w-full py-2.5 rounded-xl bg-[#102A4C] hover:bg-[#16365C] text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                {language === "ta" ? "மூடு" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Chart Search Modal with Manual Search Button */}
+      {showSearchModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setShowSearchModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#DDE5F0] overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-4 bg-[#102A4C] text-white flex items-center justify-between shadow-xs shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 font-bold">
+                  <FolderOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold flex items-center gap-2">
+                    <span>
+                      {language === "ta"
+                        ? "சேமித்த ஜாதகத்தைத் தேடி திறக்கவும்"
+                        : "Open Saved Client Chart"}
+                    </span>
+                    <span className="text-[11px] font-normal px-2 py-0.5 rounded-full bg-white/20">
+                      {savedHoroscopes.length} {language === "ta" ? "ஜாதகங்கள்" : "charts"}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-white/80">
+                    {language === "ta"
+                      ? "ஜாதகரைத் தேர்ந்தெடுத்து பஞ்ச பட்சி கணிப்பை உடனடியாகப் பெறவும்"
+                      : "Select a client chart to automatically load birth star, paksha, and rhythms"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSearchModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer"
+                title={language === "ta" ? "மூடு" : "Close"}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Search Bar with Manual Search Button */}
+            <div className="p-4 border-b border-[#DDE5F0] bg-[#FAF8F5]">
+              <form onSubmit={handleManualSearch} className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    autoFocus
+                    value={chartSearchQuery}
+                    onChange={(e) => setChartSearchQuery(e.target.value)}
+                    placeholder={
+                      language === "ta"
+                        ? "ஜாதகர் பெயர், ஊர், பிறந்த தேதி (YYYY-MM-DD), எண் மூலம் தேடுக..."
+                        : "Search by client name, place, date (YYYY-MM-DD), or chart #..."
+                    }
+                    className="w-full text-xs pl-9 pr-8 py-2.5 border border-[#CBD5E1] rounded-xl outline-none focus:ring-2 focus:ring-[#102A4C] bg-white text-[#102A4C]"
+                  />
+                  {chartSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                      title="Clear"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Manual Search Button */}
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#102A4C] hover:bg-[#16365C] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer shrink-0"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>{language === "ta" ? "கண்டுபிடி" : "Search"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fetchSavedHoroscopes()}
+                  disabled={loadingSavedList}
+                  title={language === "ta" ? "புதுப்பி" : "Refresh List"}
+                  className="p-2.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingSavedList ? "animate-spin text-amber-600" : ""}`} />
+                </button>
+              </form>
+
+              <div className="flex items-center justify-between text-[11px] text-[#52667E] mt-2 px-1">
+                <span>
+                  {language === "ta"
+                    ? `காண்பிக்கப்படுகிறது: ${filteredHoroscopes.length} / ${savedHoroscopes.length}`
+                    : `Showing ${filteredHoroscopes.length} of ${savedHoroscopes.length} charts`}
+                </span>
+                {(submittedSearchQuery || chartSearchQuery) && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="text-amber-700 hover:underline font-medium cursor-pointer"
+                  >
+                    {language === "ta" ? "அனைத்தையும் காட்டு" : "Show all"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Charts List */}
+            <div className="overflow-y-auto p-4 space-y-2 flex-1 max-h-[55vh]">
+              {!isAuthenticated ? (
+                <div className="p-6 text-center space-y-3">
+                  <p className="text-xs text-[#52667E]">
+                    {language === "ta"
+                      ? "சேமிக்கப்பட்ட ஜாதகங்களைத் தேட உள்நுழைய வேண்டும்."
+                      : "Please sign in to view and search your saved client charts."}
+                  </p>
+                  <Link
+                    href="/login?redirect=/tools/pancha-pakshi"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#102A4C] text-white text-xs font-semibold shadow-xs"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>{language === "ta" ? "உள்நுழைக" : "Sign In"}</span>
+                  </Link>
+                </div>
+              ) : loadingSavedList ? (
+                <div className="py-12 text-center space-y-2">
+                  <RefreshCw className="w-6 h-6 animate-spin text-amber-600 mx-auto" />
+                  <p className="text-xs text-[#52667E]">
+                    {language === "ta" ? "ஜாதகங்கள் ஏற்றப்படுகின்றன..." : "Loading saved charts..."}
+                  </p>
+                </div>
+              ) : filteredHoroscopes.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <Database className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="text-xs font-semibold text-[#102A4C]">
+                    {language === "ta"
+                      ? `"${chartSearchQuery}" என்ற பெயரில் ஜாதகங்கள் இல்லை`
+                      : `No saved charts found matching "${chartSearchQuery}"`}
+                  </p>
+                  <p className="text-[11px] text-[#52667E]">
+                    {language === "ta"
+                      ? "தேடல் சொல்லை மாற்றி அல்லது அழித்து முயற்சிக்கவும்."
+                      : "Try a different search term or clear the search filter."}
+                  </p>
+                  {chartSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="mt-2 text-xs font-semibold text-amber-700 underline cursor-pointer"
+                    >
+                      {language === "ta" ? "தேடலை அழி" : "Clear Search"}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filteredHoroscopes.map((h) => {
+                  const isSelected = selectedChart?.id === h.id;
+                  return (
+                    <div
+                      key={h.id}
+                      onClick={() => handleSelectSavedChart(h)}
+                      className={`p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? "bg-[#FAF7F0] border-amber-500 ring-2 ring-amber-500/20"
+                          : "hover:bg-slate-50 border-[#E2E8F0] bg-white"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <strong className="text-xs font-bold text-[#102A4C] truncate">
+                            {h.person_name || "Unnamed Chart"}
+                          </strong>
+                          {h.display_number && (
+                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                              #{h.display_number}
+                            </span>
+                          )}
+                          {h.is_pinned && <span title="Pinned">📌</span>}
+                        </div>
+                        <div className="text-[11px] text-[#52667E] flex items-center gap-2 mt-1 truncate">
+                          <span>📅 {h.birth_date}</span>
+                          <span>⏰ {h.birth_time}</span>
+                          <span className="truncate">📍 {h.birthplace || h.location_name || `${h.latitude}, ${h.longitude}`}</span>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-2">
+                        {isSelected ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                            <Check className="w-3.5 h-3.5" />
+                            <span>{language === "ta" ? "தேர்வு செய்யப்பட்டுள்ளது" : "Active"}</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#102A4C] hover:text-white text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            {language === "ta" ? "திற" : "Open"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-[#DDE5F0] flex items-center justify-between text-xs text-[#52667E]">
+              <span>
+                {language === "ta"
+                  ? "விசைப்பலகை: Esc மூடலாம் • Enter தேடலாம்"
+                  : "Keyboard: Press Esc to close • Enter to search"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowSearchModal(false)}
+                className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white hover:bg-slate-100 text-[#102A4C] font-semibold cursor-pointer"
               >
                 {language === "ta" ? "மூடு" : "Close"}
               </button>
