@@ -7,48 +7,18 @@ Ensures complete Unicode glyph coverage for both Tamil script and Latin characte
 from pathlib import Path
 import logging
 from typing import Dict, Any, Optional, Tuple
+from functools import lru_cache
 
 import re
+import uharfbuzz as hb
+from fontTools.ttLib import TTFont as FontToolsTTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+import reportlab.pdfbase.ttfonts as _ttfonts
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 logger = logging.getLogger("gai.pdf.fonts")
-
-
-def reorder_tamil_for_pdf(text: Any) -> Any:
-    """Reorder Indic pre-base and split vowels for simple TrueType renderers like ReportLab.
-
-    ReportLab TTFont renders glyphs in sequential left-to-right order without OpenType
-    GSUB/GPOS glyph reordering.
-
-    In standard Unicode:
-      Consonant + VowelSign
-
-    This function converts syllables into visual rendering order:
-      1. Split vowels (o, oo, au):
-         - \\u0bca (o)  -> \\u0bc6 + consonant + \\u0bbe
-         - \\u0bcb (oo) -> \\u0bc7 + consonant + \\u0bbe
-         - \\u0bcc (au) -> \\u0bc6 + consonant + \\u0bd7
-      2. Pre-base vowels (e, ee, ai):
-         - consonant + \\u0bc6 -> \\u0bc6 + consonant
-         - consonant + \\u0bc7 -> \\u0bc7 + consonant
-         - consonant + \\u0bc8 -> \\u0bc8 + consonant
-    """
-    if not isinstance(text, str) or not text:
-        return text
-
-    # 1. Decompose split vowels (o, oo, au)
-    text = re.sub(r'([\u0b95-\u0bb9])\u0bca', '\u0bc6\\1\u0bbe', text)
-    text = re.sub(r'([\u0b95-\u0bb9])\u0bcb', '\u0bc7\\1\u0bbe', text)
-    text = re.sub(r'([\u0b95-\u0bb9])\u0bcc', '\u0bc6\\1\u0bd7', text)
-
-    # 2. Reorder pre-base vowels (e, ee, ai)
-    text = re.sub(r'([\u0b95-\u0bb9])([\u0bc6\u0bc7\u0bc8])', '\\2\\1', text)
-
-    return text
-
 
 FONTS_DIR = Path(__file__).resolve().parent.parent.parent / "assets" / "fonts"
 NOTO_REGULAR = FONTS_DIR / "NotoSansTamil-Regular.ttf"
@@ -64,6 +34,207 @@ PREFERRED_BOLD = FONTS_DIR / "preferred_tamil_bold.ttf"
 _FONTS_REGISTERED = False
 _ACTIVE_FONT_REGULAR = "NotoSansTamil"
 _ACTIVE_FONT_BOLD = "NotoSansTamil-Bold"
+
+_hb_font: Optional[hb.Font] = None
+_PUA_TO_UNICODE: Dict[int, str] = {}
+
+
+def _init_pua_reverse_map():
+    """Builds reverse mapping from PUA glyph code (0xE000 + gid) to Unicode text for ToUnicode CMap."""
+    global _PUA_TO_UNICODE
+    if _PUA_TO_UNICODE or not NOTO_REGULAR.exists():
+        return
+    try:
+        tt = FontToolsTTFont(str(NOTO_REGULAR))
+        order = tt.getGlyphOrder()
+        cmap = tt.getBestCmap()
+        rev = {v: chr(k) for k, v in cmap.items() if k < 0xE000}
+
+        prefixes = {
+            'k': '\u0b95', 'ka': '\u0b95',
+            'ng': '\u0b99', 'nga': '\u0b99',
+            'c': '\u0b9a', 'ca': '\u0b9a', 'tcha': '\u0b9a',
+            'j': '\u0b9c', 'ja': '\u0b9c',
+            'ny': '\u0b9e', 'nya': '\u0b9e',
+            'tt': '\u0b9f', 'tta': '\u0b9f',
+            'nn': '\u0ba3', 'nna': '\u0ba3',
+            't': '\u0ba4', 'ta': '\u0ba4',
+            'n': '\u0ba8', 'na': '\u0ba8',
+            'nnn': '\u0ba9', 'nnna': '\u0ba9',
+            'p': '\u0baa', 'pa': '\u0baa',
+            'm': '\u0bae', 'ma': '\u0bae',
+            'y': '\u0baf', 'ya': '\u0baf',
+            'r': '\u0bb0', 'ra': '\u0bb0',
+            'rr': '\u0bb1', 'rra': '\u0bb1',
+            'l': '\u0bb2', 'la': '\u0bb2',
+            'll': '\u0bb3', 'lla': '\u0bb3',
+            'lll': '\u0bb4', 'llla': '\u0bb4',
+            'v': '\u0bb5', 'va': '\u0bb5',
+            'sh': '\u0bb6', 'sha': '\u0bb6',
+            'ss': '\u0bb7', 'ssa': '\u0bb7',
+            's': '\u0bb8', 'sa': '\u0bb8',
+            'h': '\u0bb9', 'ha': '\u0bb9',
+        }
+        suffixes = {
+            'prehalf': '\u0bcd',
+            'aivowelsign': '\u0bbf',
+            'aiivowelsign': '\u0bc0',
+            'auvowelsign': '\u0bc1',
+            'auuvowelsign': '\u0bc2',
+            'aavowelsign': '\u0bbe',
+        }
+
+        def resolve(name: str) -> str:
+            if name in rev:
+                return rev[name]
+            if name.endswith('tamil'):
+                core = name[:-5]
+                for s_name, s_char in suffixes.items():
+                    if core.endswith(s_name):
+                        p = core[:-len(s_name)]
+                        if p in prefixes:
+                            return prefixes[p] + s_char
+                if core in prefixes:
+                    return prefixes[core]
+                if core.startswith('ivowelsign'):
+                    return '\u0bbf'
+                if core.startswith('iivowelsign'):
+                    return '\u0bc0'
+                if core.startswith('uvowelsign'):
+                    return '\u0bc1'
+                if core.startswith('uuvowelsign'):
+                    return '\u0bc2'
+                if core == 'tchaiivowelsign':
+                    return '\u0b9a\u0bc0'
+                if 'candrabindu' in core:
+                    return '\u0b82'
+                if core == 'shri':
+                    return '\u0bb8\u0bcd\u0bb0\u0bc0'
+                if core == 'kssha':
+                    return '\u0b95\u0bcd\u0bb7'
+                if core == 'ksshaprehalf':
+                    return '\u0b95\u0bcd\u0bb7\u0bcd'
+                if core == 'ksshauvowelsign':
+                    return '\u0b95\u0bcd\u0bb7\u0bc1'
+                if core == 'ksshauuvowelsign':
+                    return '\u0b95\u0bcd\u0bb7\u0bc2'
+            return ''
+
+        _PUA_TO_UNICODE = {
+            0xE000 + gid: resolve(name)
+            for gid, name in enumerate(order)
+            if resolve(name)
+        }
+    except Exception as exc:
+        logger.warning("Failed to initialize PUA reverse map: %s", exc)
+
+
+def _install_reportlab_tounicode_patch():
+    """Patches ReportLab TTFont makeToUnicodeCMap so extracted PDF text accurately returns Tamil Unicode."""
+    _init_pua_reverse_map()
+    orig_make_cmap = getattr(_ttfonts, "_gai_orig_makeToUnicodeCMap", None)
+    if orig_make_cmap is None:
+        _ttfonts._gai_orig_makeToUnicodeCMap = _ttfonts.makeToUnicodeCMap
+
+    def _gai_makeToUnicodeCMap(fontname, subset):
+        if not _PUA_TO_UNICODE:
+            return _ttfonts._gai_orig_makeToUnicodeCMap(fontname, subset)
+        lines = [
+            "/CIDInit /ProcSet findresource begin",
+            "12 dict begin",
+            "begincmap",
+            "/CIDSystemInfo",
+            f"<< /Registry ({fontname}) /Ordering ({fontname}) /Supplement 0 >> def",
+            f"/CMapName /{fontname} def",
+            "/CMapType 2 def",
+            "1 begincodespacerange",
+            f"<00> <{len(subset) - 1:02X}>",
+            "endcodespacerange",
+            f"{len(subset)} beginbfchar",
+        ]
+        for i, v in enumerate(subset):
+            if v in _PUA_TO_UNICODE and _PUA_TO_UNICODE[v]:
+                u_str = _PUA_TO_UNICODE[v]
+                hex_str = ''.join(f"{ord(c):04X}" for c in u_str)
+                lines.append(f"<{i:02X}> <{hex_str}>")
+            else:
+                lines.append(f"<{i:02X}> <{v:04X}>")
+        lines.extend([
+            "endbfchar",
+            "endcmap",
+            "CMapName currentdict /CMap defineresource pop",
+            "end",
+            "end",
+        ])
+        return '\n'.join(lines)
+
+    _ttfonts.makeToUnicodeCMap = _gai_makeToUnicodeCMap
+
+
+def _get_hb_font() -> Optional[hb.Font]:
+    """Lazy-initializes and caches the uharfbuzz font for NotoSansTamil."""
+    global _hb_font
+    if _hb_font is None and NOTO_REGULAR.exists():
+        try:
+            blob = hb.Blob.from_file_path(str(NOTO_REGULAR))
+            face = hb.Face(blob)
+            _hb_font = hb.Font(face)
+        except Exception as exc:
+            logger.warning("Failed to initialize HarfBuzz font for NotoSansTamil: %s", exc)
+    return _hb_font
+
+
+@lru_cache(maxsize=16384)
+def _shape_tamil_segment(segment: str) -> str:
+    """Shapes a single text segment containing Tamil Unicode characters into Noto Sans Tamil PUA glyphs."""
+    if not segment or not any('\u0b80' <= c <= '\u0bff' for c in segment):
+        return segment
+    hb_font = _get_hb_font()
+    if not hb_font:
+        # Fallback to simple vowel decomposition if HarfBuzz is unavailable
+        text = re.sub(r'([\u0b95-\u0bb9])\u0bca', '\u0bc6\\1\u0bbe', segment)
+        text = re.sub(r'([\u0b95-\u0bb9])\u0bcb', '\u0bc7\\1\u0bbe', text)
+        text = re.sub(r'([\u0b95-\u0bb9])\u0bcc', '\u0bc6\\1\u0bd7', text)
+        text = re.sub(r'([\u0b95-\u0bb9])([\u0bc6\u0bc7\u0bc8])', '\\2\\1', text)
+        return text
+    try:
+        buf = hb.Buffer()
+        buf.add_str(segment)
+        buf.guess_segment_properties()
+        hb.shape(hb_font, buf)
+        return ''.join(chr(0xE000 + info.codepoint) for info in buf.glyph_infos)
+    except Exception as exc:
+        logger.warning("HarfBuzz shaping error for segment %r: %s", segment, exc)
+        return segment
+
+
+def reorder_tamil_for_pdf(text: Any) -> Any:
+    """Pre-processes text for ReportLab by shaping Tamil syllables using HarfBuzz and Google Noto Sans Tamil.
+
+    Uses OpenType HarfBuzz shaping to resolve complex Indic ligatures, viramas, conjuncts,
+    and split/pre-base vowels into crystal-clear Noto Sans Tamil glyphs matching the website.
+    Preserves XML/HTML tags (<b>, <i>, <font>, etc.) and HTML entities (&nbsp;, &amp;, etc.)
+    for ReportLab Paragraphs and Canvas drawString.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+
+    if not any('\u0b80' <= c <= '\u0bff' for c in text):
+        return text
+
+    # Split by XML/HTML tags, entities, AND isolate Tamil character sequences
+    parts = re.split(r'(<[^>]+>|&[a-zA-Z0-9#]+;|[\u0b80-\u0bff]+)', text)
+    shaped_parts = []
+    for part in parts:
+        if not part:
+            continue
+        if (part.startswith('<') and part.endswith('>')) or (part.startswith('&') and part.endswith(';')):
+            shaped_parts.append(part)
+        elif any('\u0b80' <= c <= '\u0bff' for c in part):
+            shaped_parts.append(_shape_tamil_segment(part))
+        else:
+            shaped_parts.append(part)
+    return ''.join(shaped_parts)
 
 # Palette constants
 GOLD_PRIMARY = colors.HexColor("#8B6914")       # Rich Vedic Gold / Saffron
@@ -88,6 +259,9 @@ def register_report_fonts(preferred_family: Optional[str] = None) -> Tuple[str, 
     - NotoSansTamil / NotoSansTamil-Bold (Google Noto OFL)
     """
     global _FONTS_REGISTERED, _ACTIVE_FONT_REGULAR, _ACTIVE_FONT_BOLD
+
+    # Install ToUnicode CMap patch for exact Unicode text extraction and search
+    _install_reportlab_tounicode_patch()
 
     # 1. Register NotoSansTamil
     if NOTO_REGULAR.exists():
@@ -139,7 +313,7 @@ def register_report_fonts(preferred_family: Optional[str] = None) -> Tuple[str, 
 
     _FONTS_REGISTERED = True
 
-    # Determine which font to activate based on user preference
+    # Determine which font to activate based on user preference; default to Google Noto Sans Tamil
     req_f = (preferred_family or "").lower().strip()
     if req_f in ("preferred", "custom") and PREFERRED_REGULAR.exists():
         _ACTIVE_FONT_REGULAR = "PreferredTamil"
@@ -153,12 +327,10 @@ def register_report_fonts(preferred_family: Optional[str] = None) -> Tuple[str, 
     elif req_f == "lohit" and LOHIT_REGULAR.exists():
         _ACTIVE_FONT_REGULAR = "Lohit-Tamil"
         _ACTIVE_FONT_BOLD = "Lohit-Tamil-Bold"
-    elif req_f == "noto":
+    else:
+        # Default to Google Noto Sans Tamil across all Tamil PDF reports
         _ACTIVE_FONT_REGULAR = "NotoSansTamil"
         _ACTIVE_FONT_BOLD = "NotoSansTamil-Bold"
-    elif PREFERRED_REGULAR.exists():
-        _ACTIVE_FONT_REGULAR = "PreferredTamil"
-        _ACTIVE_FONT_BOLD = "PreferredTamil-Bold"
 
     return _ACTIVE_FONT_REGULAR, _ACTIVE_FONT_BOLD
 

@@ -84,8 +84,8 @@ class SinglePageHoroscopePdfRequest(BaseModel):
         description="House system ID (0=Whole Sign, 2=Placidus). Default 0."
     )
     font_family: Optional[str] = Field(
-        "auto",
-        description="Tamil font family: 'auto', 'vijaya', 'latha', 'noto', 'lohit', 'preferred'."
+        "noto",
+        description="Tamil font family: 'noto' (Google Noto Sans Tamil default), 'vijaya', 'latha', 'lohit', 'preferred'."
     )
 
 

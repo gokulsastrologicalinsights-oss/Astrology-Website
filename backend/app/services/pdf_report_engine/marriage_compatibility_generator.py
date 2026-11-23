@@ -25,7 +25,7 @@ import html
 import logging
 from typing import Any, Dict, List
 
-from playwright.sync_api import sync_playwright
+from app.services.pdf_report_engine.browser_renderer import render_html_to_pdf
 
 from app.services.pdf_report_engine.marriage_dossier_viewmodel import build_marriage_dossier_view_model
 from app.services.pdf_report_engine.marriage_print_viewmodel import (
@@ -995,21 +995,15 @@ def generate_marriage_compatibility_pdf_bytes(data: Dict[str, Any], language: st
     )
 
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            try:
-                page = browser.new_page()
-                page.set_content(html_doc, wait_until="load")
-                return page.pdf(
-                    format="A4",
-                    print_background=True,
-                    prefer_css_page_size=True,
-                    display_header_footer=True,
-                    header_template=header_tpl,
-                    footer_template=footer_tpl,
-                )
-            finally:
-                browser.close()
+        return render_html_to_pdf(
+            html_doc,
+            pdf_format="A4",
+            print_background=True,
+            prefer_css_page_size=True,
+            display_header_footer=True,
+            header_template=header_tpl,
+            footer_template=footer_tpl,
+        )
     except Exception as exc:
         logger.warning("Chromium PDF generation unavailable, falling back to ReportLab: %s", exc)
         from app.services.pdf_report_engine.marriage_compatibility_generator_rl import (

@@ -344,7 +344,7 @@ async def generate_single_page_pdf_endpoint(
 async def download_single_page_pdf_by_id_endpoint(
     horoscope_id: str,
     language: str = "ta",
-    font_family: str = "auto",
+    font_family: str = "noto",
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> Response:
     """Download 1-page PDF report for a saved horoscope ID."""

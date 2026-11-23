@@ -54,6 +54,7 @@ from app.services.pdf_report_engine.fonts import (
     reorder_tamil_for_pdf,
     register_report_fonts,
 )
+from app.services.pdf_report_engine.browser_renderer import render_html_to_pdf
 
 logger = logging.getLogger("gai.pdf.single_page")
 
@@ -1103,33 +1104,14 @@ class SinglePageHoroscopePdfGenerator:
 """
 
     def generate_playwright(self) -> bytes:
-        """Renders single-page PDF via Playwright Chromium for flawless Indic shaping.
+        """Renders single-page PDF via Chromium for flawless Indic shaping.
 
-        Runs inside a dedicated thread pool to guarantee safety when called from within
-        FastAPI / Uvicorn asyncio event loops.
+        Discovers installed system browser (Chromium/Edge/Chrome) and applies
+        container-safe launch flags, with automatic CLI fallback if Playwright
+        encounters runtime issues.
         """
-        import concurrent.futures
-
         html_content = self.generate_html()
-
-        def _render_worker() -> bytes:
-            from playwright.sync_api import sync_playwright
-
-            with sync_playwright() as p:
-                browser = p.chromium.launch()
-                page = browser.new_page()
-                page.set_content(html_content)
-                pdf_bytes = page.pdf(
-                    format="A4",
-                    print_background=True,
-                    margin={"top": "0mm", "bottom": "0mm", "left": "0mm", "right": "0mm"},
-                )
-                browser.close()
-                return pdf_bytes
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(_render_worker)
-            return future.result(timeout=45.0)
+        return render_html_to_pdf(html_content)
 
     def _calculate_all(self) -> Dict[str, Any]:
         """Calculates all horoscope attributes, positions, Mandi, and Dasa trees."""
