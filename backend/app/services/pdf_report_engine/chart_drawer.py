@@ -6,17 +6,10 @@ Supports bilingual Tamil and English labels with highlight for the Lagna sign.
 """
 
 from typing import Dict, List, Optional, Any
-from reportlab.graphics.shapes import Drawing, Rect, String as _RLString, Line, Group
+from reportlab.graphics.shapes import Drawing, Rect, Line, Group
 from reportlab.lib import colors
 
-from app.services.pdf_report_engine.fonts import reorder_tamil_for_pdf
-
-
-class String(_RLString):
-    """Shape-aware String for ReportLab vector drawings with Indic reordering."""
-
-    def __init__(self, x: float, y: float, text: Any, *args, **kwargs):
-        super().__init__(x, y, reorder_tamil_for_pdf(text), *args, **kwargs)
+from app.services.pdf_report_engine.fonts import String, reorder_tamil_for_pdf
 
 
 # Canonical South Indian Chart Box Coordinates (Col 0..3, Row 0..3 from top)

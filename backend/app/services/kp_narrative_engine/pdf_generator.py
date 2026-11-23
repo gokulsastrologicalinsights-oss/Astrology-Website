@@ -17,7 +17,6 @@ from reportlab.platypus import (
     HRFlowable,
     KeepTogether,
     PageBreak,
-    Paragraph as _RLParagraph,
     SimpleDocTemplate,
     Spacer,
     Table,
@@ -25,6 +24,7 @@ from reportlab.platypus import (
 )
 
 from app.services.pdf_report_engine.fonts import (
+    Paragraph,
     BG_HEADER,
     BG_ZEBRA,
     BORDER_COLOR,
@@ -43,13 +43,6 @@ logger = logging.getLogger("gai.kp_narrative.pdf")
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 36.0  # 0.5 in
 USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)  # 523.27 pt
-
-
-class Paragraph(_RLParagraph):
-    """Custom Paragraph that automatically reorders Indic vowels for ReportLab TTFont linear rendering."""
-
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(text), *args, **kwargs)
 
 
 class KpNarrativeNumberedCanvas(canvas.Canvas):

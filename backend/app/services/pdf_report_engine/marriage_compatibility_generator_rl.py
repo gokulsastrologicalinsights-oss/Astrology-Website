@@ -30,7 +30,12 @@ from reportlab.platypus import (
 )
 
 from app.services.pdf_report_engine.chart_drawer import SIGN_GRID_MAP
-from app.services.pdf_report_engine.fonts import register_report_fonts, reorder_tamil_for_pdf
+from app.services.pdf_report_engine.fonts import (
+    register_report_fonts,
+    reorder_tamil_for_pdf,
+    Paragraph as _RLParagraph,
+    String as _RLString,
+)
 from app.services.pdf_report_engine.marriage_dossier_viewmodel import build_marriage_dossier_view_model
 from app.services.pdf_report_engine.marriage_print_viewmodel import DASA_COLORS
 
@@ -52,7 +57,7 @@ def _esc(val: Any) -> str:
 
 
 def _p(text: Any, style: ParagraphStyle) -> _RLParagraph:
-    return _RLParagraph(reorder_tamil_for_pdf(str(text if text is not None else "")), style)
+    return _RLParagraph(text, style)
 
 
 class MarriageDossierCanvas(canvas.Canvas):

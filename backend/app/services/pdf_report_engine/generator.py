@@ -13,7 +13,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph as _RLParagraph,
     Spacer,
     Table,
     TableStyle,
@@ -24,6 +23,7 @@ from reportlab.platypus import (
 from reportlab.pdfgen import canvas
 
 from app.services.pdf_report_engine.fonts import (
+    Paragraph,
     get_report_styles,
     reorder_tamil_for_pdf,
     GOLD_PRIMARY,
@@ -44,13 +44,6 @@ logger = logging.getLogger("gai.pdf.generator")
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 36.0  # 0.5 inch
 USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)  # 523.27 pt
-
-
-class Paragraph(_RLParagraph):
-    """Custom Paragraph that automatically pre-processes Tamil text for linear TTFont rendering."""
-
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(text), *args, **kwargs)
 
 
 GRAHA_NAMES_TA: Dict[str, str] = {

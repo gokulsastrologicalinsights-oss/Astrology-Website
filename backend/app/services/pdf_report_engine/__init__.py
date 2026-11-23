@@ -9,7 +9,23 @@ Utilizing ReportLab, Noto Sans Tamil fonts, and vector South Indian charts.
 from app.services.pdf_report_engine.data_builder import ReportData, build_report_data
 from app.services.pdf_report_engine.generator import HoroscopePdfReportGenerator
 from app.services.pdf_report_engine.chart_drawer import create_south_indian_chart
-from app.services.pdf_report_engine.fonts import register_report_fonts, get_report_styles
+from app.services.pdf_report_engine.fonts import (
+    register_report_fonts,
+    get_report_styles,
+    get_traditional_styles,
+    get_modern_styles,
+    TamilParagraph,
+    TamilString,
+    TamilTable,
+    TamilNumberedCanvas,
+    Paragraph,
+    String,
+    Table,
+    NumberedCanvas,
+    normalize_tamil_text,
+    reorder_tamil_for_pdf,
+    TypographyProfile,
+)
 
 from app.services.pdf_report_engine.kp_data_builder import KpReportData, build_kp_report_data
 from app.services.pdf_report_engine.kp_generator import KpPdfReportGenerator
@@ -65,7 +81,20 @@ __all__ = [
     "generate_gemstone_rudraksha_playbook_pdf_bytes",
     "MarriageCompatibilityPdfGenerator",
     "generate_marriage_compatibility_pdf_bytes",
-    # Fonts & Styles
+    # Fonts, Profiles & Centralized Tamil Typography Engine
     "register_report_fonts",
     "get_report_styles",
+    "get_traditional_styles",
+    "get_modern_styles",
+    "TamilParagraph",
+    "TamilString",
+    "TamilTable",
+    "TamilNumberedCanvas",
+    "Paragraph",
+    "String",
+    "Table",
+    "NumberedCanvas",
+    "normalize_tamil_text",
+    "reorder_tamil_for_pdf",
+    "TypographyProfile",
 ]

@@ -374,15 +374,18 @@ export function formatApiErrorMessage(
 
 
   if (status === 403) {
-
     const rawDetail = typeof errorData === "string" ? errorData : errorData?.detail || errorData?.message || "";
-
     if (!rawDetail || typeof rawDetail !== "string") {
-
       return "Access denied. You do not have permission to perform this action.";
-
     }
+  }
 
+  if (status === 429) {
+    const rawDetail = typeof errorData === "string" ? errorData : errorData?.detail || errorData?.message || "";
+    if (typeof rawDetail === "string" && rawDetail.trim() && rawDetail !== "[object Object]") {
+      return rawDetail.trim();
+    }
+    return "Too many requests to the server (Rate Limit reached). Please wait a few seconds and try again. / அதிகப்படியான கோரிக்கைகள் (Rate Limit). தயவுசெய்து சில வினாடிகள் காத்திருந்து மீண்டும் முயற்சிக்கவும்.";
   }
 
 
@@ -811,7 +814,7 @@ async function requestWithGatewayRetry<T>(
       lastError = err;
       const isTransientGateway =
         err instanceof ApiError &&
-        (err.statusCode === 502 || err.statusCode === 503 || err.statusCode === 504);
+        (err.statusCode === 502 || err.statusCode === 503 || err.statusCode === 504 || err.statusCode === 429);
       if (!isTransientGateway || attempt === maxAttempts) {
         throw err;
       }
@@ -842,27 +845,48 @@ export async function requestBlob(path: string, options: RequestInit = {}): Prom
       }
     }
 
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        ...options,
-        headers: requestHeaders,
-      });
-    } catch (primaryFetchErr) {
-      // In the browser, if direct fetch to API_BASE_URL failed (e.g. cross-origin, host mismatch, or PNA policy),
-      // fallback to same-origin path via Next.js rewrites proxy
-      if (typeof window !== "undefined" && url.startsWith("http")) {
-        try {
-          response = await fetch(path, {
-            ...options,
-            headers: requestHeaders,
-          });
-        } catch {
+    let response!: Response;
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        response = await fetch(url, {
+          ...options,
+          headers: requestHeaders,
+        });
+      } catch (primaryFetchErr) {
+        // In the browser, if direct fetch to API_BASE_URL failed (e.g. cross-origin, host mismatch, or PNA policy),
+        // fallback to same-origin path via Next.js rewrites proxy
+        if (typeof window !== "undefined" && url.startsWith("http")) {
+          try {
+            response = await fetch(path, {
+              ...options,
+              headers: requestHeaders,
+            });
+          } catch {
+            throw primaryFetchErr;
+          }
+        } else {
           throw primaryFetchErr;
         }
-      } else {
-        throw primaryFetchErr;
       }
+
+      if (
+        (response.status === 429 ||
+          response.status === 502 ||
+          response.status === 503 ||
+          response.status === 504) &&
+        attempt < maxAttempts
+      ) {
+        const retryAfterHeader = response.headers.get("retry-after");
+        const retryAfterSec = retryAfterHeader ? parseInt(retryAfterHeader, 10) : NaN;
+        const delayMs =
+          !isNaN(retryAfterSec) && retryAfterSec > 0
+            ? Math.min(retryAfterSec * 1000, 10000)
+            : attempt * 2000;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      break;
     }
 
     if (!response.ok) {

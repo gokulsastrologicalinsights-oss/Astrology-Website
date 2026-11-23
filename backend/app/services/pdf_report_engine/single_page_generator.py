@@ -23,14 +23,13 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph as _RLParagraph,
     Spacer,
     Table,
     TableStyle,
     HRFlowable,
     Image,
 )
-from reportlab.graphics.shapes import Drawing, Rect, String as _RLString, Line, Group
+from reportlab.graphics.shapes import Drawing, Rect, Line, Group
 
 import xalen
 import xalen.swe as swe
@@ -50,6 +49,8 @@ from app.services.horoscope_writing.traditional_calculations import (
     KARANA_NAMES_TA,
 )
 from app.services.pdf_report_engine.fonts import (
+    Paragraph,
+    String,
     get_report_styles,
     reorder_tamil_for_pdf,
     register_report_fonts,
@@ -65,20 +66,6 @@ MARGIN_RIGHT = 32.0
 MARGIN_TOP = 26.0
 MARGIN_BOTTOM = 22.0
 USABLE_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT  # 531.27 pt
-
-
-class Paragraph(_RLParagraph):
-    """Custom Paragraph that automatically pre-processes Tamil text for linear TTFont rendering."""
-
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(str(text) if text is not None else ""), *args, **kwargs)
-
-
-class String(_RLString):
-    """Shape-aware String for ReportLab vector drawings with Indic reordering."""
-
-    def __init__(self, x: float, y: float, text: Any, *args, **kwargs):
-        super().__init__(x, y, reorder_tamil_for_pdf(str(text) if text is not None else ""), *args, **kwargs)
 
 
 # 27 Nakshatra Naming Letters (Nama Aksharas for 4 Padas)

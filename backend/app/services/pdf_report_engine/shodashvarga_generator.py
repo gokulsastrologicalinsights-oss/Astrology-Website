@@ -14,7 +14,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph as _RLParagraph,
     Spacer,
     Table,
     TableStyle,
@@ -24,6 +23,7 @@ from reportlab.platypus import (
 from reportlab.pdfgen import canvas
 
 from app.services.pdf_report_engine.fonts import (
+    Paragraph,
     get_report_styles,
     reorder_tamil_for_pdf,
     register_report_fonts,
@@ -60,11 +60,6 @@ def extract_chart_data(item: Any) -> Dict[str, Any]:
     if isinstance(item, dict):
         return item.get("chart") or item.get("chart_data") or item
     return {}
-
-
-class Paragraph(_RLParagraph):
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(text), *args, **kwargs)
 
 
 class ShodashvargaNumberedCanvas(canvas.Canvas):

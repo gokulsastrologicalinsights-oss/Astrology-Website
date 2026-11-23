@@ -14,16 +14,18 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph as _RLParagraph,
     Spacer,
     Table,
     TableStyle,
     PageBreak,
 )
 from reportlab.pdfgen import canvas
-from reportlab.graphics.shapes import Drawing, Rect, String as _RLString, Line
+from reportlab.graphics.shapes import Drawing, Rect, Line
 
 from app.services.pdf_report_engine.fonts import (
+    Paragraph,
+    String,
+    get_traditional_styles,
     get_report_styles,
     reorder_tamil_for_pdf,
     register_report_fonts,
@@ -44,11 +46,6 @@ from app.schemas.pdf_report import MuhurtaCertificatePdfRequest
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 28.0
 USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)
-
-
-class Paragraph(_RLParagraph):
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(text), *args, **kwargs)
 
 
 class CertificateCanvas(canvas.Canvas):
@@ -90,7 +87,7 @@ def generate_muhurta_certificate_pdf_bytes(
 ) -> bytes:
     """Generates a certified ceremonial Auspicious Muhurta Selection Certificate."""
     register_report_fonts()
-    styles = get_report_styles()
+    styles = get_traditional_styles()
     is_ta = req.language == "ta"
 
     # 1. Calculate the Muhurta Chart at the event date and start time

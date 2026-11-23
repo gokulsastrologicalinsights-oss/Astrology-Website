@@ -13,7 +13,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph as _RLParagraph,
     Spacer,
     Table,
     TableStyle,
@@ -24,7 +23,8 @@ from reportlab.platypus import (
 from reportlab.pdfgen import canvas
 
 from app.services.pdf_report_engine.fonts import (
-    get_report_styles,
+    Paragraph,
+    get_traditional_styles,
     reorder_tamil_for_pdf,
     GOLD_PRIMARY,
     GOLD_ACCENT,
@@ -42,13 +42,6 @@ logger = logging.getLogger("gai.horoscope_writing.pdf")
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 36.0  # 0.5 inch (36 pt)
 USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)  # 523.27 pt
-
-
-class Paragraph(_RLParagraph):
-    """Custom Paragraph that automatically reorders Indic vowels for ReportLab TTFont linear rendering."""
-
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(text), *args, **kwargs)
 
 
 class TraditionalHoroscopeNumberedCanvas(canvas.Canvas):
@@ -116,7 +109,7 @@ class TraditionalHoroscopePdfGenerator:
 
     def __init__(self, data: Dict[str, Any]):
         self.data = data
-        self.styles = get_report_styles()
+        self.styles = get_traditional_styles()
 
     def generate(self) -> bytes:
         """Assembles all six pages and returns PDF bytes."""

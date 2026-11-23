@@ -16,7 +16,6 @@ from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate,
-    Paragraph as _RLParagraph,
     Spacer,
     Table,
     TableStyle,
@@ -25,6 +24,7 @@ from reportlab.platypus import (
 from reportlab.pdfgen import canvas
 
 from app.services.pdf_report_engine.fonts import (
+    Paragraph,
     reorder_tamil_for_pdf,
     register_report_fonts,
     GOLD_PRIMARY,
@@ -135,11 +135,6 @@ def get_power_color(power: int) -> str:
         return "#475569"
     else:
         return "#DC2626"
-
-
-class Paragraph(_RLParagraph):
-    def __init__(self, text: Any, *args, **kwargs):
-        super().__init__(reorder_tamil_for_pdf(text), *args, **kwargs)
 
 
 class PanchaPakshiNumberedCanvas(canvas.Canvas):
