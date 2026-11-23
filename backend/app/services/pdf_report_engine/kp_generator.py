@@ -37,16 +37,28 @@ from app.services.pdf_report_engine.fonts import (
     BG_HEADER,
     BG_ZEBRA,
     BORDER_COLOR,
+    BORDER_GOLD,
     EMERALD_GREEN,
 )
 from app.services.pdf_report_engine.kp_chart_drawer import create_kp_rasi_chart, create_kp_bhava_chart
 from app.services.pdf_report_engine.kp_data_builder import KpReportData
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    make_letterhead_canvas_class,
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+)
 
 logger = logging.getLogger("gai.pdf.kp_generator")
 
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 36.0  # 0.5 inch
-USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)  # 523.27 pt
+MARGIN = LEFT_MARGIN
+
+KpNumberedCanvas = GAILetterheadCanvas
 
 
 GRAHA_NAMES_TA: Dict[str, str] = {
@@ -125,78 +137,6 @@ def _format_dms(deg_val: float) -> str:
     return f"{deg:02d}° {mins:02d}' {secs:02d}\""
 
 
-class KpNumberedCanvas(canvas.Canvas):
-    """Two-pass canvas that writes dynamic total page count and KP running headers."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states: List[Dict[str, Any]] = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_decorations(num_pages)
-            super().showPage()
-        super().save()
-
-    def draw_page_decorations(self, page_count: int):
-        self.saveState()
-
-        # Running Header (pages > 1)
-        if self._pageNumber > 1:
-            try:
-                self.setFont("NotoSansTamil-Bold", 7.5)
-            except Exception:
-                self.setFont("Helvetica-Bold", 7.5)
-            self.setFillColor(GOLD_PRIMARY)
-            self.drawString(
-                MARGIN,
-                PAGE_HEIGHT - 26,
-                reorder_tamil_for_pdf("Gokul's Astrological Insights | கிருஷ்ணமூர்த்தி பத்ததி (KP) அறிக்கை"),
-            )
-
-            try:
-                self.setFont("NotoSansTamil", 7.0)
-            except Exception:
-                self.setFont("Helvetica", 7.0)
-            self.setFillColor(colors.HexColor("#64748B"))
-            self.drawRightString(
-                PAGE_WIDTH - MARGIN,
-                PAGE_HEIGHT - 26,
-                "KP Astrology Report • Sub-Lord Arbiter • Confidential",
-            )
-
-            self.setStrokeColor(colors.HexColor("#E2E8F0"))
-            self.setLineWidth(0.5)
-            self.line(MARGIN, PAGE_HEIGHT - 30, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 30)
-
-        # Running Footer (all pages)
-        self.setStrokeColor(colors.HexColor("#E2E8F0"))
-        self.setLineWidth(0.5)
-        self.line(MARGIN, 28, PAGE_WIDTH - MARGIN, 28)
-
-        try:
-            self.setFont("NotoSansTamil", 6.8)
-        except Exception:
-            self.setFont("Helvetica", 6.8)
-        self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(
-            MARGIN,
-            18,
-            "© Gokul's Astrological Insights • Powered by Swiss Ephemeris & XALEN Astronomical Engine • Verified KP System",
-        )
-
-        page_str = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(PAGE_WIDTH - MARGIN, 18, page_str)
-
-        self.restoreState()
-
-
 class KpPdfReportGenerator:
     """Orchestrates building all 6 pages of the branded KP astrology report."""
 
@@ -211,10 +151,10 @@ class KpPdfReportGenerator:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            leftMargin=MARGIN,
-            rightMargin=MARGIN,
-            topMargin=36.0,
-            bottomMargin=36.0,
+            leftMargin=LEFT_MARGIN,
+            rightMargin=RIGHT_MARGIN,
+            topMargin=TOP_MARGIN,
+            bottomMargin=BOTTOM_MARGIN,
         )
 
         story: List[Any] = []
@@ -242,7 +182,12 @@ class KpPdfReportGenerator:
         # 6. KP Life Event Matrix, Remedial Directives & Official Certification
         story.extend(self._build_page_6_event_matrix_certification())
 
-        doc.build(story, canvasmaker=KpNumberedCanvas)
+        canvasmaker = make_letterhead_canvas_class(
+            language=self.lang,
+            report_title="Gokul's Astrological Insights | கிருஷ்ணமூர்த்தி பத்ததி (KP) அறிக்கை",
+            draw_page_numbers=True,
+        )
+        doc.build(story, canvasmaker=canvasmaker)
         buffer.seek(0)
         return buffer.getvalue()
 
@@ -253,15 +198,15 @@ class KpPdfReportGenerator:
         elements: List[Any] = []
 
         # Header Banner
-        elements.append(Spacer(1, 4))
-        elements.append(Paragraph("GOKUL'S ASTROLOGICAL INSIGHTS", self.styles["BrandHeader"]))
+        title_ta = "கிருஷ்ணமூர்த்தி பத்ததி (KP) ஜோதிட அறிக்கை"
         sub_title = (
-            "கிருஷ்ணமூர்த்தி பத்ததி (KP) ஜோதிட அறிக்கை | Advanced KP Astrology Report"
+            "GOKUL'S ASTROLOGICAL INSIGHTS • உப-அதிபதி தீர்ப்பு மற்றும் பலன் நிர்ணயம் | Sub-Lord Arbiter Report"
             if self.lang == "ta"
-            else "Advanced Krishnamurti Paddhati (KP) Astrology Report | கிருஷ்ணமூர்த்தி பத்ததி"
+            else "GOKUL'S ASTROLOGICAL INSIGHTS • Advanced Krishnamurti Paddhati (KP) Astrology Report"
         )
+        elements.append(Paragraph(title_ta, self.styles["BrandHeader"]))
         elements.append(Paragraph(sub_title, self.styles["BrandSubHeader"]))
-        elements.append(HRFlowable(width="100%", thickness=1.5, color=GOLD_PRIMARY, spaceBefore=2, spaceAfter=10))
+        elements.append(HRFlowable(width="100%", thickness=1.0, color=BORDER_GOLD, spaceBefore=2, spaceAfter=8))
 
         # Particulars Section Header
         is_horary = self.data.chart_type == "horary"
@@ -688,13 +633,13 @@ class KpPdfReportGenerator:
         t_cusps = Table(cusp_rows, colWidths=[60, 75, 65, 60, 60, 80, 60, 60])
         t_cusps.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
-            ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
-            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 2.8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.8),
+            ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+            ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor("#E2E8F0")),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.4),
         ]))
         elements.append(t_cusps)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # CSL 12-Bhava Promise Arbiter Table
         elements.append(Paragraph("12 Bhavas Cuspal Sub-Lord (CSL) Promise Arbiter — பாவ காரக பலன் உறுதி", self.styles["SectionTitle"]))
@@ -745,10 +690,10 @@ class KpPdfReportGenerator:
         t_arbiter = Table(csl_arbiter_rows, colWidths=[55, 175, 55, 115, 120])
         t_arbiter.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
-            ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
-            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 2.8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.8),
+            ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+            ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor("#E2E8F0")),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.4),
         ]))
         elements.append(t_arbiter)
 

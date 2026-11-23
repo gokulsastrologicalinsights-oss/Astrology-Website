@@ -42,44 +42,22 @@ from app.services.pdf_report_engine.fonts import (
 from app.services.pdf_report_engine.chart_drawer import create_south_indian_chart
 from app.services.ephemeris import calculate_full_horoscope
 from app.schemas.pdf_report import MuhurtaCertificatePdfRequest
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    make_letterhead_canvas_class,
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    PAGE_SIZE,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+)
 
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 28.0
-USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)
+MARGIN = LEFT_MARGIN
 
-
-class CertificateCanvas(canvas.Canvas):
-    """Draws ceremonial double-gold ornamental border and authentic Vedic seal."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def draw_ceremonial_border(self):
-        self.saveState()
-
-        # Outer Gold Border
-        self.setStrokeColor(GOLD_PRIMARY)
-        self.setLineWidth(3.0)
-        self.rect(14, 14, PAGE_WIDTH - 28, PAGE_HEIGHT - 28)
-
-        # Inner Thin Vermilion Border
-        self.setStrokeColor(CRIMSON_ACCENT)
-        self.setLineWidth(1.0)
-        self.rect(18, 18, PAGE_WIDTH - 36, PAGE_HEIGHT - 36)
-
-        # Corner Corner Accents (Decorative L-brackets)
-        for x, y, dx, dy in [
-            (22, 22, 24, 24),
-            (PAGE_WIDTH - 22, 22, -24, 24),
-            (22, PAGE_HEIGHT - 22, 24, -24),
-            (PAGE_WIDTH - 22, PAGE_HEIGHT - 22, -24, -24),
-        ]:
-            self.setStrokeColor(GOLD_PRIMARY)
-            self.setLineWidth(1.5)
-            self.line(x, y, x + dx, y)
-            self.line(x, y, x, y + dy)
-
-        self.restoreState()
+CertificateCanvas = GAILetterheadCanvas
 
 
 def generate_muhurta_certificate_pdf_bytes(
@@ -128,11 +106,11 @@ def generate_muhurta_certificate_pdf_bytes(
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=A4,
-        leftMargin=MARGIN,
-        rightMargin=MARGIN,
-        topMargin=26,
-        bottomMargin=26,
+        pagesize=PAGE_SIZE,
+        leftMargin=LEFT_MARGIN,
+        rightMargin=RIGHT_MARGIN,
+        topMargin=TOP_MARGIN,
+        bottomMargin=BOTTOM_MARGIN,
     )
     story: List[Any] = []
 
@@ -140,17 +118,17 @@ def generate_muhurta_certificate_pdf_bytes(
     sloka_sanskrit = "ॐ शुक्लाम্বরधरं विष्णुं शशिवर्णं चतुर्भुजम् । प्रसन्नवदनं ध्यायेत् सर्वविघ्नोपशान्तये ॥"
     sloka_ta = "ஓம் சுக்லாம்பரதரம் விஷ்ணும் சசிவர்ணம் சதுர்புஜம் | ப்ரஸன்னவதனம் த்யாயேத் சர்வவிக்நோபசாந்தயே ||"
 
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 2))
     story.append(Paragraph(f"<font color='{CRIMSON_ACCENT.hexval()}'><b>{sloka_sanskrit}</b></font>", styles["Subtitle"]))
     story.append(Paragraph(f"<font color='{GOLD_PRIMARY.hexval()}'><i>{sloka_ta}</i></font>", styles["Subtitle"]))
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 4))
 
     # Main Certificate Title
     cert_title = "சுப முகூர்த்த தேர்வு சான்றிதழ்" if is_ta else "AUSPICIOUS MUHURTA CERTIFICATE"
     cert_sub = f"பராசர ஜோதிட முறைப்படி கணிக்கப்பட்ட மங்களகரமான கால நேரம்" if is_ta else f"Canonical Astrological Election according to Vedic Muhurta Shastra"
     story.append(Paragraph(f"<font color='{GOLD_PRIMARY.hexval()}'><b>{cert_title}</b></font>", styles["DocTitle"]))
     story.append(Paragraph(f"<font color='{NAVY_PRIMARY.hexval()}'>{cert_sub}</font>", styles["Subtitle"]))
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 6))
 
     # Occasion & Names Ribbon
     occ_str = req.occasion
@@ -198,7 +176,7 @@ def generate_muhurta_certificate_pdf_bytes(
         chart_data=muhurta_chart_data,
         title_en=f"MUHURTA KUNDALI (லக்னம்: {horo.ascendant.sign_name})",
         title_ta=f"முகூர்த்த லக்ன சக்கரம் ({horo.ascendant.sign_name})",
-        size=220.0,
+        size=175.0,
         language=req.language,
     )
 
@@ -220,8 +198,8 @@ def generate_muhurta_certificate_pdf_bytes(
         ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#F8FAFC")),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
     ]))
 
@@ -233,7 +211,7 @@ def generate_muhurta_certificate_pdf_bytes(
         ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
     ]))
     story.append(t_middle)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 6))
 
     # Classical Safeguards Passed Box
     safeguards_text = (
@@ -248,11 +226,11 @@ def generate_muhurta_certificate_pdf_bytes(
     story.append(Table([[Paragraph(safeguards_text, styles["NormalSmall"])]], colWidths=[USABLE_WIDTH], style=[
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F0FDF4")),
         ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#86EFAC")),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
     ]))
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 6))
 
     # Astrologer Endorsement & Seal Footer
     sign_data = [
@@ -266,14 +244,16 @@ def generate_muhurta_certificate_pdf_bytes(
     t_sign.setStyle(TableStyle([
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FAF2DE")),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
     ]))
     story.append(t_sign)
 
-    def on_page(canv, doc):
-        canv.draw_ceremonial_border()
-
-    doc.build(story, canvasmaker=CertificateCanvas, onFirstPage=on_page)
+    canvasmaker = make_letterhead_canvas_class(
+        language=req.language,
+        report_title="Gokul's Astrological Insights | சுப முகூர்த்த சான்றிதழ்",
+        draw_page_numbers=False,
+    )
+    doc.build(story, canvasmaker=canvasmaker)
     return buffer.getvalue()

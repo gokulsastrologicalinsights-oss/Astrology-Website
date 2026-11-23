@@ -36,72 +36,22 @@ from app.services.pdf_report_engine.fonts import (
     BORDER_COLOR,
     EMERALD_GREEN,
 )
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    PAGE_SIZE,
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+)
 
 logger = logging.getLogger("gai.horoscope_writing.pdf")
 
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 36.0  # 0.5 inch (36 pt)
-USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)  # 523.27 pt
-
-
-class TraditionalHoroscopeNumberedCanvas(canvas.Canvas):
-    """Two-pass canvas enforcing exact Page X of 6 and running headers/footers."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_decorations(num_pages)
-            super().showPage()
-        super().save()
-
-    def draw_page_decorations(self, page_count: int):
-        self.saveState()
-
-        # Running Header (pages > 1)
-        if self._pageNumber > 1:
-            try:
-                self.setFont("NotoSansTamil-Bold", 7.5)
-            except Exception:
-                self.setFont("Helvetica-Bold", 7.5)
-            self.setFillColor(GOLD_PRIMARY)
-            self.drawString(MARGIN, PAGE_HEIGHT - 26, reorder_tamil_for_pdf("Gokul's Astrological Insights | பாரம்பரிய தமிழ் ஜாதகக் குறிப்பு"))
-
-            try:
-                self.setFont("NotoSansTamil", 7.0)
-            except Exception:
-                self.setFont("Helvetica", 7.0)
-            self.setFillColor(colors.HexColor("#64748B"))
-            self.drawRightString(PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 26, "Traditional Tamil Horoscope Booklet")
-
-            self.setStrokeColor(colors.HexColor("#CBD5E1"))
-            self.setLineWidth(0.5)
-            self.line(MARGIN, PAGE_HEIGHT - 30, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 30)
-
-        # Running Footer (all pages)
-        self.setStrokeColor(colors.HexColor("#CBD5E1"))
-        self.setLineWidth(0.5)
-        self.line(MARGIN, 28, PAGE_WIDTH - MARGIN, 28)
-
-        try:
-            self.setFont("NotoSansTamil", 6.8)
-        except Exception:
-            self.setFont("Helvetica", 6.8)
-        self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(MARGIN, 18, reorder_tamil_for_pdf("© கோகுலின் பாரம்பரிய ஜோதிடக் குறிப்பு • Gokul's Astrological Insights • திருக்கணித முறை"))
-
-        page_str = f"பக்கம் {self._pageNumber} / {page_count}"
-        self.drawRightString(PAGE_WIDTH - MARGIN, 18, reorder_tamil_for_pdf(page_str))
-
-        self.restoreState()
+MARGIN = LEFT_MARGIN
+TraditionalHoroscopeNumberedCanvas = GAILetterheadCanvas
 
 
 class TraditionalHoroscopePdfGenerator:
@@ -116,11 +66,11 @@ class TraditionalHoroscopePdfGenerator:
         buffer = BytesIO()
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=A4,
-            leftMargin=MARGIN,
-            rightMargin=MARGIN,
-            topMargin=36.0,
-            bottomMargin=36.0,
+            pagesize=PAGE_SIZE,
+            leftMargin=LEFT_MARGIN,
+            rightMargin=RIGHT_MARGIN,
+            topMargin=TOP_MARGIN,
+            bottomMargin=BOTTOM_MARGIN,
         )
 
         story: List[Any] = []

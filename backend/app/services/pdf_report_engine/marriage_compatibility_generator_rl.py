@@ -38,6 +38,15 @@ from app.services.pdf_report_engine.fonts import (
 )
 from app.services.pdf_report_engine.marriage_dossier_viewmodel import build_marriage_dossier_view_model
 from app.services.pdf_report_engine.marriage_print_viewmodel import DASA_COLORS
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    PAGE_SIZE,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+)
 
 logger = logging.getLogger("gai.pdf.marriage_generator_rl")
 
@@ -48,8 +57,9 @@ PARCHMENT = colors.HexColor("#FAF2DE")
 SLATE_BORDER = colors.HexColor("#CBD5E1")
 ZEBRA = colors.HexColor("#F8FAFC")
 
-MARGIN_PT = 32.0
-CONTENT_WIDTH = A4[0] - (2 * MARGIN_PT)
+MARGIN_PT = LEFT_MARGIN
+CONTENT_WIDTH = USABLE_WIDTH
+MarriageDossierCanvas = GAILetterheadCanvas
 
 
 def _esc(val: Any) -> str:
@@ -58,56 +68,6 @@ def _esc(val: Any) -> str:
 
 def _p(text: Any, style: ParagraphStyle) -> _RLParagraph:
     return _RLParagraph(text, style)
-
-
-class MarriageDossierCanvas(canvas.Canvas):
-    """Draws studio Navy & Gold double border, contact footer, and `Page X of N`."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states: List[Dict[str, Any]] = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        total = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self._draw_chrome(total)
-            super().showPage()
-        super().save()
-
-    def _draw_chrome(self, page_count: int) -> None:
-        w, h = A4
-        self.saveState()
-        self.setStrokeColor(NAVY)
-        self.setLineWidth(1.3)
-        self.rect(14, 14, w - 28, h - 28)
-
-        self.setStrokeColor(GOLD_LIGHT)
-        self.setLineWidth(0.6)
-        self.rect(18, 18, w - 36, h - 36)
-
-        self.setStrokeColor(colors.HexColor("#E2E8F0"))
-        self.setLineWidth(0.5)
-        self.line(MARGIN_PT, 27, w - MARGIN_PT, 27)
-
-        try:
-            self.setFont("NotoSansTamil", 6.8)
-        except Exception:
-            self.setFont("Helvetica", 6.8)
-        self.setFillColor(colors.HexColor("#475569"))
-        self.drawString(
-            MARGIN_PT,
-            20,
-            reorder_tamil_for_pdf(
-                "© Gokul's Astrological Insights • 165, Sakreeshwari Nagar, 2nd St, Thiruverkadu, Chennai - 600077 • Ph: 9444 55 9071"
-            ),
-        )
-        self.drawRightString(w - MARGIN_PT, 20, f"Page {self._pageNumber} of {page_count}")
-        self.restoreState()
 
 
 def _make_tick_drawing(passed: bool) -> Drawing:
@@ -277,12 +237,17 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
 
     buf = BytesIO()
     doc = SimpleDocTemplate(
-        buf, pagesize=A4, leftMargin=MARGIN_PT, rightMargin=MARGIN_PT, topMargin=30.0, bottomMargin=34.0
+        buf,
+        pagesize=PAGE_SIZE,
+        leftMargin=LEFT_MARGIN,
+        rightMargin=RIGHT_MARGIN,
+        topMargin=TOP_MARGIN,
+        bottomMargin=BOTTOM_MARGIN,
     )
 
-    s_brand = ParagraphStyle("RLB", fontName=font_bold, fontSize=16.5, leading=20, alignment=1, textColor=NAVY)
+    s_brand = ParagraphStyle("RLB", fontName=font_bold, fontSize=15.0, leading=18, alignment=1, textColor=NAVY)
     s_addr = ParagraphStyle("RLA", fontName=font_reg, fontSize=8.0, leading=10.5, alignment=1, textColor=colors.HexColor("#475569"))
-    s_doc_sub = ParagraphStyle("RLDS", fontName=font_bold, fontSize=9.8, leading=13, alignment=1, textColor=colors.HexColor("#8B6914"))
+    s_doc_sub = ParagraphStyle("RLDS", fontName=font_bold, fontSize=9.5, leading=12.5, alignment=1, textColor=colors.HexColor("#8B6914"))
     s_sec = ParagraphStyle("RLS", fontName=font_bold, fontSize=10.5, leading=14, textColor=colors.white)
     s_sub = ParagraphStyle("RLSub", fontName=font_bold, fontSize=9.0, leading=12, textColor=NAVY, spaceAfter=3)
     s_th = ParagraphStyle("RLTh", fontName=font_bold, fontSize=7.8, leading=10, textColor=colors.white)
@@ -321,32 +286,13 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
     story: List[Any] = []
 
     # ==================== PAGE 1: COVER, PROFILES & COMPOSITE ASSESSMENT ====================
-    logo_cell: Any = ""
-    if base["logo_path"]:
-        try:
-            logo_cell = Image(base["logo_path"], width=46, height=46)
-        except Exception:
-            logo_cell = ""
-
-    hdr_t = Table(
-        [[
-            logo_cell,
-            [
-                _p("<b>Gokul's Astrological Insights</b>", s_brand),
-                _p("165, Sakreeshwari Nagar, 2nd St, Thiruverkadu, Chennai - 600077 • Phone: 9444 55 9071", s_addr),
-                Spacer(1, 2),
-                _p(
-                    f"<b>{'திருமணப் பொருத்த முழு ஆய்வு அறிக்கை' if is_ta else 'COMPREHENSIVE MARRIAGE COMPATIBILITY DOSSIER'}</b>",
-                    s_doc_sub,
-                ),
-            ],
-            "",
-        ]],
-        colWidths=[52, CONTENT_WIDTH - 104, 52],
-    )
-    hdr_t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE")]))
-    story.append(hdr_t)
-    story.append(HRFlowable(width="100%", thickness=1.2, color=GOLD_LIGHT, spaceBefore=3, spaceAfter=8))
+    doc_brand = "Gokul's Astrological Insights"
+    doc_title = "திருமணப் பொருத்த முழு ஆய்வு அறிக்கை" if is_ta else "COMPREHENSIVE MARRIAGE COMPATIBILITY DOSSIER"
+    doc_sub = "வேத ஜோதிடம், நவாம்சம் & கேபி உன்னத பொருத்தம்" if is_ta else "Confidential Vedic, Navamsa & KP Astrological Synthesis"
+    story.append(_p(f"<font color='{GOLD.hexval()}'><b>{doc_brand} • {doc_title}</b></font>", s_brand))
+    story.append(_p(f"<font color='{NAVY.hexval()}'>{doc_sub}</font>", s_doc_sub))
+    story.append(Spacer(1, 4))
+    story.append(HRFlowable(width="100%", thickness=1.0, color=GOLD_LIGHT, spaceBefore=2, spaceAfter=6))
 
     def _profile_card(title: str, p: Dict[str, Any], top_col: Any) -> Table:
         rows = [

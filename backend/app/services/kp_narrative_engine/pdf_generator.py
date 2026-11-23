@@ -37,80 +37,22 @@ from app.services.pdf_report_engine.fonts import (
     get_report_styles,
     reorder_tamil_for_pdf,
 )
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    PAGE_SIZE,
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+)
 
 logger = logging.getLogger("gai.kp_narrative.pdf")
 
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 36.0  # 0.5 in
-USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)  # 523.27 pt
-
-
-class KpNarrativeNumberedCanvas(canvas.Canvas):
-    """Two-pass canvas for exact total page count, running headers, and footers."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states: List[Dict[str, Any]] = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_decorations(num_pages)
-            super().showPage()
-        super().save()
-
-    def draw_decorations(self, total_pages: int):
-        self.saveState()
-
-        # Outer decorative double border
-        self.setStrokeColor(GOLD_PRIMARY)
-        self.setLineWidth(1.2)
-        self.rect(20, 20, PAGE_WIDTH - 40, PAGE_HEIGHT - 40)
-        self.setStrokeColor(NAVY_PRIMARY)
-        self.setLineWidth(0.5)
-        self.rect(23, 23, PAGE_WIDTH - 46, PAGE_HEIGHT - 46)
-
-        # Running Header (pages > 1)
-        if self._pageNumber > 1:
-            try:
-                self.setFont("NotoSansTamil-Bold", 8)
-            except Exception:
-                self.setFont("Helvetica-Bold", 8)
-            self.setFillColor(NAVY_PRIMARY)
-            self.drawString(MARGIN, PAGE_HEIGHT - 28, reorder_tamil_for_pdf("GOKUL'S ASTROLOGICAL INSIGHTS | கே.பி. கணிப்பு உரை அறிக்கை"))
-            try:
-                self.setFont("NotoSansTamil", 8)
-            except Exception:
-                self.setFont("Helvetica", 8)
-            self.setFillColor(colors.HexColor("#64748B"))
-            self.drawRightString(PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 28, "KP Stellar Predictive Narrative")
-            self.setStrokeColor(GOLD_ACCENT)
-            self.setLineWidth(0.6)
-            self.line(MARGIN, PAGE_HEIGHT - 32, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 32)
-
-        # Running Footer (all pages)
-        self.setStrokeColor(GOLD_ACCENT)
-        self.setLineWidth(0.6)
-        self.line(MARGIN, 36, PAGE_WIDTH - MARGIN, 36)
-
-        try:
-            self.setFont("NotoSansTamil", 7.5)
-        except Exception:
-            self.setFont("Helvetica", 7.5)
-        self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(MARGIN, 26, reorder_tamil_for_pdf("Deterministic KP Astrology Engine • Krishnamurti Paddhati"))
-
-        page_str = f"Page {self._pageNumber} of {total_pages}"
-        self.setFont("Helvetica-Bold", 8)
-        self.setFillColor(NAVY_PRIMARY)
-        self.drawRightString(PAGE_WIDTH - MARGIN, 26, page_str)
-
-        self.restoreState()
+MARGIN = LEFT_MARGIN
+KpNarrativeNumberedCanvas = GAILetterheadCanvas
 
 
 class KpNarrativePdfGenerator:
@@ -186,11 +128,11 @@ class KpNarrativePdfGenerator:
         buf = BytesIO()
         doc = SimpleDocTemplate(
             buf,
-            pagesize=A4,
-            leftMargin=MARGIN,
-            rightMargin=MARGIN,
-            topMargin=MARGIN,
-            bottomMargin=MARGIN,
+            pagesize=PAGE_SIZE,
+            leftMargin=LEFT_MARGIN,
+            rightMargin=RIGHT_MARGIN,
+            topMargin=TOP_MARGIN,
+            bottomMargin=BOTTOM_MARGIN,
         )
         story: List[Any] = []
 
@@ -231,12 +173,6 @@ class KpNarrativePdfGenerator:
 
         header_tbl = Table(
             [
-                [
-                    Paragraph(
-                        "<font size='14' color='#B4872B'><b>GOKUL'S ASTROLOGICAL INSIGHTS</b></font>",
-                        self.styles["CenterBold"],
-                    )
-                ],
                 [
                     Paragraph(
                         f"<font size='12' color='#0A192F'><b>{self._t(title_en, title_ta)}</b></font>",

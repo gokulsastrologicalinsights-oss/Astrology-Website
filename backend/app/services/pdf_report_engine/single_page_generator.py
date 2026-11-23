@@ -57,15 +57,28 @@ from app.services.pdf_report_engine.fonts import (
 )
 from app.services.pdf_report_engine.browser_renderer import render_html_to_pdf
 
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    make_letterhead_canvas_class,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    PAGE_SIZE,
+    BORDER_GOLD,
+    OFFICIAL_LETTERHEAD_PATH,
+)
+
 logger = logging.getLogger("gai.pdf.single_page")
 
-# Page Dimensions (A4)
-PAGE_WIDTH, PAGE_HEIGHT = A4  # 595.27 x 841.89 pt
-MARGIN_LEFT = 32.0
-MARGIN_RIGHT = 32.0
-MARGIN_TOP = 26.0
-MARGIN_BOTTOM = 22.0
-USABLE_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT  # 531.27 pt
+# Page Dimensions (A4 Safe Area)
+MARGIN_LEFT = LEFT_MARGIN
+MARGIN_RIGHT = RIGHT_MARGIN
+MARGIN_TOP = TOP_MARGIN
+MARGIN_BOTTOM = BOTTOM_MARGIN
 
 
 # 27 Nakshatra Naming Letters (Nama Aksharas for 4 Padas)
@@ -525,11 +538,11 @@ class SinglePageHoroscopePdfGenerator:
             return self.generate_reportlab()
 
     def generate_reportlab(self) -> bytes:
-        """Assembles the single-page document using ReportLab."""
+        """Assembles the single-page document using ReportLab and official letterhead canvas."""
         buffer = BytesIO()
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=A4,
+            pagesize=PAGE_SIZE,
             leftMargin=MARGIN_LEFT,
             rightMargin=MARGIN_RIGHT,
             topMargin=MARGIN_TOP,
@@ -559,7 +572,8 @@ class SinglePageHoroscopePdfGenerator:
         # 7. Build Auspicious Panchang Footer
         self._build_footer(story)
 
-        doc.build(story)
+        canvasmaker = make_letterhead_canvas_class(language=self.language, draw_page_numbers=False)
+        doc.build(story, canvasmaker=canvasmaker)
         return buffer.getvalue()
 
     def generate_html(self) -> str:
@@ -1170,40 +1184,10 @@ class SinglePageHoroscopePdfGenerator:
         }
 
     def _build_header(self, story: List[Any]):
-        """Header matching the uploaded document."""
-        logo_path = Path(__file__).resolve().parent.parent.parent / "assets" / "logo.png"
-
-        logo_flowable = ""
-        if logo_path.exists():
-            try:
-                logo_flowable = Image(str(logo_path), width=42, height=42)
-            except Exception:
-                logo_flowable = ""
-
-        header_title = "<font size='13'><b>Gokul's Astrological Insights</b></font>"
-        header_address = (
-            "<font size='8' color='#1E293B'>"
-            "165, Sakreeshwari Nagar, 2nd Street,<br/>"
-            "Thiruverkadu, Chennai - 600077"
-            "</font>"
-        )
-
-        header_text = f"{header_title}<br/>{header_address}"
-
-        table_data = [[logo_flowable, Paragraph(header_text, self.styles["TableCellCenter"])]]
-        header_table = Table(table_data, colWidths=[55, USABLE_WIDTH - 55])
-        header_table.setStyle(TableStyle([
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("ALIGN", (0, 0), (0, 0), "LEFT"),
-            ("ALIGN", (1, 0), (1, 0), "CENTER"),
-            ("LEFTPADDING", (0, 0), (-1, -1), 0),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-            ("TOPPADDING", (0, 0), (-1, -1), 0),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-        ]))
-
-        story.append(header_table)
-        story.append(HRFlowable(width="100%", thickness=1.0, color=colors.black, spaceBefore=3, spaceAfter=5))
+        """Builds distinguished report heading inside the safe area below the official letterhead."""
+        title_text = "வேத ஜோதிட ஜாதகக் குறிப்பு (Vedic Horoscope Chart)"
+        story.append(Paragraph(title_text, self.styles["BrandHeader"]))
+        story.append(HRFlowable(width="100%", thickness=0.75, color=BORDER_GOLD, spaceBefore=2, spaceAfter=4))
 
     def _build_personal_and_panchang_table(self, story: List[Any], data: Dict[str, Any]):
         """Builds the 2-column Native & Panchang details block."""

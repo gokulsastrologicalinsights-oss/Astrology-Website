@@ -39,65 +39,22 @@ from app.services.pdf_report_engine.fonts import (
 )
 from app.services.remedy_engine.gemstone_advisory import GemstoneAdvisoryEngine
 from app.schemas.pdf_report import GemstoneRudrakshaPlaybookPdfRequest
+from app.services.pdf_report_engine.letterhead_renderer import (
+    GAILetterheadCanvas,
+    make_letterhead_canvas_class,
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    PAGE_SIZE,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+)
 
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 36.0
-USABLE_WIDTH = PAGE_WIDTH - (2 * MARGIN)
+MARGIN = LEFT_MARGIN
 
-
-class PlaybookNumberedCanvas(canvas.Canvas):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_decorations(num_pages)
-            super().showPage()
-        super().save()
-
-    def draw_page_decorations(self, page_count: int):
-        self.saveState()
-        if self._pageNumber > 1:
-            try:
-                self.setFont("NotoSansTamil-Bold", 7.5)
-            except Exception:
-                self.setFont("Helvetica-Bold", 7.5)
-            self.setFillColor(GOLD_PRIMARY)
-            self.drawString(MARGIN, PAGE_HEIGHT - 26, reorder_tamil_for_pdf("Gokul's Astrological Insights | ரத்தின & ருத்ராட்ச கையேடு"))
-
-            try:
-                self.setFont("NotoSansTamil", 7.0)
-            except Exception:
-                self.setFont("Helvetica", 7.0)
-            self.setFillColor(colors.HexColor("#64748B"))
-            self.drawRightString(PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 26, "Sanctification & Safety Playbook")
-
-            self.setStrokeColor(colors.HexColor("#E2E8F0"))
-            self.setLineWidth(0.5)
-            self.line(MARGIN, PAGE_HEIGHT - 30, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 30)
-
-        # Footer
-        self.setStrokeColor(colors.HexColor("#E2E8F0"))
-        self.setLineWidth(0.5)
-        self.line(MARGIN, 26, PAGE_WIDTH - MARGIN, 26)
-
-        try:
-            self.setFont("NotoSansTamil", 6.8)
-        except Exception:
-            self.setFont("Helvetica", 6.8)
-        self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(MARGIN, 16, "© Gokul's Astrological Insights • Classical Ratna Shastra (Ratna Samadhan - Grahabalabal Method & Shiva Purana)")
-
-        page_str = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(PAGE_WIDTH - MARGIN, 16, page_str)
-        self.restoreState()
+PlaybookNumberedCanvas = GAILetterheadCanvas
 
 
 def generate_gemstone_rudraksha_playbook_pdf_bytes(
@@ -122,11 +79,11 @@ def generate_gemstone_rudraksha_playbook_pdf_bytes(
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=A4,
-        leftMargin=MARGIN,
-        rightMargin=MARGIN,
-        topMargin=38,
-        bottomMargin=36,
+        pagesize=PAGE_SIZE,
+        leftMargin=LEFT_MARGIN,
+        rightMargin=RIGHT_MARGIN,
+        topMargin=TOP_MARGIN,
+        bottomMargin=BOTTOM_MARGIN,
     )
     story: List[Any] = []
 
