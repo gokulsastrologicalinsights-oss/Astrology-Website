@@ -19,6 +19,7 @@ from app.schemas.horoscope_writing import (
     HoroscopeWritingUpdateRequest,
 )
 from app.schemas.common import BirthInput
+from app.services.pdf_report_engine import make_content_disposition_header
 from app.services.horoscope_writing import (
     calculate_traditional_horoscope_writing_data,
     TraditionalHoroscopePdfGenerator,
@@ -240,7 +241,7 @@ async def generate_horoscope_writing_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
             },

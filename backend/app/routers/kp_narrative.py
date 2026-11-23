@@ -25,6 +25,7 @@ from app.services.kp_narrative_engine import (
     KpNarrativeRepository,
 )
 
+from app.services.pdf_report_engine import make_content_disposition_header
 logger = logging.getLogger("gai.api.kp_narrative")
 security = HTTPBearer(auto_error=False)
 
@@ -225,7 +226,7 @@ async def generate_kp_narrative_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
             },

@@ -567,3 +567,19 @@ def validate_pdf_safe_boundaries(pdf_bytes: bytes) -> Dict[str, Any]:
         "page_dimensions": page_dimensions,
         "violations": violations,
     }
+
+
+def make_content_disposition_header(filename: str) -> str:
+    """Creates a standard RFC 6266 / RFC 5987 Content-Disposition header.
+
+    Guarantees Latin-1/ASCII compatibility for Starlette/uvicorn HTTP servers,
+    while conveying the complete Unicode filename to browsers via filename*=UTF-8''.
+    """
+    import urllib.parse
+    # Strip non-ASCII characters for legacy HTTP header fallback
+    ascii_clean = "".join(c for c in filename if c.isascii() and (c.isalnum() or c in ("-", "_", "."))).strip()
+    if not ascii_clean or ascii_clean.startswith(".") or ascii_clean == ".pdf":
+        ascii_clean = "gai_astrology_report.pdf"
+    encoded_utf8 = urllib.parse.quote(filename, safe="")
+    return f'attachment; filename="{ascii_clean}"; filename*=UTF-8\'\'{encoded_utf8}'
+

@@ -69,6 +69,7 @@ from app.services.pdf_report_engine.letterhead_renderer import (
     create_data_table,
     create_metadata_grid,
     validate_pdf_safe_boundaries,
+    make_content_disposition_header,
 )
 
 

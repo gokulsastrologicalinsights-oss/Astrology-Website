@@ -98,6 +98,7 @@ from app.services.numerology import (
     generate_numerology_pdf_bytes,
     ENGINE_VERSION,
 )
+from app.services.pdf_report_engine import make_content_disposition_header
 
 router = APIRouter(prefix="/api/v1/numerology", tags=["Numerology"])
 
@@ -1404,7 +1405,7 @@ async def export_saved_report_pdf(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Length": str(len(pdf_bytes)),
             },
         )
@@ -1441,7 +1442,7 @@ def export_ad_hoc_numerology_pdf(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Length": str(len(pdf_bytes)),
             },
         )

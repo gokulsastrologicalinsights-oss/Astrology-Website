@@ -34,6 +34,7 @@ from app.services.pdf_report_engine import (
     generate_pancha_pakshi_pdf_bytes,
     generate_gemstone_rudraksha_playbook_pdf_bytes,
     generate_marriage_compatibility_pdf_bytes,
+    make_content_disposition_header,
 )
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.horoscope_cache import get_cached_saved_horoscope
@@ -192,7 +193,7 @@ async def generate_pdf_report_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Content-Length": str(len(pdf_bytes)),
             },
@@ -325,7 +326,7 @@ async def generate_single_page_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
             },
         )
@@ -464,7 +465,7 @@ async def generate_kp_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Content-Length": str(len(pdf_bytes)),
             },
@@ -548,7 +549,7 @@ async def generate_shodashvarga_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Content-Length": str(len(pdf_bytes)),
             },
@@ -574,7 +575,7 @@ async def generate_muhurta_certificate_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Content-Length": str(len(pdf_bytes)),
             },
@@ -597,7 +598,7 @@ async def generate_pancha_pakshi_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Content-Length": str(len(pdf_bytes)),
             },
@@ -620,7 +621,7 @@ async def generate_gemstone_rudraksha_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
                 "Content-Length": str(len(pdf_bytes)),
             },
@@ -683,7 +684,7 @@ async def generate_marriage_compatibility_pdf_endpoint(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Disposition": make_content_disposition_header(filename),
                 "Content-Type": "application/pdf",
             },
         )
