@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { TenantUserManager, TenantUser } from "@/components/admin/TenantUserManager";
+import { DailyRaasiSocialHub } from "@/components/admin/DailyRaasiSocialHub";
 import { formatDate } from "@/lib/date-formatter";
 
 type AdminUser = TenantUser;
@@ -342,6 +343,9 @@ export default function AdminPage() {
           <ExternalLink className="w-3.5 h-3.5" />
         </Link>
       </div>
+
+      {/* Daily KP Raasi Palan Social & WhatsApp Status Broadcaster */}
+      <DailyRaasiSocialHub />
 
       {/* Astrologer Rental Profiles & Selected Access Management Suite */}
       <TenantUserManager users={users} onRefresh={fetchUsers} />
