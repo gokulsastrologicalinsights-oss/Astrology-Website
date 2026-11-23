@@ -287,6 +287,20 @@ async def run_startup_catchup_check() -> bool:
             "error": None,
         })
         _save_persisted_state(_last_run_info)
+
+        # Pre-cache posters on disk if wiped during cloud container redeploy
+        today_dir = os.path.join(DATA_DIR, "generated_posters", today_str)
+        if not os.path.isdir(today_dir) or len([f for f in os.listdir(today_dir) if f.endswith(".png")]) < 12:
+            try:
+                from app.services.kp_daily_horoscope_service import compute_kp_daily_horoscope
+                from app.services.daily_poster_generator import generate_all_12_posters
+                loop = asyncio.get_running_loop()
+                h_data = compute_kp_daily_horoscope(target_date=today_str, timezone_str="Asia/Kolkata")
+                loop.run_in_executor(None, generate_all_12_posters, h_data, today_dir)
+                logger.info(f"Catch-up: Dispatched background render of missing posters on disk for {today_str}")
+            except Exception as render_err:
+                logger.warning(f"Failed to pre-render missing posters during catch-up: {render_err}")
+
         return True
 
     logger.info(

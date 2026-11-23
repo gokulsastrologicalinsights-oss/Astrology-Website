@@ -150,7 +150,17 @@ export function DailyRaasiSocialHub() {
         );
 
         const imgUrl = getPosterUrl(rashi.id, rashi.key);
-        const resp = await fetch(imgUrl);
+        let resp = await fetch(imgUrl);
+        // If image is being rendered on demand, retry once after a short wait
+        if (!resp.ok) {
+          setShareProgress(
+            language === "ta"
+              ? `சேவையகத்தில் படம் உருவாகிறது (${i + 1}/12): ${rashi.nameTa}...`
+              : `Rendering poster on server (${i + 1}/12): ${rashi.nameEn}...`
+          );
+          await new Promise((r) => setTimeout(r, 4000));
+          resp = await fetch(imgUrl);
+        }
         if (!resp.ok) {
           throw new Error(`Failed to fetch poster for ${rashi.nameEn} (HTTP ${resp.status})`);
         }
@@ -232,7 +242,11 @@ export function DailyRaasiSocialHub() {
     setSharingSingleId(rashi.id);
     try {
       const imgUrl = getPosterUrl(rashi.id, rashi.key);
-      const resp = await fetch(imgUrl);
+      let resp = await fetch(imgUrl);
+      if (!resp.ok) {
+        await new Promise((r) => setTimeout(r, 4000));
+        resp = await fetch(imgUrl);
+      }
       if (!resp.ok) {
         throw new Error(`Failed to load poster (HTTP ${resp.status})`);
       }

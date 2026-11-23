@@ -6,9 +6,11 @@ KP Daily Raasi Palan publications to a connected Facebook Page.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
-from typing import Optional
+import re
+from typing import Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import FileResponse, JSONResponse
@@ -66,9 +68,16 @@ async def get_facebook_status():
     }
 
 
+_POSTER_GEN_LOCKS: Dict[str, asyncio.Lock] = {}
+
+
 @router.get("/posters/{target_date}/{filename}", summary="Serve public poster image for Instagram and Facebook crawlers")
 async def get_poster_image(target_date: str, filename: str):
-    """Serves the generated 1:1 square poster image file for Meta's Instagram crawler."""
+    """Serves the generated 1:1 square poster image file for Meta's Instagram crawler.
+
+    If the image does not exist on disk (e.g. after a cloud redeploy or restart),
+    it is automatically rendered on the fly so it never returns 404.
+    """
     data_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         "data",
@@ -76,10 +85,31 @@ async def get_poster_image(target_date: str, filename: str):
         target_date,
     )
     file_path = os.path.join(data_dir, filename)
+
+    if not os.path.isfile(file_path):
+        if target_date not in _POSTER_GEN_LOCKS:
+            _POSTER_GEN_LOCKS[target_date] = asyncio.Lock()
+
+        async with _POSTER_GEN_LOCKS[target_date]:
+            if not os.path.isfile(file_path):
+                try:
+                    logger.info(
+                        f"Poster {filename} missing on disk for date {target_date}. Generating all 12 posters on demand..."
+                    )
+                    from app.services.kp_daily_horoscope_service import compute_kp_daily_horoscope
+                    from app.services.daily_poster_generator import generate_all_12_posters
+
+                    horoscope = compute_kp_daily_horoscope(target_date=target_date, timezone_str="Asia/Kolkata")
+                    loop = asyncio.get_running_loop()
+                    await loop.run_in_executor(None, generate_all_12_posters, horoscope, data_dir)
+                    logger.info(f"Successfully generated all 12 posters for {target_date} into {data_dir}")
+                except Exception as gen_err:
+                    logger.exception(f"Failed to auto-generate poster {filename} on demand: {gen_err}")
+
     if not os.path.isfile(file_path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Poster image {filename} not found for date {target_date}",
+            detail=f"Poster image {filename} could not be found or generated for date {target_date}",
         )
     return FileResponse(file_path, media_type="image/png")
 
