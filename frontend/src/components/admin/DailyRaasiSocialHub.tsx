@@ -101,9 +101,31 @@ export function DailyRaasiSocialHub() {
     text: string;
     files: File[];
   } | null>(null);
+  const [showDesktopNotice, setShowDesktopNotice] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    }
+  }, []);
 
   const getPosterUrl = (rashiId: number, rashiKey: string) => {
     return `/api/v1/social/facebook/posters/${targetDate}/rashi_${rashiId}_${rashiKey}.png`;
+  };
+
+  // Download all 12 posters to PC / device
+  const handleDownloadAll12Posters = async () => {
+    for (const rashi of RASHIS) {
+      const url = getPosterUrl(rashi.id, rashi.key);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rashi_${rashi.id}_${rashi.key}_${targetDate}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      await new Promise((r) => setTimeout(r, 250));
+    }
   };
 
   const fetchStatus = async () => {
@@ -606,6 +628,16 @@ export function DailyRaasiSocialHub() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={handleDownloadAll12Posters}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors cursor-pointer"
+              title="Download all 12 poster PNGs to your computer"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>{language === "ta" ? "12 படங்களையும் பதிவிறக்கு (PC)" : "Download All 12 (PC)"}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleCopyCaption}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors cursor-pointer"
             >
@@ -813,7 +845,7 @@ export function DailyRaasiSocialHub() {
                     }
                   } catch (shareErr: any) {
                     if (shareErr?.name !== "AbortError") {
-                      alert(`Sharing failed: ${shareErr.message || shareErr}`);
+                      setShowDesktopNotice(true);
                     }
                   }
                 }}
@@ -837,6 +869,89 @@ export function DailyRaasiSocialHub() {
                 className="w-full py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
               >
                 {language === "ta" ? "ரத்து செய்" : "Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Limitation Notice Modal */}
+      {showDesktopNotice && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setShowDesktopNotice(false)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 shadow-inner text-2xl font-black">
+              📱
+            </div>
+
+            <h3 className="font-serif text-xl sm:text-2xl font-black text-slate-900">
+              {language === "ta" ? "மொபைல் போனில் திறக்கவும்" : "Open on Your Mobile Phone"}
+            </h3>
+
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed text-left bg-slate-50 p-4 rounded-xl border border-slate-200">
+              {language === "ta" ? (
+                <>
+                  💡 <b>வாட்ஸ்அப் ஸ்டேட்டஸ் மொபைல் போன்களுக்கானது:</b>
+                  <br />
+                  Windows கணினி உலாவிகள் வாட்ஸ்அப் ஸ்டேட்டஸில் நேரடியாகப் பகிர அனுமதிக்காது (Permission Denied).
+                  <br /><br />
+                  உங்கள் <b>Android போன் (Chrome)</b> அல்லது <b>iPhone (Safari)</b>-ல் <b>astro.gaionline.in/admin</b> தளத்தைத் திறந்து இதே பட்டனைத் தட்டினால், வாட்ஸ்அப் நேரடியாகத் திறந்து 12 ஸ்லைடுகளையும் உடனே பப்ளிஷ் செய்துவிடும்!
+                </>
+              ) : (
+                <>
+                  💡 <b>WhatsApp Status is Mobile-Only:</b>
+                  <br />
+                  Windows desktop browsers block direct file sharing to WhatsApp Status (Permission Denied).
+                  <br /><br />
+                  Please open <b>astro.gaionline.in/admin</b> on your <b>Android phone (Chrome)</b> or <b>iPhone (Safari)</b>. Tapping this button on mobile directly launches WhatsApp with all 12 slides queued!
+                </>
+              )}
+            </p>
+
+            <div className="mt-5 space-y-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDesktopNotice(false);
+                  handleDownloadAll12Posters();
+                }}
+                className="w-full py-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Download className="w-4 h-4 text-emerald-400" />
+                <span>
+                  {language === "ta"
+                    ? "கணினியில் 12 படங்களையும் பதிவிறக்குக (Download 12 PNGs)"
+                    : "Download All 12 Posters to PC"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDesktopNotice(false);
+                  handleSendToTelegram();
+                }}
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Send className="w-4 h-4 text-white" />
+                <span>
+                  {language === "ta"
+                    ? "என் Telegram Bot-க்கு அனுப்புக (Send to Telegram)"
+                    : "Send to My Telegram Bot"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowDesktopNotice(false)}
+                className="w-full py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
+                {language === "ta" ? "மூடுக" : "Close"}
               </button>
             </div>
           </div>
