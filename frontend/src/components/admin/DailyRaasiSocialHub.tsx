@@ -349,6 +349,10 @@ export function DailyRaasiSocialHub() {
     statusData?.scheduler?.last_run?.last_posted_date === targetDate &&
     statusData?.scheduler?.last_run?.status === "success";
 
+  const nextRashi = RASHIS.find((r) => !sharedRashis[r.id]) || RASHIS[0];
+  const completedCount = RASHIS.filter((r) => sharedRashis[r.id]).length;
+  const isAllCompleted = completedCount === RASHIS.length;
+
   return (
     <div className="rounded-2xl border border-emerald-200 bg-white shadow-xs overflow-hidden">
       {/* Top Header Banner */}
@@ -518,84 +522,136 @@ export function DailyRaasiSocialHub() {
         </div>
 
         {/* ========================================================================= */}
-        {/* SUPER HERO BUTTON: "POST ALL 12 CONSECUTIVE SLIDES AT ONCE"              */}
+        {/* RAPID-SEQUENCE STATUS HERO: 1-BY-1 FAST PLAYER (WHATSAPP NATIVE COMPLIANT) */}
         {/* ========================================================================= */}
-        <div className="rounded-2xl p-6 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-700 text-white shadow-lg relative overflow-hidden">
+        <div className="rounded-2xl p-6 bg-gradient-to-br from-emerald-700 via-green-600 to-teal-800 text-white shadow-lg relative overflow-hidden">
           <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 opacity-10 pointer-events-none">
             <MessageCircle className="w-64 h-64 text-white" />
           </div>
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="max-w-xl">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="relative z-10 space-y-5">
+            {/* Header Strip */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase bg-white/20 text-white backdrop-blur-xs">
                   <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                  {language === "ta" ? "சூப்பர் ஃபாஸ்ட் வாட்ஸ்அப் பப்ளிஷர்" : "Super-Fast WhatsApp Story Publisher"}
+                  {language === "ta" ? "தொடர் வரிசை ஸ்டேட்டஸ் பிளேயர்" : "Rapid WhatsApp Status Player"}
                 </span>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/40 border border-white/20 text-emerald-200">
+                  {completedCount}/12 {language === "ta" ? "பகிரப்பட்டது" : "Completed"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
                 <a
                   href={WHATSAPP_CHANNEL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/40 border border-white/20 text-white hover:bg-emerald-950/60 transition-colors"
                 >
-                  <span>WhatsApp Channel</span>
+                  <span>GAI Channel</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
+                {completedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSharedRashis({})}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
+            </div>
+
+            {/* Title & Guidance */}
+            <div className="max-w-2xl">
               <h3 className="font-serif text-xl sm:text-2xl font-black text-white leading-tight">
-                {language === "ta"
-                  ? "12 ராசி ஸ்லைடுகளையும் WhatsApp Status & Channel-ல் உடனே பகிர்க!"
-                  : "Post All 12 Consecutive Slides to WhatsApp Status & Channel"}
+                {isAllCompleted
+                  ? language === "ta"
+                    ? "🎉 வாழ்த்துகள்! 12 ராசிகளும் வாட்ஸ்அப்பில் வெற்றிகரமாக பகிரப்பட்டுவிட்டன!"
+                    : "🎉 All 12 Rashis Successfully Posted to WhatsApp!"
+                  : language === "ta"
+                  ? `அடுத்த ராசி: ${nextRashi.symbol} ${nextRashi.nameTa} (${nextRashi.id}/12) – உடனே Status-ல் பகிர்க!`
+                  : `Next Slide: ${nextRashi.symbol} ${nextRashi.nameEn} (${nextRashi.id}/12) – Post to Status!`}
               </h3>
-              <p className="mt-2 text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+              <p className="mt-1 text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
                 {language === "ta"
-                  ? "ஒரே கிளிக்கில் 12 ராசிகளின் உயர்தர 1080x1080 படங்களும் தொடர் ஸ்லைடுகளாக வாட்ஸ்அப்பில் தயாராகும். உங்கள் 'My Status' அல்லது 'Gokul's Astrological Insights' சேனலைத் தேர்ந்தெடுத்து Send செய்யவும்!"
-                  : "Bundles all 12 high-resolution 1080x1080 Tamil posters into a multi-slide broadcast. Just select 'My Status' or your WhatsApp Channel and tap Send once!"}
+                  ? "கீழே உள்ள பெரிய பட்டனைத் தட்டினால், அடுத்த ராசியின் படம் நேரடியாக வாட்ஸ்அப் ஸ்டேட்டஸில் தயாராகும். 'My Status' & Send கொடுத்ததும் தானாக அடுத்த ராசிக்கு மாறிவிடும்!"
+                  : "Tap the big button below to launch the next Rashi directly into WhatsApp Status. It auto-advances to the next slide every time you post!"}
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 shrink-0">
-              {/* Share to Status */}
-              <button
-                type="button"
-                onClick={() => handleShareAllToWhatsApp("status")}
-                disabled={sharingAll}
-                className="inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer transform active:scale-98 disabled:opacity-75 disabled:cursor-wait"
-              >
-                {sharingAll ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
-                    <span>{shareProgress || "Preparing..."}</span>
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="w-4 h-4 text-emerald-600 fill-emerald-600" />
+            {/* Progress Bar */}
+            <div className="space-y-1.5">
+              <div className="w-full bg-emerald-950/50 rounded-full h-2.5 overflow-hidden border border-white/10">
+                <div
+                  className="bg-gradient-to-r from-yellow-400 to-emerald-300 h-full transition-all duration-300 rounded-full"
+                  style={{ width: `${(completedCount / 12) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] font-mono text-emerald-200/80">
+                <span>♈ மேஷம் (1)</span>
+                <span>{completedCount} of 12 shared</span>
+                <span>♓ மீனம் (12)</span>
+              </div>
+            </div>
+
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              {!isAllCompleted ? (
+                <>
+                  {/* Next Rashi to Status */}
+                  <button
+                    type="button"
+                    onClick={() => handleShareSingleRashi(nextRashi, "status")}
+                    disabled={sharingSingleId === nextRashi.id}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-white hover:bg-emerald-50 text-slate-950 font-black text-sm sm:text-base shadow-lg transition-transform active:scale-98 cursor-pointer"
+                  >
+                    {sharingSingleId === nextRashi.id ? (
+                      <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
+                    ) : (
+                      <MessageCircle className="w-5 h-5 text-emerald-600 fill-emerald-600" />
+                    )}
                     <span>
-                      {language === "ta" ? "12 Slides ➔ WhatsApp Status" : "12 Slides ➔ WhatsApp Status"}
+                      {language === "ta"
+                        ? `📲 அடுத்தது: ${nextRashi.nameTa} (${nextRashi.id}/12) Status-ல் பகிர்க ➔`
+                        : `📲 Post Next: ${nextRashi.nameEn} (${nextRashi.id}/12) to Status ➔`}
                     </span>
-                  </>
-                )}
-              </button>
+                  </button>
 
-              {/* Share to Channel */}
-              <button
-                type="button"
-                onClick={() => handleShareAllToWhatsApp("channel")}
-                disabled={sharingAll}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-950 hover:bg-black text-white font-bold text-xs sm:text-sm border border-emerald-400/40 shadow-md hover:shadow-lg transition-all cursor-pointer transform active:scale-98 disabled:opacity-75"
-              >
-                <Share2 className="w-4 h-4 text-emerald-300" />
-                <span>
-                  {language === "ta" ? "12 Slides ➔ WhatsApp Channel" : "12 Slides ➔ WhatsApp Channel"}
-                </span>
-              </button>
+                  {/* Next Rashi to Channel */}
+                  <button
+                    type="button"
+                    onClick={() => handleShareSingleRashi(nextRashi, "channel")}
+                    disabled={sharingSingleId === nextRashi.id}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs sm:text-sm border border-emerald-400/40 shadow-md transition-transform active:scale-98 cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4 text-emerald-300" />
+                    <span>
+                      {language === "ta"
+                        ? `${nextRashi.nameTa} Channel-ல் பகிர்க`
+                        : `Post ${nextRashi.nameEn} to Channel`}
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSharedRashis({})}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-white text-slate-950 font-black text-sm shadow-lg cursor-pointer"
+                >
+                  <RefreshCw className="w-4 h-4 text-emerald-600" />
+                  <span>{language === "ta" ? "மீண்டும் முதன்முறையாகத் தொடங்குக (Reset)" : "Reset & Share Again"}</span>
+                </button>
+              )}
 
-              {/* Send to Telegram */}
+              {/* Telegram Action */}
               <button
                 type="button"
                 onClick={handleSendToTelegram}
                 disabled={dispatchingTelegram}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/60 border border-white/20 text-white font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/60 border border-white/20 text-white font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
                 title="Send all 12 posters as 3 photo albums directly to your Telegram chat"
               >
                 <Send className={`w-3.5 h-3.5 text-emerald-300 ${dispatchingTelegram ? "animate-spin" : ""}`} />
