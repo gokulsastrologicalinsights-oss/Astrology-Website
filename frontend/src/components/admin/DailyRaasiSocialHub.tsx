@@ -95,6 +95,12 @@ export function DailyRaasiSocialHub() {
   const [telegramNotice, setTelegramNotice] = useState<string | null>(null);
   const [copiedCaption, setCopiedCaption] = useState(false);
   const [previewModalImage, setPreviewModalImage] = useState<string | null>(null);
+  const [readyModalData, setReadyModalData] = useState<{
+    target: "status" | "channel";
+    title: string;
+    text: string;
+    files: File[];
+  } | null>(null);
 
   const getPosterUrl = (rashiId: number, rashiKey: string) => {
     return `/api/v1/social/facebook/posters/${targetDate}/rashi_${rashiId}_${rashiKey}.png`;
@@ -203,22 +209,17 @@ export function DailyRaasiSocialHub() {
             `🙏 Gokul's Astrological Insights | Thiruverkadu\n\n` +
             `📢 எங்களின் WhatsApp Channel:\n${WHATSAPP_CHANNEL_URL}`;
 
-      await navigator.share({
+      // Set the ready modal so navigator.share is invoked directly in a fresh user gesture tap!
+      setReadyModalData({
+        target,
         title: `தினசரி ராசிபலன் - ${targetDate}`,
         text: captionText,
         files: files,
       });
-
-      // Mark all as shared
-      const allShared: Record<number, boolean> = {};
-      RASHIS.forEach((r) => {
-        allShared[r.id] = true;
-      });
-      setSharedRashis(allShared);
     } catch (err: any) {
       if (err?.name !== "AbortError") {
-        console.error("Failed to share all slides to WhatsApp:", err);
-        alert(`Sharing failed: ${err.message || err}`);
+        console.error("Failed to prepare slides for WhatsApp:", err);
+        alert(`Preparation failed: ${err.message || err}`);
       }
     } finally {
       setSharingAll(false);
@@ -254,21 +255,26 @@ export function DailyRaasiSocialHub() {
       const file = new File([blob], `rashi_${rashi.id}_${rashi.key}_${targetDate}.png`, { type: "image/png" });
 
       const captionText =
-        `✨ இன்றைய தினசரி ராசிபலன்: ${rashi.nameTa} (${rashi.nameEn}) ${rashi.symbol}\n` +
-        `📅 தேதி: ${targetDate}\n` +
-        `🙏 Gokul's Astrological Insights | Thiruverkadu\n\n` +
-        `📢 WhatsApp Channel: ${WHATSAPP_CHANNEL_URL}`;
+        target === "channel"
+          ? `✨ இன்றைய தினசரி ராசிபலன்: ${rashi.nameTa} (${rashi.nameEn}) ${rashi.symbol}\n` +
+            `📅 தேதி: ${targetDate}\n` +
+            `🙏 Gokul's Astrological Insights | Thiruverkadu\n\n` +
+            `📢 அதிகாரப்பூர்வ வாட்ஸ்அப் சேனல்:\n${WHATSAPP_CHANNEL_URL}`
+          : `✨ இன்றைய தினசரி ராசிபலன்: ${rashi.nameTa} (${rashi.nameEn}) ${rashi.symbol}\n` +
+            `📅 தேதி: ${targetDate}\n` +
+            `🙏 Gokul's Astrological Insights | Thiruverkadu\n\n` +
+            `📢 எங்களின் WhatsApp Channel:\n${WHATSAPP_CHANNEL_URL}`;
 
-      await navigator.share({
+      // Open ready modal so share request is handled in a direct user gesture tap
+      setReadyModalData({
+        target,
         title: `${rashi.nameTa} ராசிபலன் - ${targetDate}`,
         text: captionText,
         files: [file],
       });
-
-      setSharedRashis((prev) => ({ ...prev, [rashi.id]: true }));
     } catch (err: any) {
       if (err?.name !== "AbortError") {
-        alert(`Sharing failed: ${err.message || err}`);
+        alert(`Preparation failed: ${err.message || err}`);
       }
     } finally {
       setSharingSingleId(null);
@@ -750,6 +756,92 @@ export function DailyRaasiSocialHub() {
           })}
         </div>
       </div>
+
+      {/* Ready to Share Modal (Guarantees user gesture activation for navigator.share) */}
+      {readyModalData && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setReadyModalData(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-emerald-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-inner">
+              <MessageCircle className="w-8 h-8 fill-emerald-600" />
+            </div>
+
+            <h3 className="font-serif text-xl sm:text-2xl font-black text-slate-900">
+              {readyModalData.files.length > 1
+                ? language === "ta"
+                  ? "12 படங்களும் தயாராக உள்ளன!"
+                  : "All 12 Slides Ready!"
+                : language === "ta"
+                ? "படம் தயாராக உள்ளது!"
+                : "Poster Ready!"}
+            </h3>
+
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+              {readyModalData.target === "channel"
+                ? language === "ta"
+                  ? "வாட்ஸ்அப் திறக்க கீழே உள்ள பட்டனைத் தொடவும். 'Channels' பிரிவில் 'Gokul's Astrological Insights' சேனலைத் தேர்வு செய்யவும்."
+                  : "Tap below to launch WhatsApp. Select 'Channels' and choose 'Gokul's Astrological Insights'."
+                : language === "ta"
+                ? "வாட்ஸ்அப் திறக்க கீழே உள்ள பட்டனைத் தொடவும். 'My Status' என்பதைத் தேர்ந்தெடுத்து அனுப்பவும்."
+                : "Tap below to launch WhatsApp. Select 'My Status' and tap Send."}
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  const data = readyModalData;
+                  setReadyModalData(null);
+                  try {
+                    await navigator.share({
+                      title: data.title,
+                      text: data.text,
+                      files: data.files,
+                    });
+                    // Mark all or single as shared
+                    if (data.files.length > 1) {
+                      const allShared: Record<number, boolean> = {};
+                      RASHIS.forEach((r) => {
+                        allShared[r.id] = true;
+                      });
+                      setSharedRashis(allShared);
+                    }
+                  } catch (shareErr: any) {
+                    if (shareErr?.name !== "AbortError") {
+                      alert(`Sharing failed: ${shareErr.message || shareErr}`);
+                    }
+                  }
+                }}
+                className="w-full py-4 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-slate-950 font-black text-sm sm:text-base shadow-lg transition-transform active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="w-5 h-5 fill-current" />
+                <span>
+                  {readyModalData.target === "channel"
+                    ? language === "ta"
+                      ? "WhatsApp Channel-ல் பகிர்க 🚀"
+                      : "Open WhatsApp Channel 🚀"
+                    : language === "ta"
+                    ? "WhatsApp Status-ல் பகிர்க 🚀"
+                    : "Open WhatsApp Status 🚀"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReadyModalData(null)}
+                className="w-full py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
+                {language === "ta" ? "ரத்து செய்" : "Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Full Resolution Poster Modal */}
       {previewModalImage && (
