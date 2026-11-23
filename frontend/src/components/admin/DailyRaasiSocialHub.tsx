@@ -828,13 +828,30 @@ export function DailyRaasiSocialHub() {
                 type="button"
                 onClick={async () => {
                   const data = readyModalData;
-                  setReadyModalData(null);
+                  if (!data) return;
+
+                  // Pre-flight check payload combinations with navigator.canShare
+                  let payload: ShareData = {
+                    title: data.title,
+                    text: data.text,
+                    files: data.files,
+                  };
+
+                  if (navigator.canShare && !navigator.canShare(payload)) {
+                    // Some desktop/mobile OS targets reject combining files with text; fallback to files only
+                    payload = { files: data.files };
+                  }
+
+                  if (navigator.canShare && !navigator.canShare(payload)) {
+                    // If batch multi-file sharing is not permitted, fallback to single file
+                    if (data.files.length > 0) {
+                      payload = { files: [data.files[0]] };
+                    }
+                  }
+
                   try {
-                    await navigator.share({
-                      title: data.title,
-                      text: data.text,
-                      files: data.files,
-                    });
+                    await navigator.share(payload);
+                    setReadyModalData(null);
                     // Mark all or single as shared
                     if (data.files.length > 1) {
                       const allShared: Record<number, boolean> = {};
@@ -844,6 +861,7 @@ export function DailyRaasiSocialHub() {
                       setSharedRashis(allShared);
                     }
                   } catch (shareErr: any) {
+                    setReadyModalData(null);
                     if (shareErr?.name !== "AbortError") {
                       setShowDesktopNotice(true);
                     }
