@@ -4787,47 +4787,18 @@ export async function downloadMuhurtaCertificatePdf(
  */
 
 export async function downloadPanchaPakshiPdf(
-
   req: PanchaPakshiPdfReportRequest,
-
   token?: string
-
 ): Promise<Blob> {
-
   const authHeaders = await resolveAuthHeaders(token);
-
-  const url = `${API_BASE_URL}/api/v1/reports/pancha-pakshi/pdf`;
-
-  const response = await fetch(url, {
-
+  return requestBlob("/api/v1/reports/pancha-pakshi/pdf", {
     method: "POST",
-
     headers: {
-
       ...authHeaders,
-
       "Content-Type": "application/json",
-
     },
-
     body: JSON.stringify(req),
-
   });
-
-
-
-  if (!response.ok) {
-
-    const errorText = await response.text();
-
-    throw new Error(`Failed to generate Pancha Pakshi PDF: ${response.status} ${errorText}`);
-
-  }
-
-
-
-  return response.blob();
-
 }
 
 

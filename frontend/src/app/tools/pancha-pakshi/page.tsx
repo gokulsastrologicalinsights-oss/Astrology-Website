@@ -436,7 +436,7 @@ function PanchaPakshiStudioInner() {
         location_name: selectedCity.name_en,
         native_name: clientName,
         language: language === "ta" ? "ta" : "en",
-      });
+      }, session?.access_token);
       const safeName = clientName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_") || "Native";
       triggerBlobDownload(blob, `Agastya_Pancha_Pakshi_24Hr_${safeName}_${dateStr}.pdf`);
     } catch (err: any) {
