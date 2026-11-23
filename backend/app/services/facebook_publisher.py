@@ -800,6 +800,21 @@ async def post_daily_carousel_3_posts(
             logger.error(f"Failed to publish Instagram carousels: {ig_err}")
             ig_summary = {"success": False, "error": str(ig_err)}
 
+    # Send 1-click admin delivery to Telegram if configured
+    tg_summary = None
+    if settings.telegram_bot_token and settings.telegram_chat_id and not dry_run:
+        try:
+            from app.services.telegram_notifier import send_daily_posters_to_telegram
+            logger.info("Telegram admin notification is configured: Sending daily posters to admin chat...")
+            tg_summary = await send_daily_posters_to_telegram(
+                horoscope_data=horoscope_data,
+                posters_map=poster_map,
+                group_size=group_size,
+            )
+        except Exception as tg_err:
+            logger.error(f"Failed to send Telegram admin notification: {tg_err}")
+            tg_summary = {"success": False, "error": str(tg_err)}
+
     individual_posts = [
         {
             "rashi_id": prediction.rashi_id,
@@ -824,6 +839,7 @@ async def post_daily_carousel_3_posts(
         "failed_posts": failed_count,
         "results": results,
         "instagram": ig_summary,
+        "telegram": tg_summary,
     }
 
 

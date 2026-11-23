@@ -79,6 +79,11 @@ class Settings(BaseModel):
     ig_auto_post_enabled: bool = False
     public_backend_url: str = "https://gai-astrology-backend.onrender.com"
 
+    # Telegram Admin Delivery Integration
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+    telegram_auto_send_enabled: bool = False
+
     def __init__(self, **data):
         super().__init__(**data)
         env_origins = os.getenv("ALLOWED_ORIGINS")
@@ -125,6 +130,14 @@ class Settings(BaseModel):
         self.ig_access_token = os.getenv("IG_ACCESS_TOKEN", "").strip()
         self.ig_auto_post_enabled = os.getenv("IG_AUTO_POST_ENABLED", "false").lower() in ("true", "1", "yes")
         self.public_backend_url = os.getenv("PUBLIC_BACKEND_URL", "https://gai-astrology-backend.onrender.com").rstrip("/")
+
+        # Telegram settings
+        self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+        self.telegram_auto_send_enabled = os.getenv(
+            "TELEGRAM_AUTO_SEND_ENABLED",
+            "true" if (self.telegram_bot_token and self.telegram_chat_id) else "false"
+        ).lower() in ("true", "1", "yes")
 
 
 settings = Settings()

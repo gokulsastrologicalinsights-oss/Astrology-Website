@@ -44,6 +44,9 @@ target/
 sample_kp_*.pdf
 docs/*.pdf
 
+# Generated posters & cache
+**/generated_posters/
+
 # System & IDE
 .DS_Store
 Thumbs.db

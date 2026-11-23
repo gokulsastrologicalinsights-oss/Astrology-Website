@@ -20,6 +20,11 @@ from app.services.facebook_publisher import (
     verify_facebook_credentials,
 )
 from app.services.instagram_publisher import verify_instagram_credentials
+from app.services.telegram_notifier import (
+    send_daily_posters_to_telegram,
+    send_telegram_text,
+    verify_telegram_credentials,
+)
 from app.services.facebook_scheduler import (
     get_scheduler_status,
     run_and_record_daily_publish,
@@ -48,13 +53,15 @@ class SchedulerToggleRequest(BaseModel):
 
 @router.get("/status", summary="Check Facebook Integration and Scheduler Status")
 async def get_facebook_status():
-    """Returns Facebook & Instagram configuration status and daily scheduler state."""
+    """Returns Facebook, Instagram & Telegram configuration status and daily scheduler state."""
     cred_status = await verify_facebook_credentials()
     ig_status = await verify_instagram_credentials()
+    tg_status = await verify_telegram_credentials()
     scheduler_status = get_scheduler_status()
     return {
         "credentials": cred_status,
         "instagram": ig_status,
+        "telegram": tg_status,
         "scheduler": scheduler_status,
     }
 
@@ -164,3 +171,56 @@ async def toggle_scheduler(payload: SchedulerToggleRequest):
     else:
         stop_facebook_scheduler()
     return get_scheduler_status()
+
+
+@router.post("/telegram/test", summary="Send a test notification to Admin Telegram")
+async def test_telegram_notification():
+    """Sends a quick test message to verify Telegram bot token and chat ID."""
+    cred = await verify_telegram_credentials()
+    if not cred.get("valid"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Telegram credentials invalid: {cred.get('error')}",
+        )
+    test_msg = (
+        "🔮 <b>Gokul's Astrological Insights - Telegram Alert Test</b>\n\n"
+        "✅ Your Telegram Bot integration is working properly!\n"
+        "Every morning, daily Raasi Palan posters will be delivered here for 1-click sharing to WhatsApp."
+    )
+    result = await send_telegram_text(test_msg)
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to deliver message: {result.get('error')}",
+        )
+    return {"success": True, "message": "Test message sent to Telegram successfully!", "bot": cred.get("bot_username")}
+
+
+@router.post("/telegram/send", summary="Manually dispatch today's 12 posters to Telegram")
+async def dispatch_posters_to_telegram(
+    date: Optional[str] = Query(None, description="Target date in YYYY-MM-DD format (defaults to today)"),
+):
+    """Generates (or uses cached) 12 posters and sends them as 3 photo albums to Admin Telegram."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    from app.services.kp_daily_horoscope_service import compute_kp_daily_horoscope
+    from app.services.daily_poster_generator import generate_all_12_posters
+
+    cred = await verify_telegram_credentials()
+    if not cred.get("valid"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Telegram credentials invalid: {cred.get('error')}",
+        )
+
+    target_date = date or datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+    horoscope_data = compute_kp_daily_horoscope(target_date=target_date, timezone_str="Asia/Kolkata")
+
+    # Generate posters in executor
+    import asyncio
+    loop = asyncio.get_running_loop()
+    posters_meta = await loop.run_in_executor(None, generate_all_12_posters, horoscope_data)
+    poster_map = {m[0]: m[3] for m in posters_meta}
+
+    res = await send_daily_posters_to_telegram(horoscope_data=horoscope_data, posters_map=poster_map)
+    return res
