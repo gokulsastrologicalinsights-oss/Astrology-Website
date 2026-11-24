@@ -23,7 +23,10 @@ import unicodedata
 import re
 
 import uharfbuzz as hb
-from fontTools.ttLib import TTFont as FontToolsTTFont
+try:
+    from fontTools.ttLib import TTFont as FontToolsTTFont
+except ImportError:
+    FontToolsTTFont = None  # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import reportlab.pdfbase.ttfonts as _ttfonts
@@ -193,7 +196,7 @@ _NUM_MAP = {
 def _build_font_reverse_map(font_path: Path) -> Dict[int, str]:
     """Builds reverse mapping from PUA glyph code (0xE000 + gid) to Unicode text for ToUnicode CMap."""
     mapping: Dict[int, str] = {}
-    if not font_path.exists():
+    if not font_path.exists() or FontToolsTTFont is None:
         return mapping
 
     try:

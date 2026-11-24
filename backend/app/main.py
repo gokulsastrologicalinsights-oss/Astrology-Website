@@ -80,12 +80,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description=(
-        "Deterministic Vedic & KP Astrology API powered by the XALEN astronomical engine. "
-        "Strictly rule-based calculations without conversational AI or generative models."
-    ),
-    docs_url="/docs",
-    redoc_url="/redoc",
+    description="Gokul's Astrological Insights - High-Precision Vedic and KP Astrology API.",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
     lifespan=lifespan,
 )
 
@@ -163,7 +161,7 @@ def root():
         "service": settings.app_name,
         "version": settings.app_version,
         "status": "operational",
-        "documentation": "/docs",
+        "documentation": "/docs" if settings.debug else "Protected / Administrative Access Only",
         "health": "/health",
         "metadata": f"{settings.api_prefix}/metadata",
     }

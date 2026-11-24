@@ -25,8 +25,8 @@ def get_health():
         "service": "Gokul's Astrological Insights API",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "engine": {
-            "name": "XALEN Ephemeris & Vedic Astrological Engine",
-            "version": "0.6.0",
+            "name": "GAI Astronomical Calculation Engine",
+            "version": "1.0.0",
             "rust_core_available": engine_available,
             "error": error_msg,
         },

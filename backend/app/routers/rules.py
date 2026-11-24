@@ -246,6 +246,8 @@ async def evaluate_rules(
         try:
             eval_res = AstrologicalRuleEvaluator.evaluate_rule(rule, ctx)
             item_dict = eval_res.to_dict(language=request.language)
+            # Proprietary protection: sanitize internal source references from customer-facing API output
+            item_dict["source_reference"] = None
             results.append(EvaluatedRuleItem(**item_dict))
             if eval_res.matched:
                 total_matched += 1

@@ -82,7 +82,7 @@ def get_metadata() -> MetadataResponse:
     ]
 
     return MetadataResponse(
-        engine="XALEN Ephemeris & Vedic Astrological Engine",
+        engine="GAI Astronomical Calculation Engine",
         version="1.0.0",
         verified_phases=["Phase A", "Phase B", "Phase C", "Phase D"],
         dasa_year_convention="Julian Year (365.25 Days / 120 Years = 43,830 Days)",

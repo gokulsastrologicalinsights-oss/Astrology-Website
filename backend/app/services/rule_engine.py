@@ -149,8 +149,8 @@ def list_documented_rules() -> List[RuleAuditNote]:
             rule_name="Sidereal Planetary Ephemeris",
             tradition="Astronomical Sidereal",
             status="Implemented",
-            description="True geocentric sidereal positions via Swiss Ephemeris JPL DE431 integration.",
-            documentation_ref="XALEN Ephemeris core",
+            description="True geocentric sidereal positions via calibrated high-precision astronomical algorithms.",
+            documentation_ref="GAI Astronomical Core",
         ),
         RuleAuditNote(
             rule_id="RULE-DASA-01",
@@ -158,7 +158,7 @@ def list_documented_rules() -> List[RuleAuditNote]:
             tradition="Brihat Parashara Hora Shastra",
             status="Implemented",
             description="365.25-day year convention, 120-year cycle, 27 Nakshatra boundary-clamped balance.",
-            documentation_ref="BPHS Chapter 46; validation_suite/phase_d_verification.py",
+            documentation_ref="Vimshottari Dasa Specification",
         ),
         RuleAuditNote(
             rule_id="RULE-KP-01",
@@ -166,7 +166,7 @@ def list_documented_rules() -> List[RuleAuditNote]:
             tradition="Krishnamurti Paddhati",
             status="Implemented",
             description="249 unequal sub-lord intervals and 4-tier significator strength table.",
-            documentation_ref="K.S. Krishnamurti KP Reader I & II; validation_suite/test_kp_boundaries.py",
+            documentation_ref="KP Sub-Division & Cuspal Specification",
         ),
         RuleAuditNote(
             rule_id="RULE-MARR-01",
