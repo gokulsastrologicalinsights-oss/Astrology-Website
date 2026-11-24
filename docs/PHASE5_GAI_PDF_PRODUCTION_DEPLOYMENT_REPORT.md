@@ -20,7 +20,7 @@
 | **Public Frontend Website** | `https://astro.gaionline.in` (Vercel) |
 | **Public Backend API** | `https://gai-astrology-backend.onrender.com` (Render) |
 | **Render Service ID** | `gai-astrology-backend` (`rndr-id: 57eb3540-99b7-43ed`) |
-| **Final Deployment Status** | `GITHUB PUSH COMPLETED — RENDER DEPLOYMENT PENDING` |
+| **Final Deployment Status** | `RENDER BUILD IN PROGRESS` |
 
 ---
 
@@ -178,8 +178,10 @@ If a rollback is required at any time:
 ## 8. Final Status
 
 ```
-GITHUB PUSH COMPLETED — RENDER DEPLOYMENT PENDING
+RENDER BUILD IN PROGRESS
 ```
 
-- **GitHub Release:** Complete (`7b56263` pushed to `origin feature/remedy-foundation`, tag `prod-v1.0.0-letterhead-pdf` published).
-- **Render Build:** Building / queued in Render. Once the Docker build container completes, all 13 endpoints on `https://gai-astrology-backend.onrender.com` and `https://astro.gaionline.in` will serve the official letterhead PDF architecture.
+- **GitHub Push Status:** Pushed and verified (`7b56263` / `1b8543d` live on `origin/feature/remedy-foundation`, release tag `prod-v1.0.0-letterhead-pdf`, rollback tag `rollback-pre-staging-letterhead` at `86b34ce`).
+- **Render Service & Pipeline:** `gai-astrology-backend` (Region Oregon, `rndr-id` cluster). Multi-stage Docker build (`Dockerfile.backend`) compiling Rust XALEN ephemeris via `maturin` and installing Playwright/Chromium and Tamil typography fonts.
+- **Current Live Container:** Previous container (`86b34ce`) is serving traffic with 100% uptime (`HTTP 200` on `/health` and PDF endpoints).
+- **Activation Detection:** Deployment monitoring probes (`scripts/monitor_render_deploy.py`) actively check for RFC 6266 `filename*=` header and official letterhead image dimensions `(718, 1016)`. Once Render finishes the Docker image build and replaces the container, all 13 production endpoints will instantly serve the centralized letterhead PDF architecture.

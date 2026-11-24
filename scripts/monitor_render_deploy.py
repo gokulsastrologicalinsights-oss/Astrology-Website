@@ -15,7 +15,7 @@ import pypdf
 
 BACKEND_URL = "https://gai-astrology-backend.onrender.com"
 HEALTH_URL = f"{BACKEND_URL}/health"
-PDF_URL = f"{BACKEND_URL}/api/v1/reports/horoscope/single-page-pdf"
+PDF_URL = f"{BACKEND_URL}/api/v1/reports/horoscope/pdf"
 
 SAMPLE_PAYLOAD = {
     "birth_input": {
@@ -26,6 +26,8 @@ SAMPLE_PAYLOAD = {
         "timezone": "Asia/Kolkata",
     },
     "native_name": "Deployment Monitor",
+    "language": "en",
+    "report_style": "full",
 }
 
 def probe_health():
@@ -73,10 +75,10 @@ def main():
         print(f"\n[Attempt {attempt} | {elapsed}s] Health: HTTP {h_code} (Rndr-Id: {h_rndr})")
 
         p_code, p_cd, p_imgs, p_rndr = probe_pdf()
-        print(f"  Single-Page PDF: HTTP {p_code} | CD: {p_cd[:70]} | Images: {p_imgs}")
+        print(f"  Horoscope PDF: HTTP {p_code} | CD: {p_cd[:70]} | Images: {p_imgs}")
 
-        # Check for RFC 6266 header format: filename*=UTF-8''
-        if "filename*=UTF-8''" in p_cd or (len(p_imgs) > 0 and p_imgs[0] != (1024, 1024)):
+        # Check for RFC 6266 header format: filename*=UTF-8'' or letterhead image dimensions (718, 1016)
+        if "filename*=UTF-8''" in p_cd or any(dim == (718, 1016) for dim in p_imgs):
             print("\n=======================================================")
             print(">>> NEW DEPLOYMENT DETECTED LIVE ON RENDER! <<<")
             print(f">>> Content-Disposition: {p_cd}")
