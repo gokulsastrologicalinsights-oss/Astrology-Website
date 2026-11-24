@@ -707,8 +707,8 @@ export function DasaBukthiPalangalSection({
                         ? "மைல்கற்களை மறை"
                         : "Hide Life Milestones"
                       : isTa
-                      ? "8 முக்கிய மைல்கற்கள் (Marc Boney) ▾"
-                      : "8 Life Milestones (Marc Boney) ▾"}
+                      ? "8 முக்கிய வாழ்க்கை மைல்கற்கள் ▾"
+                      : "8 Major Life Milestones ▾"}
                   </span>
                   {showMilestones ? (
                     <ChevronUp className="w-3.5 h-3.5" />

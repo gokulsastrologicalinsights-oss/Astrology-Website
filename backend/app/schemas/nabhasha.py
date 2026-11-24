@@ -33,6 +33,6 @@ class NabhashaResponse(BaseModel):
     primary_yoga: Optional[NabhashaYogaDetail] = None
     all_qualifying_yogas: List[NabhashaYogaDetail] = Field(default_factory=list)
     classical_reference: str = Field(
-        "Brihat Parashara Hora Shastra, Chapter 35 (Nabhasha Yogas); Brihat Jataka, Chapter 12",
+        "Traditional Planetary Combinations (Nabhasha Yogas)",
         description="Textual authority"
     )

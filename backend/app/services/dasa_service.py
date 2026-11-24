@@ -611,7 +611,6 @@ def calculate_dasa(
         ayanamsa_deg=round(aya_deg, 6),
         house_system_id=house_system_id,
         house_system_name=hsys_name,
-        engine="XALEN 0.6.0 (Rust) + Precision Vedic Engine",
         notes=[
             f"Vimshottari Dasa calculated from exact birth balance down to depth {depth}.",
             f"Moon sidereal longitude: {moon_lon:.6f}° in {nak_detail.name} Pada {nak_detail.pada}.",
@@ -679,7 +678,6 @@ def calculate_direct_dasa(
         ayanamsa_deg=0.0,
         house_system_id=0,
         house_system_name="N/A",
-        engine="XALEN 0.6.0 (Rust) + Precision Vedic Engine",
         notes=[
             f"Direct Dasa calculation from specified Moon longitude {moon_lon:.6f}° and JD {birth_jd}."
         ],

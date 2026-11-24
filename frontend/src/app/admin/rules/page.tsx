@@ -986,7 +986,7 @@ export default function AdminRulesPage() {
                     type="text"
                     value={sourceReference}
                     onChange={(e) => setSourceReference(e.target.value)}
-                    placeholder="e.g. BPHS Ch. 24, Sloka 70"
+                    placeholder="e.g. Classical Reference or Rule ID"
                     className="w-full p-2 rounded-lg border border-[#D9DEE7] text-xs"
                   />
                 </div>

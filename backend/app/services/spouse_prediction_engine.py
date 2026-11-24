@@ -1368,7 +1368,6 @@ class SpousePredictionService:
             summary_text_en=summary_body_en,
             summary_text_ta=summary_body_ta,
             metadata=CalculationMetadata(
-                engine="XALEN 0.6.0 (Rust)",
                 birth_utc_iso=utc_dt.isoformat(),
                 julian_day_ut1=birth_jd,
                 local_timezone=tz_name,

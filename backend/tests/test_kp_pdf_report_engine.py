@@ -162,10 +162,10 @@ def test_kp_pdf_natal_exact_six_pages():
     assert "Ruling Planets" in p5 or "ஆளும் கிரகங்கள்" in p5
     assert "Vimshottari Dasa" in p5 or "தசா" in p5
 
-    # Page 6: Event Matrix & Certification
+    # Page 6: Event Matrix & Verification
     p6 = reader.pages[5].extract_text()
     assert "KP Event Signification Matrix" in p6 or "முக்கிய வாழ்க்கை நிகழ்வுகள்" in p6
-    assert "Certification" in p6 or "சான்றொப்பம்" in p6
+    assert "Verification" in p6 or "சரிபார்ப்பு" in p6 or "Certification" in p6
     assert "SHA-256" in p6
 
 

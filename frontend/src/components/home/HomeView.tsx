@@ -211,8 +211,8 @@ interface AstrologyToolCard {
           </h1>
           <p className="text-xs sm:text-sm text-[#8190A6] max-w-2xl">
             {language === "ta"
-              ? "துல்லியமான வேத மற்றும் கே.பி வானியல் எஃபிமெரிஸ் தளம். உங்கள் ஜாதகங்கள் மற்றும் பகுப்பாய்வுகளை அணுகுங்கள்."
-              : "Welcome to precision Vedic and KP Krishnamurti Paddhati astrology powered by the XALEN astronomical engine."}
+              ? "துல்லியமான வேத மற்றும் கே.பி ஜோதிடத் தளம். உங்கள் ஜாதகங்கள் மற்றும் முழுமையான பகுப்பாய்வுகளை அணுகுங்கள்."
+              : "Welcome to precision Vedic and KP stellar astrology with high-precision astronomical calculations."}
           </p>
         </div>
 
@@ -478,7 +478,7 @@ interface AstrologyToolCard {
       <div className="p-4 rounded-2xl bg-white border border-[#D9DEE7] flex items-center gap-3 shadow-2xs text-xs text-[#52667E]">
         <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
         <p className="leading-relaxed">
-          <strong>Deterministic Ephemeris:</strong> All planetary coordinates, KP cusp sub-lords, and Dasa periods are calculated through verified algorithms. Saved horoscopes and numerology reports are stored in your secure Supabase account with sequential numbering.
+          <strong>Official Astrological Calculations:</strong> All planetary coordinates, KP cuspal sub-lords, and Dasa periods are calculated through verified astronomical algorithms. Saved horoscopes and numerology reports are stored securely in your private account with sequential numbering.
         </p>
       </div>
 

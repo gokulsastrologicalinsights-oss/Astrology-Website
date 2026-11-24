@@ -4,7 +4,7 @@ Clean-room, Shastra-validated endpoints for:
 - 39 Classical Problem Taxonomy categories (Bilingual English/Tamil)
 - Authentic Remedy Catalog (Devanagari Sanskrit mantras, Tamil transliteration, Daan, Fasting)
 - 9 Kaveri Delta Navagraha Sthalams (Geographic coordinates, deities, offerings)
-- Canonical Shastra citations (BPHS, Phaladeepika, Lal Kitab)
+- Canonical Vedic Shastra citations
 - Content validation and Unicode fidelity auditing
 - Vedic Astrological Eligibility safeguards (Yogakaraka protection, Daan restrictions)
 """
@@ -197,7 +197,7 @@ async def audit_content() -> ContentValidationReport:
 
 @router.post("/eligibility-check", response_model=RemedyEligibilityResponse, summary="Check Astrological Remedy Eligibility")
 async def check_remedy_eligibility(request: RemedyEligibilityRequest) -> RemedyEligibilityResponse:
-    """Evaluates remedy suitability against classical BPHS rules (e.g. Yogakaraka protection against Daan/charity)."""
+    """Evaluates remedy suitability against classical Vedic rules (e.g. Yogakaraka protection against Daan/charity)."""
     return RemedyEligibilityEngine.evaluate_eligibility(
         ascendant_sign=request.ascendant_sign,
         graha=request.graha,

@@ -136,7 +136,7 @@ export function MarcBoneyMilestonesCard({
       lines.push(`அமாத்திய காரகன் (தொழில்): ${getGrahaName(analysis.charaKarakas[1].planet, language)}`);
     } else {
       lines.push(
-        `🏛️ Marc Boney & K.N. Rao Major Life Milestones (Period: ${analysis.activeDasaLord} Dasa - ${analysis.activeBukthiLord} Bhukti):`
+        `🏛️ Major Life Milestones & Planetary Timing Analysis (Period: ${analysis.activeDasaLord} Dasa - ${analysis.activeBukthiLord} Bhukti):`
       );
       analysis.milestones.slice(0, 4).forEach((m, idx) => {
         lines.push(
@@ -166,7 +166,7 @@ export function MarcBoneyMilestonesCard({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-600 text-white text-xs font-bold shadow-xs">
               <Award className="w-3.5 h-3.5" />
-              <span>{isTa ? "மார்க் போனி & கே.என். ராவ் கூட்டு முறை" : "Marc Boney & K.N. Rao Composite System"}</span>
+              <span>{isTa ? "முக்கிய வாழ்க்கை மைல்கற்கள் & கால கணிப்பு" : "Major Life Milestones & Planetary Timing Analysis"}</span>
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-900 border border-indigo-200 text-xs font-semibold">
               <Compass className="w-3 h-3 text-indigo-700" />
@@ -196,7 +196,7 @@ export function MarcBoneyMilestonesCard({
           <p className="text-xs text-[#52667E] max-w-2xl leading-relaxed">
             {isTa
               ? "விம்சForms மகா தசா-புக்தி, தசா லக்னம், கே.என். ராவ் இரட்டைப் பெயர்ச்சி (Saturn & Jupiter Double Transit வக்ர விதி உட்பட) மற்றும் ஜைமினி காரகங்களை இணைக்கும் துல்லிய கணிப்பு."
-              : "Composite timing synthesis combining Vimshottari Dasa-Bhukti, Dasa Lagna, K.N. Rao's Double Transit principle (with the Retrograde previous-sign rule), and Jaimini Chara Karakas."}
+              : "Composite timing synthesis combining Vimshottari Dasa-Bhukti, Dasa Lagna, dual planetary transit alignments (with retrograde sign aspects), and primary planetary significators."}
           </p>
         </div>
 
@@ -514,7 +514,7 @@ export function MarcBoneyMilestonesCard({
                       {/* Classical Rules Cited from Marc Boney & K.N. Rao */}
                       <div className="space-y-1.5">
                         <span className="text-[11px] font-bold text-[#183047] uppercase tracking-wide">
-                          {isTa ? "நூலின் மூல விதிகள் (Classical Citations):" : "Classical Principles Applied:"}
+                          {isTa ? "ஜோதிட விதிமுறைகள்:" : "Astrological Principles Applied:"}
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                           {(isTa
@@ -564,7 +564,7 @@ export function MarcBoneyMilestonesCard({
               <span>
                 {isTa
                   ? "கே.என். ராவ் இரட்டைப் பெயர்ச்சி கோட்பாடு (Double Transit Principle)"
-                  : "K.N. Rao's Golden Double Transit Axiom"}
+                  : "Dual Planetary Transit Alignment (Jupiter & Saturn)"}
               </span>
             </h4>
             <p className="text-xs text-blue-900 leading-relaxed">
@@ -790,7 +790,7 @@ export function MarcBoneyMilestonesCard({
             <p className="text-xs text-pink-900 leading-relaxed">
               {isTa
                 ? "பராசர மகரிஷி மற்றும் மார்க் போனி நூலின்படி, விந்து வீரியத்தை நிர்ணயிக்க பீஜ ஸ்புடமும் (சூரியன் + சுக்கிரன் + குரு), கருப்பை ஏற்புத்திறனை கணிக்க ஷேத்ர ஸ்புடமும் (சந்திரன் + செவ்வாய் + குரு) பயன்படுத்தப்படுகின்றன. ஒற்றை/இரட்டை ராசி மற்றும் நவாம்சப் பொருத்தங்கள் இங்கே கணக்கிடப்பட்டுள்ளன."
-                : "According to Maharishi Parashara and detailed in Marc Boney's work, Beeja Sphuta (Sun + Venus + Jupiter) measures male procreative vitality, while Kshetra Sphuta (Moon + Mars + Jupiter) calculates female procreative receptivity. Odd/Even sign and Navamsha harmonics reveal natural fertility readiness."}
+                : "Beeja Sphuta (Sun + Venus + Jupiter) evaluates male procreative vitality, while Kshetra Sphuta (Moon + Mars + Jupiter) calculates female procreative receptivity. Odd/Even sign and Navamsha harmonics reveal natural fertility readiness."}
             </p>
           </div>
 

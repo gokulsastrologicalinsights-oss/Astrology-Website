@@ -314,9 +314,9 @@ def scan_kp_prediction(
 
     # 9. Assemble response payload
     convention_str = (
-        "XALEN 0.6.0 (Rust Engine - Chitrapaksha Lahiri, Placidus Cusps, KP 249 Sub-Lords)"
+        "GAI Astronomical Calculation Engine (Chitrapaksha Lahiri, Placidus Cusps, KP 249 Sub-Lords)"
         if saved_chart_ayanamsa == 1
-        else "XALEN 0.6.0 (Rust Engine - KP Krishnamurti, Placidus Cusps, KP 249 Sub-Lords)"
+        else "GAI Astronomical Calculation Engine (KP Krishnamurti, Placidus Cusps, KP 249 Sub-Lords)"
     )
 
     accuracy_warning = (

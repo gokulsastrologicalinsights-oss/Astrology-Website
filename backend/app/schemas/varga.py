@@ -8,7 +8,7 @@ from app.schemas.common import BirthInput, CalculationMetadata
 class VargaPlanetPosition(BaseModel):
     """Detailed position of a planet across D1 (Rasi) and D9 (Navamsa) charts."""
     name: str = Field(..., description="Planet name (e.g. Sun, Moon, Mars)")
-    body_id: int = Field(..., description="XALEN astronomical body ID")
+    body_id: int = Field(..., description="Astronomical body ID")
     
     # D1 (Rasi Chakra)
     d1_longitude: float = Field(..., description="Absolute sidereal longitude [0, 360)")
@@ -103,7 +103,7 @@ class VargaD1D9Request(BaseModel):
 class ShodashvargaPlanetEntry(BaseModel):
     """Position of a celestial body in a specific divisional chart."""
     name: str = Field(..., description="Planet name")
-    body_id: int = Field(0, description="XALEN astronomical body ID")
+    body_id: int = Field(0, description="Astronomical body ID")
     sign_index: int = Field(..., ge=1, le=12, description="Divisional sign index (1=Aries .. 12=Pisces)")
     sign_name: str = Field(..., description="Divisional sign name (English)")
     sign_name_tamil: str = Field(..., description="Divisional sign name (Tamil)")

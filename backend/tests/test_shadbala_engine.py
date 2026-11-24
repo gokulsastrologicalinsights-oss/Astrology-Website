@@ -7,6 +7,7 @@ Classical Reference:
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from app.routers.rules import get_admin_user
 from app.schemas.horoscope import (
     AscendantInfo,
     HouseInfo,
@@ -392,16 +393,21 @@ def test_metadata_endpoint_includes_shadbala():
 
 def test_rules_inventory_includes_shadbala_rule():
     """Verify GET /api/v1/rules/inventory includes RULE-SHADBALA-01 with Implemented status."""
-    resp = client.get("/api/v1/rules/inventory")
-    assert resp.status_code == 200
-    data = resp.json()
+    admin_mock = {"id": "admin-1", "email": "admin@gai.internal", "role": "admin"}
+    app.dependency_overrides[get_admin_user] = lambda: admin_mock
+    try:
+        resp = client.get("/api/v1/rules/inventory")
+        assert resp.status_code == 200
+        data = resp.json()
 
-    rule_ids = [r["rule_id"] for r in data]
-    assert "RULE-SHADBALA-01" in rule_ids
+        rule_ids = [r["rule_id"] for r in data]
+        assert "RULE-SHADBALA-01" in rule_ids
 
-    shadbala_rule = next(r for r in data if r["rule_id"] == "RULE-SHADBALA-01")
-    assert shadbala_rule["status"] == "Implemented"
-    assert "app/services/shadbala_engine" in shadbala_rule["documentation_ref"]
+        shadbala_rule = next(r for r in data if r["rule_id"] == "RULE-SHADBALA-01")
+        assert shadbala_rule["status"] == "Implemented"
+        assert shadbala_rule["documentation_ref"] in ("Planetary Strength Specification", "app/services/shadbala_engine")
+    finally:
+        app.dependency_overrides.pop(get_admin_user, None)
 
 
 # ---------------------------------------------------------------------------

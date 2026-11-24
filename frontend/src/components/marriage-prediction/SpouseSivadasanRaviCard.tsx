@@ -74,14 +74,14 @@ export function SpouseSivadasanRaviCard({ data, language }: SpouseSivadasanRaviC
         {[
           {
             id: "sivadasan_ravi",
-            labelEn: "Sivadasan Ravi Key Rules",
-            labelTa: "சித்தயோகி திறவுகோல் விதிகள்",
+            labelEn: "Spouse & Directional Indicators",
+            labelTa: "துணைவர் & திசை அமைப்புகள்",
             icon: BookOpen,
           },
           {
             id: "kp_reader4",
-            labelEn: "KP Reader IV (Prof. KSK)",
-            labelTa: "கே.பி. ரீடர் 4 (பேரா. கே.எஸ்.கே)",
+            labelEn: "Sub-Lord Marriage Analysis",
+            labelTa: "உப-அதிபதி திருமண ஆய்வு",
             icon: Sparkles,
           },
           {
@@ -130,8 +130,8 @@ export function SpouseSivadasanRaviCard({ data, language }: SpouseSivadasanRaviC
             <div className="text-xs">
               <div className="font-bold text-[#153F6B]">
                 {language === "ta"
-                  ? "திருமண யோக பொருத்த திறவுகோல் - சித்தயோகி சிவதாசன் ரவி"
-                  : "Thirumana Yoga Porutha Thiravukol - Siddhayogi Sivadasan Ravi"}
+                  ? "துணைவர் பண்புகள் & திசை அமைப்புகள்"
+                  : "Spouse Characteristics & Directional Analysis"}
               </div>
               <p className="text-slate-600 mt-0.5 leading-relaxed">
                 {language === "ta"
@@ -355,8 +355,8 @@ export function SpouseSivadasanRaviCard({ data, language }: SpouseSivadasanRaviC
             <div>
               <h4 className="text-sm font-bold text-blue-900">
                 {language === "ta"
-                  ? "கே.பி. ரீடர் 4: திருமணம், இல்லற வாழ்க்கை & குழந்தைப்பேறு (பேரா. கே. எஸ். கிருஷ்ணமூர்த்தி)"
-                  : "KP Stellar Reader IV: Marriage, Married Life & Children (Prof. K. S. Krishnamurti)"}
+                  ? "உப-அதிபதி திருமண நிர்ணயம்: இல்லற வாழ்க்கை & தம்பதியர் பண்புகள்"
+                  : "Sub-Lord Marriage Timing: Marital Compatibility & Spouse Indicators"}
               </h4>
               <p className="text-xs text-blue-700/90 mt-0.5 leading-relaxed">
                 {language === "ta"

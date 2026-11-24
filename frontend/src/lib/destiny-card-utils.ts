@@ -139,7 +139,7 @@ export function extractDestinyCardData(
   }
 
   const ayanamsaName = horoscope.metadata?.ayanamsa_name || "Lahiri";
-  const calculationEngine = horoscope.metadata?.engine || "XALEN Astronomical Engine";
+  const calculationEngine = "Official Astrological Calculation";
   const julianDayUt1 = horoscope.metadata?.julian_day_ut1;
 
   return {
@@ -607,8 +607,8 @@ export function renderDestinyCardToCanvas(
   ctx.fillStyle = "#22C55E";
   ctx.fillText(
     isTa
-      ? "✓ XALEN துல்லிய வானியல் எபிமெரிஸ் கணிப்பு மூலம் சரிபார்க்கப்பட்டது"
-      : "✓ VERIFIED CALCULATION · XALEN HIGH-PRECISION EPHEMERIS ENGINE",
+      ? "✓ துல்லிய வானியல் கணிப்பு மூலம் சரிபார்க்கப்பட்டது"
+      : "✓ VERIFIED CALCULATION · HIGH-PRECISION SIDEREAL ALIGNMENT",
     width / 2,
     footerLineY + 22
   );

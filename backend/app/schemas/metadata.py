@@ -1,7 +1,7 @@
 """Metadata schemas for GET /api/v1/metadata."""
 
 from typing import List, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class AyanamsaOption(BaseModel):
@@ -31,8 +31,8 @@ class ChartCapability(BaseModel):
 
 
 class MetadataResponse(BaseModel):
-    engine: str = "XALEN Ephemeris & Vedic Astrological Engine"
-    version: str = "1.0.0"
+    model_config = ConfigDict(extra="ignore")
+
     verified_phases: List[str] = Field(default_factory=lambda: ["Phase A", "Phase B", "Phase C", "Phase D"])
     dasa_year_convention: str = "Julian Year (365.25 Days / 120 Years = 43,830 Days)"
     kp_sub_divisions: int = 249

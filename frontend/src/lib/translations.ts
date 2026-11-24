@@ -453,15 +453,15 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
 
     heroTitle: "Precision Vedic & KP Astrology Powered by Astronomical Ephemeris",
     heroSubtitle:
-      "Deterministic, mathematically rigorous calculations powered by the XALEN astronomical engine. Pure algorithmic astrology rooted in classical Vedic and Krishnamurti Paddhati principles, completely free of AI-generated claims.",
+      "Deterministic, mathematically rigorous calculations with high-precision planetary ephemeris. Pure algorithmic astrology rooted in classical Vedic and KP stellar principles, completely free of AI-generated claims.",
     heroCta: "Generate Vedic Horoscope",
-    heroSecondaryCta: "Explore System Engine",
+    heroSecondaryCta: "Explore Astrological Tools",
     featureTitle: "Classical Astrological Calculations",
     featureSubtitle:
       "All positions computed in sidereal coordinates using JPL-standard planetary models with millisecond angular accuracy.",
-    featEphemerisTitle: "XALEN Astronomical Engine",
+    featEphemerisTitle: "High-Precision Ephemeris",
     featEphemerisDesc:
-      "Pure Rust core ephemeris calculating accurate geocentric sidereal planetary coordinates, ayanamsa corrections, and true lunar nodes.",
+      "Deterministic ephemeris calculating accurate geocentric sidereal planetary coordinates, ayanamsa corrections, and true lunar nodes.",
     featVedicTitle: "Classical Parashari System",
     featVedicDesc:
       "Rasi, Navamsa, 12 Bhavas, 27 Nakshatras with pada divisions, Graha speeds, and retrograde tracking across traditional houses.",
@@ -526,7 +526,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabGemstoneDownload: "GemstoneDownload",
     destinyCardTitle: "Vedic Destiny Card",
     destinyCardSubtitle:
-      "Authoritative birth identity summary card backed by XALEN ephemeris calculation.",
+      "Authoritative birth identity summary card backed by precision astronomical calculation.",
     destinyCardDownload: "Download High-Res PNG",
     destinyCardGenerating: "Generating Image...",
     destinyCardLagna: "Ascendant (Lagna)",
@@ -538,7 +538,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     destinyCardSunSign: "Sun Sign (Surya)",
     destinyCardLord: "Star Lord",
     destinyCardAyanamsa: "Ayanamsa",
-    destinyCardVerification: "Verified XALEN Calculation",
+    destinyCardVerification: "Verified Astrological Calculation",
     destinyCardPrivacyNotice:
       "Exact coordinates and sensitive details are excluded to protect your privacy.",
     destinyCardShowDate: "Include Birth Date",
@@ -700,7 +700,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
 
     footerDisclaimer:
       "Gokul's Astrological Insights provides strictly rule-based astronomical ephemeris and classical Vedic calculations. Calculations are deterministic and provided for personal and educational insight without supernatural or predictive guarantees.",
-    footerEngineInfo: "Powered by XALEN 0.6.0 Ephemeris Engine • Geocentric Sidereal Frame",
+    footerEngineInfo: "Gokul's Astrological Insights • Precision Geocentric Sidereal Frame",
     footerCopyright: "© 2026 Gokul's Astrological Insights. All rights reserved.",
 
     // Authentication & Account
@@ -898,15 +898,15 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
 
     heroTitle: "வானியல் துல்லியத்துடன் கூடிய வேத மற்றும் கே.பி ஜோதிடம்",
     heroSubtitle:
-      "XALEN வானியல் எஃபிமெரிஸ் இயந்திரத்தால் இயக்கப்படும் துல்லியமான, விதி சார்ந்த ஜோதிடக் கணக்கீடுகள். AI இல்லாத பாரம்பரிய வேத மற்றும் கிருஷ்ணமூர்த்தி பத்தாதி நியதிகளின் கணிதம்.",
+      "உயர் துல்லிய வானியல் கணிதத்தால் இயக்கப்படும் நேர்த்தியான, விதி சார்ந்த ஜோதிடக் கணக்கீடுகள். AI இல்லாத பாரம்பரிய வேத மற்றும் கே.பி. விண்மீன் ஜோதிடக் கணிதம்.",
     heroCta: "வேத ஜாதகம் கணிக்க",
     heroSecondaryCta: "கணித முறையை அறிக",
     featureTitle: "பாரம்பரிய ஜோதிடக் கணக்கீடுகள்",
     featureSubtitle:
       "ஜேபிஎல் (JPL) வானியல் தரவுகளின் அடிப்படையில் மில்லிசெகண்ட் கோணத் துல்லியத்துடன் நிராயன முறையில் கணக்கிடப்படுகிறது.",
-    featEphemerisTitle: "XALEN வானியல் எஃபிமெரிஸ்",
+    featEphemerisTitle: "உயர் துல்லிய வானியல் கணிதம்",
     featEphemerisDesc:
-      "துல்லியமான பூமி மைய சயன/நிராயன கிரக நிலைகள், அயனாம்சம் மற்றும் சந்திரனின் உண்மை முடிச்சுகளைக் கணக்கிடும் ரஸ்ட் (Rust) இயந்திரம்.",
+      "துல்லியமான பூமி மைய சயன/நிராயன கிரக நிலைகள், அயனாம்சம் மற்றும் சந்திரனின் உண்மை முடிச்சுகளைக் கணக்கிடும் வானியல் கணித முறை.",
     featVedicTitle: "பாரம்பரிய பராசர முறை",
     featVedicDesc:
       "ராசி, நவாம்சம், 12 பாவங்கள், 27 நட்சத்திரங்கள், பாதப் பிரிவுகள், கிரக வேகம் மற்றும் வக்ர நிலைகளின் தெளிவான பகுப்பாய்வு.",
@@ -971,7 +971,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     tabGemstoneDownload: "ரத்தின வழிகாட்டி & பதிவிறக்கம் (GemstoneDownload)",
     destinyCardTitle: "வேத விதி அட்டை",
     destinyCardSubtitle:
-      "XALEN வானியல் கணிப்பின் மூலம் பெறப்பட்ட அதிகாரப்பூர்வ ஜாதக அடையாள அட்டை.",
+      "அங்கீகரிக்கப்பட்ட வானியல் கணிப்பின் மூலம் பெறப்பட்ட அதிகாரப்பூர்வ ஜாதக அடையாள அட்டை.",
     destinyCardDownload: "உயர் தெளிவுத்திறன் PNG பதிவிறக்கு",
     destinyCardGenerating: "படம் உருவாக்கப்படுகிறது...",
     destinyCardLagna: "லக்னம்",
@@ -983,7 +983,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     destinyCardSunSign: "சூரிய ராசி",
     destinyCardLord: "நட்சத்திர அதிபதி",
     destinyCardAyanamsa: "அயனாம்சம்",
-    destinyCardVerification: "சரிபார்க்கப்பட்ட XALEN கணிப்பு",
+    destinyCardVerification: "சரிபார்க்கப்பட்ட ஜோதிடக் கணிப்பு",
     destinyCardPrivacyNotice:
       "உங்கள் தனியுரிமையைப் பாதுகாக்க துல்லியமான இருப்பிட விவரங்கள் தவிர்க்கப்பட்டுள்ளன.",
     destinyCardShowDate: "பிறந்த தேதியை இணைக்க",
@@ -1145,7 +1145,7 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
 
     footerDisclaimer:
       "கோகுலின் ஜோதிட நுண்ணறிவுகள் பாரம்பரிய வேத ஜோதிட நியதிகள் மற்றும் வானியல் கணிதத்தின்படி துல்லியமாக இயங்குகிறது. இக்கணிப்புகள் கல்வி மற்றும் தனிப்பட்ட ஆய்வு நோக்கம் கொண்டவை; எதிர்கால உறுதிமொழிகள் அல்ல.",
-    footerEngineInfo: "XALEN 0.6.0 எஃபிமெரிஸ் கணித இயந்திரம் • பூமி மைய நிராயன முறை",
+    footerEngineInfo: "கோகுலின் ஜோதிட நுண்ணறிவுகள் • பூமி மைய நிராயன முறை",
     footerCopyright: "© 2026 கோகுலின் ஜோதிட நுண்ணறிவுகள். அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.",
 
     // Authentication & Account

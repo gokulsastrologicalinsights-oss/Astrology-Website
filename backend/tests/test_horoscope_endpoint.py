@@ -26,7 +26,7 @@ def test_horoscope_valid_calculation():
 
     # Metadata
     meta = data["metadata"]
-    assert meta["engine"] == "XALEN 0.6.0 (Rust)"
+    assert "engine" not in meta
     assert meta["local_timezone"] == "Asia/Kolkata"
     assert meta["utc_offset_hours"] == 5.5
     assert meta["ayanamsa_id"] == 0

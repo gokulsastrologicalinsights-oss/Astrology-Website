@@ -100,7 +100,7 @@ def test_pdf_report_exact_nine_pages():
 
     # Page 5: Shadbala
     p5 = reader.pages[4].extract_text()
-    assert "Shadbala Engine" in p5
+    assert "Shadbala" in p5
     assert "Sthana" in p5
 
     # Page 6: Ashtakavarga

@@ -400,10 +400,10 @@ function MarriagePredictionContent() {
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#153F6B] ring-1 ring-inset ring-blue-700/10">
-                Engine: XALEN 0.6.0
+                {language === "ta" ? "கணித முறை: உயர் துல்லிய வானியல் மாதிரி" : "Calculation: High-Precision Sidereal Model"}
               </span>
               <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">
-                Rule: UNI-MARR-REC-001
+                {language === "ta" ? "ஒருங்கிணைந்த திருமண மாதிரி" : "Unified Marriage Analysis Model"}
               </span>
             </div>
           </div>
@@ -1126,7 +1126,7 @@ function MarriagePredictionContent() {
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${activeViewMode === "spouse" ? "bg-[#153F6B] text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-white/50"}`}
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
-                {language === "ta" ? "வாழ்க்கைத் துணை & சிவதாசன் ரவி திறவுகோல்" : "Spouse & Sivadasan Ravi Insights"}
+                {language === "ta" ? "வாழ்க்கைத் துணை பண்புகள் & திசை ஆய்வு" : "Spouse Characteristics & Directional Insights"}
               </button>
             </div>
 
@@ -1963,7 +1963,7 @@ function MarriagePredictionContent() {
                         Placidus (KP) + Whole Sign (Vedic)
                       </p>
                       <span className="text-[10px] text-slate-500">
-                        Engine: {response.metadata.engine}
+                        High-Precision Geocentric Planetary Modeling
                       </span>
                     </div>
                   </div>

@@ -98,12 +98,12 @@ export function GkTransitMatchingCard({
         <h4 className="text-base font-bold text-[#183047]">
           {language === "ta"
             ? "நேரலை கோச்சார நிலைகள் கணக்கிடப்படுகின்றன..."
-            : "Calculating Live Ephemeris Transits..."}
+            : "Calculating Live Planetary Transits..."}
         </h4>
         <p className="text-xs text-[#52667E] max-w-md mx-auto">
           {language === "ta"
-            ? "சுவிஸ் எபிமெரிஸ் மூலம் தற்போதைய கோச்சார கிரகங்களை உங்கள் ஜனன ஜாதகத்துடன் இணைத்து பகுப்பாய்வு செய்கிறோம்."
-            : "Matching real-time Swiss Ephemeris transiting planetary positions against your saved natal chart."}
+            ? "துல்லியமான வானியல் கணிப்புகள் மூலம் தற்போதைய கோச்சார கிரகங்களை உங்கள் ஜனன ஜாதகத்துடன் இணைத்து பகுப்பாய்வு செய்கிறோம்."
+            : "Matching real-time high-precision astronomical transiting planetary positions against your saved natal chart."}
         </p>
       </div>
     );

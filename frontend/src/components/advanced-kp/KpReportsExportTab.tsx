@@ -170,8 +170,8 @@ export function KpReportsExportTab({
           </h3>
           <p className="text-xs text-[#52667E]">
             {language === "ta"
-              ? "சுவிஸ் எபிமெரிஸ் மற்றும் சேலன் வானியல் எஞ்சின் மூலம் சான்றளிக்கப்பட்ட 6-பக்க அதிகாரப்பூர்வ கே.பி. அறிக்கை."
-              : "Official 6-page bilingual ReportLab PDF calibrated with Swiss Ephemeris & XALEN engine."}
+              ? "துல்லியமான வானியல் கணிப்புகள் மூலம் கணக்கிடப்பட்ட 6-பக்க அதிகாரப்பூர்வ விரிவான அறிக்கை."
+              : "Official 6-page bilingual comprehensive astrological report with high-precision planetary calculations."}
           </p>
         </div>
 
@@ -182,7 +182,7 @@ export function KpReportsExportTab({
             onClick={handleExportPdf}
             disabled={isExportingPdf}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#102A4C] hover:bg-[#1E3A61] disabled:opacity-50 transition-colors shadow-2xs"
-            title="Download certified 6-page bilingual ReportLab PDF"
+            title="Download official 6-page bilingual comprehensive PDF report"
           >
             {isExportingPdf ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -253,7 +253,7 @@ export function KpReportsExportTab({
           </div>
           <div className="text-right text-xs text-[#52667E] space-y-0.5">
             <div>Generated: {formatDate(new Date())}</div>
-            <div>Engine: <strong>{data.metadata?.engine || "Swiss Ephemeris & XALEN"}</strong></div>
+            <div>Calculation Model: <strong>{data.metadata?.calculation_frame || "Geocentric Sidereal"}</strong></div>
             <div>Ayanamsa: <strong>{data.metadata?.ayanamsa_name} ({data.metadata?.ayanamsa_deg?.toFixed(4)}°)</strong></div>
             <div>House System: <strong>{data.metadata?.house_system_name}</strong></div>
           </div>

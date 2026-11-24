@@ -108,7 +108,6 @@ class UnifiedMarriagePredictionService:
             kp_ayan_val = round(float(xalen.ayanamsa(birth_jd, 1)), 6) if 'birth_jd' in locals() else 0.0
             vedic_ayan_val = round(float(xalen.ayanamsa(birth_jd, 0)), 6) if 'birth_jd' in locals() else 0.0
             metadata = CalculationMetadata(
-                engine="XALEN 0.6.0 (Rust) + Unified Prediction Engine",
                 birth_utc_iso=utc_dt.isoformat() if 'utc_dt' in locals() else "",
                 julian_day_ut1=birth_jd if 'birth_jd' in locals() else 0.0,
                 local_timezone=tz_name if 'tz_name' in locals() else "",
@@ -322,7 +321,6 @@ class UnifiedMarriagePredictionService:
         vedic_ayanamsa_deg = round(float(xalen.ayanamsa(birth_jd, 0)), 6)
 
         metadata = CalculationMetadata(
-            engine="XALEN 0.6.0 (Rust) + Unified Prediction Engine",
             birth_utc_iso=utc_dt.isoformat(),
             julian_day_ut1=birth_jd,
             local_timezone=tz_name,

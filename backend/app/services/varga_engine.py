@@ -279,7 +279,6 @@ def calculate_varga_d1_d9(
         calc_meta = metadata
     elif isinstance(metadata, dict):
         calc_meta = CalculationMetadata(
-            engine=metadata.get("engine", "XALEN 0.6.0 (Rust)"),
             birth_utc_iso=metadata.get("birth_utc_iso", ""),
             julian_day_ut1=float(metadata.get("julian_day_ut1", 0.0)),
             local_timezone=metadata.get("local_timezone"),
@@ -295,7 +294,6 @@ def calculate_varga_d1_d9(
         )
     else:
         calc_meta = CalculationMetadata(
-            engine="XALEN 0.6.0 (Rust)",
             birth_utc_iso="",
             julian_day_ut1=0.0,
             ayanamsa_id=0,
@@ -775,7 +773,6 @@ def calculate_shodashvarga(
         calc_meta = metadata
     elif isinstance(metadata, dict):
         calc_meta = CalculationMetadata(
-            engine=metadata.get("engine", "XALEN 0.6.0 (Rust)"),
             birth_utc_iso=metadata.get("birth_utc_iso", ""),
             julian_day_ut1=float(metadata.get("julian_day_ut1", 0.0)),
             local_timezone=metadata.get("local_timezone"),
@@ -791,7 +788,6 @@ def calculate_shodashvarga(
         )
     else:
         calc_meta = CalculationMetadata(
-            engine="XALEN 0.6.0 (Rust)",
             birth_utc_iso="",
             julian_day_ut1=0.0,
             ayanamsa_id=0,

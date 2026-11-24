@@ -361,8 +361,8 @@ function RemediesHubContent() {
 
             <p className="text-xs sm:text-sm text-[#52667E] max-w-3xl leading-relaxed">
               {language === "ta"
-                ? "பிருஹத் பராசர ஹோரா சாஸ்திரம், பலதீபிகை, ஆதித்ய ஹிருதயம் மற்றும் காவிரி டெல்டா நவக்கிரக ஸ்தலங்கள் அடிப்படையிலான தூய சாஸ்திர பரிகாரங்கள் மற்றும் சமஸ்கிருத/தமிழ் மந்திரங்கள்."
-                : "Clean-room, Shastra-validated remedies based on Brihat Parashara Hora Shastra, Phaladeepika, Valmiki Ramayana, and consecrated Kaveri Delta Navagraha Temples. Zero AI hallucination, authentic Devanagari Sanskrit, and Yogakaraka protection safeguards."}
+                ? "பாரம்பரிய வேத சாஸ்திரம், ஆதித்ய ஹிருதயம் மற்றும் காவிரி டெல்டா நவக்கிரக ஸ்தலங்கள் அடிப்படையிலான தூய சாஸ்திர பரிகாரங்கள் மற்றும் சமஸ்கிருத/தமிழ் மந்திரங்கள்."
+                : "Clean-room, Shastra-validated remedies based on classical Vedic traditions and consecrated Kaveri Delta Navagraha Temples. Zero AI assumptions, authentic Devanagari Sanskrit, and Yogakaraka protection safeguards."}
             </p>
           </div>
 
@@ -1189,7 +1189,7 @@ function RemediesHubContent() {
           <div className="p-6 rounded-3xl border border-[#DDE5F0] bg-white shadow-xs space-y-5">
             <div>
               <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 border border-indigo-200 text-indigo-800 uppercase tracking-wider mb-2">
-                Brihat Parashara Hora Shastra Ch. 34 Safeguards
+                Classical Vedic Astrological Safeguards
               </div>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#102A4C]">
                 {language === "ta"

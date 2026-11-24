@@ -305,7 +305,7 @@ def test_api_ayanamsa_metadata_nonzero_and_accurate():
     assert meta["ayanamsa_id"] == 1
     assert "Krishnamurti (KP)" in meta["ayanamsa_name"]
     assert "Chitrapaksha Lahiri (Vedic)" in meta["ayanamsa_name"]
-    assert meta["engine"] == "XALEN 0.6.0 (Rust) + Unified Prediction Engine"
+    assert "engine" not in meta
     assert meta["house_system_name"] == "Placidus (KP) + Whole Sign (Vedic)"
 
     # 3. Verify numerical accuracy against XALEN directly using returned Julian Day

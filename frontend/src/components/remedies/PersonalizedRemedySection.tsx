@@ -283,8 +283,8 @@ export function PersonalizedRemedySection({
 
             <p className="text-xs sm:text-sm text-[#52667E] max-w-2xl leading-relaxed">
               {language === "ta"
-                ? "பராசர சாஸ்திர விதிகளின்படி நவகிரக அமைப்புகள், நீச-அஸ்தமன நிலைகள், தசா-புக்தி மற்றும் பாவங்கள் ஆராயப்பட்டு வடிவமைக்கப்பட்ட பரிந்துரைகள்."
-                : "Deterministic rule-based diagnosis of debilitation, combustion, dusthana placements, running Dasa-Bhukti periods, and BPHS Ch. 34 Yogakaraka protections."}
+                ? "பாரம்பரிய சாஸ்திர விதிகளின்படி நவகிரக அமைப்புகள், நீச-அஸ்தமன நிலைகள், தசா-புக்தி மற்றும் பாவங்கள் ஆராயப்பட்டு வடிவமைக்கப்பட்ட பரிந்துரைகள்."
+                : "Deterministic rule-based diagnosis of debilitation, combustion, dusthana placements, running Dasa-Bhukti periods, and traditional Yogakaraka protections."}
             </p>
           </div>
 
@@ -413,7 +413,7 @@ export function PersonalizedRemedySection({
                 : kujaStatus === "cancelled"
                 ? language === "ta"
                   ? "தோஷ நிவர்த்தி உண்டு (Cancelled)"
-                  : "Present (Cancelled by BPHS Rule)"
+                  : "Present (Cancelled by Classical Rule)"
                 : language === "ta"
                 ? "தோஷம் இல்லை (Absent)"
                 : "No Kuja Dosha"}
@@ -422,21 +422,21 @@ export function PersonalizedRemedySection({
         </div>
       </div>
 
-      {/* 2. Yogakaraka Protection Alert (BPHS Ch. 34) */}
+      {/* 2. Yogakaraka Protection Alert */}
       {hasYogakarakaWarning && (
         <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-400 text-amber-950 space-y-2.5 shadow-sm">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-6 h-6 text-amber-700 shrink-0" />
             <h3 className="font-serif text-base font-bold text-amber-900">
               {language === "ta"
-                ? "யோககாரகன் தான பாதுகாப்பு எச்சரிக்கை (பிருஹத் பராசர ஹோரா சாஸ்திரம் அதிகாரம் 34)"
-                : "BPHS Ch. 34 Strict Yogakaraka Daan Protection Safeguard"}
+                ? "யோககாரகன் தான பாதுகாப்பு எச்சரிக்கை (பாரம்பரிய வேத சாஸ்திரம்)"
+                : "Traditional Yogakaraka Daan Protection Safeguard"}
             </h3>
           </div>
           <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
             {language === "ta"
               ? "உங்கள் லக்னத்திற்கு மிகவும் சுபமான யோககாரக கிரகம் நலிவடைந்தாலோ அல்லது மறைவிடத்தில் இருந்தாலோ அதற்கு தானம் (Daan) செய்வது சாஸ்திரப்படி முற்றிலும் தடைசெய்யப்பட்டுள்ளது. தானம் தருவது யோக பலனை பலவீனப்படுத்திவிடும். இதற்குப் பதிலாக காயத்ரி அல்லது ஸ்தோத்திர ஜபம், நெய் தீபம் ஏற்றுதல் மற்றும் காவிரி டெல்டா ஸ்தலங்களில் அர்ச்சனை செய்தல் போன்ற சாத்வீக வழிபாடுகளே உகந்தவை."
-              : "Brihat Parashara Hora Shastra Chapter 34 mandates that for a Yogakaraka planet (such as Saturn for Taurus/Libra, Mars for Cancer/Leo, or Venus for Capricorn/Aquarius), charity (daan) of related items is strictly prohibited. Daan gives away planetary strength, depleting the benefic life force protecting your Kendra-Trikona houses. Only Sattvic Stotras, Gayatri recitation, and Navagraha temple archana are prescribed."}
+              : "Classical Vedic Jyotish principles establish that for a Yogakaraka planet (such as Saturn for Taurus/Libra, Mars for Cancer/Leo, or Venus for Capricorn/Aquarius), charity (daan) of related items is strictly avoided. Daan mitigates planetary intensity, whereas Yogakaraka life force protects your Kendra-Trikona houses. Only Sattvic Stotras, Gayatri recitation, and temple archana are prescribed."}
           </p>
         </div>
       )}

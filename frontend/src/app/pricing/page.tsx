@@ -265,8 +265,8 @@ export default function PricingPage() {
             </h1>
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
               {language === "ta"
-                ? "சுவிஸ் எஃபிமெரிஸ் & XALEN வானியல் துல்லியத்துடன் கூடிய வேத, கே.பி, பாரம்பரிய தமிழ் ஜாதகம் மற்றும் பிரசன்னக் கருவிகளை வரம்பற்ற அணுகலில் பெறுங்கள்."
-                : "Unlock full Parashari, Advanced KP 249, Traditional Tamil Booklets, and Jamakkol Horary powered by Swiss Ephemeris and XALEN deterministic calculations."}
+                ? "முழுமையான வேத, கே.பி, பாரம்பரிய தமிழ் ஜாதகம் மற்றும் பிரசன்னக் கருவிகளை வரம்பற்ற அணுகலில் பெறுங்கள்."
+                : "Unlock full Parashari, Advanced KP 249, Traditional Tamil Booklets, and Jamakkol Horary powered by high-precision astronomical calculations."}
             </p>
 
             {/* Billing Cycle Switcher */}
@@ -463,7 +463,7 @@ export default function PricingPage() {
               <thead>
                 <tr className="border-b border-[#D9DEE7] text-[#153F6B] font-bold">
                   <th className="py-3 px-4">
-                    {language === "ta" ? "மென்பொருள் கருவி / தொகுதி" : "Software Tool / Engine"}
+                    {language === "ta" ? "ஜோதிட சேவை / தொகுதி" : "Astrology Service / Module"}
                   </th>
                   <th className="py-3 px-4 text-center">Basic (₹999)</th>
                   <th className="py-3 px-4 text-center text-[#B4872B]">
@@ -582,12 +582,12 @@ export default function PricingPage() {
             <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
             <div>
               <h4 className="text-sm font-bold text-[#183047]">
-                {language === "ta" ? "சுவிஸ் எஃபிமெரிஸ் கணிதம்" : "Deterministic Precision"}
+                {language === "ta" ? "துல்லிய வானியல் கணிதம்" : "Deterministic Precision"}
               </h4>
               <p className="text-xs text-[#52667E] mt-1 leading-relaxed">
                 {language === "ta"
-                  ? "XALEN வானியல் சூத்திரங்கள் மற்றும் சுவிஸ் எஃபிமெரிஸ் மூலம் வினாடித் துல்லியத்தில் கிரக நிலைகள்."
-                  : "All planetary positions and sub-lords calculate directly via high-precision astronomical ephemeris."}
+                  ? "உயர் துல்லிய வானியல் சூத்திரங்கள் மூலம் வினாடித் துல்லியத்தில் கிரக நிலைகள் கணக்கிடப்படுகின்றன."
+                  : "All planetary positions and sub-lords calculate directly via high-precision astronomical algorithms."}
               </p>
             </div>
           </div>

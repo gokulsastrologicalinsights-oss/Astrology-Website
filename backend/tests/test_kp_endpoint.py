@@ -26,7 +26,7 @@ def test_kp_valid_chart():
     meta = data["metadata"]
     assert meta["ayanamsa_name"] == "KP"
     assert meta["house_system_name"] == "Placidus"
-    assert "kpastro" in meta["engine"]
+    assert "engine" not in meta
 
     # 1. Planetary Positions (9 Vedic Grahas)
     planets = data["planetary_positions"]

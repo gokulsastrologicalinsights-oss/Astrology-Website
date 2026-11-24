@@ -1366,7 +1366,7 @@ def evaluate_vastu_layout(request: VastuEvaluationRequest) -> VastuEvaluationRes
                     f"Owner's Lagna ruler ({ruler}) naturally harmonizes with {', '.join(fav_dirs)}.",
                     "Ensure native's work/study desk faces one of the favorable cardinal directions.",
                 ],
-                calculation_source="Native XALEN Ephemeris Engine (Verified)",
+                calculation_source="Native GAI Ephemeris Calculation Engine (Verified)",
             )
         except Exception as exc:
             missing_warnings.append(f"Astro-Vastu overlay skipped due to calculation error: {str(exc)}")

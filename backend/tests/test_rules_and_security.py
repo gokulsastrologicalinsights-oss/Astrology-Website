@@ -4,6 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
+from app.routers.rules import get_admin_user
+
 client = TestClient(app)
 
 VALID_PAYLOAD = {
@@ -16,20 +18,25 @@ VALID_PAYLOAD = {
 
 
 def test_rules_inventory():
-    response = client.get("/api/v1/rules/inventory")
-    assert response.status_code == 200
-    rules = response.json()
-    assert len(rules) >= 5
-    rule_ids = [r["rule_id"] for r in rules]
-    assert "RULE-HORO-01" in rule_ids
-    assert "RULE-DASA-01" in rule_ids
-    assert "RULE-KP-01" in rule_ids
-    assert "RULE-CAREER-01" in rule_ids
+    admin_mock = {"id": "admin-1", "email": "admin@gai.internal", "role": "admin"}
+    app.dependency_overrides[get_admin_user] = lambda: admin_mock
+    try:
+        response = client.get("/api/v1/rules/inventory")
+        assert response.status_code == 200
+        rules = response.json()
+        assert len(rules) >= 5
+        rule_ids = [r["rule_id"] for r in rules]
+        assert "RULE-HORO-01" in rule_ids
+        assert "RULE-DASA-01" in rule_ids
+        assert "RULE-KP-01" in rule_ids
+        assert "RULE-CAREER-01" in rule_ids
 
-    # Verify every rule has tradition and documentation ref
-    for r in rules:
-        assert r["tradition"] != ""
-        assert r["status"] in ("Implemented", "Draft", "Requires Verification", "Pending Canon Specification")
+        # Verify every rule has tradition and documentation ref
+        for r in rules:
+            assert r["tradition"] != ""
+            assert r["status"] in ("Implemented", "Draft", "Requires Verification", "Pending Canon Specification")
+    finally:
+        app.dependency_overrides.pop(get_admin_user, None)
 
 
 def test_career_rule_analysis():

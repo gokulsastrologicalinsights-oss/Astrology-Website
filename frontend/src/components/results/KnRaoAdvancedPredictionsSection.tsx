@@ -44,7 +44,7 @@ export function KnRaoAdvancedPredictionsSection({
         <p className="text-sm font-medium">
           {language === "ta"
             ? "கே.என். ராவ் ஆய்வு முடிவுகள் கிடைக்கவில்லை."
-            : "No K.N. Rao research data available."}
+            : "No empirical trajectory model data available."}
         </p>
       </div>
     );
@@ -73,7 +73,7 @@ export function KnRaoAdvancedPredictionsSection({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 text-xs font-semibold uppercase tracking-wider mb-2">
               <Award className="w-3.5 h-3.5" />
-              {isTa ? "கே.என். ராவ் ஆய்வுக் களஞ்சியம்" : "K.N. Rao Research Canon"}
+              {isTa ? "தொழில் & வாழ்க்கை வளர்ச்சி ஆய்வு களஞ்சியம்" : "Career & Life Trajectory Models"}
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
               {isTa
@@ -83,7 +83,7 @@ export function KnRaoAdvancedPredictionsSection({
             <p className="text-amber-100/90 text-sm mt-1 max-w-2xl">
               {isTa
                 ? "பாரதிய வித்யா பவன் ஆய்வுப் பேராசிரியர்களின் பல ஆண்டு சோதனைகளில் நிரூபிக்கப்பட்ட கணித மாதிரிகள் மற்றும் விதிகள்."
-                : "Empirically validated models from the research faculty of Bharatiya Vidya Bhavan (New Delhi), edited by K.N. Rao."}
+                : "Empirically validated models analyzing executive status, business vs service, journalism, and marital discord."}
             </p>
           </div>
 
@@ -139,7 +139,7 @@ export function KnRaoAdvancedPredictionsSection({
             }`}
           >
             <Feather className="w-4 h-4" />
-            {isTa ? "எழுத்தாளர் vs இதழியல்" : "Authors & Media"}
+            {isTa ? "பத்திரிகை & ஊடகத்துறை" : "Journalism & Media"}
           </button>
 
           <button
@@ -400,7 +400,7 @@ export function KnRaoAdvancedPredictionsSection({
             <div className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-800/60 dark:to-slate-800/20 border border-emerald-200 dark:border-slate-700 rounded-xl">
               <div>
                 <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                  {isTa ? "கர்னல் ஏ.கே. கெளர் இலக்கிய ஆய்வு" : "Col. A.K. Gour Literary Enquiry"}
+                  {isTa ? "பத்திரிகை, எழுத்து & ஊடகத்துறை ஆய்வு" : "Journalism, Writing & Media Trajectory"}
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">
                   {isTa ? auth.writing_profile_tamil : auth.writing_profile}

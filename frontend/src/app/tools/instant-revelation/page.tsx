@@ -351,7 +351,7 @@ function InstantRevelationContent() {
     });
 
     if (data.lagna_nadiamsa_name) {
-      lines.push(`\n--- DEVA KERALAM (CHANDRA KALA NADI) 150 NADIAMSA & LONGEVITY ---`);
+      lines.push(`\n--- 150 NADIAMSA & LONGEVITY ANALYSIS ---`);
       lines.push(`Lagna Nadiamsa: #${data.lagna_nadiamsa_number} (${data.lagna_nadiamsa_name_ta} / ${data.lagna_nadiamsa_name}) - ${data.lagna_nadiamsa_half_ta}`);
       lines.push(`Delineation (TA): "${data.lagna_nadiamsa_script_ta}"`);
       lines.push(`Delineation (EN): "${data.lagna_nadiamsa_script_en}"`);
@@ -1247,7 +1247,7 @@ function InstantRevelationContent() {
             </div>
 
             {/* =========================================================================
-                DEVA KERALAM (CHANDRA KALA NADI) 150 NADIAMSA & LONGEVITY PLATFORM
+                150 NADIAMSA & LONGEVITY PLATFORM
                ========================================================================= */}
             {data.lagna_nadiamsa_name && (
               <div className="bg-gradient-to-br from-[#1A1C29] via-[#12131C] to-[#1A1C29] text-white rounded-2xl shadow-xl border-2 border-indigo-400/60 p-6 space-y-6">
@@ -1258,7 +1258,7 @@ function InstantRevelationContent() {
                     </div>
                     <div>
                       <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-widest block">
-                        Deva Keralam • சந்திர கலா நாடி 150 நாடியம்சம் & ஆயுள் நிர்ணயம்
+                        உயர் துல்லிய 150 நாடியம்சம் & ஆயுள் நிர்ணயம் (150 Nadiamsa System)
                       </span>
                       <h3 className="text-xl font-bold text-white flex items-center gap-2">
                         <span>லக்ன நாடியம்சம் #{data.lagna_nadiamsa_number}: {data.lagna_nadiamsa_name_ta} ({data.lagna_nadiamsa_name})</span>
@@ -1314,7 +1314,7 @@ function InstantRevelationContent() {
                   <div className="bg-slate-900/80 border border-indigo-900/50 rounded-xl p-4 space-y-2.5">
                     <span className="text-xs font-bold text-rose-300 uppercase tracking-wide flex items-center gap-1.5">
                       <AlertTriangle className="w-4 h-4 text-rose-400" />
-                      பெற்றோர் கண்ட கோச்சார பாகை (Deva Keralam Transit Criticals):
+                      பெற்றோர் கண்ட கோச்சார பாகை (Sensitive Transit Criticals):
                     </span>
                     <div className="space-y-1.5 text-xs">
                       <div className="bg-black/30 p-2.5 rounded-lg border border-rose-900/30">

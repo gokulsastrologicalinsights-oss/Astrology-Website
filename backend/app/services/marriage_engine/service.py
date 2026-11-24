@@ -501,7 +501,6 @@ def run_marriage_compatibility_analysis(
     reproducibility_fp = "SHA256:" + hashlib.sha256(fp_raw.encode("utf-8")).hexdigest()[:16]
 
     meta = CalculationMetadata(
-        engine="XALEN 0.6.0 (Rust) + GAI Marriage Compatibility Engine 1.0.0",
         birth_utc_iso=f"{groom_chart.birth_date_iso}T{groom_chart.birth_time_iso}Z",
         julian_day_ut1=2450000.0,
         local_timezone=groom_chart.timezone,

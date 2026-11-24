@@ -87,7 +87,7 @@ function HoroscopeFormContent() {
   const [ayanamsas, setAyanamsas] = useState<AyanamsaOption[]>([
     { id: 0, name: "Lahiri", description: "Chitrapaksha Lahiri (Standard Vedic)", is_default: true },
     { id: 1, name: "KP", description: "Krishnamurti Paddhati", is_default: false },
-    { id: 2, name: "Raman", description: "Dr. B.V. Raman", is_default: false },
+    { id: 2, name: "Raman", description: "Raman Ayanamsa", is_default: false },
   ]);
   const [selectedAyanamsa, setSelectedAyanamsa] = useState(0);
 

@@ -92,6 +92,9 @@ class HoroscopePdfReportGenerator:
             rightMargin=RIGHT_MARGIN,
             topMargin=TOP_MARGIN,
             bottomMargin=BOTTOM_MARGIN,
+            title="Gokul's Astrological Insights - Comprehensive Vedic Horoscope",
+            author="Gokul's Astrological Insights",
+            creator="Gokul's Astrological Insights Proprietary Platform",
         )
 
         story: List[Any] = []
@@ -284,7 +287,7 @@ class HoroscopePdfReportGenerator:
         elements: List[Any] = []
 
         elements.append(Paragraph("D1 Rasi Chart & Planetary Longitudes — ராசி கட்டம் & கிரக நிலைகள்", self.styles["SectionTitle"]))
-        elements.append(Paragraph("High-precision sidereal Nirayana longitudes calculated via XALEN ephemeris engine.", self.styles["SectionSubtitle"]))
+        elements.append(Paragraph("High-precision sidereal Nirayana longitudes calculated via GAI Astronomical Calculation Engine.", self.styles["SectionSubtitle"]))
 
         # Build D1 Chart Data
         planets = self.data.horoscope.planets if self.data.horoscope else []
@@ -637,8 +640,8 @@ class HoroscopePdfReportGenerator:
     def _build_page_5_shadbala(self) -> List[Any]:
         elements: List[Any] = []
 
-        elements.append(Paragraph("Shadbala Engine — அறுவகை கிரக பலம் (Six-Fold Strength Analysis)", self.styles["SectionTitle"]))
-        elements.append(Paragraph("Classical quantitative planetary strength calculated per Brihat Parasara Hora Shastra (BPHS) Chapter 23.", self.styles["SectionSubtitle"]))
+        elements.append(Paragraph("Planetary Strength Assessment — அறுவகை கிரக பலம் (Six-Fold Shadbala Analysis)", self.styles["SectionTitle"]))
+        elements.append(Paragraph("Classical quantitative planetary strength assessment evaluating Sthana, Dig, Kala, Cheshta, Naisargika, and Drik balas.", self.styles["SectionSubtitle"]))
 
         # Shadbala Master Table
         shad_header = [
@@ -770,7 +773,7 @@ class HoroscopePdfReportGenerator:
         elements: List[Any] = []
 
         elements.append(Paragraph("Ashtakavarga System — அஷ்டகவர்க்கம் (BAV, SAV & சோதனா பலன்கள்)", self.styles["SectionTitle"]))
-        elements.append(Paragraph("Eight-fold benefic point matrix evaluated per BPHS Ch. 66–69 with validated 337 Sarvashtakavarga invariant.", self.styles["SectionSubtitle"]))
+        elements.append(Paragraph("Eight-fold benefic point matrix evaluated with validated 337 Sarvashtakavarga invariant.", self.styles["SectionSubtitle"]))
 
         # Build BAV / SAV Table
         signs_short = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"]
@@ -1167,7 +1170,7 @@ class HoroscopePdfReportGenerator:
                 else:
                     st_badge = "<font color='#15803D'>Absent (இல்லை)</font>"
                 
-                cond_str = ", ".join(d.conditions) if d.conditions else "Standard BPHS criteria evaluated"
+                cond_str = ", ".join(d.conditions) if d.conditions else "Standard classical criteria evaluated"
                 add_rows.append([
                     Paragraph(f"<b>{d.name}</b><br/>{d.name_tamil}", self.styles["TableCell"]),
                     Paragraph(cond_str[:120], self.styles["TableCell"]),
@@ -1193,7 +1196,7 @@ class HoroscopePdfReportGenerator:
         return elements
 
     # -------------------------------------------------------------------------
-    # PAGE 9: Vimshottari Dasa Timeline + Classical Remedies + Certification
+    # PAGE 9: Vimshottari Dasa Timeline + Classical Remedies + Verification
     # -------------------------------------------------------------------------
     def _build_page_9_dasa_remedies(self) -> List[Any]:
         elements: List[Any] = []
@@ -1313,11 +1316,11 @@ class HoroscopePdfReportGenerator:
         # 4. Report Verification Block (Mathematical Integrity & System Provenance)
         cert_data = [
             [
-                Paragraph("<b>Mathematical Engine:</b> XALEN Sidereal (JPL DE440/441 Ephemeris)", self.styles["TableCell"]),
+                Paragraph("<b>Calculation Frame:</b> High-Precision Sidereal Ephemeris (Geocentric)", self.styles["TableCell"]),
                 Paragraph(f"<b>Report Verification:</b> GAI-VERIFY-{self.data.report_id}", self.styles["TableCell"]),
             ],
             [
-                Paragraph("<b>Report Generator:</b> Gokul's Astrological Insights (Vedic System)", self.styles["TableCell"]),
+                Paragraph("<b>Official Report:</b> Gokul's Astrological Insights (Vedic System)", self.styles["TableCell"]),
                 Paragraph(f"<b>Calculation Date:</b> {self.data.generated_at}", self.styles["TableCell"]),
             ],
         ]

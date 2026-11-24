@@ -135,17 +135,21 @@ export function HeinrichDaathSection({
               </span>
             </div>
             <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-              <span>{isEn ? book_title : book_title_ta}</span>
+              <span>
+                {isEn
+                  ? "Planetary Pathology & Physical Susceptibility Analysis"
+                  : "கிரக நோய்க்கூறியல் & உடல் உணர்திறன் பகுப்பாய்வு"}
+              </span>
             </h2>
             <p className="text-sm text-indigo-200/90 font-medium">
               {isEn
-                ? `Author: ${author} • Publisher: ${publisher}`
-                : `ஆசிரியர்: ${author} • பதிப்பகம்: ${publisher}`}
+                ? "Classical Biodynamic Framework • Astrological Physiological Mapping"
+                : "பாரம்பரிய உயிரியக்க கட்டமைப்பு • ஜோதிட உடற்கூறியல் வரைபடம்"}
             </p>
             <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">
               {isEn
-                ? "Restoring the ancient Egyptian jatromathematics and Paracelsian Medicina Adepta: human anatomy mapped through 12-sign bony/vascular frameworks, 9 planetary biodynamic vectors, antipathic balancing (Contraria Contrariis Curantur), and decumbiture critical days."
-                : "பண்டைய எகிப்திய ஜாத்ரோமேத்தமேட்டிக்ஸ் மற்றும் பரசெல்சியன் மருத்துவ ஞானம்: 12 ராசி எலும்பு/இரத்தநாள உடற்கூறியல், 9 கிரகங்களின் துருவநிலை இயக்கம், எதிர்முனை சமநிலை சிகிச்சை மற்றும் தீவிர நோய்க்கால சந்திர சுழற்சிகள்."}
+                ? "Comprehensive astrological physical vitality mapping: human anatomy analyzed through 12-sign structural frameworks, 9 planetary biodynamic vectors, elemental balancing, and sensitive cyclical vulnerability timing."
+                : "முழுமையான ஜோதிட உடலியல் பகுப்பாய்வு: 12 ராசி உடற்கூறியல் கூறுகள், 9 கிரக இயக்கங்கள், பஞ்சபூத சமநிலை மற்றும் முக்கிய காலச்சுழற்சி நலவாழ்வு கண்காணிப்பு."}
             </p>
           </div>
 
@@ -323,8 +327,8 @@ export function HeinrichDaathSection({
               </h3>
               <p className="text-xs text-slate-400">
                 {isEn
-                  ? "Heinrich Däath evaluates physiological prognosis through five classical balances: Aspect (Drikbalam), Position (Sthanabalam), Natural / Mutual Receptions, Motional Speed, and Radix Hexis vs Directional Diathesis."
-                  : "ஹென்ரிச் டாத் ஜாதகரின் நோய்த்தடுப்பு திறனை பார்வை வலிமை, ஸ்தான வலிமை, பரஸ்பர பரிவர்த்தனை, கோள்களின் வேகம் மற்றும் நிரந்தர உடல்வாகு கொண்டு மதிப்பிடுகிறார்."}
+                  ? "Classical physiological prognosis is evaluated through five essential factors: Aspect Strength (Drikbalam), Positional Strength (Sthanabalam), Mutual Receptions, Motional Speed, and Constitutional Diathesis."
+                  : "ஜாதகரின் உடல் வலிமை மற்றும் ஆரோக்கியத் திறன் பார்வை பலம், ஸ்தான பலம், பரஸ்பர பரிவர்த்தனை, கோள்களின் வேகம் மற்றும் நிரந்தர உடல்வாகு கொண்டு மதிப்பிடப்படுகிறது."}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

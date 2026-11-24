@@ -397,7 +397,7 @@ export function MedicalAstrologySection({
                   }`}
                 >
                   <Stethoscope className="w-3.5 h-3.5" />
-                  <span>{language === "ta" ? "டாக்டர் எஸ். கிருஷ்ண குமார் நூல் தொகுதி" : "Dr. S. Krishna Kumar Compendium"}</span>
+                  <span>{language === "ta" ? "உடலமைப்பியல் & நலவாழ்வு" : "Constitutional Health & Vitality"}</span>
                 </button>
 
                 {/* Dr. Chatterjee */}
@@ -411,7 +411,7 @@ export function MedicalAstrologySection({
                   }`}
                 >
                   <Award className="w-3.5 h-3.5" />
-                  <span>{language === "ta" ? "டாக்டர் எஸ்.எஸ். சாட்டர்ஜி தொகுதி" : "Dr. S. S. Chatterjee Compendium"}</span>
+                  <span>{language === "ta" ? "வளர்சிதை மாற்றம் & சமநிலை" : "Metabolic & Physiological Balance"}</span>
                 </button>
 
                 {/* Max Heindel */}
@@ -425,7 +425,7 @@ export function MedicalAstrologySection({
                   }`}
                 >
                   <Compass className="w-3.5 h-3.5" />
-                  <span>{language === "ta" ? "மேக்ஸ் ஹெயிண்டல் நோய்நிர்ணயம்" : "Max Heindel Astro-Diagnosis"}</span>
+                  <span>{language === "ta" ? "உறுப்பு நலம் & உடற்கூறு" : "Organ Systems & Structural Health"}</span>
                 </button>
 
                 {/* Jane Ridder-Patrick */}
@@ -439,7 +439,7 @@ export function MedicalAstrologySection({
                   }`}
                 >
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>{language === "ta" ? "ஜேன் ரிடர்-பேட்ரிக் தொகுதி" : "Jane Ridder-Patrick Compendium"}</span>
+                  <span>{language === "ta" ? "ஊட்டச்சத்து & உயிர்வேதியியல்" : "Biochemical & Nutritional Harmony"}</span>
                 </button>
 
                 {/* Heinrich Daath */}
@@ -453,7 +453,7 @@ export function MedicalAstrologySection({
                   }`}
                 >
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>{language === "ta" ? "ஹென்ரிச் டாத் மருத்துவ ஜோதிடம்" : "Heinrich Däath Compendium"}</span>
+                  <span>{language === "ta" ? "கிரக நோய்க்கூறியல் & உணர்திறன்" : "Planetary Pathology & Susceptibility"}</span>
                 </button>
               </div>
             </div>
@@ -1268,8 +1268,8 @@ export function MedicalAstrologySection({
             </div>
             <p className="text-xs text-[#52667E]">
               {language === "ta"
-                ? "டாக்டர் எஸ். கிருஷ்ண குமார் நூல் தொகுதி தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
-                : "Dr. S. Krishna Kumar Compendium data is not available for this horoscope record."}
+                ? "உடலமைப்பியல் & நலவாழ்வு மாதிரித் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Constitutional health and vitality data is not available for this horoscope record."}
             </p>
           </div>
         )
@@ -1292,8 +1292,8 @@ export function MedicalAstrologySection({
             </div>
             <p className="text-xs text-[#52667E]">
               {language === "ta"
-                ? "டாக்டர் எஸ்.எஸ். சாட்டர்ஜி நூல் தொகுதி தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
-                : "Dr. S. S. Chatterjee Compendium data is not available for this horoscope record."}
+                ? "வளர்சிதை மாற்றம் & உடலியல் சமநிலை மாதிரித் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Metabolic and physiological balance data is not available for this horoscope record."}
             </p>
           </div>
         )
@@ -1316,8 +1316,8 @@ export function MedicalAstrologySection({
             </div>
             <p className="text-xs text-[#52667E]">
               {language === "ta"
-                ? "மேக்ஸ் ஹெயிண்டல் நோய்நிர்ணயத் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
-                : "Max Heindel Astro-Diagnosis data is not available for this horoscope record."}
+                ? "உறுப்பு நலம் & உடற்கூறியல் மாதிரித் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Organ systems and structural health data is not available for this horoscope record."}
             </p>
           </div>
         )
@@ -1340,8 +1340,8 @@ export function MedicalAstrologySection({
             </div>
             <p className="text-xs text-[#52667E]">
               {language === "ta"
-                ? "ஜேன் ரிடர்-பேட்ரிக் மருத்துவ ஜோதிடத் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
-                : "Jane Ridder-Patrick Medical Astrology data is not available for this horoscope record."}
+                ? "ஊட்டச்சத்து & உயிர்வேதியியல் மாதிரித் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Biochemical and nutritional harmony data is not available for this horoscope record."}
             </p>
           </div>
         )
@@ -1362,8 +1362,8 @@ export function MedicalAstrologySection({
             </div>
             <p className="text-xs text-[#52667E]">
               {language === "ta"
-                ? "ஹென்ரிச் டாத் மருத்துவ ஜோதிடத் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
-                : "Heinrich Däath Medical Astrology data is not available for this horoscope record."}
+                ? "கிரக நோய்க்கூறியல் & உடல் உணர்திறன் மாதிரித் தரவுகள் இந்த ஜாதகத்திற்கு கிடைக்கவில்லை."
+                : "Physiological susceptibility and vitality mapping data is not available for this horoscope record."}
             </p>
           </div>
         )

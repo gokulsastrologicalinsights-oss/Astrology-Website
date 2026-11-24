@@ -60,9 +60,9 @@ interface AstrologicalPredictionsSectionProps {
 // Quick filter categories requested by user & extracted from classical documents
 const QUICK_FILTER_PILLS = [
   { id: "all", label_en: "All Topics (230+)", label_ta: "அனைத்தும் (230+)", icon: Sparkles },
-  { id: "bphs_classics", label_en: "Parashara Hora (BPHS)", label_ta: "பராசர ஹோரா சாஸ்திரம்", icon: ScrollText, isHighlight: true },
-  { id: "saravali_classics", label_en: "Saravali Classics", label_ta: "சாராவளி நூற்பலன்கள்", icon: BookOpen, isHighlight: true },
-  { id: "deva_keralam_classics", label_en: "Deva Keralam (Nadi)", label_ta: "தேவ கேரளம் (சந்திர கலா நாடி)", icon: BookOpen, isHighlight: true },
+  { id: "bphs_classics", label_en: "Foundational Classics", label_ta: "அடிப்படை செவ்வியல் பலன்கள்", icon: ScrollText, isHighlight: true },
+  { id: "saravali_classics", label_en: "Planetary Combinations", label_ta: "கிரக சேர்க்கை பலன்கள்", icon: BookOpen, isHighlight: true },
+  { id: "deva_keralam_classics", label_en: "Stellar Degree Insights", label_ta: "நட்சத்திர பாகை பலன்கள்", icon: BookOpen, isHighlight: true },
   { id: "sexuality_intimacy", label_en: "Sexual Topics & Intimacy", label_ta: "தாம்பத்தியம் & காமம்", icon: Flame, isHighlight: true },
   { id: "longevity_death", label_en: "Longevity & Death", label_ta: "ஆயுள் & மரண அமைப்பு", icon: ShieldAlert, isHighlight: true },
   { id: "event_timing", label_en: "Event Timing (KP)", label_ta: "நிகழ்வு காலக் கணிப்பு (KP)", icon: Clock, isHighlight: true },
@@ -110,13 +110,13 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
   },
   {
     id: "bphs_domain",
-    label_en: "Parashara Hora (BPHS)",
-    label_ta: "பராசர ஹோரா சாஸ்திரம்",
+    label_en: "Foundational Classical Significations",
+    label_ta: "அடிப்படை செவ்வியல் பலன்கள்",
     icon: ScrollText,
     colorClass: "text-purple-950 bg-purple-50/90 border-purple-300 hover:bg-purple-100",
     activeColorClass: "bg-gradient-to-r from-purple-800 via-indigo-900 to-purple-950 text-white shadow-sm ring-2 ring-purple-400/50",
     subPills: [
-      { id: "all", label_en: "All BPHS Rules", label_ta: "அனைத்து பராசர விதிகள்", icon: ScrollText },
+      { id: "all", label_en: "All Classical Rules", label_ta: "அனைத்து செவ்வியல் விதிகள்", icon: ScrollText },
       { id: "bphs_bhava_lords", label_en: "12 Bhava Lords (144 Combinations)", label_ta: "144 பாவாதிபதி பலன்கள்", slug: "bphs_bhava_lords", icon: Crown },
       { id: "bphs_yogakarakas", label_en: "Yogakarakas & Lagna Lords", label_ta: "யோககாரகர்கள் & லக்னாதிபதிகள்", slug: "bphs_yogakarakas", icon: Sparkles },
       { id: "bphs_dhana_yogas", label_en: "Special Dhana Yogas", label_ta: "சிறப்பு தன யோகங்கள்", slug: "bphs_dhana_yogas", icon: Coins },
@@ -129,13 +129,13 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
   },
   {
     id: "saravali_domain",
-    label_en: "Saravali Classics",
-    label_ta: "சாராவளி நூற்பலன்கள்",
+    label_en: "Planetary Combinations",
+    label_ta: "கிரக சேர்க்கை பலன்கள்",
     icon: BookOpen,
     colorClass: "text-amber-950 bg-amber-50/90 border-amber-300 hover:bg-amber-100",
     activeColorClass: "bg-gradient-to-r from-amber-700 via-amber-800 to-amber-950 text-white shadow-sm ring-2 ring-amber-400/50",
     subPills: [
-      { id: "all", label_en: "All Saravali Rules", label_ta: "அனைத்து சாராவளி", icon: BookOpen },
+      { id: "all", label_en: "All Conjunction Rules", label_ta: "அனைத்து சேர்க்கை பலன்கள்", icon: BookOpen },
       { id: "saravali_bhava_phala", label_en: "Bhava Phala (1-12 Houses)", label_ta: "1-12 பாவக பலன்கள்", slug: "saravali_bhava_phala", icon: Crown },
       { id: "saravali_graha_yogas", label_en: "Conjunctions & Angles", label_ta: "சேர்க்கை & கேந்திர யோகங்கள்", slug: "saravali_graha_yogas", icon: Sparkles },
       { id: "saravali_raja_yogas", label_en: "Raja Yogas", label_ta: "ராஜயோகங்கள்", slug: "saravali_raja_yogas", icon: Crown },
@@ -149,13 +149,13 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
   },
   {
     id: "deva_keralam_domain",
-    label_en: "Deva Keralam (Nadi)",
-    label_ta: "தேவ கேரளம் (சந்திர கலா நாடி)",
+    label_en: "Stellar Degree Insights",
+    label_ta: "நட்சத்திர பாகை பலன்கள்",
     icon: BookOpen,
     colorClass: "text-emerald-950 bg-emerald-50/90 border-emerald-300 hover:bg-emerald-100",
     activeColorClass: "bg-gradient-to-r from-emerald-800 via-teal-900 to-emerald-950 text-white shadow-sm ring-2 ring-emerald-400/50",
     subPills: [
-      { id: "all", label_en: "All Deva Keralam Rules", label_ta: "அனைத்து தேவ கேரள விதிகள்", icon: BookOpen },
+      { id: "all", label_en: "All Stellar Degree Rules", label_ta: "அனைத்து நட்சத்திர பாகை விதிகள்", icon: BookOpen },
       { id: "deva_keralam_nadiamsas", label_en: "150 Nadiamsas", label_ta: "150 நாடியம்ச பலன்கள்", slug: "deva_keralam_nadiamsas", icon: Sparkles },
       { id: "deva_keralam_raja_yogas", label_en: "Sovereign & Koorma Yogas", label_ta: "ராஜ & கூர்ம யோகங்கள்", slug: "deva_keralam_raja_yogas", icon: Crown },
       { id: "deva_keralam_gochara_navamsa", label_en: "Navamsa Dispositor Transits", label_ta: "நவாம்ச கோசார விதிகள்", slug: "deva_keralam_gochara_navamsa", icon: Clock },
@@ -227,7 +227,7 @@ export const PREDICTION_DOMAINS: PredictionDomainConfig[] = [
   },
   {
     id: "advanced_engine",
-    label_en: "Advanced Rule Engine",
+    label_en: "Advanced Rule Analysis",
     label_ta: "விதிகள் ஆய்வு",
     icon: SlidersHorizontal,
     colorClass: "text-slate-700 bg-slate-100 border-slate-300 hover:bg-slate-200",
@@ -976,8 +976,8 @@ export function AstrologicalPredictionsSection({
             </div>
             <h3 className="font-serif text-base sm:text-lg font-bold text-[#183047]">
               {language === "ta"
-                ? "ஜோதிட விதிகள் மற்றும் பலன்கள் (கணிப்பு இயந்திரம்)"
-                : "Astrological Conditions & Prediction Engine"}
+                ? "ஜோதிட விதிகள் மற்றும் கணிப்பு முடிவுகள்"
+                : "Astrological Predictions & Significations"}
             </h3>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
               70+ {language === "ta" ? "விதிகள்" : "Classical Rules"}
@@ -1569,9 +1569,11 @@ export function AstrologicalPredictionsSection({
                         </span>
                       )}
 
-                      <span className="font-mono font-bold text-[#8190A6]">
-                        {rule.rule_id}
-                      </span>
+                      {isCustom && (
+                        <span className="font-mono font-bold text-[#8190A6]">
+                          {rule.rule_id}
+                        </span>
+                      )}
 
                       {isCustom && (
                         <span className="px-2 py-0.5 rounded font-bold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80]">
@@ -1677,15 +1679,6 @@ export function AstrologicalPredictionsSection({
 
                     {/* Source Reference & Limitations */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#D9DEE7]/70 text-[11px] text-[#8190A6]">
-                      {rule.source_reference && (
-                        <div className="flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5 text-[#B4872B] shrink-0" />
-                          <span>
-                            <strong className="text-[#52667E]">{language === "ta" ? "நூல் ஆதாரம்:" : "Classical Source:"}</strong>{" "}
-                            {rule.source_reference}
-                          </span>
-                        </div>
-                      )}
                       {(rule.limitations_en || rule.limitations_ta) && (
                         <div className="flex items-center gap-1.5 text-[#8C6D23]">
                           <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
@@ -2659,11 +2652,11 @@ export function AstrologicalPredictionsSection({
 
                 <div className="space-y-1">
                   <label className="font-bold text-[#183047] block">
-                    {language === "ta" ? "நூல் மேற்கோள் (Classical Source / Author)" : "Classical Source Reference"}
+                    {language === "ta" ? "ஜோதிடக் குறிப்பு / ஆதாரம்" : "Astrological Source / Note"}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Jataka Tatva, Brihat Jataka, BPHS, KP Reader"
+                    placeholder="e.g. Classical Jyotish Canon, Traditional Principles"
                     value={newSourceRef}
                     onChange={(e) => setNewSourceRef(e.target.value)}
                     className="w-full rounded-lg border border-[#D9DEE7] p-2 text-xs text-[#183047]"

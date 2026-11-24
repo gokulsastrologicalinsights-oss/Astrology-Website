@@ -70,7 +70,7 @@ def get_metadata() -> MetadataResponse:
         ChartCapability(
             id="shadbala_planetary_strength",
             name="Shadbala (Six-fold Planetary Strength)",
-            description="Six-fold planetary strength evaluation per BPHS Ch. 23 (Sthana, Dig, Kala, Cheshta, Naisargika, Drik).",
+            description="Six-fold planetary strength evaluation (Sthana, Dig, Kala, Cheshta, Naisargika, Drik).",
         ),
     ]
 
@@ -82,8 +82,6 @@ def get_metadata() -> MetadataResponse:
     ]
 
     return MetadataResponse(
-        engine="GAI Astronomical Calculation Engine",
-        version="1.0.0",
         verified_phases=["Phase A", "Phase B", "Phase C", "Phase D"],
         dasa_year_convention="Julian Year (365.25 Days / 120 Years = 43,830 Days)",
         kp_sub_divisions=249,

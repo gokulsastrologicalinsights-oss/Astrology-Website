@@ -386,8 +386,8 @@ export function ChartMatchedRulesSection({
 
             <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
               {language === "ta"
-                ? "பராசர ஹோரா சாஸ்திரம், பலதீபிகை, சாராவளி, கிருஷ்ணமூர்த்தி பத்ததி (KP), டாக்டர் எஸ். கிருஷ்ண குமார் மற்றும் டாக்டர் எஸ்.எஸ். சாட்டர்ஜி ஆகிய அனைத்து மூல நூல்களும் ஆய்வு செய்யப்பட்டு, இந்த குறிப்பிட்ட ஜாதகத்திற்கு நேரடியாகப் பொருந்தும் அமைப்புகள் மற்றும் அவற்றுக்கான பாரம்பரிய பரிகாரங்கள் மட்டும் இங்கே வரிசைப்படுத்தப்பட்டுள்ளன."
-                : "Cross-analyzing Parashara Hora Shastra, Phaladeepika, Saravali, Krishnamurti Paddhati (KP), Dr. S. Krishna Kumar, and Dr. S. S. Chatterjee to strictly present only the rules and classical remedies that match this native's chart."}
+                ? "செவ்வியல் ஜோதிட நெறிமுறைகள், பாவ உப-அதிபதிகள் மற்றும் உடலமைப்பியல் விதிகள் முழுமையாக ஆய்வு செய்யப்பட்டு, இந்த குறிப்பிட்ட ஜாதகத்திற்கு நேரடியாகப் பொருந்தும் அமைப்புகள் மற்றும் அவற்றுக்கான பாரம்பரிய பரிகாரங்கள் மட்டும் இங்கே வரிசைப்படுத்தப்பட்டுள்ளன."
+                : "Cross-analyzing foundational classical principles, cuspal sub-lords, and anatomical planetary significations to strictly present only the indicators and classical remedies that match this native's chart."}
             </p>
           </div>
 
@@ -478,8 +478,8 @@ export function ChartMatchedRulesSection({
               }`}
             >
               {language === "ta"
-                ? `டாக்டர் கிருஷ்ண குமார் (${matchedProgenyCurses.length + matchedKrishnaKumarYogas.length})`
-                : `Dr. Krishna Kumar (${matchedProgenyCurses.length + matchedKrishnaKumarYogas.length})`}
+                ? `உடலமைப்பியல் & நலம் (${matchedProgenyCurses.length + matchedKrishnaKumarYogas.length})`
+                : `Vitality & Progeny (${matchedProgenyCurses.length + matchedKrishnaKumarYogas.length})`}
             </button>
 
             <button
@@ -492,8 +492,8 @@ export function ChartMatchedRulesSection({
               }`}
             >
               {language === "ta"
-                ? `டாக்டர் சாட்டர்ஜி (${matchedChatterjeeGoldenRules.length + (isDeathPointTriggered ? 1 : 0) + (isDiabetesIndicated ? 1 : 0)})`
-                : `Dr. Chatterjee (${matchedChatterjeeGoldenRules.length + (isDeathPointTriggered ? 1 : 0) + (isDiabetesIndicated ? 1 : 0)})`}
+                ? `வளர்சிதை மாற்றம் (${matchedChatterjeeGoldenRules.length + (isDeathPointTriggered ? 1 : 0) + (isDiabetesIndicated ? 1 : 0)})`
+                : `Metabolic Balance (${matchedChatterjeeGoldenRules.length + (isDeathPointTriggered ? 1 : 0) + (isDiabetesIndicated ? 1 : 0)})`}
             </button>
 
             <button
@@ -506,8 +506,8 @@ export function ChartMatchedRulesSection({
               }`}
             >
               {language === "ta"
-                ? `மேக்ஸ் ஹெய்ண்டல் (${matchedHeindelRules.length})`
-                : `Max Heindel (${matchedHeindelRules.length})`}
+                ? `உறுப்பு நலம் (${matchedHeindelRules.length})`
+                : `Organ Systems (${matchedHeindelRules.length})`}
             </button>
 
             {matchedRidderPatrickRules.length > 0 && (
@@ -520,7 +520,7 @@ export function ChartMatchedRulesSection({
                     : "bg-teal-50 text-teal-900 hover:bg-teal-100"
                 }`}
               >
-                {language === "ta" ? "ரிடர்-பேட்ரிக்" : "Ridder-Patrick"} ({matchedRidderPatrickRules.length})
+                {language === "ta" ? "உயிர்வேதியியல் நலம்" : "Biochemical Harmony"} ({matchedRidderPatrickRules.length})
               </button>
             )}
 
@@ -534,7 +534,7 @@ export function ChartMatchedRulesSection({
                     : "bg-indigo-50 text-indigo-900 hover:bg-indigo-100"
                 }`}
               >
-                {language === "ta" ? "ஹென்ரிச் டாத்" : "Heinrich Däath"} ({matchedDaathRules.length})
+                {language === "ta" ? "உடலியல் உணர்திறன்" : "Physiological Susceptibility"} ({matchedDaathRules.length})
               </button>
             )}
 
@@ -840,7 +840,7 @@ export function ChartMatchedRulesSection({
               <span>
                 {language === "ta"
                   ? "டாக்டர் எஸ். கிருஷ்ண குமார் நூல் தொகுதிப் பொருத்தம் (Horoscope or Stethoscope)"
-                  : "Dr. S. Krishna Kumar Compendium Matching This Horoscope"}
+                  : "Constitutional Health & Vitality Indications"}
               </span>
             </h3>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fuchsia-100 text-fuchsia-900">
@@ -1002,7 +1002,7 @@ export function ChartMatchedRulesSection({
               <span>
                 {language === "ta"
                   ? "டாக்டர் எஸ்.எஸ். சாட்டர்ஜி அட்வான்ஸ் மருத்துவ ஜோதிடப் பொருத்தம்"
-                  : "Dr. S. S. Chatterjee Advance Medical Astrology Matching This Horoscope"}
+                  : "Metabolic & Physiological Balance Indications"}
               </span>
             </h3>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-900">
@@ -1020,8 +1020,8 @@ export function ChartMatchedRulesSection({
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="font-bold text-rose-900 text-sm">
                       {language === "ta"
-                        ? "டாக்டர் சாட்டர்ஜியின் ஆயுள் புள்ளி (Death Point) மீது சனியின் பார்வை"
-                        : "Dr. Chatterjee's Death Point Receiving Saturn's Direct Drishti"}
+                        ? "முக்கிய உணர்திறன் புள்ளி மீது சனியின் பார்வை"
+                        : "Sensitive Vitality Point Receiving Direct Saturn Aspect"}
                     </span>
                     <span className="font-mono text-2xs bg-rose-200/80 px-2 py-0.5 rounded text-rose-950">
                       {chatterjee.death_point.degree_in_sign.toFixed(2)}° {chatterjee.death_point.sign_name_en}
@@ -1030,8 +1030,8 @@ export function ChartMatchedRulesSection({
 
                   <p className="leading-relaxed">
                     {language === "ta"
-                      ? "சாட்டர்ஜி கண்டறிந்த கணித முறையின்படி, லக்னம் + சூரியன் + சந்திரன் + குரு ஆகிய நால்வரின் பாகை கூட்டுத்தொகையாக அமைந்த ஆயுள் புள்ளி மீது சனியின் நேரடிப் பார்வை படுவதால், உடல் சோர்வு மற்றும் மூட்டு/நரம்பு அழுத்தங்கள் ஏற்படலாம்."
-                      : "Dr. S. S. Chatterjee's empirical discovery: When transit or natal Saturn casts aspect on the sensitive mathematical Death Point (Asc + Sun + Moon + Jupiter), acute physical fatigue and muscular-joint vulnerabilities may be experienced."}
+                      ? "பாரம்பரிய கணித முறையின்படி அமைந்த உணர்திறன் புள்ளி மீது சனியின் நேரடிப் பார்வை படுவதால், உடல் சோர்வு மற்றும் நரம்பு அழுத்தங்கள் ஏற்படலாம்."
+                      : "Classical observation: When transit or natal Saturn casts aspect on the sensitive mathematical vitality point (Asc + Sun + Moon + Jupiter), physical fatigue and structural vulnerabilities warrant mindful care."}
                   </p>
 
                   <div className="rounded-lg bg-white border border-rose-200 p-3 space-y-1 mt-2">
@@ -1070,8 +1070,8 @@ export function ChartMatchedRulesSection({
                 </p>
                 <p className="leading-relaxed">
                   {language === "ta"
-                    ? "டாக்டர் சாட்டர்ஜியின் விரிவான மருத்துவ ஜோதிட ஆய்வின்படி, சுக்கிரன்/குரு துஸ்தானங்களில் அமைவது அல்லது 6-ஆம் அதிபதியின் சேர்க்கை கணைய இன்சுலின் சுரப்பில் ஏற்றத்தாழ்வுகளை ஏற்படுத்தலாம்."
-                    : "According to Dr. S. S. Chatterjee, affliction to Venus, Jupiter, or the 6th sign (Virgo) predisposes the native to pancreatic glycemic sensitivity."}
+                    ? "பாரம்பரிய மருத்துவ ஜோதிட நெறிமுறைகளின்படி, சுக்கிரன்/குரு துஸ்தானங்களில் அமைவது அல்லது 6-ஆம் அதிபதியின் சேர்க்கை வளர்சிதை மாற்றத்தில் சமநிலையின்மையை ஏற்படுத்தலாம்."
+                    : "According to classical principles, affliction to Venus, Jupiter, or the 6th sign (Virgo) indicates that metabolic harmony benefits from balanced nutrition and proactive lifestyle care."}
                 </p>
               </div>
 
@@ -1079,7 +1079,7 @@ export function ChartMatchedRulesSection({
               <div className="rounded-lg bg-white border border-amber-200 p-3.5 space-y-2">
                 <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
                   <Pill className="w-3.5 h-3.5 text-amber-700" />
-                  {language === "ta" ? "டாக்டர் சாட்டர்ஜியின் இயற்கை உணவுப் பரிகாரங்கள்:" : "Dr. Chatterjee's Natural Dietetic Protocol:"}
+                  {language === "ta" ? "பாரம்பரிய இயற்கை உணவு & வாழ்க்கை முறை பரிந்துரைகள்:" : "Traditional Nutritional & Supportive Guidance:"}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-2xs text-slate-700">
                   <div className="flex items-center gap-1.5">
@@ -1156,7 +1156,7 @@ export function ChartMatchedRulesSection({
               <span>
                 {language === "ta"
                   ? "மேக்ஸ் ஹெய்ண்டல்: ரோசிகுரூசியன் ஆஸ்ட்ரோ-டயக்னாசிஸ் உறுதி செய்யப்பட்ட விதிகள்"
-                  : "Max Heindel: Rosicrucian Astro-Diagnosis Active Rules in This Chart"}
+                  : "Organ Systems & Structural Health Active Indications"}
               </span>
             </h3>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-900">
@@ -1166,8 +1166,8 @@ export function ChartMatchedRulesSection({
 
           <p className="text-xs text-slate-600">
             {language === "ta"
-              ? "மேக்ஸ் ஹெய்ண்டல் & அகஸ்டா பாஸ் ஹெய்ண்டல் அருளிய 'ஆஸ்ட்ரோ-டயக்னாசிஸ்: ஹீலிங் கையேடு' நூலின்படி, ஜாதகத்தில் கிரக சேர்க்கைகள், பார்வைகள் மற்றும் கேந்திர/திரிகோண பலவீனங்களால் தூண்டப்பட்ட மருத்துவ விதிகள்:"
-              : "Diagnostic and physiological predispositions triggered according to Max Heindel & Augusta Foss Heindel's 'Astro-Diagnosis: A Guide to Healing' based on planetary afflictions, aspects, and cross reflexes:"}
+              ? "பாரம்பரிய மருத்துவ ஜோதிட நெறிமுறைகளின்படி, ஜாதகத்தில் கிரக சேர்க்கைகள், பார்வைகள் மற்றும் கேந்திர/திரிகோண பலவீனங்களால் தூண்டப்பட்ட மருத்துவ விதிகள்:"
+              : "Diagnostic and physiological predispositions evaluated according to classical astrological principles based on planetary afflictions, aspects, and anatomical reflexes:"}
           </p>
 
           <div className="grid grid-cols-1 gap-3">
@@ -1220,7 +1220,7 @@ export function ChartMatchedRulesSection({
               <span>
                 {language === "ta"
                   ? "ஜேன் ரிடர்-பேட்ரிக்: மருத்துவ ஜோதிட உறுதி செய்யப்பட்ட விதிகள்"
-                  : "Jane Ridder-Patrick: Classical & Clinical Astrological Active Rules"}
+                  : "Biochemical & Nutritional Harmony Active Indications"}
               </span>
             </h3>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-900">
@@ -1273,8 +1273,8 @@ export function ChartMatchedRulesSection({
               <BookOpen className="w-4 h-4 text-indigo-700" />
               <span>
                 {language === "ta"
-                  ? "ஹென்ரிச் டாத்: பண்டைய ஜாத்ரோமேத்தமேட்டிக்ஸ் உறுதி செய்யப்பட்ட விதிகள்"
-                  : "Heinrich Däath: Classical Jatromathematical Active Rules in Chart"}
+                  ? "உடலமைப்பியல் & உணர்திறன்: உறுதி செய்யப்பட்ட விதிகள்"
+                  : "Physiological Pathology & Physical Susceptibility Indicators"}
               </span>
             </h3>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-900">

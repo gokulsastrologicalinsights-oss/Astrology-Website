@@ -1386,7 +1386,7 @@ function HoroscopeWritingContent() {
                   {/* Astrologer Verification Stamp */}
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <div>
-                      <span className="font-bold text-[#153F6B] block">சான்றளிக்கப்பட்டது (Verified &amp; Certified):</span>
+                      <span className="font-bold text-[#153F6B] block">சரிபார்க்கப்பட்ட கணிதம் (Verified Calculation):</span>
                       <span className="text-slate-600">
                         பாரம்பரிய தர்ம சாஸ்திர முறைப்படியும் திருக்கணித வானியல் கணிதப்படியும் கணக்கிடப்பட்டுத் தயாரிக்கப்பட்டது.
                       </span>

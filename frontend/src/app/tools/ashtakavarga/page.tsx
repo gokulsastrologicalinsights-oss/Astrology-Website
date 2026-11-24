@@ -319,7 +319,7 @@ function AshtakavargaContent() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF2DE] text-[#8C6D23] border border-[#D8BD80] mb-2">
             <Grid className="w-3.5 h-3.5 text-[#B8862B]" />
-            <span>Classical Ashtakavarga System (BPHS Ch. 66–73)</span>
+            <span>Classical Ashtakavarga System</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[#102A4C]">
             {language === "ta"
@@ -329,7 +329,7 @@ function AshtakavargaContent() {
           <p className="text-xs sm:text-sm text-[#52667E] mt-1 max-w-2xl">
             {language === "ta"
               ? "337 சர்வ அஷ்டகவர்க்க பிந்து பரவல், திரிகோண/ஏகாதிபத்ய சோதனைகள், சோத்திய பிண்டம், 8-நபர் பிரஸ்தார சக்கரம் மற்றும் 3°45' கக்ஷா கோச்சார பலன்கள்."
-              : "Complete 337-bindu Sarvashtakavarga matrix, Shodhana reductions, Shodhya Pinda, 8-donor Prastarashtakavarga, and real-time 3°45' Kakshya transit timing windows per BPHS."}
+              : "Complete 337-bindu Sarvashtakavarga matrix, Shodhana reductions, Shodhya Pinda, 8-donor Prastarashtakavarga, and real-time 3°45' Kakshya transit timing windows."}
           </p>
         </div>
 
@@ -825,7 +825,7 @@ function AshtakavargaContent() {
               <div className="p-6 rounded-2xl bg-[#FAF7F0] border border-[#E8DEC8] text-xs text-[#52667E] space-y-3 shadow-2xs">
                 <div className="flex items-center gap-2 text-[#8C6D23] font-bold text-sm">
                   <BookOpen className="w-4 h-4 text-[#B8862B]" />
-                  <span>Classical Ashtakavarga Transit Rules (Brihat Parashara Hora Shastra)</span>
+                  <span>Classical Ashtakavarga Transit Rules</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1">
@@ -901,7 +901,7 @@ function AshtakavargaContent() {
                           {bav.total_bindus} / {bav.expected_total}
                         </div>
                         <div className="text-xs text-emerald-700 font-semibold">
-                          Reconciles with BPHS Invariant
+                          Reconciles with 337 Canonical Invariant
                         </div>
                       </div>
 

@@ -140,13 +140,13 @@ export function MuhurtaDashboard({ onTabChange }: MuhurtaDashboardProps) {
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
             {language === "ta"
               ? "துல்லியமான சுப முகூர்த்தம் & பஞ்சாங்கக் கணிப்பான்"
-              : "Vedic Muhurta & Panchangam Calculation Engine"}
+              : "Vedic Muhurta & Precision Timing System"}
           </h1>
 
           <p className="text-sm sm:text-base text-purple-200/90 leading-relaxed">
             {language === "ta"
-              ? "சுவிஸ் எபிமெரிஸ் கணித முறைப்படி, ராகு காலம், எமகண்டம், வர்ஜியம் தவிர்ந்து, தாரா பலம், சந்திர பலம் மற்றும் சுப லக்ன சுத்தியுடன் கூடிய உன்னத முகூர்த்தங்களை கண்டறிந்து அச்சிடலாம்."
-              : "Discover, filter, rank, save, and print auspicious time windows for all major life ceremonies using astronomical Meeus/NOAA calculations and classical Panchanga rules."}
+              ? "துல்லியமான வானியல் கணித முறைப்படி, ராகு காலம், எமகண்டம், வர்ஜியம் தவிர்ந்து, தாரா பலம், சந்திர பலம் மற்றும் சுப லக்ன சுத்தியுடன் கூடிய உன்னத முகூர்த்தங்களை கண்டறிந்து அச்சிடலாம்."
+              : "Discover, filter, rank, save, and print auspicious time windows for all major life ceremonies using high-precision planetary calculations and classical Panchanga rules."}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -232,9 +232,9 @@ export function MuhurtaDashboard({ onTabChange }: MuhurtaDashboardProps) {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-base font-extrabold text-slate-900">Swiss Ephemeris</div>
+            <div className="text-base font-extrabold text-slate-900">Sidereal Ephemeris</div>
             <div className="text-xs font-semibold text-slate-500 mt-0.5">
-              Sub-second NOAA / Meeus
+              High-Precision Astronomical Model
             </div>
           </div>
         </div>

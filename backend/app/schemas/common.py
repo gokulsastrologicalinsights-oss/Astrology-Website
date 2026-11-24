@@ -2,7 +2,7 @@
 
 from datetime import date, time
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 import re
 
 
@@ -57,7 +57,8 @@ class BirthInput(BaseModel):
 
 class CalculationMetadata(BaseModel):
     """Metadata describing the calculated astronomical context."""
-    engine: str = "XALEN 0.6.0 (Rust)"
+    model_config = ConfigDict(extra="ignore")
+
     birth_utc_iso: str
     julian_day_ut1: float
     local_timezone: Optional[str] = None

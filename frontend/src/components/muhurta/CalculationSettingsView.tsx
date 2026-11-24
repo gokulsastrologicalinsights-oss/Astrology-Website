@@ -101,12 +101,12 @@ export function CalculationSettingsView() {
               <Sliders className="w-5 h-5" />
             </span>
             <h3 className="text-xl font-extrabold text-slate-900">
-              {language === "ta" ? "கணித அமைப்புகள் & விதிமுறைகள்" : "Calculation Settings & Ephemeris"}
+              {language === "ta" ? "கணித அமைப்புகள் & வானியல் மாதிரி" : "Calculation Settings & Planetary Models"}
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-1 max-w-xl">
             {language === "ta"
-              ? "சுவிஸ் எபிமெரிஸ் கணித முறை, அயனாம்சம், இயல்புநிலை இருப்பிடம் மற்றும் முகூர்த்த விதிகளின் கண்டிப்பு நிலைகளை மாற்றியமைக்கலாம்."
+              ? "அயனாம்சம், இயல்புநிலை இருப்பிடம் மற்றும் முகூர்த்த விதிகளின் கண்டிப்பு நிலைகளை மாற்றியமைக்கலாம்."
               : "Configure default Ayanamsa convention, location coordinates, regional rule profiles, and traditional strictness thresholds."}
           </p>
         </div>
@@ -150,14 +150,14 @@ export function CalculationSettingsView() {
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
             <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Cpu className="w-4 h-4 text-amber-600" />
-              <span>{language === "ta" ? "கணித எந்திர விவரங்கள்" : "Ephemeris Engine Provenance"}</span>
+              <span>{language === "ta" ? "வானியல் கணித மாதிரி விவரங்கள்" : "Astronomical Model Specifications"}</span>
             </h4>
 
             <div className="space-y-2.5 text-xs">
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-800">Astronomical Engine</div>
-                  <div className="text-[11px] text-slate-500">Swiss Ephemeris 2.10 (Meeus Algorithms)</div>
+                  <div className="font-bold text-slate-800">Astronomical Calculation Model</div>
+                  <div className="text-[11px] text-slate-500">High-Precision Sidereal Ephemeris Model</div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">
                   Active
@@ -167,7 +167,7 @@ export function CalculationSettingsView() {
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-800">Solar Elevation & Zenith</div>
-                  <div className="text-[11px] text-slate-500">NOAA standard (90°50' atmospheric refraction)</div>
+                  <div className="text-[11px] text-slate-500">Standard Astronomical Atmospheric Refraction Model</div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
                   Sub-second
@@ -205,7 +205,7 @@ export function CalculationSettingsView() {
                 >
                   <option value={0}>Lahiri / Chitra Paksha (Government of India Standard)</option>
                   <option value={1}>Krishnamurti Paddhati (KP System)</option>
-                  <option value={2}>B.V. Raman Ayanamsa</option>
+                  <option value={2}>Raman Ayanamsa</option>
                   <option value={3}>Tropical / Sayana (Western)</option>
                 </select>
               </div>

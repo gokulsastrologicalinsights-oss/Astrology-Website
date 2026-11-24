@@ -252,19 +252,19 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Astronomical Engine */}
+        {/* Astronomical Service */}
         <div className="rounded-2xl border border-[#E2DCD5] bg-white p-5 shadow-2xs">
           <div className="flex items-center justify-between text-[#64748B]">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              {language === "ta" ? "எஃபிமெரிஸ் இயந்திரம்" : "Ephemeris Engine"}
+              {language === "ta" ? "வானியல் சேவை நிலை" : "Calculation Service"}
             </span>
             <Compass className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="mt-3 text-sm font-bold text-[#0F172A] truncate">
-            {health?.engine.name || "XALEN Ephemeris"}
+            {health?.service || "Gokul's Astrological Insights API"}
           </div>
           <div className="mt-1 text-[11px] text-[#94A3B8]">
-            v{health?.engine.version || "0.6.0"} • Deterministic
+            {health?.status === "healthy" ? "Operational • High-Precision" : "Service Active"}
           </div>
         </div>
 

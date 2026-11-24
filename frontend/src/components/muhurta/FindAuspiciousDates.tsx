@@ -341,7 +341,7 @@ export function FindAuspiciousDates() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/30 mb-3">
             <Sparkles className="w-3.5 h-3.5" />
             <span>
-              {language === "ta" ? "சுவிஸ் எபிமெரிஸ் கணிதம்" : "Swiss Ephemeris Vedic Precision"}
+              {language === "ta" ? "துல்லியமான வானியல் கணிதம்" : "High-Precision Sidereal Vedic Calculations"}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -719,7 +719,7 @@ export function FindAuspiciousDates() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>{language === "ta" ? "கணக்கிடப்படுகிறது..." : "Calculating Ephemeris..."}</span>
+                  <span>{language === "ta" ? "கணக்கிடப்படுகிறது..." : "Calculating Planetary Positions..."}</span>
                 </>
               ) : (
                 <>
@@ -1060,7 +1060,7 @@ export function FindAuspiciousDates() {
                           </span>
                         ) : (
                           <span>
-                            {language === "ta" ? "கணக்கீட்டு முறை:" : "Engine:"} Swiss Ephemeris (Meeus/NOAA)
+                            {language === "ta" ? "கணக்கீட்டு முறை:" : "Calculation Model:"} High-Precision Sidereal Model
                           </span>
                         )}
                       </div>

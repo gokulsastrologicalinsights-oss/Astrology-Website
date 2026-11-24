@@ -48,13 +48,13 @@ BODIES_CONFIG = [
 AYANAMSA_NAMES = {
     0: ("Lahiri", "Chitrapaksha Lahiri — Standard Vedic ayanamsa defined by Indian Calendar Reform Committee"),
     1: ("KP", "Krishnamurti Paddhati — Standard Krishnamurti ayanamsa for KP sub-lord astrology"),
-    2: ("Raman", "Dr. B.V. Raman ayanamsa"),
+    2: ("Raman", "Traditional Raman sidereal ayanamsa"),
     3: ("Fagan-Bradley", "Western Sidereal Fagan-Bradley system"),
     4: ("True Chitra", "Astronomically anchored to Spica (Alpha Virginis) at 180°"),
     5: ("True Revati", "Astronomically anchored to Zeta Piscium at 359° 50'"),
     6: ("Surya Siddhanta", "Traditional Surya Siddhanta mean ayanamsa"),
-    7: ("Yukteswar", "Sri Yukteswar Holy Science epoch ayanamsa"),
-    11: ("Pushya Paksha", "P.V.R. Narasimha Rao Pushya-paksha ayanamsa"),
+    7: ("Yukteswar", "Holy Science epoch sidereal ayanamsa"),
+    11: ("Pushya Paksha", "Pushya-paksha sidereal ayanamsa"),
 }
 
 HOUSE_SYSTEM_NAMES = {
@@ -321,7 +321,6 @@ def calculate_full_horoscope(
         ayanamsa_deg=round(aya_val, 6),
         house_system_id=house_system_id,
         house_system_name=hsys_name,
-        engine="XALEN 0.6.0 (Rust)",
         notes=[
             f"Calculated with {aya_name} ayanamsa ({aya_val:.4f}°) and {hsys_name} house cusps.",
             "All coordinates geocentric apparent sidereal; houses computed via true obliquity.",

@@ -1781,8 +1781,8 @@ export function analyzeMarcBoneyComposite(
     jupiterTransitDetail: jupiterDetail,
     milestones,
     marcBoneyCoreQuoteEn:
-      "Marc Boney Axiom (dedicated to K.N. Rao): 'No major life event manifests unless Vimshottari Dasa promises it, Dasa Lagna reinforces it, and transiting Saturn and Jupiter jointly sanction it.'",
+      "Astrological Principle: 'No major life event manifests in concrete reality unless the active Dasa promises it, Dasa Lagna reinforces it, and transiting Saturn and Jupiter jointly sanction it.'",
     marcBoneyCoreQuoteTa:
-      "மார்க் போனி & கே.என். ராவ் பொன்மொழி: 'விம்சForms தசா நாதன் அனுமதித்து, தசா லக்னம் உறுதி செய்து, கோச்சார சனி மற்றும் குரு பகவான்கள் ஒருமித்து அங்கீகரிக்கும் போதே எந்த ஒரு முக்கிய வாழ்க்கை நிகழ்வும் பௌதீகமாக நிகழ்கிறது.'",
+      "ஜோதிட விதிமுறை: 'விம்சோத்தரி தசா நாதன் அனுமதித்து, தசா லக்னம் உறுதி செய்து, கோச்சார சனி மற்றும் குரு பகவான்கள் ஒருமித்து அங்கீகரிக்கும் போதே எந்த ஒரு முக்கிய வாழ்க்கை நிகழ்வும் பௌதீகமாக நிகழ்கிறது.'",
   };
 }

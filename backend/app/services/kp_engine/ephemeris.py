@@ -255,7 +255,7 @@ class SwissEphemeris:
 
 
 def ephemeris_version() -> str:
-    return "XALEN 0.6.0 (Pure-Rust Precision Engine)"
+    return "GAI Astronomical Calculation Engine"
 
 
 # Alias for clean forward-looking naming while maintaining backwards compatibility

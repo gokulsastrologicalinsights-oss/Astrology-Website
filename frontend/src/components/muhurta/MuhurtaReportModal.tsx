@@ -331,13 +331,13 @@ export function MuhurtaReportModal({ isOpen, onClose, reportData }: MuhurtaRepor
             </div>
           )}
 
-          {/* 6. Scientific Provenance & Certification */}
+          {/* 6. Scientific Provenance & Verification */}
           <div className="pt-6 border-t border-[#DDE5F0] flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-[#64748B] gap-2">
             <div>
               <strong>Calculation Convention:</strong> {reportData.ayanamsa_name || "Chitrapaksha Lahiri Ayanamsa"} • True Solar Horizon
             </div>
             <div className="sm:text-right">
-              Validated by <strong>Gokul&apos;s Astrological Insights</strong> Ephemeris Engine
+              Validated by <strong>Gokul&apos;s Astrological Insights</strong> Official Calculations
             </div>
           </div>
         </div>

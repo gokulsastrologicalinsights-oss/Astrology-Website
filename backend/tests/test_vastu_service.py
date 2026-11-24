@@ -315,7 +315,7 @@ def test_astro_vastu_overlay_native_ephemeris():
     assert res.astro_overlay.lagna_sign != ""
     assert res.astro_overlay.lagna_ruler != ""
     assert len(res.astro_overlay.favorable_directions) > 0
-    assert "XALEN" in res.astro_overlay.calculation_source
+    assert "GAI" in res.astro_overlay.calculation_source
 
 
 # ------------------------------------------------------------------------------
@@ -571,7 +571,7 @@ def test_astro_vastu_verification_fixtures():
     assert "N" in res.astro_overlay.favorable_directions
     assert "W" in res.astro_overlay.favorable_directions
     assert "S" in res.astro_overlay.unfavorable_directions
-    assert res.astro_overlay.calculation_source == "Native XALEN Ephemeris Engine (Verified)"
+    assert res.astro_overlay.calculation_source == "Native GAI Ephemeris Calculation Engine (Verified)"
 
 
 def test_multi_user_report_isolation():

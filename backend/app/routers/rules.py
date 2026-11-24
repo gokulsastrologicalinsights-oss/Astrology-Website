@@ -60,8 +60,8 @@ router = APIRouter(prefix="/api/v1/rules", tags=["Rule Engine"])
 # ===========================================================================
 
 @router.get("/inventory", response_model=List[RuleAuditNote])
-def get_rule_inventory() -> List[RuleAuditNote]:
-    """List all documented astrological rules and their verification/audit status."""
+def get_rule_inventory(admin_user: Dict[str, Any] = Depends(get_admin_user)) -> List[RuleAuditNote]:
+    """List all documented astrological rules and their verification/audit status. Requires administrative authorization."""
     return list_documented_rules()
 
 
@@ -224,8 +224,8 @@ async def evaluate_rules(
                 or (target_category in ("legal_disputes", "legal") and (r.category_slug in ("legal_disputes", "other_life_themes") or r.subcategory == "legal_disputes"))
                 or (target_category in ("longevity_death", "death", "longevity") and ("LONG" in r.rule_id or "DEATH" in r.rule_id or "SURG" in r.rule_id or "SUIC" in r.rule_id or r.category_slug == "longevity_death"))
                 or (target_category in ("event_timing", "event", "events") and ("EVENT" in r.rule_id or "UNTEN" in r.rule_id or "DECID" in r.rule_id or r.subcategory == "planetary_strengths"))
-                or (target_category in ("bphs_classics", "bphs", "parashara", "parashari") and (r.category_slug.startswith("bphs_") or "BPHS" in r.rule_id))
-                or (target_category in ("saravali_classics", "saravali") and (r.category_slug.startswith("saravali_") or "SARAVALI" in r.rule_id or "SVLI" in r.rule_id))
+                or (target_category in ("classical_principles", "bphs_classics", "bphs", "parashara", "parashari") and (r.category_slug.startswith("bphs_") or "BPHS" in r.rule_id))
+                or (target_category in ("planetary_principles", "saravali_classics", "saravali") and (r.category_slug.startswith("saravali_") or "SARAVALI" in r.rule_id or "SVLI" in r.rule_id))
             )
             if not cat_matches:
                 continue

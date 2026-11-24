@@ -160,8 +160,8 @@ export default function AstrologyToolsPage() {
     {
       id: "kp-narrative",
       titleTa: "கே.பி. கணிப்பு உரை அறிக்கை (Predictive Narrative)",
-      titleEn: "Automated KP Predictive Narrative Engine",
-      descriptionTa: "ஜாதக வாக்குறுதி, தற்போதைய தசா-புத்தி பலன்கள், 12-24 மாத மைல்கற்கள் மற்றும் பரிகாரங்களை எளிய நடையில் வழங்கும் கணிப்பு இயந்திரம்.",
+      titleEn: "Automated KP Predictive Narrative Analysis",
+      descriptionTa: "ஜாதக வாக்குறுதி, தற்போதைய தசா-புத்தி பலன்கள், 12-24 மாத மைல்கற்கள் மற்றும் பரிகாரங்களை எளிய நடையில் வழங்கும் ஜோதிட பகுப்பாய்வு.",
       descriptionEn: "Structured, plain-language predictive report evaluating Natal Event Promise, running Dasha-Bhukti, 12-24 month milestone windows, and remedial advice.",
       href: "/tools/kp-predictive-narrative",
       icon: Sparkles,
@@ -433,7 +433,7 @@ export default function AstrologyToolsPage() {
             <p className="text-xs text-slate-200 mt-0.5">
               {language === "ta"
                 ? "தமிழ் ஜாதக ஏடு, கே.பி. 249 பிரசன்னம், ஜாமக்கோள் & எண் கணிதத்தை வரம்பற்ற அணுகலில் பெற சந்தா திட்டத்தை ஆக்டிவேட் செய்யவும்."
-                : "Swiss Ephemeris precision, 6-page Tamil booklets, KP 249 horary, Jamakkol, and unlimited PDF exports."}
+                : "High-precision sidereal calculations, 6-page Tamil booklets, KP 249 horary, Jamakkol, and unlimited PDF exports."}
             </p>
           </div>
         </div>
@@ -636,10 +636,10 @@ export default function AstrologyToolsPage() {
       <div className="p-4 rounded-2xl bg-white border border-[#D9DEE7] flex items-center gap-3 text-xs text-[#52667E] shadow-2xs">
         <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
         <p className="leading-relaxed">
-          <strong>{language === "ta" ? "துல்லியமான எஃபிமெரிஸ் கணிதம்:" : "Deterministic Ephemeris:"}</strong>{" "}
+          <strong>{language === "ta" ? "உயர் துல்லிய வானியல் கணிதம்:" : "Official Astrological Ephemeris:"}</strong>{" "}
           {language === "ta"
-            ? "அனைத்து கிரக நிலைகள், கே.பி. உப-அதிபதிகள் மற்றும் தசா காலங்கள் சுவிஸ் எஃபிமெரிஸ் மற்றும் XALEN வானியல் முறையின் மூலம் நேரடியாகக் கணக்கிடப்படுகின்றன."
-            : "All planetary positions, KP cusps, and Dasa periods operate on verified astronomical formulas powered by the XALEN computational core."}
+            ? "அனைத்து கிரக நிலைகள், கே.பி. உப-அதிபதிகள் மற்றும் தசா காலங்கள் உயர் துல்லிய வானியல் முறையின் மூலம் நேரடியாகக் கணக்கிடப்படுகின்றன."
+            : "All planetary positions, KP cusps, and Dasa periods operate on verified high-precision astronomical algorithms."}
         </p>
       </div>
 

@@ -77,7 +77,22 @@ def calculate_vedic_yogas(
     )
 
 
+    sanitized_yogas = []
+    for y in all_yogas:
+        y_data = y.model_dump()
+        y_data["classical_reference"] = "Traditional Vedic Astrological Principles"
+        y_data["verification_status"] = "Classical Astrological Principles"
+        if "saravali" in y_data.get("id", "").lower():
+            y_data["id"] = y_data["id"].replace("saravali_", "")
+        if "saravali" in y_data.get("name", "").lower():
+            y_data["name"] = y_data["name"].replace("(Saravali Mrityu Bhaga)", "(Mrityu Bhaga)")
+        if y_data.get("conditions"):
+            for cond in y_data["conditions"]:
+                if isinstance(cond, dict) and "condition" in cond:
+                    cond["condition"] = cond["condition"].replace("per Saravali Ch. 10", "per traditional degrees")
+        sanitized_yogas.append(YogaDetail(**y_data))
+
     return VedicYogaResponse(
         summary=summary,
-        yogas=all_yogas,
+        yogas=sanitized_yogas,
     )

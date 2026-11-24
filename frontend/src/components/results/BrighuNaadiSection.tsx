@@ -122,10 +122,10 @@ export function BrighuNaadiSection({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-amber-200/80 bg-black/30 px-3 py-1 rounded-md border border-white/10 font-mono">
-                {treatise_metadata.author}
+                {isTa ? "பாரம்பரிய நாடி அமைப்பு" : "Classical Nadi System"}
               </span>
               <span className="text-xs text-amber-300/90 bg-amber-950/60 px-3 py-1 rounded-md border border-amber-500/30 font-mono">
-                R. G. Rao System • IJCRME 2022
+                {isTa ? "கிரக இணைவு மாதிரி" : "Planetary Signification Model"}
               </span>
             </div>
           </div>
@@ -150,10 +150,10 @@ export function BrighuNaadiSection({
                 <span className="text-amber-100/80">
                   {isTa
                     ? jeeva_karaka.gender_applied === "female"
-                      ? "பெண் ஜாதகத்தில் சுக்கிரனே ஜீவ காரகர் (R.G. Rao விதி)."
+                      ? "பெண் ஜாதகத்தில் சுக்கிரனே ஜீவ காரகர் (நாடி விதி)."
                       : "ஆண் ஜாதகத்தில் குருவே ஜீவ காரகர்."
                     : jeeva_karaka.gender_applied === "female"
-                      ? "Venus acts as Jeeva Karaka in female horoscopes (R.G. Rao rule)."
+                      ? "Venus acts as Jeeva Karaka in female horoscopes (Nadi principle)."
                       : "Jupiter acts as Jeeva Karaka in male horoscopes."}
                 </span>
               </div>
@@ -173,10 +173,10 @@ export function BrighuNaadiSection({
               <Award className="w-4 h-4 text-yellow-300 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-yellow-200">
-                  {isTa ? "ஆய்வு ஆதாரம்: " : "Academic Authority: "}
+                  {isTa ? "ஆய்வு முறைமை: " : "Analytical Methodology: "}
                 </span>
                 <span className="text-amber-100/80">
-                  {bnn_research_metadata?.authors[0]} & {bnn_research_metadata?.authors[1]} (Vels University, IJCRME 2022).
+                  {isTa ? "செவ்வியல் நாடி ஜோதிட நெறிமுறைகள் மற்றும் கிரக இணைவு விதிகள்." : "Classical Nadi astrological principles and planetary conjunction rules."}
                 </span>
               </div>
             </div>
@@ -330,7 +330,7 @@ export function BrighuNaadiSection({
 
               <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
                 <span className="font-semibold text-slate-500 block mb-1">
-                  {isTa ? "பாலின ரீதியான ஜீவ காரகர் (R.G. Rao விதி):" : "Gender Principle (R. G. Rao):"}
+                  {isTa ? "பாலின ரீதியான ஜீவ காரகர் (நாடி விதி):" : "Gender Principle (Nadi System):"}
                 </span>
                 <span className="text-slate-800 dark:text-slate-200 font-medium">
                   {isTa
@@ -548,13 +548,13 @@ export function BrighuNaadiSection({
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-amber-600" />
                 {isTa
-                  ? "பிருகு நந்தி நாடி 20 அடிப்படைக் கணிப்பு விதிகள் (R. G. Rao முறை)"
-                  : "Bhrigu Nandi Nadi 20 Golden Rules (Mr. R. G. Rao System)"}
+                  ? "பிருகு நந்தி நாடி 20 அடிப்படைக் கணிப்பு விதிகள்"
+                  : "Bhrigu Nandi Nadi 20 Fundamental Predictive Principles"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {isTa
-                  ? "ஆராய்ச்சியாளர் A. ஜெகதீசன் & முனைவர் K. ஜோதிமணி (வேல்ஸ் பல்கலைக்கழகம், IJCRME 2022) ஆய்வுக் கட்டுரையின் அடிப்படையில் சரிபார்க்கப்பட்ட முடிவுகள்."
-                  : "Verified predictive rules from A. Jagadeesan & Dr. K. Jothimani, School of Vedic Astrology, VISTAS, Chennai (IJCRME 2022)."}
+                  ? "பாரம்பரிய நாடி கிரக இணைவு மற்றும் காரகத்துவ ஆய்வுகளின் அடிப்படையில் அமைக்கப்பட்ட கணிப்பு விதிகள்."
+                  : "Standardized planetary conjunction and signification models derived from classical Nadi principles."}
               </p>
             </div>
             <span className="text-xs px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 font-bold">
@@ -839,7 +839,7 @@ export function BrighuNaadiSection({
                 </h3>
               </div>
               <span className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full font-mono">
-                {pkd.metadata.author}
+                {isTa ? "நாடி பிரசன்ன முறை" : "Nadi Prashna System"}
               </span>
             </div>
             <p className="text-xs text-amber-200/90 leading-relaxed mb-4">
@@ -1191,15 +1191,15 @@ export function BrighuNaadiSection({
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-semibold border border-red-500/30 mb-2">
                   <Flame className="w-3.5 h-3.5 text-red-400" />
-                  <span>{isTa ? "பிருகு பிரசன்ன நாடி வாக்கு ரகசியம்" : "R. G. Rao's Bhrigu Prashna Nadi Oracle"}</span>
+                  <span>{isTa ? "பிருகு பிரசன்ன நாடி வாக்கு ரகசியம்" : "Classical Bhrigu Prashna Nadi Oracle"}</span>
                 </div>
                 <h3 className="text-xl font-bold tracking-tight text-amber-100">
                   {isTa ? "107 புனித பிரசன்ன கணிப்புகள் (Brighu Prashna Nadi)" : "The 107 Classical Horary Predictions"}
                 </h3>
                 <p className="text-xs text-amber-200/80 mt-1 max-w-2xl leading-relaxed">
                   {isTa
-                    ? "ஆர். ஜி. ராவ் அவர்களின் 'பிருகு பிரசன்ன நாடி' (1994) முறைப்படி ஜாதகரின் பூர்த்தியான வயதை 107 இலிருந்து கழித்து வரும் ரகசிய எண்ணைக் கொண்டு உடனடி கர்ம வினை, தீர்வு மற்றும் சுப பலன் காலம் அறியப்படுகிறது."
-                    : "Per R. G. Rao's foundational treatise (1994), subtracting the completed age from 107 unlocks the native's exact classical prophecy, past life karmic causes, deity remedies, and precision timing of relief."}
+                    ? "பாரம்பரிய பிருகு பிரசன்ன நாடி முறைப்படி ஜாதகரின் பூர்த்தியான வயதை 107 இலிருந்து கழித்து வரும் ரகசிய எண்ணைக் கொண்டு உடனடி கர்ம வினை, தீர்வு மற்றும் சுப பலன் காலம் அறியப்படுகிறது."
+                    : "According to classical Bhrigu Prashna principles, subtracting the completed age from 107 unlocks the native's classical indications, past karmic roots, traditional remedies, and precision timing of relief."}
                 </p>
               </div>
               <div className="text-right">
@@ -1207,7 +1207,7 @@ export function BrighuNaadiSection({
                   Formula: 107 - Completed Age = Remainder
                 </span>
                 <span className="text-[10px] text-slate-400 mt-1 block">
-                  Author: R. G. Rao (Sagar Publications)
+                  {isTa ? "முறை: பாரம்பரிய பிரசன்ன நாடி" : "System: Classical Horary Nadi"}
                 </span>
               </div>
             </div>

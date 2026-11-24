@@ -104,7 +104,7 @@ export function Footer() {
             </h5>
             <ul className="space-y-2 text-xs text-[#64748B]">
               <li>{language === "ta" ? "சித்ரபக்ஷ லஹரி அயனாம்சம்" : "Lahiri (Chitrapaksha) Sidereal"}</li>
-              <li>{language === "ta" ? "கே.பி பத்தாதி (249 உப அதிபதிகள்)" : "KP Krishnamurti (249 Sub-Lords)"}</li>
+              <li>{language === "ta" ? "கே.பி முறை (249 உப அதிபதிகள்)" : "KP Sub-Lord System (249 Sub-Lords)"}</li>
               <li>{language === "ta" ? "விம்சோத்தரி தசை (365.25 நாள்)" : "Vimshottari Dasa (365.25d)"}</li>
               <li>{language === "ta" ? "தென்/வடஇந்திய கட்ட அமைப்புகள்" : "South & North Indian Charts"}</li>
             </ul>
@@ -155,7 +155,7 @@ export function Footer() {
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 text-[#94A3B8]">
             <div>{t.footerCopyright} • Geocoding © OpenStreetMap contributors</div>
-            <div className="font-mono text-[10px]">Deterministic Engine • Zero AI Assumptions</div>
+            <div className="font-mono text-[10px]">Official Astrological Calculations • Mathematical Precision</div>
           </div>
         </div>
       </div>

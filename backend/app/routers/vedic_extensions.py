@@ -253,7 +253,7 @@ def evaluate_kaksha_transit_endpoint(request: KakshaTransitEvaluationRequest) ->
 
 @router.post("/shadbala", response_model=ShadbalaResponse)
 def calculate_shadbala_endpoint(request: HoroscopeRequest) -> ShadbalaResponse:
-    """Calculate classical Shadbala (Six-fold Planetary Strength) per BPHS Ch. 23."""
+    """Calculate classical Shadbala (Six-fold Planetary Strength)."""
     try:
         horoscope = calculate_full_horoscope(
             birth_date=request.birth_date,
@@ -327,7 +327,7 @@ def calculate_doshas_endpoint(request: DoshaEvaluationRequest) -> UnifiedDoshaRe
 
 @router.post("/vargas", response_model=ShodashvargaResponse, summary="Calculate 16 classical Shodashvarga charts")
 def calculate_shodashvarga_endpoint(request: HoroscopeRequest) -> ShodashvargaResponse:
-    """Calculate all 16 canonical Shodashvarga divisional charts (D1 to D60) per BPHS Ch. 6."""
+    """Calculate all 16 canonical Shodashvarga divisional charts (D1 to D60)."""
     try:
         horoscope = calculate_full_horoscope(
             birth_date=request.birth_date,
@@ -606,10 +606,10 @@ def _extract_kn_rao_chart_inputs(request: HoroscopeRequest):
 @router.post(
     "/kn-rao-research",
     response_model=KnRaoAdvancedResearchResponse,
-    summary="Comprehensive K.N. Rao Advanced Astrological Research Suite"
+    summary="Advanced Astrological Research Suite"
 )
 def calculate_kn_rao_research_endpoint(request: HoroscopeRequest) -> KnRaoAdvancedResearchResponse:
-    """Calculates all empirical research findings from 'Advanced Techniques of Astrological Predictions' (BVB / K.N. Rao)."""
+    """Calculates empirical astrological timing and career transit trajectories under classical techniques."""
     try:
         planets_data, d9_planets, lagna_sign, lagna_deg, active_md, active_ad = _extract_kn_rao_chart_inputs(request)
         return evaluate_kn_rao_advanced_research(
@@ -625,14 +625,14 @@ def calculate_kn_rao_research_endpoint(request: HoroscopeRequest) -> KnRaoAdvanc
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"K.N. Rao Advanced Research calculation failed: {str(exc)}",
+            detail=f"Advanced Research calculation failed: {str(exc)}",
         )
 
 
 @router.post(
     "/consolidated-kakshya",
     response_model=ConsolidatedKakshyaResponse,
-    summary="Dr. R.K. Aggarwal Table III Kakshya Chart + P.C. Verma 8-Part Timing"
+    summary="Consolidated Kakshya Chart and 8-Part Period Timing"
 )
 def calculate_consolidated_kakshya_endpoint(request: HoroscopeRequest) -> ConsolidatedKakshyaResponse:
     """Evaluates the 12-sign x 8-kakshya consolidated matrix and Mahadasha 8-part career trajectory."""
@@ -654,10 +654,10 @@ def calculate_consolidated_kakshya_endpoint(request: HoroscopeRequest) -> Consol
 
 @router.post(
     "/career-research",
-    summary="Empirical Career Research: Service vs Business, Tech Scoring, and Literary Talents"
+    summary="Empirical Career Analysis: Service vs Business, Tech Indicators, and Creative Talents"
 )
 def calculate_career_research_endpoint(request: HoroscopeRequest):
-    """Evaluates S.N. Kapoor, R.C. Sharma, and Col. A.K. Gour career models."""
+    """Evaluates professional specialization, technical aptitude, and business orientation models."""
     try:
         planets_data, d9_planets, lagna_sign, _, _, _ = _extract_kn_rao_chart_inputs(request)
         service_res = evaluate_service_vs_self_employment(planets_data, lagna_sign)
@@ -680,10 +680,10 @@ def calculate_career_research_endpoint(request: HoroscopeRequest):
 @router.post(
     "/marital-discord-research",
     response_model=MaritalDiscordResult,
-    summary="Shunny Nigam 4 Main + 2 Supplementary Rules Marital Discord Analysis"
+    summary="Relationship Harmony and Marital Promise Analysis"
 )
 def calculate_marital_discord_endpoint(request: HoroscopeRequest) -> MaritalDiscordResult:
-    """Evaluates Upapada 2nd house affliction, 7th lord D9 dignity, Venus afflictions, and dusthana links."""
+    """Evaluates Upapada 2nd house disposition, 7th lord D9 dignity, Venus influences, and remedial indications."""
     try:
         planets_data, d9_planets, lagna_sign, _, active_md, active_ad = _extract_kn_rao_chart_inputs(request)
         return evaluate_marital_discord(

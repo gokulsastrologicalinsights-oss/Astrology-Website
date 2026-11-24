@@ -119,7 +119,7 @@ class AshtakavargaResponse(BaseModel):
     lagna_sign_index: int = Field(..., description="Ascendant sign index (1-12)")
     validation_status: str = Field("PASSED", description="Validation status against canonical 337 invariant")
     classical_reference: str = Field(
-        "Brihat Parashara Hora Shastra, Chapters 66–73 (Ashtakavarga System)",
+        "Traditional Ashtakavarga System",
         description="Textual authority",
     )
     prastara: Optional[Dict[str, PrastaraDetail]] = Field(

@@ -155,6 +155,9 @@ class KpPdfReportGenerator:
             rightMargin=RIGHT_MARGIN,
             topMargin=TOP_MARGIN,
             bottomMargin=BOTTOM_MARGIN,
+            title="Gokul's Astrological Insights - Advanced KP Astrology Report",
+            author="Gokul's Astrological Insights",
+            creator="Gokul's Astrological Insights Proprietary Platform",
         )
 
         story: List[Any] = []
@@ -179,8 +182,8 @@ class KpPdfReportGenerator:
         story.extend(self._build_page_5_ruling_planets_dasa())
         story.append(PageBreak())
 
-        # 6. KP Life Event Matrix, Remedial Directives & Official Certification
-        story.extend(self._build_page_6_event_matrix_certification())
+        # 6. KP Life Event Matrix, Remedial Directives & Official Verification
+        story.extend(self._build_page_6_event_matrix_verification())
 
         canvasmaker = make_letterhead_canvas_class(
             language=self.lang,
@@ -221,7 +224,7 @@ class KpPdfReportGenerator:
         elements.append(Paragraph(section_sub, self.styles["SectionSubtitle"]))
 
         # Table: Particulars
-        verified_text = "✓ Verified KP Engine" if self.data.is_verified else "⚠ Unverified Coordinates"
+        verified_text = "✓ Verified Astronomical Alignment" if self.data.is_verified else "⚠ Unverified Coordinates"
         verified_color = "#15803D" if self.data.is_verified else "#B45309"
 
         if is_horary:
@@ -255,7 +258,7 @@ class KpPdfReportGenerator:
                 [
                     Paragraph("<b>Report ID / அறிக்கை எண்:</b>", self.styles["TableCell"]),
                     Paragraph(self.data.report_id, self.styles["TableCell"]),
-                    Paragraph("<b>Engine Status / நிலை:</b>", self.styles["TableCell"]),
+                    Paragraph("<b>Calibration Status / நிலை:</b>", self.styles["TableCell"]),
                     Paragraph(f"<font color='{verified_color}'><b>{verified_text}</b></font>", self.styles["TableCell"]),
                 ],
             ]
@@ -288,7 +291,7 @@ class KpPdfReportGenerator:
                 [
                     Paragraph("<b>Report ID / அறிக்கை எண்:</b>", self.styles["TableCell"]),
                     Paragraph(self.data.report_id, self.styles["TableCell"]),
-                    Paragraph("<b>Engine Status / நிலை:</b>", self.styles["TableCell"]),
+                    Paragraph("<b>Calibration Status / நிலை:</b>", self.styles["TableCell"]),
                     Paragraph(f"<font color='{verified_color}'><b>{verified_text}</b></font>", self.styles["TableCell"]),
                 ],
             ]
@@ -349,13 +352,13 @@ class KpPdfReportGenerator:
                 Paragraph("<b>KP Ayanamsa / அயனாம்சம்</b>", self.styles["TableHeader"]),
                 Paragraph("<b>House System / பாவக முறை</b>", self.styles["TableHeader"]),
                 Paragraph("<b>Julian Day (UT1) / ஜூலியன் நாள்</b>", self.styles["TableHeader"]),
-                Paragraph("<b>Ephemeris Engine / எஞ்சின்</b>", self.styles["TableHeader"]),
+                Paragraph("<b>Calculation Model / கணித மாதிரி</b>", self.styles["TableHeader"]),
             ],
             [
                 Paragraph(f"{self.data.ayanamsa_name}<br/><font color='#8B6914'><b>{ayanamsa_dms}</b></font>", self.styles["TableCellCenter"]),
                 Paragraph(f"{self.data.house_system_name}<br/>(Placidus Semi-Arc)", self.styles["TableCellCenter"]),
                 Paragraph(f"{self.data.julian_day_ut1:.4f}", self.styles["TableCellCenter"]),
-                Paragraph("Swiss Ephemeris & XALEN<br/>(Sub-arcsecond precision)", self.styles["TableCellCenter"]),
+                Paragraph("GAI Astronomical Engine<br/>(Sub-arcsecond precision)", self.styles["TableCellCenter"]),
             ],
         ]
         t_astro = Table(astro_data, colWidths=[140, 125, 125, 130])
@@ -948,9 +951,9 @@ class KpPdfReportGenerator:
         return elements
 
     # -------------------------------------------------------------------------
-    # PAGE 6: KP Life Event Matrix, Remedial Directives & Official Certification
+    # PAGE 6: KP Life Event Matrix, Remedial Directives & Official Verification
     # -------------------------------------------------------------------------
-    def _build_page_6_event_matrix_certification(self) -> List[Any]:
+    def _build_page_6_event_matrix_verification(self) -> List[Any]:
         elements: List[Any] = []
 
         elements.append(Paragraph("KP Event Signification Matrix — முக்கிய வாழ்க்கை நிகழ்வுகளின் பலன் உறுதி", self.styles["SectionTitle"]))
@@ -1020,8 +1023,8 @@ class KpPdfReportGenerator:
         elements.append(t_remedy)
         elements.append(Spacer(1, 10))
 
-        # Certification Seal & Verification Hash Block
-        elements.append(Paragraph("Official Certification & Security Seal — சான்றொப்பம் & பாதுகாப்பு முத்திரை", self.styles["SectionTitle"]))
+        # Verification Seal & Security Hash Block
+        elements.append(Paragraph("Official Verification & Security Seal — சரிபார்ப்பு & பாதுகாப்பு முத்திரை", self.styles["SectionTitle"]))
 
         raw_fingerprint = f"{self.data.report_id}:{self.data.native_name}:{self.data.birth_date}:{self.data.birth_time}:{self.data.latitude}:{self.data.longitude}"
         cert_hash = hashlib.sha256(raw_fingerprint.encode("utf-8")).hexdigest().upper()
@@ -1036,14 +1039,14 @@ class KpPdfReportGenerator:
             [
                 Paragraph("<b>SHA-256 Verification Hash:</b>", self.styles["TableCell"]),
                 Paragraph(f"<font size='6' face='Courier'><b>{cert_hash[:32]}...</b></font>", self.styles["TableCell"]),
-                Paragraph("<b>Ephemeris Calibration:</b>", self.styles["TableCell"]),
+                Paragraph("<b>Ephemeris Alignment:</b>", self.styles["TableCell"]),
                 Paragraph("Krishnamurti VP291 • Placidus Semi-Arc", self.styles["TableCell"]),
             ],
             [
-                Paragraph("<b>Astrological Certification:</b>", self.styles["TableCell"]),
+                Paragraph("<b>Astrological Verification:</b>", self.styles["TableCell"]),
                 Paragraph(
-                    "<font color='#15803D'><b>✓ Certified Deterministic KP Computation</b></font><br/>"
-                    "Gokul's Astrological Insights Astronomical Calibration Seal",
+                    "<font color='#15803D'><b>✓ Official Deterministic KP Computation</b></font><br/>"
+                    "Gokul's Astrological Insights Official Verification Seal",
                     self.styles["TableCell"],
                 ),
                 Paragraph("<b>Confidentiality:</b>", self.styles["TableCell"]),

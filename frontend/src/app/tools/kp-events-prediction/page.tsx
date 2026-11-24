@@ -756,7 +756,7 @@ function KpEventsPredictionContent() {
                       </select>
                     </div>
                     <p className="text-[10.5px] text-[#785E1A] leading-relaxed">
-                      Deep Scan bisects exact Moon &amp; Ascendant ingress/egress boundaries down to the second using XALEN ephemeris root-finding.
+                      Deep Scan bisects exact Moon &amp; Ascendant ingress/egress boundaries down to the second using precision astronomical root-finding.
                     </p>
                   </div>
                 )}
@@ -1082,7 +1082,7 @@ function KpEventsPredictionContent() {
                                 </div>
                                 <div>
                                   <span className="text-[#64748B] block">Precision:</span>
-                                  <strong className="text-emerald-700">±{w.transit_transitions.astronomical_precision_seconds}s (XALEN)</strong>
+                                  <strong className="text-emerald-700">±{w.transit_transitions.astronomical_precision_seconds}s (High-Precision Sidereal)</strong>
                                 </div>
                               </div>
                               <p className="text-[10px] text-[#785E1A] italic pt-0.5">

@@ -241,7 +241,7 @@ async def calculate_shodashvarga_endpoint(
     request: ShodashvargaRequest,
     current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
 ) -> ShodashvargaResponse:
-    """Computes all 16 classical Shodashvarga charts (D1 to D60) per BPHS Ch. 6 from ad-hoc input or saved horoscope."""
+    """Computes all 16 classical Shodashvarga charts (D1 to D60) under classical Vedic principles from ad-hoc input or saved horoscope."""
     try:
         # Case A: Saved horoscope requested
         if request.saved_horoscope_id:
@@ -366,7 +366,7 @@ def compute_live_transits_data(
     ayanamsa_id: int = 0,
     target_datetime_str: Optional[str] = None,
 ) -> LiveTransitsResponse:
-    """Core calculation engine for real-time live transits using XALEN ephemeris."""
+    """Core calculation service for real-time live transits using high-precision astronomical coordinates."""
     if target_datetime_str:
         try:
             dt = datetime.fromisoformat(target_datetime_str)
@@ -424,7 +424,7 @@ def get_live_transits_endpoint(
     ayanamsa: int = 0,
     target_datetime: Optional[str] = None,
 ) -> LiveTransitsResponse:
-    """Computes live geocentric sidereal planetary transits using validated XALEN ephemeris."""
+    """Computes live geocentric sidereal planetary transits using high-precision astronomical calculations."""
     try:
         return compute_live_transits_data(
             timezone_str=timezone,

@@ -1814,7 +1814,7 @@ function MarriageCompatibilityContent() {
                   },
                   {
                     id: "sivadasan_ravi",
-                    labelEn: "Thiravukol (Sivadasan Ravi)",
+                    labelEn: "Essential Compatibility Keys",
                     labelTa: "திருமண யோக திறவுகோல்",
                   },
                   {
@@ -2198,7 +2198,7 @@ function MarriageCompatibilityContent() {
                         <div>
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
                             <BookOpen className="w-3.5 h-3.5 text-amber-700" />
-                            {language === "ta" ? "சித்தயோகி சிவதாசன் ரவி நூல் ஆய்வு" : "Classical Tamil Treatise Synthesis"}
+                            {language === "ta" ? "பாரம்பரிய திருமண பொருத்த ஆய்வு" : "Traditional Compatibility Analysis"}
                           </div>
                           <h3 className="text-lg font-black text-[#153F6B] mt-1.5">
                             {language === "ta"
@@ -2207,8 +2207,8 @@ function MarriageCompatibilityContent() {
                           </h3>
                           <p className="text-xs text-slate-600 mt-0.5">
                             {language === "ta"
-                              ? "ஆசிரியர்: சித்தயோகி சிவதாசன் ரவி | வெளியீடு: ஸ்ரீஆரோமிரா பிரசுரம், தம்மம்பட்டி"
-                              : "Author: Siddhayogi Sivadasan Ravi | Sri Aromira Prasuram, Thammampatti"}
+                              ? "பாரம்பரிய நாடி & சாஸ்திர பொருத்த நெறிமுறைகள்"
+                              : "Traditional Marriage Harmony & Compatibility Principles"}
                           </p>
                         </div>
                         <div className="text-right sm:text-right">

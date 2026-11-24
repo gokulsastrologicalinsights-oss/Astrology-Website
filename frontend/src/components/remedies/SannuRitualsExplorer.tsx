@@ -185,24 +185,24 @@ export function SannuRitualsExplorer({
           <div className="space-y-3 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold tracking-wider uppercase">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Sannu Ahmed • Jyotish Sadhak • Seeker of Light</span>
+              <span>{isTa ? "பாரம்பரிய பரிகார நெறிமுறைகள்" : "Traditional Remedial Protocols"}</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400">
               {isTa
-                ? "வேத ஜோதிட சடங்குகள் & கர்ம பரிகாரங்கள்"
-                : "Vedic Astrology Rituals & Remedies: Powerful Protocols"}
+                ? "பாரம்பரிய ஜோதிட பரிகாரங்கள் மற்றும் கர்ம சாந்தி நெறிகள்"
+                : "Traditional Remedial Guidance & Karmic Harmonization"}
             </h2>
             <p className="text-sm text-stone-300 leading-relaxed">
               {isTa
-                ? "பிருஹத் பராசர ஹோரா சாஸ்திரம், ஜைமினி சூத்திரங்கள், சம்சுல் மஆரிப், பிகேட்ரிக்ஸ் மற்றும் தந்திர ரகசியங்களின் அடிப்படையில் கர்ம வினைகளைத் தீர்க்கும் முப்பரிமாண ஆன்மீக வழிகாட்டி."
-                : "Synthesized from Brihat Parashara Hora Shastra, Jaimini Sutras, Atharvaveda, Shams al-Ma'arif, Picatrix, and Tantric treatises. Decode the soul's threefold karma, 27 Nakshatras sacred geometry, and the soul-body-energy circuit."}
+                ? "செவ்வியல் வேத ஜோதிட நெறிமுறைகள் மற்றும் ஆன்மீக வழிமுறைகளின் அடிப்படையில் கர்ம வினைகளை சமநிலைப்படுத்தும் முழுமையான வழிகாட்டி."
+                : "Comprehensive remedial guidance based on classical astrological principles and spiritual traditions to harmonize karmic influences and vital energies."}
             </p>
             <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-amber-400/90 font-medium">
               <span className="px-2.5 py-0.5 rounded bg-amber-900/50 border border-amber-700/50">3-Fold Karma</span>
               <span className="px-2.5 py-0.5 rounded bg-amber-900/50 border border-amber-700/50">27 Sacred Yantras</span>
               <span className="px-2.5 py-0.5 rounded bg-amber-900/50 border border-amber-700/50">Vedic Beeja Mantras</span>
               <span className="px-2.5 py-0.5 rounded bg-amber-900/50 border border-amber-700/50">Gandanta & Abhukta Mula Shanti</span>
-              <span className="px-2.5 py-0.5 rounded bg-amber-900/50 border border-amber-700/50">Picatrix Safeguards</span>
+              <span className="px-2.5 py-0.5 rounded bg-amber-900/50 border border-amber-700/50">{isTa ? "சாஸ்திர பாதுகாப்பு விதிகள்" : "Protective Safeguards"}</span>
             </div>
           </div>
           <div className="shrink-0 flex flex-col items-center justify-center p-4 rounded-xl bg-amber-900/30 border border-amber-500/30 text-center min-w-[160px]">
@@ -585,7 +585,7 @@ export function SannuRitualsExplorer({
             <ShieldAlert className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <div className="font-bold text-red-300 uppercase tracking-wider text-xs">
-                The Golden Warning (Picatrix & Brihat Parashara Hora Shastra)
+                {isTa ? "முக்கிய சாஸ்திர எச்சரிக்கை (பாரம்பரிய ஜோதிட நெறிகள்)" : "The Essential Precaution (Classical Astrological Principles)"}
               </div>
               <p className="text-stone-300 leading-relaxed font-serif text-sm italic">
                 "{knowledge.propitiation_vs_empowerment.core_law}"
@@ -1070,7 +1070,7 @@ export function SannuRitualsExplorer({
               <div className="space-y-2">
                 <Sparkles className="w-10 h-10 text-amber-400 mx-auto" />
                 <h3 className="text-xl font-bold text-amber-200">
-                  {isTa ? "உங்கள் ஜாதக கர்ம ஆய்வு" : "Generate Sannu Ahmed Karma Diagnostic"}
+                  {isTa ? "உங்கள் ஜாதக கர்ம ஆய்வு" : "Generate Personal Karmic Diagnostic"}
                 </h3>
                 <p className="text-xs text-stone-400">
                   Select your Ascendant, Moon Sign, and Moon Nakshatra to evaluate your 3-fold karma, 

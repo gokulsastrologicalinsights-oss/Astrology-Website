@@ -1,33 +1,31 @@
 """Health check endpoint."""
 
+import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter
 import xalen
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Health"])
 
 
 @router.get("/health")
 def get_health():
-    """Verify backend status and XALEN astronomical engine availability."""
+    """Verify backend service availability."""
     try:
-        # Perform quick sanity check on xalen engine (JD for J2000.0)
+        # Perform server-side diagnostic check on astronomical core (JD for J2000.0)
         jd_check = xalen.julian_day(2000, 1, 1, 12.0)
-        engine_available = abs(jd_check - 2451545.0) < 1e-5
+        core_available = abs(jd_check - 2451545.0) < 1e-5
     except Exception as exc:
-        engine_available = False
-        error_msg = str(exc)
+        core_available = False
+        logger.error("Astronomical calculation core check failed: %s", exc, exc_info=True)
     else:
-        error_msg = None
+        if not core_available:
+            logger.warning("Astronomical calculation core returned unexpected Julian Day value")
 
     return {
-        "status": "healthy" if engine_available else "degraded",
+        "status": "healthy" if core_available else "degraded",
         "service": "Gokul's Astrological Insights API",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "engine": {
-            "name": "GAI Astronomical Calculation Engine",
-            "version": "1.0.0",
-            "rust_core_available": engine_available,
-            "error": error_msg,
-        },
     }
+

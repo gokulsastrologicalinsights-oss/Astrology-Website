@@ -49,9 +49,9 @@ const cinzel = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Gokul's Astrological Insights — Precision Vedic & KP Astronomical System",
+  title: "Gokul's Astrological Insights — Precision Vedic & KP Astrology Platform",
   description:
-    "Deterministic sidereal Vedic and KP Krishnamurti Paddhati astrological calculations powered by the XALEN astronomical engine.",
+    "Comprehensive Vedic and KP astrology platform providing high-precision birth charts, transits, Dasa, marriage matching, and personalized remedies.",
   keywords: [
     "Gokul's Astrological Insights",
     "Vedic Astrology",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     "Vimshottari Dasa",
     "Tamil Astrology",
     "Jathagam",
-    "XALEN ephemeris",
+    "Precision Ephemeris",
   ],
   icons: {
     icon: [
@@ -72,9 +72,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "Gokul's Astrological Insights — Precision Vedic & KP Astronomical System",
+    title: "Gokul's Astrological Insights — Precision Vedic & KP Astrology Platform",
     description:
-      "Deterministic sidereal Vedic and KP Krishnamurti Paddhati astrological calculations powered by the XALEN astronomical engine.",
+      "Comprehensive Vedic and KP astrology platform providing high-precision birth charts, transits, Dasa, marriage matching, and personalized remedies.",
     siteName: "Gokul's Astrological Insights",
     type: "website",
     images: [
@@ -88,9 +88,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gokul's Astrological Insights — Precision Vedic & KP Astronomical System",
+    title: "Gokul's Astrological Insights — Precision Vedic & KP Astrology Platform",
     description:
-      "Deterministic sidereal Vedic and KP Krishnamurti Paddhati astrological calculations powered by the XALEN astronomical engine.",
+      "Comprehensive Vedic and KP astrology platform providing high-precision birth charts, transits, Dasa, marriage matching, and personalized remedies.",
     images: ["/logo.png"],
   },
 };

@@ -110,7 +110,7 @@ export default function PrivacyPage() {
               <li>
                 {isTamil
                   ? "வேத மற்றும் கே.பி முறைப்படி லக்னம், நவாம்சம், தசா புக்தி, அஷ்டகவர்க்கம் மற்றும் ஷட்பல கணிப்புகளை துல்லியமாகக் கணக்கிட."
-                  : "Executing high-precision planetary longitudes, Placidus cusps, Vimshottari dasas, and Shadbala strengths via the native XALEN engine."}
+                  : "Executing high-precision planetary longitudes, Placidus cusps, Vimshottari dasas, and Shadbala strengths via the native GAI calculation engine."}
               </li>
               <li>
                 {isTamil

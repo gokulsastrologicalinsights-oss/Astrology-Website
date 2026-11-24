@@ -855,7 +855,7 @@ function MasterPredictionContent() {
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {spouseData
                     ? `${isTa ? "துணைவரின் திசை" : "Direction"}: ${spouseData.sivadasan_ravi_insights?.street_orientation_ta || spouseData.sivadasan_ravi_insights?.street_orientation_en || "East/North"}. ${spouseData.summary_headline_ta || spouseData.summary_headline_en || "Service/Business"}`
-                    : (isTa ? "துணைவர் திசை மற்றும் குணம் சிவநேசன் ரவி விதிகளின்படி கணிக்கப்படுகிறது." : "Spouse direction and traits derived via classical Sivadasan Ravi rules.")}
+                    : (isTa ? "துணைவர் திசை மற்றும் இயல்புகள் பாரம்பரிய ஜோதிட விதிகளின்படி கணிக்கப்படுகின்றன." : "Spouse direction and traits derived via classical astrological principles.")}
                 </p>
               </div>
 
@@ -1195,12 +1195,12 @@ function MasterPredictionContent() {
               <div>
                 <h3 className="text-lg font-bold font-serif text-[#102A4C] flex items-center gap-2">
                   <Heart className="w-5 h-5 text-rose-600" />
-                  <span>{isTa ? "திருமண கணிப்பு & களத்திர ஆய்வு (Marriage & Spouse)" : "Marriage & Spouse Prediction Engine"}</span>
+                  <span>{isTa ? "திருமண கணிப்பு & களத்திர ஆய்வு (Marriage & Spouse)" : "Marriage & Spouse Analysis System"}</span>
                 </h3>
                 <p className="text-xs text-slate-500">
                   {isTa
-                    ? "7-ம் பாவ உப-அதிபதி (CSL), விவாக பிராப்த காலம் மற்றும் சிவநேசன் ரவி விதிகளின்படி துணைவர் இயல்புகள்."
-                    : "7th Cuspal Sub-Lord analysis, marriage timing windows, and Sivadasan Ravi spouse traits."}
+                    ? "7-ம் பாவ உப-அதிபதி (CSL), விவாக பிராப்த காலம் மற்றும் பாரம்பரிய விதிகளின்படி துணைவர் இயல்புகள்."
+                    : "7th Cuspal Sub-Lord analysis, marriage timing windows, and classical spouse traits."}
                 </p>
               </div>
 

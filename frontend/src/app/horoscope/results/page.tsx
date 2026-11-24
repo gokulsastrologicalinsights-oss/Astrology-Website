@@ -270,8 +270,8 @@ function HoroscopeResultsContent() {
       console.error("Failed to calculate K.N. Rao Advanced Research:", err);
       setKnRaoError(
         language === "ta"
-          ? "கே.என். ராவ் ஆய்வுக் கணிப்பில் பிழை ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
-          : "Failed to evaluate K.N. Rao empirical research models. Please retry."
+          ? "தொழில் மற்றும் வாழ்க்கை மைல்கல் கணிப்பில் பிழை ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+          : "Failed to evaluate career and life milestone models. Please retry."
       );
     } finally {
       setIsLoadingKnRao(false);
@@ -1498,8 +1498,8 @@ function HoroscopeResultsContent() {
                   }`}
                   title={
                     language === "ta"
-                      ? "கிரகங்களின் ஸ்தான பலன்கள் (டாக்டர் பி. வி. ராமன் & சாராவளி முறை)"
-                      : "Planetary House Placement Predictions (Dr. B. V. Raman & Saravali)"
+                      ? "கிரகங்களின் ஸ்தான மற்றும் பாவக பலன்கள்"
+                      : "Planetary House Placement Predictions"
                   }
                 >
                   <Crown className="w-3.5 h-3.5 text-[#B4872B]" />
@@ -1516,12 +1516,12 @@ function HoroscopeResultsContent() {
                   }`}
                   title={
                     language === "ta"
-                      ? "திருப்பூர் ஸ்ரீ எஸ். கோபாலகிருஷ்ணன் (ஜிகே) சந்திர நாடி துல்லிய கோச்சார பலன்கள்"
-                      : "Tirupur S. Gopalakrishnan Accurate Transit Predictions"
+                      ? "நிகழ்நேர சந்திர நாடி துல்லிய கோச்சார பலன்கள்"
+                      : "Current Planetary Transit Alignments"
                   }
                 >
                   <Compass className="w-3.5 h-3.5 text-[#B4872B]" />
-                  <span>{language === "ta" ? "கோச்சார பலன்கள் (GK Transits)" : "GK Transit Predictions"}</span>
+                  <span>{language === "ta" ? "தற்போதைய கோச்சாரம்" : "Current Transits"}</span>
                 </button>
 
                 <button
@@ -1534,12 +1534,12 @@ function HoroscopeResultsContent() {
                   }`}
                   title={
                     language === "ta"
-                      ? "மார்க் போனி & கே.என். ராவ்: 8 முக்கிய வாழ்க்கை நிகழ்வுகள் கணிப்பு"
-                      : "Marc Boney & K.N. Rao Major Life Milestones Predictor"
+                      ? "முக்கிய வாழ்க்கை மைல்கற்கள் & கால கணிப்பு"
+                      : "Major Life Milestones & Planetary Timing Analysis"
                   }
                 >
                   <Award className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>{language === "ta" ? "வாழ்க்கை மைல்கற்கள் (Marc Boney)" : "Life Milestones (Marc Boney)"}</span>
+                  <span>{language === "ta" ? "வாழ்க்கை மைல்கற்கள்" : "Life Milestones"}</span>
                 </button>
 
                 <button
@@ -1610,12 +1610,12 @@ function HoroscopeResultsContent() {
                   }`}
                   title={
                     language === "ta"
-                      ? "கே.என். ராவ் ஆய்வுக் கட்டுரைகள்: சுயதொழில் vs உத்தியோகம், தொழில்நுட்ப மதிப்பீடு, உபபத தாம்பத்தியம் & மிருத்யு பாகை"
-                      : "K.N. Rao Research Canon: Service vs Business, Technical Scoring, Upapada Marital Discord & Medical Timing"
+                      ? "தொழில், அந்தஸ்து மற்றும் வாழ்க்கை வளர்ச்சி ஆய்வு மாதிரிகள்"
+                      : "Career & Financial Trajectory Models"
                   }
                 >
                   <Award className="w-3.5 h-3.5 text-orange-600" />
-                  <span>{language === "ta" ? "கே.என். ராவ் ஆய்வு" : "K.N. Rao Research"}</span>
+                  <span>{language === "ta" ? "தொழில் & வாழ்க்கை ஆய்வு" : "Career & Life Models"}</span>
                 </button>
 
                 <button
@@ -2063,7 +2063,7 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 4b-2: PLANETARY HOUSE PLACEMENT PREDICTIONS (Dr. B. V. Raman & Classical Saravali) */}
+              {/* Sub-Tab 4b-2: PLANETARY HOUSE PLACEMENT PREDICTIONS */}
               {secondaryTab === "sthana-palangal" && (
                 <div className="max-w-7xl mx-auto w-full space-y-4">
                   <PlanetaryHousePredictionsSection
@@ -2088,7 +2088,7 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 4d: MARC BONEY & K.N. RAO MAJOR LIFE MILESTONES */}
+              {/* Sub-Tab 4d: MAJOR LIFE MILESTONES & TIMING ANALYSIS */}
               {secondaryTab === "milestones" && (
                 <div className="space-y-4">
                   <MarcBoneyMilestonesCard
@@ -2189,7 +2189,7 @@ function HoroscopeResultsContent() {
                 </div>
               )}
 
-              {/* Sub-Tab 11: K.N. RAO ADVANCED RESEARCH ENGINE */}
+              {/* Sub-Tab 11: ADVANCED PREDICTION RESEARCH SUITE */}
               {secondaryTab === "kn-rao" && (
                 <div className="space-y-5">
                   {isLoadingKnRao && !knRaoData ? (
@@ -2197,8 +2197,8 @@ function HoroscopeResultsContent() {
                       <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-3" />
                       <p className="text-slate-600 dark:text-slate-400 text-sm font-medium">
                         {language === "ta"
-                          ? "கே.என். ராவ் ஆய்வுக் கட்டுரைகளின் விதிகள் கணக்கிடப்படுகின்றன..."
-                          : "Evaluating K.N. Rao empirical research models..."}
+                          ? "தொழில் மற்றும் வாழ்க்கை வளர்ச்சி மாதிரி விதிகள் கணக்கிடப்படுகின்றன..."
+                          : "Evaluating Career & Life Trajectory Models..."}
                       </p>
                     </div>
                   ) : knRaoData ? (
@@ -2212,8 +2212,8 @@ function HoroscopeResultsContent() {
                       <Award className="w-10 h-10 text-orange-500 mx-auto" />
                       <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
                         {language === "ta"
-                          ? "கே.என். ராவ் மேம்பட்ட ஆய்வு கணிப்புகள்"
-                          : "K.N. Rao Advanced Research Models"}
+                          ? "தொழில் & வாழ்க்கை வளர்ச்சி ஆய்வு மாதிரிகள்"
+                          : "Career & Life Trajectory Models"}
                       </h3>
                       <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
                         {knRaoError ||

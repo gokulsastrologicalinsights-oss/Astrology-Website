@@ -235,7 +235,7 @@ def generate_muhurta_certificate_pdf_bytes(
     # Astrologer Endorsement & Seal Footer
     sign_data = [
         [
-            Paragraph(f"<b>கணித்தவர் / Certified By:</b><br/>{req.astrologer_name or 'Gokul’s Astrological Insights'}<br/><font size='6' color='#64748B'>Vedic Astrological Authority</font>", styles["NormalSmall"]),
+            Paragraph(f"<b>கணித்தவர் / Calculated By:</b><br/>{req.astrologer_name or 'Gokul’s Astrological Insights'}<br/><font size='6' color='#64748B'>Official Astrology Report</font>", styles["NormalSmall"]),
             Paragraph(f"<b>சான்றிதழ் எண் / Ref ID:</b><br/>MUH-{ev_date.strftime('%Y%m%d')}-01<br/><font size='6' color='#64748B'>Tamper-evident verification</font>", styles["NormalSmall"]),
             Paragraph(f"<b>கையொப்பம் / Signature:</b><br/><br/>______________________", styles["NormalSmall"]),
         ]

@@ -316,7 +316,6 @@ def calculate_kp_chart(
         ayanamsa_deg=round(chart.ayanamsa, 6),
         house_system_id=house_system_id,
         house_system_name="Placidus",
-        engine="kpastro 0.3.3 (Swiss Ephemeris / Krishnamurti Paddhati)",
         notes=[
             f"KP 249 sub-division table and significators computed with KP ayanamsa ({chart.ayanamsa:.4f}°) and Placidus house cusps.",
             "Sub-sub-lord and 5-level Dasa hierarchy (Dasa, Bhukti, Andharam, Soochamam, Pranam) follow validated Vimshottari 120-year proportions.",
@@ -626,10 +625,9 @@ def calculate_horary_chart(request: HoraryKpRequest) -> HoraryKpResponse:
         ayanamsa_deg=round(ayan, 6),
         house_system_id=request.house_system,
         house_system_name="Placidus",
-        engine="kpastro 0.3.3 (Swiss Ephemeris / Krishnamurti Paddhati Horary)",
         notes=[
             f"KP Horary Number #{request.horary_number} fixed to midpoint {horary_division.mid_degree:.4f}° ({horary_division.sign} / {horary_division.star_lord} / {horary_division.sub_lord}).",
-            "12 Placidus cusps derived from Swiss Ephemeris ARMC inversion with micro-arcsecond convergence.",
+            "12 Placidus cusps derived from astronomical ARMC inversion with micro-arcsecond convergence.",
             "Planetary positions and Vimshottari Dasa calculated for exact question moment.",
             "Bhaav Nirdeshan 4-fold significator tiers (A, B, C, D) and Cuspal Sub-Lord arbiter analysis computed.",
             "Ruling planets calculated from ascendant, Moon, and weekday lords at question time.",

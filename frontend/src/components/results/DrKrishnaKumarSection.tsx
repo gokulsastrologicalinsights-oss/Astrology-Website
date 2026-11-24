@@ -107,24 +107,28 @@ export function DrKrishnaKumarSection({
                 {language === "ta" ? "மருத்துவ ஜோதிட நூல் தொகுதி" : "Medical Astrology Treatise"}
               </span>
               <span className="text-[11px] font-mono text-[#69235B] bg-purple-100 px-2 py-0.5 rounded border border-purple-200">
-                Dr. S. Krishna Kumar, ICAS Bangalore
+                {language === "ta" ? "முழுமையான மருத்துவ ஜோதிட மாதிரி" : "Holistic Medical Astrology Model"}
               </span>
             </div>
             <h2 className="font-serif text-lg sm:text-xl font-bold text-[#183047]">
-              {language === "ta" ? book_title_ta : book_title}
+              {language === "ta" ? "மருத்துவ ஜோதிட உடலமைப்பியல் மற்றும் நலவாழ்வு பகுப்பாய்வு" : "Constitutional Health & Vitality Analysis"}
             </h2>
             <p className="text-xs text-[#52667E] leading-relaxed max-w-3xl">
               {language === "ta"
-                ? "டாக்டர் எஸ். கிருஷ்ண குமார் அவர்களின் புகழ்பெற்ற ஆய்வு நூல்: ஜாதகமா அல்லது ஸ்டெதாஸ்கோப்பா? - நோய்கள் கண்டறிதல், புத்திர தோஷங்கள் மற்றும் அவற்றின் பரிகாரங்கள் (பராசர ஹோரா சாஸ்திர நெறிகள், பிரசவ தத்துவங்கள், 27 நட்சத்திர நோய்க் கூறுகள்)."
-                : "A seminal classical compendium by Dr. S. Krishna Kumar synthesizing Parashari principles, Ayurvedic Tridosha humours, 27 Nakshatras pathology, the 10 gestational months of embryology, and the 9 progeny curses with remedial measures."}
+                ? "முழுமையான ஜோதிட உடலமைப்பியல் பகுப்பாய்வு: பராசர தத்துவங்கள், ஆயுர்வேத முத்தோஷ சமநிலை, 27 நட்சத்திர நலக்கூறுகள், மாதந்தோறும் கிரக ஆளுமை மற்றும் நலவாழ்வு நெறிமுறைகள்."
+                : "Comprehensive constitutional vitality profile synthesizing classical astrological principles, Ayurvedic Tridosha balance, 27 Nakshatras health indicators, gestational planetary rulership, and remedial measures."}
             </p>
           </div>
           <div className="p-3 rounded-lg border border-purple-200 bg-white/80 shrink-0 text-right space-y-1 hidden sm:block">
             <span className="text-[10px] uppercase font-bold text-[#69235B] block">
-              {language === "ta" ? "ஆசிரியர் & பதிப்பகம்" : "Author & Publisher"}
+              {language === "ta" ? "பகுப்பாய்வு வகை" : "Analysis Scope"}
             </span>
-            <p className="text-xs font-semibold text-[#183047]">{author}</p>
-            <p className="text-[10px] text-[#8190A6]">{publisher}</p>
+            <p className="text-xs font-semibold text-[#183047]">
+              {language === "ta" ? "உடலியல் & மனோதத்துவ நலன்" : "Physiological & Vitality Well-being"}
+            </p>
+            <p className="text-[10px] text-[#8190A6]">
+              {language === "ta" ? "பாரம்பரிய ஜோதிட நெறிகள்" : "Classical Jyotish Principles"}
+            </p>
           </div>
         </div>
       </div>
@@ -420,7 +424,7 @@ export function DrKrishnaKumarSection({
                 <p className="text-xs text-emerald-800 max-w-md mx-auto">
                   {language === "ta"
                     ? "ஜாதகத்தில் தலையாய நோய்களைக் குறிக்கும் விசேஷ யோக அமைப்புகள் (சிரோ வியாதி, கண் பார்வை பாதிப்பு, இருதய கோளாறு போன்றவை) இந்த அட்டவணையில் காணப்படவில்லை."
-                    : "No acute afflictive yogas (such as Shiro Vyadhi, acute Nethra Roga, or Hridaya Roga) from Dr. Krishna Kumar's compendium are triggered in this chart."}
+                    : "No acute afflictive planetary combinations (such as severe head, eye, or cardiac vulnerabilities) are indicated in this chart."}
                 </p>
               </div>
             )}
@@ -467,8 +471,8 @@ export function DrKrishnaKumarSection({
               </div>
               <p className="text-xs text-rose-800 leading-relaxed">
                 {language === "ta"
-                  ? "பராசர ஹோரா மற்றும் கிருஷ்ண குமார் விதிகளின்படி இந்த ஜாதகத்தில் பின்வரும் சாபக் கூறுகள் சுட்டிக்காட்டப்பட்டுள்ளன. இதற்கான சாஸ்திர பரிகாரங்களை மேற்கொள்வது நற்பலனைத் தரும்."
-                  : "According to Parashara Hora & Dr. Krishna Kumar's compendium, the following progeny curses have planetary indications. Classical remedial shantis are prescribed below:"}
+                  ? "செவ்வியல் ஜோதிட விதிகளின்படி இந்த ஜாதகத்தில் பின்வரும் சவாலான கூறுகள் சுட்டிக்காட்டப்பட்டுள்ளன. இதற்கான பாரம்பரிய பரிகாரங்களை மேற்கொள்வது நற்பலனைத் தரும்."
+                  : "According to classical principles, the following planetary indications have been observed. Traditional remedial measures are outlined below:"}
               </p>
               <div className="space-y-2.5">
                 {activeCurses.map((c: ProgenyShapaDetail) => (
@@ -519,8 +523,8 @@ export function DrKrishnaKumarSection({
             </h3>
             <p className="text-xs text-[#52667E] leading-relaxed">
               {language === "ta"
-                ? "பிரகத் பராசர ஹோரா சாஸ்திரம் மற்றும் டாக்டர் எஸ். கிருஷ்ண குமார் அவர்களின் இரண்டாம் அத்தியாயத்தில் விவரிக்கப்பட்டுள்ளபடி, முற்பிறவி கர்ம வினைகளால் புத்திர பாக்கியத்தில் தடை ஏற்படும் 9 சாபங்களும் அவற்றுக்கான துல்லியமான வேத சாந்தி பரிகாரங்களும் கீழே கொடுக்கப்பட்டுள்ளன."
-                : "As enunciated in Brihat Parasara Hora Sastra and Chapter 2 of Dr. S. Krishna Kumar's treatise, the 9 karmic curses hindering progeny and their precise classical remedies are presented below:"}
+                ? "பாரம்பரிய செவ்வியல் ஜோதிட நெறிமுறைகளில் விவரிக்கப்பட்டுள்ளபடி, புத்திர பாக்கிய தடையை உண்டாக்கும் 9 கிரக அமைப்புகளும் அவற்றுக்கான துல்லியமான பாரம்பரிய சாந்தி பரிகாரங்களும் கீழே கொடுக்கப்பட்டுள்ளன."
+                : "As codified in foundational classical astrology, the 9 karmic planetary alignments influencing progeny delays and their precise traditional remedial measures are presented below:"}
             </p>
           </div>
 
@@ -637,8 +641,8 @@ export function DrKrishnaKumarSection({
             </h3>
             <p className="text-xs text-[#52667E] leading-relaxed">
               {language === "ta"
-                ? "டாக்டர் எஸ். கிருஷ்ண குமார் நூலின் மூன்றாம் அத்தியாயத்தில் கொடுக்கப்பட்டுள்ள கரு வளர்ச்சி மற்றும் மாதந்தோறும் ஆளும் கிரகங்களின் வரிசை. எந்த மாத அதிபதி பலவீனமடைகிறாரோ அந்த மாதத்தில் கருச்சிதைவு அல்லது ஆபத்து ஏற்படலாம் என எச்சரிக்கப்படுகிறது."
-                : "From Chapter 3 of Dr. S. Krishna Kumar's treatise: each gestational month is ruled by a specific Graha governing biological morphogenesis. Afflictions to the lord of that month indicate critical vulnerability windows."}
+                ? "பாரம்பரிய மருத்துவ ஜோதிட நெறிகளின்படி கரு வளர்ச்சி மற்றும் மாதந்தோறும் ஆளும் கிரகங்களின் வரிசை. எந்த மாத அதிபதி பலவீனமடைகிறாரோ அந்த மாதத்தில் கூடுதல் விழிப்புணர்வும் ஆரோக்கியக் கவனமும் பரிந்துரைக்கப்படுகிறது."
+                : "According to classical astrological principles: each gestational month is ruled by a specific planetary significator governing vital development. Afflictions to the ruler of that month highlight windows requiring enhanced care."}
             </p>
           </div>
 
@@ -697,8 +701,8 @@ export function DrKrishnaKumarSection({
             </h4>
             <p className="text-xs text-indigo-900 leading-relaxed">
               {language === "ta"
-                ? "டாக்டர் கிருஷ்ண குமார் அவர்களின் அத்தியாயம் 7-ல் உள்ளபடி: லக்னம் மற்றும் 5, 9-ம் பாவங்கள் சுபக்கிரகங்களால் பார்க்கப்பட்டால் சுகப் பிரசவம் (சுக பிரசவ யோகம்) நிகழும். செவ்வாய், கேது, அல்லது சனி லக்னம், 8-ம் பாவம் அல்லது சந்திரனைத் தொடர்பு கொண்டால் சஸ்திர பிரசவம் (அறுவை சிகிச்சை சிசேரியன்) தவிர்க்க முடியாததாகிறது."
-                : "According to Dr. Krishna Kumar's Chapter 7: Benefic aspects (Jupiter, Venus) to Lagna and 5th/9th bhavas indicate natural safe delivery (Sukha Prasava Yoga). When Mars, Ketu, or Saturn afflict the 1st or 8th house, surgical intervention (Caesarean operation) is indicated."}
+                ? "பாரம்பரிய ஜோதிட விதிகளின்படி: லக்னம் மற்றும் 5, 9-ம் பாவங்கள் சுபக்கிரகங்களால் பார்க்கப்பட்டால் சுகப் பிரசவம் (சுக பிரசவ யோகம்) சாதகமாகும். செவ்வாய், கேது, அல்லது சனி லக்னம், 8-ம் பாவம் அல்லது சந்திரனைத் தொடர்பு கொண்டால் மருத்துவக் கண்காணிப்பு தேவைப்படலாம்."
+                : "According to classical planetary principles: Benefic aspects (Jupiter, Venus) to Lagna and 5th/9th houses indicate harmonious delivery (Sukha Prasava Yoga). Afflictions from natural malefics to sensitive points indicate situations where medical intervention is warranted."}
             </p>
           </div>
         </div>
@@ -861,8 +865,8 @@ export function DrKrishnaKumarSection({
               <FileText className="w-4 h-4 text-[#69235B]" />
               <span>
                 {language === "ta"
-                  ? "டாக்டர் எஸ். கிருஷ்ண குமார் அவர்களின் 12 மருத்துவ ஆய்வு வழக்குகள்"
-                  : "Dr. S. Krishna Kumar's 12 Classical Clinical Case Histories (Chapter 7)"}
+                  ? "12 பாரம்பரிய மருத்துவ ஆய்வு வழக்குகள்"
+                  : "12 Classical Astrological Case Studies"}
               </span>
             </h3>
             <p className="text-xs text-[#52667E] leading-relaxed">

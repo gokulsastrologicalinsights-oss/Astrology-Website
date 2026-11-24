@@ -117,13 +117,13 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
               <li className="flex items-start gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <span>
-                  <strong>Create Horoscope:</strong> Precision astronomical calculation with JPL ephemeris models.
+                  <strong>Create Horoscope:</strong> Precision astronomical calculation with high-precision sidereal planetary models.
                 </span>
               </li>
               <li className="flex items-start gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <span>
-                  <strong>Saved Horoscopes:</strong> Auto-saved in Supabase with sequential serial numbers (#0001).
+                  <strong>Saved Horoscopes:</strong> Securely saved with sequential serial numbers (#0001) for instant access.
                 </span>
               </li>
               <li className="flex items-start gap-1.5">

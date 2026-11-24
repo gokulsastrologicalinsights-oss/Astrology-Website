@@ -12,7 +12,7 @@ export interface BirthInput {
 }
 
 export interface CalculationMetadata {
-  engine: string;
+  engine?: string;
   birth_utc_iso: string;
   julian_day_ut1: number;
   local_timezone?: string;
@@ -836,8 +836,8 @@ export interface ChartCapability {
 }
 
 export interface MetadataResponse {
-  engine: string;
-  version: string;
+  engine?: string;
+  version?: string;
   verified_phases: string[];
   dasa_year_convention: string;
   kp_sub_divisions: number;
@@ -859,7 +859,7 @@ export interface HealthResponse {
   status: "healthy" | "degraded";
   service: string;
   timestamp_utc: string;
-  engine: HealthEngine;
+  engine?: HealthEngine;
 }
 
 export interface ApiValidationError {

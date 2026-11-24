@@ -804,8 +804,15 @@ class TamilNumberedCanvas(canvas.Canvas):
         super().__init__(*args, **kwargs)
         self._saved_page_states = []
         self.report_title: str = "Gokul's Astrological Insights"
-        self.footer_left: str = "Official Certified Astrological Document"
+        self.footer_left: str = "Official Astrology Report • Gokul's Astrological Insights"
         self.language: str = "en"
+        try:
+            self.setTitle("Official Astrology Report - Gokul's Astrological Insights")
+            self.setAuthor("Gokul's Astrological Insights")
+            self.setCreator("Gokul's Astrological Insights")
+            self.setSubject("Official Astrological Calculations and Analysis")
+        except Exception:
+            pass
 
     def showPage(self):
         self._saved_page_states.append(dict(self.__dict__))
