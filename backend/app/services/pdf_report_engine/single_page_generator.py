@@ -527,15 +527,10 @@ class SinglePageHoroscopePdfGenerator:
     def generate(self) -> bytes:
         """Assembles the single-page document and returns PDF bytes.
 
-        Uses Playwright (Chromium) for 100% pixel-perfect OpenType Indic text shaping
-        matching the Gokul's Astrological Insights layout, falling back to ReportLab
-        if Playwright is unavailable.
+        Uses the centralized ReportLab official letterhead canvas engine for calibrated
+        A4 branding, HarfBuzz Tamil typography shaping, and sub-second generation.
         """
-        try:
-            return self.generate_playwright()
-        except Exception as e:
-            logger.warning("Playwright single-page PDF generation failed, falling back to ReportLab: %s", e)
-            return self.generate_reportlab()
+        return self.generate_reportlab()
 
     def generate_reportlab(self) -> bytes:
         """Assembles the single-page document using ReportLab and official letterhead canvas."""
@@ -1187,7 +1182,8 @@ class SinglePageHoroscopePdfGenerator:
         """Builds distinguished report heading inside the safe area below the official letterhead."""
         title_text = "வேத ஜோதிட ஜாதகக் குறிப்பு (Vedic Horoscope Chart)"
         story.append(Paragraph(title_text, self.styles["BrandHeader"]))
-        story.append(HRFlowable(width="100%", thickness=0.75, color=BORDER_GOLD, spaceBefore=2, spaceAfter=4))
+        story.append(Paragraph("<font size='7' color='#475569'>Gokul's Astrological Insights</font>", self.styles["TableCellCenter"]))
+        story.append(HRFlowable(width="100%", thickness=0.75, color=BORDER_GOLD, spaceBefore=1, spaceAfter=3))
 
     def _build_personal_and_panchang_table(self, story: List[Any], data: Dict[str, Any]):
         """Builds the 2-column Native & Panchang details block."""
