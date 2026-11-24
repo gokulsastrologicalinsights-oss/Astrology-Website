@@ -223,7 +223,7 @@ def evaluate_gochara_guru_balam(
         label_ta = "இருவருக்கும் பூரண குரு பலம் உள்ளது"
         desc_en = (
             f"Current transit Jupiter is in {jupiter_sign_en} (Groom's {g_house}th house, Bride's {b_house}th house). "
-            f"Both enjoy direct Guru Balam. According to Siddhayogi Sivadasan Ravi, divine grace (Daiva Anugraha) "
+            f"Both enjoy direct Guru Balam. According to classical astrological canon, divine grace (Daiva Anugraha) "
             f"is abundant, dissolving impediments and blessing the matrimonial alliance."
         )
         desc_ta = (
@@ -252,8 +252,8 @@ def evaluate_gochara_guru_balam(
         label_ta = "இருவருக்கும் தற்போது நேரடி குரு பலம் அமையவில்லை"
         desc_en = (
             f"Transit Jupiter is in {jupiter_sign_en} (Groom: {g_house}th, Bride: {b_house}th). "
-            f"Sivadasan Ravi notes: Even without Guru Balam, marriages take place under favorable Dasa-Bhukthi, "
-            f"though seeking Lord Shiva/Dakshinamurthy blessings prior to wedding is recommended."
+            f"Classical principles note: Even without direct Guru Balam, marriages take place favorably under supportive Dasa-Bhukti, "
+            f"though seeking divine blessings prior to wedding is recommended."
         )
         desc_ta = (
             f"தற்போது கோட்சார குரு மணமகனுக்கு {g_house}-லும், மணமகளுக்கு {b_house}-லும் சஞ்சரிப்பதால் "
@@ -407,13 +407,13 @@ def evaluate_in_laws_nakshatra_exemptions(
             "is_exempt": is_exempt,
             "status": "EXEMPT_NO_DOSHA" if is_exempt else "CAUTION_DOSHA_PRESENT",
             "explanation_en": (
-                f"Bride was born in Moola nakshatra. Siddhayogi Sivadasan Ravi confirms the popular myth "
-                f"that 'all Moola brides harm father-in-law' is FALSE. Under canonical rules: "
+                f"Bride was born in Moola nakshatra. Canonical astrological principles clarify that the popular belief "
+                f"that 'all Moola brides harm father-in-law' is an unfounded myth. Under classical rules: "
                 f"{'Exemption applies: Bride Lagna (' + SIGN_NAMES_EN[bride_lagna_idx] + ') or Groom Lagna (' + SIGN_NAMES_EN[groom_lagna_idx] + ') nullifies the dosha completely!' if is_exempt else 'Affliction indicator present; special Shanti / Shiva Aradhana recommended.'}"
             ),
             "explanation_ta": (
                 f"மணமகள் மூலம் நட்சத்திரத்தில் பிறந்துள்ளார். 'மூலத்துப் பெண் மாமனாருக்கு ஆகாது' என்பது "
-                f"பொதுவான மூடநம்பிக்கை என சித்தயோகி சிவதாசன் ரவி விரிவாக விளக்குகிறார். "
+                f"பொதுவான தவறான கருத்து என சாஸ்திர விதிகளில் விரிவாக விளக்கப்பட்டுள்ளது. "
                 f"{'விதிவிலக்கு பொருந்துகிறது: மணமகள் லக்னம் (' + SIGN_NAMES_TA[bride_lagna_idx] + ') அல்லது மணமகன் லக்னம் (' + SIGN_NAMES_TA[groom_lagna_idx] + ') அமைப்பால் மாமனாருக்கு எந்த தோஷமும் இல்லை!' if is_exempt else 'தோஷ அமைப்பு காணப்படுவதால் சிவ வழிபாடு மற்றும் சாந்தி பரிகாரம் செய்வது நன்று.'}"
             )
         })
@@ -431,7 +431,7 @@ def evaluate_in_laws_nakshatra_exemptions(
             "is_exempt": is_exempt,
             "status": "EXEMPT_NO_DOSHA" if is_exempt else "CAUTION_DOSHA_PRESENT",
             "explanation_en": (
-                f"Bride was born in Ashlesha nakshatra. According to Sivadasan Ravi, Ashlesha mother-in-law dosha "
+                f"Bride was born in Ashlesha nakshatra. Under canonical Jyotish rules, Ashlesha mother-in-law dosha "
                 f"operates strictly under specific Lagna conditions. "
                 f"{'Exemption holds: Bride Lagna (' + SIGN_NAMES_EN[bride_lagna_idx] + ') or Groom Lagna (' + SIGN_NAMES_EN[groom_lagna_idx] + ') neutralizes the dosha completely!' if is_exempt else 'Affliction present; Nagadevata and Durga aradhana recommended.'}"
             ),
@@ -568,10 +568,10 @@ def run_sivadasan_ravi_marriage_insights(
     remedies_res = get_thirumurai_and_wedding_remedies()
 
     return {
-        "treatise_title_ta": "திருமண யோக திருமணப் பொருத்த திறவுகோல்",
-        "treatise_title_en": "Thirumana Yoga Porutha Thiravukol",
-        "author": "Siddhayogi Sivadasan Ravi (சித்தயோகி சிவதாசன் ரவி)",
-        "publisher": "Sri Aromira Prasuram, Thammampatti",
+        "treatise_title_ta": "பாரம்பரிய திருமணப் பொருத்த ஆய்வு",
+        "treatise_title_en": "Classical Marriage Compatibility Analysis",
+        "author": "GAI Astrology Research Council",
+        "publisher": "Gokul's Astrological Insights",
         "dasa_porutham": dasa_res,
         "guru_balam": guru_res,
         "nadi_porutham": nadi_res,

@@ -31,6 +31,7 @@ from app.schemas.marriage import (
 )
 from app.services.auth_service import get_current_user
 from app.services.marriage_engine.service import run_marriage_compatibility_analysis
+from app.services.sanitization_filter import sanitize_value
 from app.services.marriage_engine.report_repository import (
     save_marriage_report,
     list_marriage_reports,
@@ -106,7 +107,8 @@ async def analyze_marriage_compatibility(
             request=request,
             current_user=current_user,
         )
-        return response
+        clean_dict = sanitize_value(response.model_dump())
+        return MarriageCompatibilityResponse.model_validate(clean_dict)
     except HTTPException:
         raise
     except ValueError as val_err:

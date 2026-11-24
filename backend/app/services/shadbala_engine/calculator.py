@@ -194,12 +194,12 @@ def calculate_shadbala(
     weakest = details[-1].planet if details else "None"
 
     notes = [
-        "Calculated according to Brihat Parasara Hora Shastra (BPHS), Chapter 27.",
+        "Calculated according to high-precision classical Vedic planetary strength standards.",
         "Rahu and Ketu are chaya grahas (shadow planets) and excluded per classical canon.",
         "Saptavargaja Bala evaluates all 7 classical divisions (D1, D2, D3, D7, D9, D12, D30) using Panchadha Maitri compound dignities.",
         "Dig Bala uses continuous angular distance from Nirbala cardinal cusps divided by 3.",
-        "Ayana Bala evaluates continuous declination-based solstice strength per BPHS.",
-        "Drik Bala employs BPHS continuous piecewise 30°-300° Drishti and Vishesha Drishti divided by 4.",
+        "Ayana Bala evaluates continuous declination-based solstice strength.",
+        "Drik Bala employs continuous piecewise 30°-300° Drishti and Vishesha Drishti divided by 4.",
     ]
 
     return ShadbalaResponse(

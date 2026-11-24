@@ -10,6 +10,7 @@ Clean-room, Shastra-validated endpoints for:
 """
 
 import uuid
+import re
 import logging
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Depends, Security, status
@@ -112,6 +113,17 @@ async def get_problem_taxonomy(
 # 2. Remedy Catalog Endpoints
 # ------------------------------------------------------------------------------
 
+from app.services.sanitization_filter import sanitize_value
+
+
+def _sanitize_remedy_dict(item: Dict[str, Any]) -> Dict[str, Any]:
+    """Sanitizes customer-visible remedy fields to eliminate raw classical treatise citations and author names."""
+    if not isinstance(item, dict):
+        return item
+    d = sanitize_value(dict(item))
+    return d
+
+
 @router.get("/catalog", response_model=RemedyListResponse, summary="Get Filtered Remedy Catalog")
 async def get_remedy_catalog(
     graha: Optional[str] = Query(None, description="Filter by Navagraha: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, ketu, universal"),
@@ -124,9 +136,10 @@ async def get_remedy_catalog(
         remedy_type=remedy_type,
         problem_slug=problem_slug,
     )
+    sanitized_items = [_sanitize_remedy_dict(item) for item in items]
     return RemedyListResponse(
-        total_count=len(items),
-        items=[RemedyItem(**item) for item in items],
+        total_count=len(sanitized_items),
+        items=[RemedyItem(**item) for item in sanitized_items],
     )
 
 
@@ -139,7 +152,7 @@ async def get_remedy_detail(code: str) -> RemedyItem:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Remedy with code '{code}' not found.",
         )
-    return RemedyItem(**remedy)
+    return RemedyItem(**_sanitize_remedy_dict(remedy))
 
 
 # ------------------------------------------------------------------------------
