@@ -91,7 +91,7 @@ export function BirthdayReminderModal({
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      const cacheStorageKey = `birthday_cache_${wishLang}`;
+      const cacheStorageKey = `birthday_cache_v2_${wishLang}`;
       const stored = sessionStorage.getItem(cacheStorageKey);
       if (stored) {
         try {
