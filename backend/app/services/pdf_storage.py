@@ -18,9 +18,15 @@ from app.services.auth_service import get_supabase_client
 logger = logging.getLogger("gai.pdf_storage")
 
 # In-memory cache: cache_key -> (timestamp, pdf_bytes, filename)
-_PDF_CACHE_TTL_SECONDS = 900.0  # 15 minutes TTL
-_MAX_PDF_CACHE_ENTRIES = 50     # Max 50 rendered PDFs (~25-50 MB memory cap)
+_PDF_CACHE_TTL_SECONDS = 300.0   # 5 minutes TTL (bounded for 512 MB memory constraint)
+_MAX_PDF_CACHE_ENTRIES = 10      # Max 10 rendered PDFs (strictly limits cache RAM to ~15-20 MB)
+_MAX_PDF_CACHE_TOTAL_BYTES = 20 * 1024 * 1024  # 20 MB hard ceiling on cumulative cached bytes
 _PDF_MEMORY_CACHE: Dict[str, Tuple[float, bytes, str]] = {}
+
+
+def _get_current_cache_bytes() -> int:
+    """Computes total bytes held in in-memory PDF cache."""
+    return sum(len(entry[1]) for entry in _PDF_MEMORY_CACHE.values())
 
 
 def generate_pdf_cache_key(
@@ -50,16 +56,32 @@ def get_cached_pdf(cache_key: str) -> Optional[Tuple[bytes, str]]:
 
 
 def store_cached_pdf(cache_key: str, pdf_bytes: bytes, filename: str) -> None:
-    """Stores generated PDF bytes in the in-memory cache with eviction guard."""
-    if not settings.enable_pdf_storage_cache:
+    """Stores generated PDF bytes in the in-memory cache with eviction and byte-limit guard."""
+    if not settings.enable_pdf_storage_cache or not pdf_bytes:
         return
+
+    # Do not cache individual oversized PDFs (> 10 MB) in RAM
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        logger.debug(f"[PDF Cache] Skipping in-memory cache for oversized PDF ({len(pdf_bytes)} bytes)")
+        return
+
     now = time.time()
-    if len(_PDF_MEMORY_CACHE) >= _MAX_PDF_CACHE_ENTRIES:
-        # Evict oldest entry
+
+    # 1. Purge expired entries first
+    expired_keys = [k for k, v in _PDF_MEMORY_CACHE.items() if now - v[0] >= _PDF_CACHE_TTL_SECONDS]
+    for k in expired_keys:
+        del _PDF_MEMORY_CACHE[k]
+
+    # 2. Evict oldest until entry count and total byte size are within limits
+    while _PDF_MEMORY_CACHE and (
+        len(_PDF_MEMORY_CACHE) >= _MAX_PDF_CACHE_ENTRIES
+        or (_get_current_cache_bytes() + len(pdf_bytes)) > _MAX_PDF_CACHE_TOTAL_BYTES
+    ):
         oldest_key = min(_PDF_MEMORY_CACHE.keys(), key=lambda k: _PDF_MEMORY_CACHE[k][0])
         del _PDF_MEMORY_CACHE[oldest_key]
+
     _PDF_MEMORY_CACHE[cache_key] = (now, pdf_bytes, filename)
-    logger.debug(f"[PDF Cache] STORED for key: {cache_key} ({len(pdf_bytes)} bytes)")
+    logger.debug(f"[PDF Cache] STORED for key: {cache_key} ({len(pdf_bytes)} bytes, total cached: {_get_current_cache_bytes()} bytes)")
 
 
 def clear_pdf_cache() -> None:

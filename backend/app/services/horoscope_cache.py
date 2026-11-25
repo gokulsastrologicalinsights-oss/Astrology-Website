@@ -12,8 +12,8 @@ from typing import Dict, Any, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 # Cache configuration
-_HOROSCOPE_CACHE_TTL_SECONDS = 300.0  # 60s TTL to cover multi-tab loads and sub-engine evaluations
-_MAX_CACHE_ENTRIES = 300
+_HOROSCOPE_CACHE_TTL_SECONDS = 300.0  # 5 minutes TTL to cover multi-tab loads and sub-engine evaluations
+_MAX_CACHE_ENTRIES = 50               # Bounded to 50 entries (~15-25 MB max RAM)
 
 # Cache storage: (clean_id, user_id, is_admin, include_calculation_result) -> (timestamp, record_dict)
 _CACHE: Dict[Tuple[str, str, bool, bool], Tuple[float, Dict[str, Any]]] = {}
@@ -84,9 +84,13 @@ def get_cached_saved_horoscope(
         if not is_admin and str(row.get("user_id")) != str(user_id):
             return None
 
-        # 4. Store in cache
-        if len(_CACHE) >= _MAX_CACHE_ENTRIES:
-            # Simple eviction of oldest item
+        # 4. Store in cache with eviction guard
+        # Purge expired entries
+        expired_keys = [k for k, v in _CACHE.items() if now - v[0] >= _HOROSCOPE_CACHE_TTL_SECONDS]
+        for k in expired_keys:
+            del _CACHE[k]
+
+        while len(_CACHE) >= _MAX_CACHE_ENTRIES:
             oldest_key = min(_CACHE.keys(), key=lambda k: _CACHE[k][0])
             del _CACHE[oldest_key]
 

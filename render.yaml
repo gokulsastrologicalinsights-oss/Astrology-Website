@@ -15,6 +15,10 @@ services:
         value: "1"
       - key: DEBUG
         value: "false"
+      - key: PREFER_REPORTLAB_PDF
+        value: "true"
+      - key: MALLOC_TRIM_THRESHOLD_
+        value: "131072"
       - key: ALLOWED_ORIGIN_REGEX
         value: "^https://.*\\.vercel\\.app$"
       - key: ALLOWED_ORIGINS

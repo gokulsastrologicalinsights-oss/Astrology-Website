@@ -52,6 +52,14 @@ from app.routers import (
 async def lifespan(app: FastAPI):
     """Application lifespan context for startup and shutdown hooks."""
     import os
+
+    # 1. Initialize file security and Ghostscript CVE-2026-125396 defense hardening
+    try:
+        from app.services.file_security import init_file_security
+        init_file_security()
+    except Exception as sec_exc:
+        logger.warning(f"File security initialization warning: {sec_exc}")
+
     if os.getenv("ADMIN_USERNAME") and os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
         try:
             from app.bootstrap_admin import bootstrap_admin

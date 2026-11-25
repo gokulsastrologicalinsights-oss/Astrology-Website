@@ -21,6 +21,7 @@ fonts and falls back to the matching ReportLab dossier builder when Chromium is 
 
 from __future__ import annotations
 
+import os
 import html
 import logging
 from typing import Any, Dict, List
@@ -979,6 +980,15 @@ def generate_html_report(data: Dict[str, Any], lang: str = "en") -> str:
 def generate_marriage_compatibility_pdf_bytes(data: Dict[str, Any], language: str = "en") -> bytes:
     """Compiles the Comprehensive Royal Gold Marriage Compatibility PDF via Playwright or ReportLab."""
     lang = "ta" if str(language).lower() in ("ta", "tamil") else "en"
+
+    # Memory optimization: if PREFER_REPORTLAB_PDF is enabled (e.g. 512 MB Render containers),
+    # directly render via pure Python ReportLab without spawning Chromium processes.
+    if os.getenv("PREFER_REPORTLAB_PDF", "false").lower() in ("true", "1", "yes"):
+        from app.services.pdf_report_engine.marriage_compatibility_generator_rl import (
+            generate_marriage_compatibility_pdf_bytes_rl,
+        )
+        return generate_marriage_compatibility_pdf_bytes_rl(data, language=language)
+
     html_doc = generate_html_report(data, lang=lang)
 
     header_tpl = (

@@ -601,8 +601,13 @@ def generate_single_poster(
         "--disable-gpu",
         "--disable-software-rasterizer",
         "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-sync",
         "--no-first-run",
         "--no-default-browser-check",
+        "--renderer-process-limit=1",
+        "--js-flags=--max-old-space-size=128",
         f"--user-data-dir={user_data}",
         f"--screenshot={png_path}",
         "--window-size=1080,1080",
@@ -610,10 +615,18 @@ def generate_single_poster(
         file_url,
     ]
 
-    res = subprocess.run(cmd, capture_output=True, timeout=45)
-    if not os.path.isfile(png_path):
-        err_msg = res.stderr.decode("utf-8", errors="ignore") if res.stderr else "Unknown browser error"
-        raise RuntimeError(f"Failed to render poster for Rashi {prediction.rashi_id}: {err_msg}")
+    try:
+        res = subprocess.run(cmd, capture_output=True, timeout=45)
+        if not os.path.isfile(png_path):
+            err_msg = res.stderr.decode("utf-8", errors="ignore") if res.stderr else "Unknown browser error"
+            raise RuntimeError(f"Failed to render poster for Rashi {prediction.rashi_id}: {err_msg}")
+    finally:
+        # Clean up temporary HTML file to preserve disk space and memory
+        if os.path.isfile(html_path):
+            try:
+                os.remove(html_path)
+            except OSError:
+                pass
 
     return png_path
 
@@ -632,9 +645,13 @@ def generate_all_12_posters(
     os.makedirs(base_dir, exist_ok=True)
 
     results = []
-    for prediction in horoscope_data.predictions:
-        png_file = generate_single_poster(horoscope_data, prediction, base_dir)
-        results.append((prediction.rashi_id, prediction.rashi_name_ta, prediction.rashi_name_en, png_file))
-        logger.info(f"Rendered poster for {prediction.rashi_name_ta} ({prediction.rashi_name_en}) -> {png_file}")
+    try:
+        for prediction in horoscope_data.predictions:
+            png_file = generate_single_poster(horoscope_data, prediction, base_dir)
+            results.append((prediction.rashi_id, prediction.rashi_name_ta, prediction.rashi_name_en, png_file))
+            logger.info(f"Rendered poster for {prediction.rashi_name_ta} ({prediction.rashi_name_en}) -> {png_file}")
+    finally:
+        import gc
+        gc.collect()
 
     return results

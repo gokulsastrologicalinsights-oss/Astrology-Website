@@ -12,11 +12,17 @@ import shutil
 import logging
 import tempfile
 import subprocess
+import threading
+import gc
 import concurrent.futures
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
 logger = logging.getLogger("gai.pdf.browser_renderer")
+
+# Global semaphore: strictly permits only ONE active Chromium rendering process
+# at a time across the entire backend to prevent RAM multiplication in 512MB containers.
+_BROWSER_SEMAPHORE = threading.Semaphore(1)
 
 BROWSER_CANDIDATE_PATHS = [
     # Linux / Docker / Cloud (Debian / Ubuntu / Render / AWS)
@@ -37,6 +43,7 @@ BROWSER_CANDIDATE_PATHS = [
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
 ]
 
+# Production memory-constrained Chromium launch arguments (critical for 512 MB Render containers)
 CHROMIUM_LAUNCH_ARGS = [
     "--no-sandbox",
     "--disable-setuid-sandbox",
@@ -44,6 +51,15 @@ CHROMIUM_LAUNCH_ARGS = [
     "--disable-gpu",
     "--disable-software-rasterizer",
     "--font-render-hinting=none",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-default-apps",
+    "--disable-sync",
+    "--mute-audio",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--renderer-process-limit=1",
+    "--js-flags=--max-old-space-size=128",
 ]
 
 
@@ -198,10 +214,7 @@ def render_html_to_pdf_with_cli(
         cmd = [
             browser_bin,
             "--headless=new",
-            "--disable-gpu",
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
+            *CHROMIUM_LAUNCH_ARGS,
             "--no-pdf-header-footer",
             f"--print-to-pdf={pdf_path}",
             file_url,
@@ -244,23 +257,28 @@ def render_html_to_pdf(
 
     1. Tries Playwright first with container-safe launch options and system executable detection.
     2. Falls back to direct headless Chromium CLI if Playwright encounters any issue.
-    3. Raises RuntimeError only if both browser mechanisms fail.
+    3. Concurrency-gated via _BROWSER_SEMAPHORE to prevent multiple concurrent browser processes.
+    4. Automatically collects garbage after rendering to return memory to OS.
     """
-    try:
-        return render_html_to_pdf_with_playwright(
-            html_content=html_content,
-            pdf_format=pdf_format,
-            print_background=print_background,
-            margin=margin,
-            prefer_css_page_size=prefer_css_page_size,
-            display_header_footer=display_header_footer,
-            header_template=header_template,
-            footer_template=footer_template,
-            timeout=timeout,
-        )
-    except Exception as pw_err:
-        logger.warning(
-            "Playwright PDF rendering failed (%s). Attempting direct headless Chromium CLI fallback...",
-            pw_err,
-        )
-        return render_html_to_pdf_with_cli(html_content=html_content, timeout=timeout)
+    with _BROWSER_SEMAPHORE:
+        try:
+            try:
+                return render_html_to_pdf_with_playwright(
+                    html_content=html_content,
+                    pdf_format=pdf_format,
+                    print_background=print_background,
+                    margin=margin,
+                    prefer_css_page_size=prefer_css_page_size,
+                    display_header_footer=display_header_footer,
+                    header_template=header_template,
+                    footer_template=footer_template,
+                    timeout=timeout,
+                )
+            except Exception as pw_err:
+                logger.warning(
+                    "Playwright PDF rendering failed (%s). Attempting direct headless Chromium CLI fallback...",
+                    pw_err,
+                )
+                return render_html_to_pdf_with_cli(html_content=html_content, timeout=timeout)
+        finally:
+            gc.collect()
