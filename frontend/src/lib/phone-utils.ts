@@ -194,42 +194,38 @@ export function getBirthdayWishMessageText(
   const safeName = trimmedName || (lang === "ta" ? "அன்பரே" : "Valued Client");
 
   return lang === "ta"
-    ? `வணக்கம் ${safeName} ❤️
+    ? `வணக்கம் ${safeName}
 
-உங்களுக்கு எங்களின் இனிய பிறந்தநாள் நல்வாழ்த்துகள்! 🎉🎂
+இனிய பிறந்தநாள் வாழ்த்துகள்! 🎂💐
 
-இந்தப் புதிய ஆண்டு உங்கள் வாழ்வில் **நல்ல ஆரோக்கியம், மனநிம்மதி, மகிழ்ச்சி, செல்வச் செழிப்பு** என அனைத்து நலன்களையும் அள்ளித் தரட்டும். இறைவனின் திருவருளால் உங்கள் எண்ணங்கள் அனைத்தும் ஈடேறி, வாழ்க்கை முழுவதும் வெற்றியும் சந்தோஷமும் நிறைந்திருக்க மனதார வாழ்த்துகிறோம்! 🙏✨
+உங்கள் வாழ்க்கை என்றும் அன்பு, மகிழ்ச்சி, நல்ல ஆரோக்கியம், மனநிம்மதி நிறைந்து இருக்கட்டும். நீங்கள் நினைக்கும் அனைத்தும் நிறைவேறட்டும்! 🥰🙏
 
-🎁 **உங்களுக்காக எங்களின் சிறப்புப் பிறந்தநாள் பரிசு!** 🔮(Free Astrology Consultation)
+🎁 **உங்களுக்காக ஒரு சின்னப் பிறந்தநாள் பரிசு!**
 
-எங்களின் ஜோதிடச் சேவையைப் பயன்படுத்திய அனுபவம் உங்களுக்குப் பிடித்திருந்தால், Google-ல் ⭐⭐⭐⭐⭐ 5-Star Review வழங்கி, உங்களின் அன்பான ஆதரவிற்கு நன்றியாக, **எங்களிடமிருந்து ஒரு இலவச ஜோதிட ஆலோசனை (Free Astrology Consultation) பெற்றுக்கொள்ளுங்கள்!** ❤️
+எங்களின் ஜோதிடச் சேவை உங்களுக்குப் பிடித்திருந்தால், Google-ல் ⭐⭐⭐⭐⭐ Review வழங்கி, எங்களிடமிருந்து ஒரு **இலவச ஜோதிட ஆலோசனையைப்** பெற்றுக்கொள்ளுங்கள்! 🔮❤️
 
-⭐ **Google Review வழங்க:**
-https://share.google/iwcotLgirm9CMBQsu
+⭐ **Google Review:**
+https://g.page/r/CT0me7Y7u_i2EBM/review
 
-மீண்டும் ஒருமுறை இனிய பிறந்தநாள் வாழ்த்துகள்! 💐
-
-உங்கள் வாழ்க்கையில் ஒவ்வொரு நாளும் புதிய நம்பிக்கையும், மகிழ்ச்சியும், வெற்றியும் மலரட்டும்! ❤️
+மீண்டும் ஒருமுறை இனிய பிறந்தநாள் வாழ்த்துகள், ${safeName}! ❤️
 
 அன்புடன்,
 **கோகுல் முருகன்**
 *Gokul’s Astrological Insights* 🔱`
-    : `Hello ${safeName} ❤️
+    : `Hello ${safeName}
 
-Wishing you our warmest Happy Birthday! 🎉🎂
+Wishing you a very Happy Birthday! 🎂💐
 
-May this new year bring **good health, peace of mind, happiness, and prosperity** into your life in abundance. With divine blessings, may all your aspirations come true, and we wholeheartedly wish your life be filled with success and happiness! 🙏✨
+May your life always be filled with love, happiness, good health, and peace of mind. May all your dreams and wishes come true! 🥰🙏
 
-🎁 **A Special Birthday Gift For You!** 🔮(Free Astrology Consultation)
+🎁 **A Special Birthday Gift For You!**
 
-If you enjoyed our astrological services, kindly leave a ⭐⭐⭐⭐⭐ 5-Star Review on Google, and as a token of gratitude for your loving support, receive a **Free Astrology Consultation from us!** ❤️
+If you enjoyed our astrological services, kindly leave a ⭐⭐⭐⭐⭐ Review on Google and receive a **Free Astrology Consultation** from us! 🔮❤️
 
-⭐ **To leave a Google Review:**
-https://share.google/iwcotLgirm9CMBQsu
+⭐ **Google Review:**
+https://g.page/r/CT0me7Y7u_i2EBM/review
 
-Once again, Happy Birthday! 💐
-
-May every day in your life blossom with renewed hope, joy, and success! ❤️
+Once again, Happy Birthday, ${safeName}! ❤️
 
 Warm regards,
 **Gokul Murugan**
