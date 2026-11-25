@@ -38,7 +38,6 @@ import {
   Download,
   Navigation,
   UserCheck,
-  Hourglass,
   Briefcase,
 } from "lucide-react";
 
@@ -827,49 +826,6 @@ function LoveOrArrangedToolContent() {
 
                     <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-600 italic leading-relaxed">
                       {language === "ta" ? result.life_partner.summary_ta : result.life_partner.summary_en}
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. When the Love was Started */}
-                {result.love_timing && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-rose-50/50 border border-rose-200/80 space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200/60 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-200">
-                          <Hourglass className="w-4 h-4 text-rose-700" />
-                        </div>
-                        <h4 className="text-xs sm:text-sm font-bold text-rose-950 uppercase tracking-wide">
-                          {language === "ta"
-                            ? "3. காதல் / ஈர்ப்பு தொடங்கிய காலம் (When Love Started)"
-                            : "3. Courtship Genesis: When Love Started & Blossomed"}
-                        </h4>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-800 bg-rose-100 px-3 py-0.5 rounded-full border border-rose-300">
-                        <Calendar className="w-3 h-3 text-rose-600" />
-                        <span>{result.love_timing.estimated_age_range} ({result.love_timing.approximate_period})</span>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-rose-100 shadow-xs space-y-2 text-xs">
-                      <div>
-                        <span className="font-semibold text-slate-500 block text-[10px] uppercase">
-                          {language === "ta" ? "காதல் தூண்டிய தசா-புத்தி காலம்" : "Triggering Dasha-Antardasha Influence"}
-                        </span>
-                        <span className="font-bold text-rose-900">
-                          {language === "ta" ? result.love_timing.trigger_dasha_ta : result.love_timing.trigger_dasha_en}
-                        </span>
-                      </div>
-
-                      <div className="border-t border-slate-100 pt-2">
-                        <span className="font-semibold text-slate-500 block text-[10px] uppercase mb-0.5">
-                          {language === "ta" ? "காதல் மலர்ந்த சூழல் & பின்னணி" : "Courtship Context & Atmosphere"}
-                        </span>
-                        <p className="text-slate-700 leading-relaxed">
-                          {language === "ta" ? result.love_timing.context_ta : result.love_timing.context_en}
-                        </p>
-                      </div>
                     </div>
                   </div>
                 )}

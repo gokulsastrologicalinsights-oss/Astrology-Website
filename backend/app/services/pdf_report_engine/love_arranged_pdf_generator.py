@@ -5,8 +5,7 @@ Produces an executive, publication-grade matrimonial pathway report detailing:
 2. Probability Percentage Distribution Meter
 3. The Origin & Direction of Spouse (2 to 3 concise points on how the bride/groom arrives)
 4. Who Will Be Their Life Partner (nature, physical stature, and career background)
-5. When Love Started / Courtship Genesis Period (age range, calendar years, and triggering dasha)
-6. Key Astrological Deciding Factors and Cuspal Sub-Lord planetary positions.
+5. Key Astrological Deciding Factors and Cuspal Sub-Lord planetary positions.
 
 Supports bilingual Tamil and English rendering with NotoSansTamil fonts and official GAI letterhead.
 """
@@ -387,50 +386,15 @@ def generate_love_arranged_pdf_bytes(
         story.append(t_partner)
 
     # =========================================================================
-    # BALANCED PAGE BREAK: Timing, Deciding Factors & Technical Data on Page 2
+    # BALANCED PAGE BREAK: Deciding Factors & Technical Data on Page 2
     # =========================================================================
     story.append(PageBreak())
 
-    # 6. Page 2 Top: Courtship Genesis & When Love Started
-    timing = report_data.love_timing
-    if timing:
-        timing_sec_title = (
-            "3. காதல் / ஈர்ப்பு தொடங்கிய காலம் (When Love Was Started & Courtship Genesis)"
-            if is_ta
-            else "3. Courtship Genesis & When Love Started (Astrological Timing)"
-        )
-        story.append(Paragraph(timing_sec_title, section_head_style))
-
-        age_lbl = "பருவ வயது:" if is_ta else "Estimated Age Range:"
-        cal_lbl = "ஆண்டு காலம்:" if is_ta else "Calendar Window:"
-        dasha_lbl = "காரக தசா-புத்தி:" if is_ta else "Triggering Dasha/Bhukti:"
-        context_lbl = "சூழல் & களம்:" if is_ta else "Courtship Context:"
-
-        dasha_val = timing.trigger_dasha_ta if is_ta else timing.trigger_dasha_en
-        context_val = timing.context_ta if is_ta else timing.context_en
-
-        timing_box_html = f"""
-        <b>{age_lbl}</b> {timing.estimated_age_range} &nbsp;&nbsp;|&nbsp;&nbsp; <b>{cal_lbl}</b> {timing.approximate_period}<br/>
-        <b>{dasha_lbl}</b> {dasha_val}<br/>
-        <b>{context_lbl}</b> {context_val}
-        """
-        t_timing = Table([[Paragraph(timing_box_html, bullet_style)]], colWidths=[USABLE_WIDTH])
-        t_timing.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FDF2F8")),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#F472B6")),
-            ('TOPPADDING', (0, 0), (-1, -1), 4.0),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.0),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-        ]))
-        story.append(t_timing)
-        story.append(Spacer(1, 5))
-
-    # 7. Page 2: Primary Astrological Deciding Factors
+    # 6. Page 2: Primary Astrological Deciding Factors
     factors_sec_title = (
-        "4. முக்கிய ஜோதிடக் காரணிகள் (Primary Astrological Deciding Factors)"
+        "3. முக்கிய ஜோதிடக் காரணிகள் (Primary Astrological Deciding Factors)"
         if is_ta
-        else "4. Primary Astrological Deciding Factors & Planetary Signatures"
+        else "3. Primary Astrological Deciding Factors & Planetary Signatures"
     )
     story.append(Paragraph(factors_sec_title, section_head_style))
 
@@ -486,11 +450,11 @@ def generate_love_arranged_pdf_bytes(
     story.append(t_factors)
     story.append(Spacer(1, 5))
 
-    # 8. Page 2: Technical Planetary Positions & Astrological References
+    # 7. Page 2: Technical Planetary Positions & Astrological References
     tech_sec_title = (
-        "5. நுட்பமான கிரக அமைப்புகள் & கே.பி உப-அதிபதி விபரங்கள்"
+        "4. நுட்பமான கிரக அமைப்புகள் & கே.பி உப-அதிபதி விபரங்கள்"
         if is_ta
-        else "5. Technical Planetary Positions & Cuspal Sub-Lord References"
+        else "4. Technical Planetary Positions & Cuspal Sub-Lord References"
     )
     story.append(Paragraph(tech_sec_title, section_head_style))
 
@@ -514,15 +478,15 @@ def generate_love_arranged_pdf_bytes(
     story.append(t_tech)
     story.append(Spacer(1, 5))
 
-    # 9. Page 2 Bottom: Classical Astrological Notes & Disclaimer
+    # 8. Page 2 Bottom: Classical Astrological Notes & Disclaimer
     notes_title = "சாஸ்திரக் குறிப்பு & அங்கீகாரம் (Vedic Authenticity Notes)" if is_ta else "Vedic Authenticity & Advisory Notes"
     notes_body = (
         "இந்த திருமண வகை கணிப்பு பராசர முறை, கே.பி உப-அதிபதி விதி மற்றும் சித்தயோகி சிவதாசன் ரவி நாடி விதிகளின்படி "
         "ஜாதகரின் 5 மற்றும் 7-ஆம் பாவக தொடர்புகளை ஆராய்ந்து துல்லியமாக வழங்கப்பட்டுள்ளது. "
-        "வாழ்க்கைத் துணைவர் திசை, குணாதிசயங்கள் மற்றும் காதல் மலர்ந்த காலம் ஆகியவை கிரக காரகத்துவங்கள் மற்றும் தசா-புக்தி அடிப்படையில் கணிக்கப்பட்டுள்ளன."
+        "வாழ்க்கைத் துணைவர் திசை மற்றும் குணாதிசயங்கள் ஆகியவை கிரக காரகத்துவங்கள் மற்றும் தசா-புக்தி அடிப்படையில் கணிக்கப்பட்டுள்ளன."
     ) if is_ta else (
         "This evaluation integrates Maharishi Parashara's classical 5th-7th lord sambandhas, Prof. K.S. Krishnamurti's Cuspal Sub-Lord (CSL) "
-        "rules, and Siddhayogi Sivadasan Ravi Nadi aphorisms. The direction of the spouse, spousal personality, and courtship genesis period "
+        "rules, and Siddhayogi Sivadasan Ravi Nadi aphorisms. The direction of the spouse and spousal personality "
         "are synthesized from 7th house planetary rulers, karakas, and operating Vimshottari Dasha intervals."
     )
     t_notes = Table([[Paragraph(f"<b>{notes_title}:</b> {notes_body}", body_style)]], colWidths=[USABLE_WIDTH])
