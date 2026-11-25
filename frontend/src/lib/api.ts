@@ -5888,5 +5888,28 @@ export async function predictLoveOrArranged(
   );
 }
 
+/**
+ * 23f. Download Love vs Arranged Marriage Professional PDF Report (POST /api/v1/predictions/love-or-arranged-marriage/pdf)
+ */
+export async function downloadLoveOrArrangedPdf(
+  req: LoveOrArrangedRequest,
+  language: string = "en",
+  token?: string
+): Promise<Blob> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return requestBlob(
+    `/api/v1/predictions/love-or-arranged-marriage/pdf?language=${encodeURIComponent(language)}`,
+    {
+      method: "POST",
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(req),
+    }
+  );
+}
+
+
 
 

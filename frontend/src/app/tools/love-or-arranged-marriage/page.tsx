@@ -12,7 +12,7 @@ import {
   LoveOrArrangedResponse,
   SavedHoroscopeItem,
 } from "@/lib/types";
-import { predictLoveOrArranged } from "@/lib/api";
+import { predictLoveOrArranged, downloadLoveOrArrangedPdf } from "@/lib/api";
 import {
   Heart,
   Sparkles,
@@ -35,6 +35,11 @@ import {
   Award,
   Layers,
   Info,
+  Download,
+  Navigation,
+  UserCheck,
+  Hourglass,
+  Briefcase,
 } from "lucide-react";
 
 const COMMON_TIMEZONES = [
@@ -72,6 +77,7 @@ function LoveOrArrangedToolContent() {
 
   // States
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<LoveOrArrangedResponse | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
@@ -176,6 +182,49 @@ function LoveOrArrangedToolContent() {
     }
   };
 
+  // Handle PDF Download
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+    setIsDownloadingPdf(true);
+    try {
+      const req: LoveOrArrangedRequest = {
+        birth: {
+          birth_date: birthDate,
+          birth_time: birthTime.length === 5 ? `${birthTime}:00` : birthTime,
+          timezone: timezone || "Asia/Kolkata",
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+        },
+        name: name.trim() || undefined,
+        gender: gender,
+        chart_id: selectedSavedId || undefined,
+      };
+
+      const blob = await downloadLoveOrArrangedPdf(
+        req,
+        language || "en",
+        session?.access_token
+      );
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cleanName = (name.trim() || "Native").replace(/\s+/g, "_");
+      a.download = `Love_vs_Arranged_Report_${cleanName}_${language}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(
+        language === "ta"
+          ? "PDF பதிவிறக்கம் செய்வதில் பிழை ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+          : "Failed to download PDF report. Please try again."
+      );
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   // Sample Preset Loader
   const loadSample = (type: "sample1" | "sample2") => {
     if (type === "sample1") {
@@ -201,21 +250,23 @@ function LoveOrArrangedToolContent() {
     <div className="min-h-screen bg-[#F4F6F9] py-6 px-3 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Navigation Breadcrumbs */}
-        <Breadcrumbs
-          items={[
-            { label: language === "ta" ? "முகப்பு" : "Home", href: "/dashboard" },
-            { label: language === "ta" ? "ஜோதிட கருவிகள்" : "Astrology Tools", href: "/tools" },
-            {
-              label:
-                language === "ta"
-                  ? "காதல் அல்லது நிச்சயிக்கப்பட்ட திருமணம்"
-                  : "Love or Arranged Marriage",
-            },
-          ]}
-        />
+        <div className="no-print">
+          <Breadcrumbs
+            items={[
+              { label: language === "ta" ? "முகப்பு" : "Home", href: "/dashboard" },
+              { label: language === "ta" ? "ஜோதிட கருவிகள்" : "Astrology Tools", href: "/tools" },
+              {
+                label:
+                  language === "ta"
+                    ? "காதல் அல்லது நிச்சயிக்கப்பட்ட திருமணம்"
+                    : "Love or Arranged Marriage",
+              },
+            ]}
+          />
+        </div>
 
         {/* Page Header */}
-        <div className="bg-gradient-to-r from-[#1B365D] via-[#24477D] to-[#392E5C] text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#1B365D] via-[#24477D] to-[#392E5C] text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden no-print">
           <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 opacity-10 pointer-events-none">
             <Heart className="w-64 h-64 text-white" />
           </div>
@@ -247,7 +298,7 @@ function LoveOrArrangedToolContent() {
         {/* Main Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Input Form Column */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-5 space-y-4 no-print">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 space-y-5">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -516,11 +567,11 @@ function LoveOrArrangedToolContent() {
           </div>
 
           {/* Result Output Column */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 print:col-span-12 print:w-full">
             {result ? (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 space-y-6">
                 {/* Header Action Bar */}
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 no-print">
                   <div>
                     <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       {language === "ta" ? "திருமண வகை தீர்ப்பு" : "Marriage Outcome Verdict"}
@@ -530,14 +581,37 @@ function LoveOrArrangedToolContent() {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
-                    title={language === "ta" ? "அச்சிடுக" : "Print"}
-                  >
-                    <Printer className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadPdf}
+                      disabled={isDownloadingPdf}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#1B365D] hover:bg-[#152C4D] rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
+                      title={language === "ta" ? "அதிகாரப்பூர்வ PDF பதிவிறக்கம் செய்க" : "Download Official PDF Report"}
+                    >
+                      {isDownloadingPdf ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>{language === "ta" ? "உருவாக்குகிறது..." : "Generating PDF..."}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-3.5 h-3.5 text-amber-300" />
+                          <span>{language === "ta" ? "PDF பதிவிறக்கம்" : "Download PDF"}</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+                      title={language === "ta" ? "அச்சிடுக / Print to PDF" : "Print / Save to PDF"}
+                    >
+                      <Printer className="w-3.5 h-3.5 text-slate-600" />
+                      <span>{language === "ta" ? "அச்சிடுக" : "Print"}</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Hero Verdict Box */}
@@ -640,6 +714,165 @@ function LoveOrArrangedToolContent() {
                     </p>
                   </div>
                 </div>
+
+                {/* 1. Way the Bride or Groom Comes From (2 to 3 points) */}
+                {result.spouse_origin && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-800">
+                          <Navigation className="w-4 h-4 text-amber-700" />
+                        </div>
+                        <h4 className="text-xs sm:text-sm font-bold text-amber-950 uppercase tracking-wide">
+                          {language === "ta"
+                            ? "1. துணைவர் வரும் திசை & வழிமுறை (Bride / Groom Origin)"
+                            : "1. Way the Bride / Groom Comes From (Origin & Arrival Pathway)"}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-900 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-200">
+                        <Compass className="w-3 h-3 text-amber-700" />
+                        <span>{language === "ta" ? result.spouse_origin.direction_ta : result.spouse_origin.direction_en}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white/80 p-2.5 rounded-xl border border-amber-100">
+                        <span className="font-semibold text-slate-500 block text-[10px] uppercase">
+                          {language === "ta" ? "தொலைவு வகை" : "Distance Category"}
+                        </span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ta" ? result.spouse_origin.distance_type_ta : result.spouse_origin.distance_type_en}
+                        </span>
+                      </div>
+                      <div className="bg-white/80 p-2.5 rounded-xl border border-amber-100">
+                        <span className="font-semibold text-slate-500 block text-[10px] uppercase">
+                          {language === "ta" ? "அறிமுக களம்" : "Meeting Sphere / Channel"}
+                        </span>
+                        <span className="font-bold text-slate-800">
+                          {language === "ta" ? result.spouse_origin.source_channel_ta : result.spouse_origin.source_channel_en}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 2 to 3 concise bullet points */}
+                    <div className="space-y-2 pt-1">
+                      <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wider block">
+                        {language === "ta"
+                          ? "துணைவர் வரும் முக்கிய 2-3 வழிமுறைக் குறிப்புகள்:"
+                          : "2 to 3 Key Observations on Arrival Pathway:"}
+                      </span>
+                      <div className="space-y-2">
+                        {(language === "ta" ? result.spouse_origin.points_ta : result.spouse_origin.points_en).map((pt, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className="flex items-start gap-2.5 p-2.5 bg-white/90 rounded-xl border border-amber-200/60 text-xs text-slate-700 leading-relaxed shadow-xs"
+                          >
+                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-700 text-white font-bold text-[10px] shrink-0 mt-0.5">
+                              {pIdx + 1}
+                            </span>
+                            <span>{pt}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Who Will Be Their Life Partner */}
+                {result.life_partner && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div className="flex items-center gap-2 border-b border-slate-200 pb-2.5">
+                      <div className="p-1.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200">
+                        <UserCheck className="w-4 h-4 text-blue-700" />
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">
+                        {language === "ta"
+                          ? "2. வாழ்க்கைத் துணைவரின் அடையாளம் & குணநலன்கள்"
+                          : "2. Who Will Be Their Life Partner (Nature, Appearance & Career)"}
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+                        <span className="font-bold text-slate-500 text-[10px] uppercase flex items-center gap-1">
+                          <Heart className="w-3 h-3 text-pink-500" />
+                          {language === "ta" ? "குணம் & இயல்பு" : "Nature & Temperament"}
+                        </span>
+                        <p className="text-slate-800 font-medium leading-relaxed">
+                          {language === "ta" ? result.life_partner.nature_temperament_ta : result.life_partner.nature_temperament_en}
+                        </p>
+                      </div>
+
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+                        <span className="font-bold text-slate-500 text-[10px] uppercase flex items-center gap-1">
+                          <User className="w-3 h-3 text-indigo-500" />
+                          {language === "ta" ? "தோற்றம் & உடல்வாகு" : "Appearance & Presence"}
+                        </span>
+                        <p className="text-slate-800 font-medium leading-relaxed">
+                          {language === "ta" ? result.life_partner.physical_features_ta : result.life_partner.physical_features_en}
+                        </p>
+                      </div>
+
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+                        <span className="font-bold text-slate-500 text-[10px] uppercase flex items-center gap-1">
+                          <Briefcase className="w-3 h-3 text-emerald-600" />
+                          {language === "ta" ? "தொழில் & கல்விப் பின்னணி" : "Career & Social Sphere"}
+                        </span>
+                        <p className="text-slate-800 font-medium leading-relaxed">
+                          {language === "ta" ? result.life_partner.career_background_ta : result.life_partner.career_background_en}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-600 italic leading-relaxed">
+                      {language === "ta" ? result.life_partner.summary_ta : result.life_partner.summary_en}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. When the Love was Started */}
+                {result.love_timing && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-rose-50/50 border border-rose-200/80 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200/60 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-200">
+                          <Hourglass className="w-4 h-4 text-rose-700" />
+                        </div>
+                        <h4 className="text-xs sm:text-sm font-bold text-rose-950 uppercase tracking-wide">
+                          {language === "ta"
+                            ? "3. காதல் / ஈர்ப்பு தொடங்கிய காலம் (When Love Started)"
+                            : "3. Courtship Genesis: When Love Started & Blossomed"}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-800 bg-rose-100 px-3 py-0.5 rounded-full border border-rose-300">
+                        <Calendar className="w-3 h-3 text-rose-600" />
+                        <span>{result.love_timing.estimated_age_range} ({result.love_timing.approximate_period})</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-rose-100 shadow-xs space-y-2 text-xs">
+                      <div>
+                        <span className="font-semibold text-slate-500 block text-[10px] uppercase">
+                          {language === "ta" ? "காதல் தூண்டிய தசா-புத்தி காலம்" : "Triggering Dasha-Antardasha Influence"}
+                        </span>
+                        <span className="font-bold text-rose-900">
+                          {language === "ta" ? result.love_timing.trigger_dasha_ta : result.love_timing.trigger_dasha_en}
+                        </span>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-2">
+                        <span className="font-semibold text-slate-500 block text-[10px] uppercase mb-0.5">
+                          {language === "ta" ? "காதல் மலர்ந்த சூழல் & பின்னணி" : "Courtship Context & Atmosphere"}
+                        </span>
+                        <p className="text-slate-700 leading-relaxed">
+                          {language === "ta" ? result.love_timing.context_ta : result.love_timing.context_en}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Key Deciding Factors */}
                 <div className="space-y-3">
@@ -745,14 +978,14 @@ function LoveOrArrangedToolContent() {
                 </div>
 
                 {/* Calculate Again */}
-                <div className="text-center pt-2">
+                <div className="text-center pt-2 no-print">
                   <button
                     type="button"
                     onClick={() => {
                       setResult(null);
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition inline-flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>{language === "ta" ? "மற்றொரு ஜாதகத்தை கணக்கிடுக" : "Calculate Another Horoscope"}</span>
@@ -782,6 +1015,38 @@ function LoveOrArrangedToolContent() {
           </div>
         </div>
       </div>
+
+      {/* Embedded Print Styling */}
+      <style jsx global>{`
+        @media print {
+          body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .no-print, header, nav, footer, .breadcrumbs-container {
+            display: none !important;
+          }
+          .lg\\:col-span-5 {
+            display: none !important;
+          }
+          .lg\\:col-span-7 {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .min-h-screen {
+            min-height: auto !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+          .shadow-sm, .shadow-md, .shadow-lg {
+            box-shadow: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

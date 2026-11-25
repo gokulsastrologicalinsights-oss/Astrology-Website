@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from starlette.concurrency import run_in_threadpool
 
 from app.services.auth_service import get_current_user
 from app.services.unified_prediction.models import (
@@ -33,6 +34,9 @@ from app.schemas.love_marriage import (
 )
 from app.services.marriage_engine.love_arranged_service import (
     LoveArrangedService,
+)
+from app.services.pdf_report_engine import (
+    generate_love_arranged_pdf_bytes,
 )
 
 logger = logging.getLogger("gai.api.predictions")
@@ -138,4 +142,47 @@ async def evaluate_love_or_arranged(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred during love vs arranged evaluation: {str(exc)}",
         ) from None
+
+
+@router.post(
+    "/love-or-arranged-marriage/pdf",
+    summary="Download Love vs Arranged Marriage Professional PDF Report",
+    response_class=Response,
+)
+@router.post(
+    "/love-or-arranged/pdf",
+    response_class=Response,
+    include_in_schema=False,
+)
+async def export_love_or_arranged_pdf_endpoint(
+    request: LoveOrArrangedRequest,
+    language: str = "en",
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Calculates love vs arranged assessment and compiles a professional bilingual PDF report."""
+    try:
+        report_data = LoveArrangedService.evaluate(request)
+        pdf_bytes = await run_in_threadpool(
+            generate_love_arranged_pdf_bytes,
+            report_data,
+            language=language,
+        )
+        safe_name = (request.name or "Native").replace(" ", "_")
+        filename = f"Love_vs_Arranged_Report_{safe_name}_{language}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
+            },
+        )
+    except Exception as exc:
+        logger.exception("Failed to generate Love vs Arranged Marriage PDF report")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate Love vs Arranged Marriage PDF: {str(exc)}",
+        ) from None
+
 

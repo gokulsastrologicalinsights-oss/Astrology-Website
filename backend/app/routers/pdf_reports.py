@@ -34,8 +34,11 @@ from app.services.pdf_report_engine import (
     generate_pancha_pakshi_pdf_bytes,
     generate_gemstone_rudraksha_playbook_pdf_bytes,
     generate_marriage_compatibility_pdf_bytes,
+    generate_love_arranged_pdf_bytes,
     make_content_disposition_header,
 )
+from app.schemas.love_marriage import LoveOrArrangedRequest
+from app.services.marriage_engine.love_arranged_service import LoveArrangedService
 from app.services.auth_service import get_current_user, get_supabase_client
 from app.services.horoscope_cache import get_cached_saved_horoscope
 from app.services.kp_engine.kp_chart_repository import get_kp_chart
@@ -693,5 +696,36 @@ async def generate_marriage_compatibility_pdf_endpoint(
     except Exception as exc:
         logger.error("Error generating Marriage Compatibility PDF: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Marriage Compatibility PDF generation failed: {str(exc)}")
+
+
+@studio_router.post("/love-or-arranged/pdf", summary="Generate Love vs Arranged Marriage Professional PDF Report")
+async def generate_love_or_arranged_pdf_studio_endpoint(
+    request: LoveOrArrangedRequest,
+    language: str = "en",
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> Response:
+    """Generates an official bilingual Love vs Arranged Marriage report PDF."""
+    try:
+        report_data = LoveArrangedService.evaluate(request)
+        pdf_bytes = await run_in_threadpool(
+            generate_love_arranged_pdf_bytes,
+            report_data,
+            language=language,
+        )
+        safe_name = (request.name or "Native").replace(" ", "_")
+        filename = f"Love_vs_Arranged_Report_{safe_name}_{language}.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": make_content_disposition_header(filename),
+                "Content-Type": "application/pdf",
+                "Content-Length": str(len(pdf_bytes)),
+            },
+        )
+    except Exception as exc:
+        logger.error("Error generating Love vs Arranged PDF: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Love vs Arranged PDF generation failed: {str(exc)}")
+
 
 

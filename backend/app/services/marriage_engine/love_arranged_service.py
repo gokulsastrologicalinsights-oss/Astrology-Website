@@ -21,6 +21,9 @@ from app.schemas.love_marriage import (
     LoveOrArrangedFactor,
     LoveOrArrangedRequest,
     LoveOrArrangedResponse,
+    SpouseOriginProfile,
+    LifePartnerProfile,
+    LoveInitiationTiming,
 )
 from app.services.timezone_utils import resolve_birth_datetime
 from app.services.ephemeris import (
@@ -472,6 +475,32 @@ class LoveArrangedService:
         # Birth summary
         b_sum = f"{birth.birth_date.strftime('%d %b %Y')}, {birth.birth_time.strftime('%I:%M %p')} ({birth.timezone})"
 
+        # Determine 3 Specialized In-Depth Predictors
+        spouse_origin = cls._determine_spouse_origin(
+            gender=gender,
+            sign_7=sign_7,
+            lord_7=lord_7,
+            house_signs=house_signs,
+            planet_house=planet_house,
+            planet_sign=planet_sign,
+        )
+
+        life_partner = cls._determine_life_partner_profile(
+            gender=gender,
+            sign_7=sign_7,
+            lord_7=lord_7,
+            planet_house=planet_house,
+            planet_sign=planet_sign,
+        )
+
+        love_timing = cls._determine_love_timing(
+            birth_date=birth.birth_date,
+            lord_5=lord_5,
+            lord_7=lord_7,
+            love_pct=love_pct,
+            kp_chart=kp_chart,
+        )
+
         return LoveOrArrangedResponse(
             native_name=native_name,
             native_gender=gender,
@@ -486,9 +515,337 @@ class LoveArrangedService:
             family_support=family_support,
             family_support_ta=family_support_ta,
             key_factors=factors,
+            spouse_origin=spouse_origin,
+            life_partner=life_partner,
+            love_timing=love_timing,
             fifth_house_summary=fifth_info,
             seventh_house_summary=seventh_info,
             kp_sublord_summary=kp_sublord_summary_text,
             venus_summary=venus_info,
             calculated_at=datetime.now(dt_timezone.utc).isoformat(),
+        )
+
+    @classmethod
+    def _determine_spouse_origin(
+        cls,
+        gender: str,
+        sign_7: int,
+        lord_7: str,
+        house_signs: Dict[int, int],
+        planet_house: Dict[str, int],
+        planet_sign: Dict[str, int],
+    ) -> SpouseOriginProfile:
+        """Determines the origin direction, distance, and 2-3 points on how the bride/groom arrives."""
+        def sign_dir(s: int) -> Tuple[str, str]:
+            if s in (1, 5, 9):
+                return "East", "கிழக்கு"
+            elif s in (2, 6, 10):
+                return "South", "தெற்கு"
+            elif s in (3, 7, 11):
+                return "West", "மேற்கு"
+            else:
+                return "North", "வடக்கு"
+
+        d7_en, d7_ta = sign_dir(sign_7)
+        pos_lord_7 = planet_sign.get(lord_7, sign_7)
+        dlord_en, dlord_ta = sign_dir(pos_lord_7)
+
+        # Compound direction
+        if d7_en == dlord_en:
+            dir_en = d7_en
+            dir_ta = d7_ta
+        elif (d7_en == "East" and dlord_en == "North") or (d7_en == "North" and dlord_en == "East"):
+            dir_en = "North-East (Ishanya)"
+            dir_ta = "வடகிழக்கு (ஈசான்யம்)"
+        elif (d7_en == "East" and dlord_en == "South") or (d7_en == "South" and dlord_en == "East"):
+            dir_en = "South-East (Agneya)"
+            dir_ta = "தென்கிழக்கு (ஆக்னேயம்)"
+        elif (d7_en == "West" and dlord_en == "North") or (d7_en == "North" and dlord_en == "West"):
+            dir_en = "North-West (Vayavya)"
+            dir_ta = "வடமேற்கு (வாயுவியம்)"
+        elif (d7_en == "West" and dlord_en == "South") or (d7_en == "South" and dlord_en == "West"):
+            dir_en = "South-West (Nairrutya)"
+            dir_ta = "தென்மேற்கு (நைருதி)"
+        else:
+            dir_en = f"{d7_en} / {dlord_en}"
+            dir_ta = f"{d7_ta} / {dlord_ta}"
+
+        # Distance category by sign quality (Chara, Sthira, Dwisvabhava)
+        if sign_7 in (1, 4, 7, 10):
+            dist_en = "Distant location / outside native birthplace or relocated partner"
+            dist_ta = "தொலைதூர பகுதி / வெளி மாவட்டம் அல்லது இடம் பெயர்ந்த வாழ்க்கைத்துணை"
+        elif sign_7 in (2, 5, 8, 11):
+            dist_en = "Nearby vicinity / same hometown or closely connected native circle"
+            dist_ta = "உள்ளூர் / சொந்த ஊர் அல்லது மிக அருகிலுள்ள வட்டாரம்"
+        else:
+            dist_en = "Moderate distance / neighboring town or adjacent district"
+            dist_ta = "நடுத்தர தூரம் / அருகிலுள்ள நகரம் அல்லது பக்கத்து மாவட்டம்"
+
+        # Sphere of meeting / channel
+        h_7 = planet_house.get(lord_7, 7)
+        if h_7 in (6, 10):
+            channel_en = "Professional workplace, corporate organization, or career networking"
+            channel_ta = "பணியிடம், கார்ப்பரேட் நிறுவனம் அல்லது தொழில் சார்ந்த பொதுவான களம்"
+            point2_en = "The primary introduction takes place through a professional workspace, corporate organization, or shared career project where daily interactions foster mutual rapport."
+            point2_ta = "பணியிடம், தொழில்முறை நிறுவனம் அல்லது உத்தியோகப்பூர்வ சந்திப்புகள் வழியாக இருவருக்குள்ளும் பரஸ்பர அறிமுகமும் நட்பும் இயல்பாக உருவாகிறது."
+        elif h_7 in (3, 11):
+            channel_en = "Social gathering, mutual friend circle, or digital / community media"
+            channel_ta = "நண்பர்கள் வட்டம், சமூகக் கூடல் அல்லது தகவல் தொடர்பு / இணைய தளம்"
+            point2_en = "Connection is initiated through mutual close friends, social celebratory gatherings, or modern digital/community communication platforms."
+            point2_ta = "பொதுவான நண்பர்கள் வட்டம், குடும்ப விசேஷங்கள் அல்லது நவீன தகவல் தொடர்பு சாதனங்கள் வாயிலாக முதல் அறிமுகம் மலர்கிறது."
+        elif h_7 in (2, 9):
+            channel_en = "Family elders, relatives, or traditional matrimonial alliance network"
+            channel_ta = "குடும்பப் பெரியோர்கள், உறவினர்கள் அல்லது பாரம்பரிய வரன் முறை"
+            point2_en = "The alliance arrives through respected family elders, maternal/paternal relatives, or established traditional matrimonial introductions."
+            point2_ta = "குடும்பப் பெரியோர்கள், நெருங்கிய உறவினர்கள் அல்லது பாரம்பரிய வரன் பார்க்கும் முறை வாயிலாக இரு குடும்பங்களும் இணைகின்றன."
+        elif h_7 in (4, 5):
+            channel_en = "Educational campus, college / university circle, or creative events"
+            channel_ta = "கல்லூரி / கல்விக்கூடம் அல்லது பொதுவான கலை மற்றும் கலைநிகழ்ச்சி களம்"
+            point2_en = "The bond sparks during educational pursuits, college/university campus life, or shared recreational/artistic interests."
+            point2_ta = "கல்லூரி அல்லது உயர்கல்வி பயிலும் காலம், அல்லது பொதுவான கலை மற்றும் விருப்பங்கள் சார்ந்த நிகழ்வுகளில் முதல் சந்திப்பு ஏற்படுகிறது."
+        elif h_7 in (1, 7):
+            channel_en = "Direct personal encounter, neighborhood acquaintance, or travel encounter"
+            channel_ta = "நேரடி அறிமுகம், பக்கத்து பகுதி அல்லது பயணத்தின்போது ஏற்பட்ட சந்திப்பு"
+            point2_en = "The meeting unfolds through direct personal encounter, neighborhood acquaintance, or a serendipitous interaction."
+            point2_ta = "முன்பே தெரிந்த பழக்கம், அருகிலுள்ள வட்டாரத் தொடர்பு அல்லது எதிர்பாராத நேரடி சந்திப்பின் மூலம் அன்பு உருவாகிறது."
+        else:
+            channel_en = "Distant origin, transit / travel connection, or cross-cultural alliance"
+            channel_ta = "தூரத்து அறிமுகம், தொலைதூரப் பயணம் அல்லது கலாச்சார எல்லை கடந்த வரன்"
+            point2_en = "The partner hails from a distinct geographical or cultural background, met during travel, relocation, or overseas assignments."
+            point2_ta = "தொலைதூரப் பயணம், பணியிட இடமாற்றம் அல்லது வேறுபட்ட கலாச்சாரப் பின்னணியில் எதிர்பாராத விதமாக சந்திப்பு அமைகிறது."
+
+        # Point 1: Direction & Distance
+        point1_en = f"The life partner originates from the {dir_en} direction relative to the native's birthplace, hailing from a {dist_en.lower()}."
+        point1_ta = f"வாழ்க்கைத் துணைவர் ஜாதகரின் பிறந்த இடத்திலிருந்து {dir_ta} திசையிலிருந்து அமைகிறார் ({dist_ta})."
+
+        # Point 3: Locality & Family Environment
+        if sign_7 in (4, 8, 12):
+            point3_en = "The spouse's family belongs to a fertile, coastal, or scenic green locality with strong emotional and cultural rootedness."
+            point3_ta = "துணைவரின் பூர்வீகம் நீர்நிலைகள், பசுமையான சூழல் அல்லது நதிக்கரை/கடற்கரை சார்ந்த வளமான நிலப்பரப்பில் அமைந்திருக்கும்."
+        elif sign_7 in (2, 6, 10):
+            point3_en = "The partner comes from an industrious, hardworking, and commercially established family background with ancestral values."
+            point3_ta = "துணைவர் கடுமையான உழைப்பு, வியாபாரம் அல்லது பாரம்பரிய சொத்துக்கள் மற்றும் குடும்ப விழுமியங்கள் கொண்ட வம்சத்தைச் சேர்ந்தவர்."
+        elif sign_7 in (3, 7, 11):
+            point3_en = "The partner hails from a prominent urban metropolis, educational center, or commercially vibrant technological hub."
+            point3_ta = "துணைவர் தகவல் தொடர்பு, கல்வி நிறுவனங்கள் அல்லது வணிக வளம் நிறைந்த நவீன நகரப்பகுதியை பூர்வீகமாகக் கொண்டவர்."
+        else:
+            point3_en = "The partner's family holds respected social standing, characterized by principled leadership, energy, and administrative reputation."
+            point3_ta = "துணைவரின் குடும்பம் சமுதாயத்தில் நன்மதிப்பும், நிர்வாக திறமையும், கௌரவமான பாரம்பரியமும் கொண்டதாக விளங்கும்."
+
+        points_en = [point1_en, point2_en, point3_en]
+        points_ta = [point1_ta, point2_ta, point3_ta]
+
+        return SpouseOriginProfile(
+            direction_en=dir_en,
+            direction_ta=dir_ta,
+            distance_type_en=dist_en,
+            distance_type_ta=dist_ta,
+            source_channel_en=channel_en,
+            source_channel_ta=channel_ta,
+            points_en=points_en,
+            points_ta=points_ta,
+        )
+
+    @classmethod
+    def _determine_life_partner_profile(
+        cls,
+        gender: str,
+        sign_7: int,
+        lord_7: str,
+        planet_house: Dict[str, int],
+        planet_sign: Dict[str, int],
+    ) -> LifePartnerProfile:
+        """Determines the traits, appearance, and career profile of who the life partner will be."""
+        planets_in_7 = [p for p, h in planet_house.items() if h == 7]
+        dominant_planet = planets_in_7[0] if planets_in_7 else lord_7
+
+        is_groom = (gender == "female")
+        partner_label_en = "Groom / Husband" if is_groom else "Bride / Wife"
+        partner_label_ta = "கணவர் (மணமகன்)" if is_groom else "மனைவி (மணமகள்)"
+
+        profiles = {
+            "Sun": {
+                "nature_en": "Noble, dignified, self-respecting, authoritative, and principled with natural leadership charisma.",
+                "nature_ta": "சுயமரியாதை, கம்பீரம், கொள்கைப்பிடிப்பு, தலைமைப் பண்பு மற்றும் கௌரவத்தை பெரிதும் மதிக்கும் நேர்மையான குணம்.",
+                "features_en": "Imposing posture, commanding presence, bright facial aura, medium to tall height, and proud demeanor.",
+                "features_ta": "கம்பீரமான நடை, பிரகாசமான முகம், நடுத்தர அல்லது நல்ல உயரமான உடல்வாகு மற்றும் எடுப்பான தோற்றம்.",
+                "career_en": "Government administration, executive leadership, public enterprise, management, or established family enterprise.",
+                "career_ta": "அரசுத்துறை, நிர்வாகப் பணி, தலைமைப் பொறுப்பு, மேலாண்மை அல்லது பரம்பரை தொழில்.",
+            },
+            "Moon": {
+                "nature_en": "Gentle, compassionate, deeply intuitive, family-oriented, fond of comfort, and emotionally supportive.",
+                "nature_ta": "அன்பும் பாசமும் நிறைந்த மென்மையான சுபாவம், உணர்ச்சிவசப்படும் குணம், குடும்பப் பற்று மற்றும் இரக்க சுபாவம்.",
+                "features_en": "Round or soft attractive facial features, glowing fair complexion, soothing eyes, and graceful charming demeanor.",
+                "features_ta": "அழகான வட்ட முகம், தெளிவான கண்கள், நளினமான உடல்வாகு மற்றும் வசீகரமான புன்னகை.",
+                "career_en": "Healthcare, hospitality, arts, public relations, finance, education, or creative enterprises.",
+                "career_ta": "மருத்துவம், மக்கள் தொடர்பு, உணவகம்/விருந்தோம்பல், கலைத்துறை, கல்வி அல்லது நிதி நிர்வாகம்.",
+            },
+            "Mars": {
+                "nature_en": "Energetic, courageous, assertive, fiercely loyal, active, protective of family, and decisive in action.",
+                "nature_ta": "சுறுசுறுப்பு, தைரியம், எதையும் நேருக்கு நேர் பேசும் குணம், துணையை பாதுகாக்கும் உறுதி மற்றும் விரைவான முடிவெடுக்கும் ஆற்றல்.",
+                "features_en": "Athletic build, sharp radiant eyes, firm step, confident expression, and youthful physical vigor.",
+                "features_ta": "உறுதியான கட்டுக்கோப்பான உடல்வாகு, கூர்மையான பார்வை, சுறுசுறுப்பான நடை மற்றும் இளமையான தோற்றம்.",
+                "career_en": "Engineering, technology, defense/uniformed services, real estate, construction, surgery, or entrepreneurship.",
+                "career_ta": "பொறியியல், தகவல் தொழில்நுட்பம், பாதுகாப்புத்துறை, கட்டுமானத்துறை, அறுவை சிகிச்சை அல்லது சொந்த தொழில்.",
+            },
+            "Mercury": {
+                "nature_en": "Sharp-witted, articulate communicator, humorous, adaptable, intellectually curious, and cheerful in companionship.",
+                "nature_ta": "அறிவுக் கூர்மை, கனிவான பேச்சுத்திறன், நகைச்சுவை உணர்வு, விரைந்து கற்கும் ஆர்வம் மற்றும் கலகலப்பான சுபாவம்.",
+                "features_en": "Youthful countenance, expressive lively eyes, slender to medium stature, and energetic posture.",
+                "features_ta": "எப்போதும் இளமையான தோற்றம், ஒளி பொருந்திய கண்கள், நடுத்தர உடல்வாகு மற்றும் சுறுசுறுப்பான இயல்பு.",
+                "career_en": "Software engineering, data analytics, banking, journalism, publishing, accounting, commerce, or trade.",
+                "career_ta": "மென்பொருள் பொறியியல், தரவு பகுப்பாய்வு, வங்கிப்பணி, எழுத்து, ஆடிட்டிங், வர்த்தகம் அல்லது வணிக மேலாண்மை.",
+            },
+            "Jupiter": {
+                "nature_en": "Wise, cultured, spiritually inclined, dignified, ethical, generous, and devoted to family honour and traditions.",
+                "nature_ta": "ஞானம், நற்பண்புகள், ஆன்மீக பற்று, பெரியோரை மதிக்கும் அடக்கம், நேர்மை மற்றும் குடும்ப தர்மத்தை காக்கும் மாண்பு.",
+                "features_en": "Stately and commanding build, warm compassionate gaze, pleasant magnetic smile, and respectable aura.",
+                "features_ta": "அமைதியான கனிவான பார்வை, எடுப்பான கம்பீரமான தோற்றம், அழகான புன்னகை மற்றும் மரியாதைக்குரிய ஆளுமை.",
+                "career_en": "Higher education, advisory, law, banking, professorship, management consulting, or corporate strategy.",
+                "career_ta": "உயர்கல்வி, பேராசிரியர் பணி, சட்டம், வங்கி நிர்வாகம், நிதி ஆலோசனை அல்லது வழிகாட்டுதல்.",
+            },
+            "Venus": {
+                "nature_en": "Charming, artistic, romantic, peace-loving, socially refined, affectionate, and deeply invested in marital joy.",
+                "nature_ta": "வசீகரமான குணம், கலையார்வம், ரொமான்டிக் சுபாவம், அமைதி விரும்பி, பாசமிக்கவர் மற்றும் இல்லற இன்பத்தை போற்றுபவர்.",
+                "features_en": "Highly attractive facial features, captivating eyes, pleasing smile, stylish dressing sense, and graceful poise.",
+                "features_ta": "மிகவும் வசீகரமான முகம், கவர்ச்சியான கண்கள், அழகான புன்னகை, நேர்த்தியான ஆடை தேர்வு மற்றும் நளினமான நடை.",
+                "career_en": "Creative media, fashion, luxury goods, IT/design, cinema, music, architecture, interior design, or hospitality.",
+                "career_ta": "கலைத்துறை, ஃபேஷன், டிசைனிங், மென்பொருள் வடிவமைப்பு, சினிமா, இசை, ஆர்க்கிடெக்ட் அல்லது அழகுக்கலை.",
+            },
+            "Saturn": {
+                "nature_en": "Mature, patient, duty-bound, disciplined, practical, dependable, and possessing deep endurance.",
+                "nature_ta": "முதிர்ந்த எண்ணங்கள், அளவற்ற பொறுமை, கடமை உணர்வு, உழைப்பாளி, எளிமை மற்றும் வாழ்நாள் முழுவதும் துணையாக நிற்கும் விசுவாசம்.",
+                "features_en": "Lean to tall stature, thoughtful composed face, serious gaze, mature demeanor, and grounded posture.",
+                "features_ta": "ஒல்லியான அல்லது உயரமான தோற்றம், அமைதியான சிந்தனை முகம், முதிர்ச்சியான நடை மற்றும் எளிமையான பாங்கு.",
+                "career_en": "Core engineering, manufacturing, operations, law, governance, civil services, agriculture, or research.",
+                "career_ta": "கோர் இன்ஜினியரிங், உற்பத்தித்துறை, செயல்பாட்டு மேலாண்மை, சட்டம், ஆய்வுத்துறை அல்லது விவசாயம்.",
+            },
+            "Rahu": {
+                "nature_en": "Progressive, unconventional, ambitious, magnetic, quick-witted, and possessing broad international outlook.",
+                "nature_ta": "முற்போக்கு சிந்தனை, புதுமை விரும்புபவர், அபரிமிதமான லட்சியம், தனித்துவமான ஈர்ப்பு மற்றும் நவீன உலகப் பார்வை.",
+                "features_en": "Distinctive striking looks, expressive deep eyes, modern styling, and captivating presence.",
+                "features_ta": "தனித்துவமான தோற்றம், வசீகரமான கண்கள், நவீன நாகரீக உடை மற்றும் மற்றவர்களை ஈர்க்கும் உடல்வாகு.",
+                "career_en": "Cutting-edge tech, global MNCs, digital marketing, aviation, foreign commerce, media, or innovative start-ups.",
+                "career_ta": "நவீன தொழில்நுட்பம், பன்னாட்டு நிறுவனம், டிஜிட்டல் மார்க்கெட்டிங், விமானத்துறை, வெளிநாட்டு வர்த்தகம் அல்லது ஸ்டார்ட்-அப்.",
+            },
+            "Ketu": {
+                "nature_en": "Spiritual, introspective, sincere, humble, selfless, intuitive, and placing contentment above materialism.",
+                "nature_ta": "ஆன்மீக நாட்டம், எளிமை, அமைதியான சிந்தனை, உண்மையான அன்பு, சுயநலமற்ற மனம் மற்றும் ஆழ்ந்த உள்ளுணர்வு.",
+                "features_en": "Simple graceful countenance, calm serene gaze, modest demeanor, and gentle posture.",
+                "features_ta": "எளிமையான முக அமைதி, சாந்தமான பார்வை, ஆடம்பரமற்ற பாங்கு மற்றும் மென்மையான உடல்வாகு.",
+                "career_en": "Software development, research, psychology, healthcare, spirituality, analytics, or consulting.",
+                "career_ta": "மென்பொருள் உருவாக்கம், ஆராய்ச்சி, உளவியல், மருத்துவம், ஆன்மீகம் அல்லது தகவல் பகுப்பாய்வு.",
+            },
+        }
+
+        p = profiles.get(dominant_planet, profiles["Venus"])
+
+        summary_en = (
+            f"Your {partner_label_en.lower()} is governed primarily by {dominant_planet}'s astrological influence in the 7th house realm. "
+            f"They possess a {p['nature_en'].lower()} They will feature a {p['features_en'].lower()} "
+            f"Professionally, they thrive in {p['career_en'].lower()}."
+        )
+
+        summary_ta = (
+            f"உங்கள் {partner_label_ta} 7-ஆம் பாவகத்தில் {PLANET_NAMES_TA.get(dominant_planet, dominant_planet)} கிரகத்தின் ஆதிக்கத்தில் அமைகிறார். "
+            f"{p['nature_ta']} {p['features_ta']} "
+            f"தொழில் ரீதியாக {p['career_ta']} துறைகளில் சிறந்து விளங்குவார்."
+        )
+
+        return LifePartnerProfile(
+            nature_temperament_en=p["nature_en"],
+            nature_temperament_ta=p["nature_ta"],
+            physical_features_en=p["features_en"],
+            physical_features_ta=p["features_ta"],
+            career_background_en=p["career_en"],
+            career_background_ta=p["career_ta"],
+            summary_en=summary_en,
+            summary_ta=summary_ta,
+        )
+
+    @classmethod
+    def _determine_love_timing(
+        cls,
+        birth_date: Any,
+        lord_5: str,
+        lord_7: str,
+        love_pct: int,
+        kp_chart: Any,
+    ) -> LoveInitiationTiming:
+        """Estimates when romantic attraction ignited or blooms based on 5th house/lord dasha triggers."""
+        if hasattr(birth_date, "year"):
+            b_year = birth_date.year
+        else:
+            try:
+                b_year = int(str(birth_date)[:4])
+            except Exception:
+                b_year = 1995
+
+        trigger_lord = "Venus" if lord_5 in ("Venus", "Mercury", "Mars", "Moon") else lord_5
+        if trigger_lord not in ("Venus", "Rahu", "Mercury", "Mars"):
+            trigger_lord = "Venus"
+
+        found_md = None
+        if kp_chart and hasattr(kp_chart, "dasa_hierarchy") and kp_chart.dasa_hierarchy:
+            mds = getattr(kp_chart.dasa_hierarchy, "mahadashas", [])
+            for md in mds:
+                try:
+                    s_yr = int(md.start_date[:4])
+                    e_yr = int(md.end_date[:4])
+                    age_at_start = s_yr - b_year
+                    if 16 <= age_at_start <= 30 or (s_yr <= b_year + 22 <= e_yr):
+                        found_md = md.lord
+                        break
+                except Exception:
+                    pass
+
+        active_timing_lord = found_md or trigger_lord
+
+        if love_pct >= 60:
+            age_start = 20
+            age_end = 23
+            context_en = (
+                "Romance ignited during college/higher education or initial corporate career transition. "
+                "Mutual attraction deepened through frequent intellectual exchanges, shared aspirations, and heartfelt emotional bonding."
+            )
+            context_ta = (
+                "கல்லூரி / உயர்கல்வி பயிலும் காலத்திலோ அல்லது பணியிடத்தின் ஆரம்ப கட்டத்திலோ இந்த காதல் ஈர்ப்பு தொடங்கியது. "
+                "இருவருக்கும் இடையே உருவான புரிதல், தொடர் உரையாடல் மற்றும் பரஸ்பர அன்பின் மூலம் இக்காதல் வேரூன்றியது."
+            )
+        elif love_pct >= 40:
+            age_start = 22
+            age_end = 25
+            context_en = (
+                "Romantic rapport developed during early career years or formal pre-wedding interaction. "
+                "Friendship naturally evolved into affectionate attachment with growing mutual trust and familial approval."
+            )
+            context_ta = (
+                "பணியில் இணைந்த ஆரம்ப ஆண்டுகள் அல்லது வரன் பார்க்கும் முன்பாக ஏற்பட்ட அறிமுகத்தில் காதல் உணர்வுகள் மலர்ந்தன. "
+                "நல்ல நட்பாகத் தொடங்கி நாளடைவில் ஆழ்ந்த காதலாகவும், இருவர் விருப்பத்திலான பந்தமாகவும் உருப்பெற்றது."
+            )
+        else:
+            age_start = 23
+            age_end = 26
+            context_en = (
+                "Emotional readiness and marital love blossoms during the matrimonial selection and engagement period. "
+                "Affection deepens smoothly following elders' matchmaking and reciprocal family alignment."
+            )
+            context_ta = (
+                "திருமணத்திற்குரிய வரன் பார்க்கும் பருவம் மற்றும் நிச்சயதார்த்த காலகட்டத்தில் காதல் மற்றும் ஈர்ப்பு மலர்கிறது. "
+                "பெரியோர்கள் ஏற்பாடு செய்த வரன் என்றாலும், இருவருக்கும் இடையே மனமொத்த அன்பும் பாசமும் விரைவாக உண்டாகும்."
+            )
+
+        year_start = b_year + age_start
+        year_end = b_year + age_end
+
+        trigger_dasha_en = f"{active_timing_lord} Mahadasha / {lord_5} Antardasha with Venus transit activation"
+        trigger_dasha_ta = f"{PLANET_NAMES_TA.get(active_timing_lord, active_timing_lord)} தசை / {PLANET_NAMES_TA.get(lord_5, lord_5)} புக்தி மற்றும் சுக்கிரனின் கோச்சார அனுகூல காலம்"
+
+        return LoveInitiationTiming(
+            estimated_age_range=f"{age_start} – {age_end} years",
+            approximate_period=f"{year_start} – {year_end}",
+            trigger_dasha_en=trigger_dasha_en,
+            trigger_dasha_ta=trigger_dasha_ta,
+            context_en=context_en,
+            context_ta=context_ta,
         )

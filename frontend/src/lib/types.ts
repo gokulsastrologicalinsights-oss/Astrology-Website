@@ -7823,6 +7823,37 @@ export interface LoveOrArrangedFactor {
   weight: number;
 }
 
+export interface SpouseOriginProfile {
+  direction_en: string;
+  direction_ta: string;
+  distance_type_en: string;
+  distance_type_ta: string;
+  source_channel_en: string;
+  source_channel_ta: string;
+  points_en: string[];
+  points_ta: string[];
+}
+
+export interface LifePartnerProfile {
+  nature_temperament_en: string;
+  nature_temperament_ta: string;
+  physical_features_en: string;
+  physical_features_ta: string;
+  career_background_en: string;
+  career_background_ta: string;
+  summary_en: string;
+  summary_ta: string;
+}
+
+export interface LoveInitiationTiming {
+  estimated_age_range: string;
+  approximate_period: string;
+  trigger_dasha_en: string;
+  trigger_dasha_ta: string;
+  context_en: string;
+  context_ta: string;
+}
+
 export interface LoveOrArrangedResponse {
   native_name?: string;
   native_gender: string;
@@ -7837,6 +7868,9 @@ export interface LoveOrArrangedResponse {
   family_support: string;
   family_support_ta: string;
   key_factors: LoveOrArrangedFactor[];
+  spouse_origin?: SpouseOriginProfile;
+  life_partner?: LifePartnerProfile;
+  love_timing?: LoveInitiationTiming;
   fifth_house_summary: string;
   seventh_house_summary: string;
   kp_sublord_summary?: string;

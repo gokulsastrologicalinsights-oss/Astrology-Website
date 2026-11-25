@@ -38,6 +38,9 @@ from app.services.pdf_report_engine.marriage_compatibility_generator import (
     MarriageCompatibilityPdfGenerator,
     generate_marriage_compatibility_pdf_bytes,
 )
+from app.services.pdf_report_engine.love_arranged_pdf_generator import (
+    generate_love_arranged_pdf_bytes,
+)
 
 
 from app.services.pdf_report_engine.single_page_generator import (
@@ -108,6 +111,7 @@ __all__ = [
     "generate_gemstone_rudraksha_playbook_pdf_bytes",
     "MarriageCompatibilityPdfGenerator",
     "generate_marriage_compatibility_pdf_bytes",
+    "generate_love_arranged_pdf_bytes",
     # Fonts, Profiles & Centralized Tamil Typography Engine
     "register_report_fonts",
     "get_report_styles",

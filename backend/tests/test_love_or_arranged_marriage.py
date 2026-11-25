@@ -107,3 +107,38 @@ def test_api_love_or_arranged_invalid_input(client):
     }
     response = client.post("/api/v1/predictions/love-or-arranged-marriage", json=payload)
     assert response.status_code == 422
+
+
+def test_api_love_or_arranged_pdf_generation(client):
+    """Test generating professional PDF report in English and Tamil."""
+    payload = {
+        "birth": {
+            "birth_date": "1995-10-24",
+            "birth_time": "14:30:00",
+            "timezone": "Asia/Kolkata",
+            "latitude": 13.0827,
+            "longitude": 80.2707,
+        },
+        "name": "Arun Kumar",
+        "gender": "male",
+    }
+    # Test English PDF
+    resp_en = client.post("/api/v1/predictions/love-or-arranged-marriage/pdf?language=en", json=payload)
+    assert resp_en.status_code == 200
+    assert resp_en.headers["content-type"] == "application/pdf"
+    assert resp_en.content.startswith(b"%PDF")
+    assert len(resp_en.content) > 1000
+
+    # Test Tamil PDF
+    resp_ta = client.post("/api/v1/predictions/love-or-arranged-marriage/pdf?language=ta", json=payload)
+    assert resp_ta.status_code == 200
+    assert resp_ta.headers["content-type"] == "application/pdf"
+    assert resp_ta.content.startswith(b"%PDF")
+    assert len(resp_ta.content) > 1000
+
+    # Test Studio Report Router
+    resp_studio = client.post("/api/v1/reports/love-or-arranged/pdf?language=ta", json=payload)
+    assert resp_studio.status_code == 200
+    assert resp_studio.headers["content-type"] == "application/pdf"
+    assert resp_studio.content.startswith(b"%PDF")
+
