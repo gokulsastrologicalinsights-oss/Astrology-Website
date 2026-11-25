@@ -184,7 +184,7 @@ runTest("Correct field mapping from verified XALEN horoscope result", () => {
 
   // Metadata
   assert.strictEqual(data.ayanamsaName, "Lahiri (Chitra Paksha)");
-  assert.strictEqual(data.calculationEngine, "XALEN Ephemeris Engine (Rust Core)");
+  assert.strictEqual(data.calculationEngine, "Official Astrological Calculation");
 });
 
 // --------------------------------------------------------------------------

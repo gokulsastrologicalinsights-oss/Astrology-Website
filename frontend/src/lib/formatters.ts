@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime, formatDateDMY, formatDateDMYDash, formatTime12 } from "./date-formatter";
+import { formatDate, formatDateTime, formatDateDMY, formatDateDMYDash, formatTime12 } from "./date-formatter.ts";
 
 export { formatDate, formatDateTime, formatDateDMY, formatDateDMYDash, formatTime12 };
 

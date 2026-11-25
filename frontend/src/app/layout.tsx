@@ -49,6 +49,7 @@ const cinzel = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://astro.gaionline.in"),
   title: "Gokul's Astrological Insights — Precision Vedic & KP Astrology Platform",
   description:
     "Comprehensive Vedic and KP astrology platform providing high-precision birth charts, transits, Dasa, marriage matching, and personalized remedies.",
