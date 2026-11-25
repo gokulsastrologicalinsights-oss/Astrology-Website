@@ -31,21 +31,39 @@ from app.services.pdf_report_engine.fonts import (
     Paragraph,
     reorder_tamil_for_pdf,
     register_report_fonts,
-    GOLD_PRIMARY,
-    GOLD_ACCENT,
-    NAVY_PRIMARY,
-    NAVY_SECONDARY,
-    CRIMSON_ACCENT,
-    BORDER_COLOR,
 )
 from app.services.pdf_report_engine.letterhead_renderer import (
     make_letterhead_canvas_class,
+)
+from app.services.pdf_report_engine.pdf_design_tokens import (
     PAGE_SIZE,
     TOP_MARGIN,
     BOTTOM_MARGIN,
     LEFT_MARGIN,
     RIGHT_MARGIN,
     USABLE_WIDTH,
+    GOLD_PRIMARY,
+    GOLD_ACCENT,
+    GOLD_LIGHT_BG,
+    NAVY_PRIMARY,
+    NAVY_SECONDARY,
+    TEXT_BODY,
+    TEXT_MUTED,
+    CRIMSON_ACCENT,
+    COLOR_LOVE,
+    COLOR_ARRANGED,
+    COLOR_BLESSING,
+    BG_HEADER,
+    BG_ZEBRA,
+    BORDER_SUBTLE,
+    BORDER_INNER,
+    TYPO_REPORT_TITLE,
+    TYPO_PRIMARY_PREDICTION,
+    TYPO_SECTION_HEADING,
+    TYPO_BODY_STANDARD,
+    TYPO_BODY_COMPACT,
+    TYPO_TABLE_HEADER,
+    TYPO_TABLE_CONTENT,
 )
 
 PLANET_NAMES_TA = {
@@ -76,69 +94,85 @@ def generate_love_arranged_pdf_bytes(
     story: List[Any] = []
 
     # =========================================================================
-    # Typography Styles - Calibrated for Zero Overlaps & Pixel-Perfect Line Heights
+    # Standardized Typography Styles (Target Scales for A4 Publication Quality)
     # =========================================================================
     report_title_style = ParagraphStyle(
         "LAReportTitle",
         fontName=font_bold,
-        fontSize=12.5,
-        leading=15,
+        fontSize=TYPO_REPORT_TITLE["fontSize"],
+        leading=TYPO_REPORT_TITLE["leading"],
         textColor=NAVY_PRIMARY,
-        alignment=1, # Center
-        spaceAfter=2,
+        alignment=1,  # Center
+        spaceAfter=3,
     )
     report_sub_style = ParagraphStyle(
         "LAReportSub",
         fontName=font_name,
-        fontSize=7.8,
-        leading=10,
-        textColor=colors.HexColor("#475569"),
-        alignment=1,
-        spaceAfter=4,
+        fontSize=9.0,
+        leading=12.5,
+        textColor=TEXT_MUTED,
+        alignment=1,  # Center
+        spaceAfter=5,
     )
     section_head_style = ParagraphStyle(
         "LASectionHead",
         fontName=font_bold,
-        fontSize=9,
-        leading=11.5,
+        fontSize=TYPO_SECTION_HEADING["fontSize"],
+        leading=TYPO_SECTION_HEADING["leading"],
         textColor=NAVY_PRIMARY,
-        spaceBefore=2,
-        spaceAfter=2,
+        spaceBefore=3,
+        spaceAfter=2.5,
     )
-    cell_val_style = ParagraphStyle(
-        "LACellVal",
+    meta_val_style = ParagraphStyle(
+        "LAMetaVal",
         fontName=font_name,
-        fontSize=7.5,
-        leading=9.5,
-        textColor=colors.HexColor("#1E293B"),
+        fontSize=8.2,
+        leading=11.0,
+        textColor=NAVY_SECONDARY,
     )
     body_style = ParagraphStyle(
         "LABody",
         fontName=font_name,
-        fontSize=7.5,
-        leading=10,
-        textColor=colors.HexColor("#334155"),
+        fontSize=TYPO_BODY_STANDARD["fontSize"],
+        leading=TYPO_BODY_STANDARD["leading"],
+        textColor=TEXT_BODY,
     )
     bullet_style = ParagraphStyle(
         "LABullet",
         fontName=font_name,
-        fontSize=7.3,
-        leading=10,
-        textColor=colors.HexColor("#1E293B"),
+        fontSize=8.3,
+        leading=11.8,
+        textColor=NAVY_SECONDARY,
+    )
+    table_head_style = ParagraphStyle(
+        "LATableHead",
+        fontName=font_bold,
+        fontSize=TYPO_TABLE_HEADER["fontSize"],
+        leading=TYPO_TABLE_HEADER["leading"],
+        textColor=NAVY_PRIMARY,
+    )
+    table_head_center = ParagraphStyle(
+        "LATableHeadCenter",
+        fontName=font_bold,
+        fontSize=TYPO_TABLE_HEADER["fontSize"],
+        leading=TYPO_TABLE_HEADER["leading"],
+        textColor=NAVY_PRIMARY,
+        alignment=1,  # Center
     )
     table_cell_style = ParagraphStyle(
         "LATableCell",
         fontName=font_name,
-        fontSize=7,
-        leading=9.2,
-        textColor=colors.HexColor("#1E293B"),
+        fontSize=TYPO_TABLE_CONTENT["fontSize"],
+        leading=TYPO_TABLE_CONTENT["leading"],
+        textColor=NAVY_SECONDARY,
     )
-    table_cell_bold = ParagraphStyle(
-        "LATableCellBold",
-        fontName=font_bold,
-        fontSize=7,
-        leading=9.2,
-        textColor=NAVY_PRIMARY,
+    table_cell_center = ParagraphStyle(
+        "LATableCellCenter",
+        fontName=font_name,
+        fontSize=TYPO_TABLE_CONTENT["fontSize"],
+        leading=TYPO_TABLE_CONTENT["leading"],
+        textColor=NAVY_SECONDARY,
+        alignment=1,  # Center
     )
 
     # 1. Header Titles
@@ -154,7 +188,7 @@ def generate_love_arranged_pdf_bytes(
     )
     story.append(Paragraph(header_title, report_title_style))
     story.append(Paragraph(header_sub, report_sub_style))
-    story.append(Spacer(1, 3))
+    story.append(Spacer(1, 2))
 
     # 2. Native Metadata Grid
     meta_name_lbl = "ஜாதகர் பெயர்:" if is_ta else "Native Name:"
@@ -172,28 +206,28 @@ def generate_love_arranged_pdf_bytes(
 
     meta_table_data = [
         [
-            Paragraph(f"<b>{meta_name_lbl}</b> {report_data.native_name or 'Native'}", cell_val_style),
-            Paragraph(f"<b>{meta_gender_lbl}</b> {gender_display}", cell_val_style),
+            Paragraph(f"<b>{meta_name_lbl}</b> {report_data.native_name or 'Native'}", meta_val_style),
+            Paragraph(f"<b>{meta_gender_lbl}</b> {gender_display}", meta_val_style),
         ],
         [
-            Paragraph(f"<b>{meta_birth_lbl}</b> {report_data.birth_summary}", cell_val_style),
-            Paragraph(f"<b>{meta_date_lbl}</b> {eval_date_str}", cell_val_style),
+            Paragraph(f"<b>{meta_birth_lbl}</b> {report_data.birth_summary}", meta_val_style),
+            Paragraph(f"<b>{meta_date_lbl}</b> {eval_date_str}", meta_val_style),
         ],
     ]
     t_meta = Table(meta_table_data, colWidths=[USABLE_WIDTH * 0.52, USABLE_WIDTH * 0.48])
     t_meta.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_SUBTLE),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_INNER),
         ('TOPPADDING', (0, 0), (-1, -1), 2.5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(t_meta)
-    story.append(Spacer(1, 5))
+    story.append(Spacer(1, 4))
 
-    # 3. Grand Outcome Verdict Card (Structured Multiple Rows - Zero Overlap)
+    # 3. Grand Outcome Verdict Card (Structured Multiple Rows - Independent Vertical Space)
     badge_bg = "#FFF1F2" if report_data.verdict_badge == "LOVE" else "#FAF5FF" if report_data.verdict_badge == "LOVE_ARRANGED" else "#EFF6FF"
     badge_border = "#FDA4AF" if report_data.verdict_badge == "LOVE" else "#D8B4FE" if report_data.verdict_badge == "LOVE_ARRANGED" else "#93C5FD"
     badge_text_color = "#BE123C" if report_data.verdict_badge == "LOVE" else "#6B21A8" if report_data.verdict_badge == "LOVE_ARRANGED" else "#1D4ED8"
@@ -205,40 +239,40 @@ def generate_love_arranged_pdf_bytes(
     v_kicker_style = ParagraphStyle(
         "VKicker",
         fontName=font_bold,
-        fontSize=7.5,
-        leading=9.5,
+        fontSize=8.0,
+        leading=10.5,
         textColor=colors.HexColor(badge_text_color),
         alignment=1,
     )
     v_title_style = ParagraphStyle(
         "VTitle",
         fontName=font_bold,
-        fontSize=12,
-        leading=15,
+        fontSize=TYPO_PRIMARY_PREDICTION["fontSize"],
+        leading=TYPO_PRIMARY_PREDICTION["leading"],
         textColor=NAVY_PRIMARY,
         alignment=1,
     )
     v_desc_style = ParagraphStyle(
         "VDesc",
         fontName=font_name,
-        fontSize=7.5,
-        leading=10,
-        textColor=colors.HexColor("#334155"),
+        fontSize=8.5,
+        leading=12.0,
+        textColor=TEXT_BODY,
         alignment=1,
     )
     v_stat_style = ParagraphStyle(
         "VStat",
         fontName=font_bold,
-        fontSize=7.8,
-        leading=10,
+        fontSize=8.5,
+        leading=12.0,
         alignment=1,
     )
     v_fam_style = ParagraphStyle(
         "VFam",
         fontName=font_name,
-        fontSize=7.3,
-        leading=9.5,
-        textColor=colors.HexColor("#047857"),
+        fontSize=8.2,
+        leading=11.2,
+        textColor=COLOR_BLESSING,
         alignment=1,
     )
 
@@ -261,16 +295,22 @@ def generate_love_arranged_pdf_bytes(
     t_verdict.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(badge_bg)),
         ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor(badge_border)),
-        ('TOPPADDING', (0, 0), (-1, 0), 5),
-        ('BOTTOMPADDING', (0, -1), (-1, -1), 5),
-        ('TOPPADDING', (0, 1), (-1, -1), 1.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -2), 1.5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 10),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 4.5),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 1.5),
+        ('TOPPADDING', (0, 1), (-1, 1), 1.5),
+        ('BOTTOMPADDING', (0, 1), (-1, 1), 2.5),
+        ('TOPPADDING', (0, 2), (-1, 2), 1.5),
+        ('BOTTOMPADDING', (0, 2), (-1, 2), 2.5),
+        ('TOPPADDING', (0, 3), (-1, 3), 1.5),
+        ('BOTTOMPADDING', (0, 3), (-1, 3), 2.5),
+        ('TOPPADDING', (0, 4), (-1, 4), 1.5),
+        ('BOTTOMPADDING', (0, 4), (-1, 4), 4.5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
     ]))
     story.append(t_verdict)
-    story.append(Spacer(1, 5))
+    story.append(Spacer(1, 4))
 
     # 4. In-Depth Section 1: Way Bride / Groom Comes From (2-3 Points)
     spouse_orig = report_data.spouse_origin
@@ -300,15 +340,15 @@ def generate_love_arranged_pdf_bytes(
         """
         t_origin = Table([[Paragraph(origin_box_html, bullet_style)]], colWidths=[USABLE_WIDTH])
         t_origin.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FFFDF5")),
+            ('BACKGROUND', (0, 0), (-1, -1), GOLD_LIGHT_BG),
             ('BOX', (0, 0), (-1, -1), 0.6, GOLD_PRIMARY),
-            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 4.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.0),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         story.append(t_origin)
-        story.append(Spacer(1, 5))
+        story.append(Spacer(1, 4))
 
     # 5. In-Depth Section 2: Who Will Be Their Life Partner (Non-Repetitive, Balanced)
     partner = report_data.life_partner
@@ -338,9 +378,9 @@ def generate_love_arranged_pdf_bytes(
         t_partner = Table([[Paragraph(partner_box_html, bullet_style)]], colWidths=[USABLE_WIDTH])
         t_partner.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
-            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
+            ('BOX', (0, 0), (-1, -1), 0.5, BORDER_SUBTLE),
+            ('TOPPADDING', (0, 0), (-1, -1), 4.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.0),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
@@ -378,13 +418,13 @@ def generate_love_arranged_pdf_bytes(
         t_timing.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FDF2F8")),
             ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#F472B6")),
-            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 4.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.0),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         story.append(t_timing)
-        story.append(Spacer(1, 6))
+        story.append(Spacer(1, 5))
 
     # 7. Page 2: Primary Astrological Deciding Factors
     factors_sec_title = (
@@ -395,16 +435,17 @@ def generate_love_arranged_pdf_bytes(
     story.append(Paragraph(factors_sec_title, section_head_style))
 
     # Factors Table with concise headers (never wrapping)
+    # Col widths calibrated: Category (22%), Factor (48%), Influence (15%), Strength/Weight (15%)
     th_category = "ஜோதிடப் பிரிவு" if is_ta else "Category"
     th_factor = "கிரக அமைப்பு & பலன்" if is_ta else "Astrological Factor"
     th_influence = "தாக்கம்" if is_ta else "Influence"
-    th_weight = "பலம்" if is_ta else "Strength"
+    th_weight = "முக்கியத்துவம்" if is_ta else "Significance"
 
     factor_rows = [[
-        Paragraph(f"<b>{th_category}</b>", table_cell_bold),
-        Paragraph(f"<b>{th_factor}</b>", table_cell_bold),
-        Paragraph(f"<b>{th_influence}</b>", table_cell_bold),
-        Paragraph(f"<b>{th_weight}</b>", table_cell_bold),
+        Paragraph(f"<b>{th_category}</b>", table_head_style),
+        Paragraph(f"<b>{th_factor}</b>", table_head_style),
+        Paragraph(f"<b>{th_influence}</b>", table_head_center),
+        Paragraph(f"<b>{th_weight}</b>", table_head_center),
     ]]
 
     for f in report_data.key_factors:
@@ -417,33 +458,33 @@ def generate_love_arranged_pdf_bytes(
         )
         inf_color = "#BE123C" if f.influence == "LOVE" else "#1D4ED8" if f.influence == "ARRANGED" else "#475569"
 
-        factor_content = f"<b>{title}</b><br/><font size='6.5' color='#475569'>{desc}</font>"
+        factor_content = f"<b>{title}</b><br/><font size='7.0' color='#475569'>{desc}</font>"
         strength_str = f"<b>{f.weight} / 5</b>"
 
         factor_rows.append([
             Paragraph(f.category, table_cell_style),
             Paragraph(factor_content, table_cell_style),
-            Paragraph(f"<font color='{inf_color}'><b>{inf_txt}</b></font>", table_cell_style),
-            Paragraph(strength_str, table_cell_style),
+            Paragraph(f"<font color='{inf_color}'><b>{inf_txt}</b></font>", table_cell_center),
+            Paragraph(strength_str, table_cell_center),
         ])
 
     t_factors = Table(
         factor_rows,
-        colWidths=[USABLE_WIDTH * 0.23, USABLE_WIDTH * 0.49, USABLE_WIDTH * 0.16, USABLE_WIDTH * 0.12],
+        colWidths=[USABLE_WIDTH * 0.22, USABLE_WIDTH * 0.48, USABLE_WIDTH * 0.15, USABLE_WIDTH * 0.15],
     )
     t_factors.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F1F5F9")),
-        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_SUBTLE),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_INNER),
+        ('TOPPADDING', (0, 0), (-1, -1), 2.8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4.5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4.5),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('ALIGN', (2, 0), (3, -1), 'CENTER'),
     ]))
     story.append(t_factors)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
     # 8. Page 2: Technical Planetary Positions & Astrological References
     tech_sec_title = (
@@ -464,14 +505,14 @@ def generate_love_arranged_pdf_bytes(
     t_tech = Table([[Paragraph(tech_content, bullet_style)]], colWidths=[USABLE_WIDTH])
     t_tech.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_SUBTLE),
         ('TOPPADDING', (0, 0), (-1, -1), 3.5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
         ('RIGHTPADDING', (0, 0), (-1, -1), 8),
     ]))
     story.append(t_tech)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
     # 9. Page 2 Bottom: Classical Astrological Notes & Disclaimer
     notes_title = "சாஸ்திரக் குறிப்பு & அங்கீகாரம் (Vedic Authenticity Notes)" if is_ta else "Vedic Authenticity & Advisory Notes"
@@ -486,7 +527,7 @@ def generate_love_arranged_pdf_bytes(
     )
     t_notes = Table([[Paragraph(f"<b>{notes_title}:</b> {notes_body}", body_style)]], colWidths=[USABLE_WIDTH])
     t_notes.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FFFDF5")),
+        ('BACKGROUND', (0, 0), (-1, -1), GOLD_LIGHT_BG),
         ('BOX', (0, 0), (-1, -1), 0.5, GOLD_PRIMARY),
         ('TOPPADDING', (0, 0), (-1, -1), 3.5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),

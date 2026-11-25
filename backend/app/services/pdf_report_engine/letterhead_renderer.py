@@ -34,6 +34,24 @@ from reportlab.platypus import (
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
+from app.services.pdf_report_engine.pdf_design_tokens import (
+    PAGE_WIDTH,
+    PAGE_HEIGHT,
+    PAGE_SIZE,
+    TOP_MARGIN_MM,
+    BOTTOM_MARGIN_MM,
+    LEFT_MARGIN_MM,
+    RIGHT_MARGIN_MM,
+    TOP_MARGIN,
+    BOTTOM_MARGIN,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    USABLE_WIDTH,
+    USABLE_HEIGHT,
+    PAGE_NUMBER_Y_MM,
+    PAGE_NUMBER_Y,
+    TYPO_FOOTER,
+)
 from app.services.pdf_report_engine.fonts import (
     register_report_fonts,
     get_report_styles,
@@ -102,22 +120,10 @@ PAGE_WIDTH: float = 210.0 * mm    # 595.2755 pt
 PAGE_HEIGHT: float = 297.0 * mm   # 841.8898 pt
 PAGE_SIZE: Tuple[float, float] = (PAGE_WIDTH, PAGE_HEIGHT)
 
-# Calibrated Safe-Area Margins (based on original GAI Letterhead asset calibration)
+# Safe-Area Margins (re-exported from standardized pdf_design_tokens)
 # - Top header features (logo, company title, contact, tagline, portrait) end at y = 49.3 mm from top
 # - Bottom footer features (address block, gold serrated ribbon) end at y = 16.0 mm from bottom
 # - Left/right borders remain clear inside 8.0 mm
-TOP_MARGIN_MM: float = 50.0
-BOTTOM_MARGIN_MM: float = 20.0
-LEFT_MARGIN_MM: float = 10.0
-RIGHT_MARGIN_MM: float = 10.0
-
-TOP_MARGIN: float = TOP_MARGIN_MM * mm        # 141.73 pt (distance from top edge)
-BOTTOM_MARGIN: float = BOTTOM_MARGIN_MM * mm  # 56.70 pt (distance from bottom edge)
-LEFT_MARGIN: float = LEFT_MARGIN_MM * mm      # 28.35 pt
-RIGHT_MARGIN: float = RIGHT_MARGIN_MM * mm    # 28.35 pt
-
-USABLE_WIDTH: float = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN    # 190.0 mm = 538.58 pt
-USABLE_HEIGHT: float = PAGE_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN  # 227.0 mm = 643.46 pt
 
 # Protected Regions (never overlap with content)
 PROTECTED_ZONES: Dict[str, Dict[str, float]] = {
@@ -223,19 +229,19 @@ class GAILetterheadCanvas(canvas.Canvas):
             is_ta = self.language == "ta"
 
             # Numbering position: safe above gold letterhead decoration in white margin
-            y_pos = 18.0 * mm
+            y_pos = PAGE_NUMBER_Y
 
             # Optional small footer note on the left
             if self.footer_note:
-                self.setFont(font_regular, 6.8)
+                self.setFont(font_regular, 7.2)
                 self.setFillColor(NAVY_SECONDARY)
                 note_txt = self.footer_note
                 if any("\u0b80" <= c <= "\u0bff" for c in note_txt):
                     note_txt = reorder_tamil_for_pdf(note_txt, font_regular)
                 self.drawString(LEFT_MARGIN, y_pos, note_txt)
 
-            # Page numbering on the right
-            self.setFont(font_regular, 7.5)
+            # Page numbering on the right (target font size 8.0 pt)
+            self.setFont(font_regular, TYPO_FOOTER["fontSize"])
             self.setFillColor(NAVY_PRIMARY)
             if is_ta:
                 page_str = f"பக்கம் {self._pageNumber} / {total_pages}"
