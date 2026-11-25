@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   productionBrowserSourceMaps: false,
   /* config options here */
+  experimental: {
+    agentUpgrade: "security",
+  },
   allowedDevOrigins: [
     "127.0.0.1",
     "localhost",
