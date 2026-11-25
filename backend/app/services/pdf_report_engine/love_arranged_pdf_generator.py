@@ -435,7 +435,7 @@ def generate_love_arranged_pdf_bytes(
     story.append(Paragraph(factors_sec_title, section_head_style))
 
     # Factors Table with concise headers (never wrapping)
-    # Col widths calibrated: Category (22%), Factor (48%), Influence (15%), Strength/Weight (15%)
+    # Col widths calibrated: Category (22%), Factor (46%), Influence (15%), Strength/Weight (17%)
     th_category = "ஜோதிடப் பிரிவு" if is_ta else "Category"
     th_factor = "கிரக அமைப்பு & பலன்" if is_ta else "Astrological Factor"
     th_influence = "தாக்கம்" if is_ta else "Influence"
@@ -470,7 +470,7 @@ def generate_love_arranged_pdf_bytes(
 
     t_factors = Table(
         factor_rows,
-        colWidths=[USABLE_WIDTH * 0.22, USABLE_WIDTH * 0.48, USABLE_WIDTH * 0.15, USABLE_WIDTH * 0.15],
+        colWidths=[USABLE_WIDTH * 0.22, USABLE_WIDTH * 0.46, USABLE_WIDTH * 0.15, USABLE_WIDTH * 0.17],
     )
     t_factors.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F1F5F9")),
