@@ -222,8 +222,8 @@ class GAILetterheadCanvas(canvas.Canvas):
             font_regular, font_bold = register_report_fonts("sans")
             is_ta = self.language == "ta"
 
-            # Numbering position: y = 21 pt (7.4 mm above bottom, safe above gold decoration)
-            y_pos = 21.0
+            # Numbering position: safe above gold letterhead decoration in white margin
+            y_pos = 18.0 * mm
 
             # Optional small footer note on the left
             if self.footer_note:

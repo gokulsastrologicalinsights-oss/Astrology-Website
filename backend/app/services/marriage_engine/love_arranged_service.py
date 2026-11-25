@@ -742,14 +742,12 @@ class LoveArrangedService:
 
         summary_en = (
             f"Your {partner_label_en.lower()} is governed primarily by {dominant_planet}'s astrological influence in the 7th house realm. "
-            f"They possess a {p['nature_en'].lower()} They will feature a {p['features_en'].lower()} "
-            f"Professionally, they thrive in {p['career_en'].lower()}."
+            f"This planetary configuration promises an enduring, mutually supportive partnership with shared values and domestic harmony."
         )
 
         summary_ta = (
             f"உங்கள் {partner_label_ta} 7-ஆம் பாவகத்தில் {PLANET_NAMES_TA.get(dominant_planet, dominant_planet)} கிரகத்தின் ஆதிக்கத்தில் அமைகிறார். "
-            f"{p['nature_ta']} {p['features_ta']} "
-            f"தொழில் ரீதியாக {p['career_ta']} துறைகளில் சிறந்து விளங்குவார்."
+            f"இக்கிரக அமைப்பு இல்லறத்தில் மனமொத்த புரிதல், பரஸ்பர மரியாதை மற்றும் நீடித்த மகிழ்ச்சியை அருளும் உன்னத சுபயோகமாகும்."
         )
 
         return LifePartnerProfile(

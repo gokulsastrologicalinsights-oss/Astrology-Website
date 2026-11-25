@@ -75,12 +75,14 @@ def generate_love_arranged_pdf_bytes(
 
     story: List[Any] = []
 
-    # Typography Styles
+    # =========================================================================
+    # Typography Styles - Calibrated for Zero Overlaps & Pixel-Perfect Line Heights
+    # =========================================================================
     report_title_style = ParagraphStyle(
         "LAReportTitle",
         fontName=font_bold,
-        fontSize=13,
-        leading=16,
+        fontSize=12.5,
+        leading=15,
         textColor=NAVY_PRIMARY,
         alignment=1, # Center
         spaceAfter=2,
@@ -88,34 +90,20 @@ def generate_love_arranged_pdf_bytes(
     report_sub_style = ParagraphStyle(
         "LAReportSub",
         fontName=font_name,
-        fontSize=8,
-        leading=10.5,
+        fontSize=7.8,
+        leading=10,
         textColor=colors.HexColor("#475569"),
         alignment=1,
-        spaceAfter=5,
+        spaceAfter=4,
     )
     section_head_style = ParagraphStyle(
         "LASectionHead",
         fontName=font_bold,
-        fontSize=9.5,
-        leading=12,
+        fontSize=9,
+        leading=11.5,
         textColor=NAVY_PRIMARY,
-        spaceBefore=4,
-        spaceAfter=3,
-    )
-    card_title_style = ParagraphStyle(
-        "LACardTitle",
-        fontName=font_bold,
-        fontSize=8.5,
-        leading=11,
-        textColor=GOLD_PRIMARY,
-    )
-    cell_label_style = ParagraphStyle(
-        "LACellLabel",
-        fontName=font_bold,
-        fontSize=7.5,
-        leading=9.5,
-        textColor=NAVY_SECONDARY,
+        spaceBefore=2,
+        spaceAfter=2,
     )
     cell_val_style = ParagraphStyle(
         "LACellVal",
@@ -134,9 +122,23 @@ def generate_love_arranged_pdf_bytes(
     bullet_style = ParagraphStyle(
         "LABullet",
         fontName=font_name,
-        fontSize=7.5,
-        leading=10.5,
+        fontSize=7.3,
+        leading=10,
         textColor=colors.HexColor("#1E293B"),
+    )
+    table_cell_style = ParagraphStyle(
+        "LATableCell",
+        fontName=font_name,
+        fontSize=7,
+        leading=9.2,
+        textColor=colors.HexColor("#1E293B"),
+    )
+    table_cell_bold = ParagraphStyle(
+        "LATableCellBold",
+        fontName=font_bold,
+        fontSize=7,
+        leading=9.2,
+        textColor=NAVY_PRIMARY,
     )
 
     # 1. Header Titles
@@ -152,7 +154,7 @@ def generate_love_arranged_pdf_bytes(
     )
     story.append(Paragraph(header_title, report_title_style))
     story.append(Paragraph(header_sub, report_sub_style))
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 3))
 
     # 2. Native Metadata Grid
     meta_name_lbl = "ஜாதகர் பெயர்:" if is_ta else "Native Name:"
@@ -183,15 +185,15 @@ def generate_love_arranged_pdf_bytes(
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
         ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(t_meta)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
-    # 3. Grand Outcome Verdict Card
+    # 3. Grand Outcome Verdict Card (Structured Multiple Rows - Zero Overlap)
     badge_bg = "#FFF1F2" if report_data.verdict_badge == "LOVE" else "#FAF5FF" if report_data.verdict_badge == "LOVE_ARRANGED" else "#EFF6FF"
     badge_border = "#FDA4AF" if report_data.verdict_badge == "LOVE" else "#D8B4FE" if report_data.verdict_badge == "LOVE_ARRANGED" else "#93C5FD"
     badge_text_color = "#BE123C" if report_data.verdict_badge == "LOVE" else "#6B21A8" if report_data.verdict_badge == "LOVE_ARRANGED" else "#1D4ED8"
@@ -200,29 +202,77 @@ def generate_love_arranged_pdf_bytes(
     summary_text = report_data.summary_ta if is_ta else report_data.summary_en
     family_support_text = report_data.family_support_ta if is_ta else report_data.family_support
 
-    verdict_cell_content = f"""
-    <para align="center">
-        <font size="8" color="{badge_text_color}"><b>{'• திருமண வகை தீர்ப்பு •' if is_ta else '• PRIMARY MARRIAGE OUTCOME VERDICT •'}</b></font><br/>
-        <font size="13" color="{NAVY_PRIMARY}"><b>{verdict_title}</b></font><br/><br/>
-        <font size="8" color="#334155">{summary_text}</font><br/><br/>
-        <font size="8" color="#BE123C"><b>{'காதல் வாய்ப்பு:' if is_ta else 'Love Probability:'} {report_data.love_percentage}%</b></font> &nbsp;&nbsp;|&nbsp;&nbsp;
-        <font size="8" color="#1D4ED8"><b>{'நிச்சயிக்கப்பட்ட வாய்ப்பு:' if is_ta else 'Arranged Probability:'} {report_data.arranged_percentage}%</b></font><br/>
-        <font size="7.5" color="#047857"><b>{'பெற்றோர் & குடும்பத்தார் ஆதரவு:' if is_ta else 'Parental & Family Blessing:'} {family_support_text}</b></font>
-    </para>
-    """
-    t_verdict = Table([[Paragraph(verdict_cell_content, body_style)]], colWidths=[USABLE_WIDTH])
+    v_kicker_style = ParagraphStyle(
+        "VKicker",
+        fontName=font_bold,
+        fontSize=7.5,
+        leading=9.5,
+        textColor=colors.HexColor(badge_text_color),
+        alignment=1,
+    )
+    v_title_style = ParagraphStyle(
+        "VTitle",
+        fontName=font_bold,
+        fontSize=12,
+        leading=15,
+        textColor=NAVY_PRIMARY,
+        alignment=1,
+    )
+    v_desc_style = ParagraphStyle(
+        "VDesc",
+        fontName=font_name,
+        fontSize=7.5,
+        leading=10,
+        textColor=colors.HexColor("#334155"),
+        alignment=1,
+    )
+    v_stat_style = ParagraphStyle(
+        "VStat",
+        fontName=font_bold,
+        fontSize=7.8,
+        leading=10,
+        alignment=1,
+    )
+    v_fam_style = ParagraphStyle(
+        "VFam",
+        fontName=font_name,
+        fontSize=7.3,
+        leading=9.5,
+        textColor=colors.HexColor("#047857"),
+        alignment=1,
+    )
+
+    kicker_label = "• திருமண வகை தீர்ப்பு •" if is_ta else "• PRIMARY MARRIAGE OUTCOME VERDICT •"
+    stats_html = (
+        f"<font color='#BE123C'><b>{'காதல் வாய்ப்பு:' if is_ta else 'Love Probability:'} {report_data.love_percentage}%</b></font>"
+        f" &nbsp;&nbsp;|&nbsp;&nbsp; "
+        f"<font color='#1D4ED8'><b>{'நிச்சயிக்கப்பட்ட வாய்ப்பு:' if is_ta else 'Arranged Probability:'} {report_data.arranged_percentage}%</b></font>"
+    )
+    fam_html = f"<b>{'பெற்றோர் & குடும்பத்தார் ஆதரவு:' if is_ta else 'Parental & Family Blessing:'}</b> {family_support_text}"
+
+    verdict_rows = [
+        [Paragraph(kicker_label, v_kicker_style)],
+        [Paragraph(verdict_title, v_title_style)],
+        [Paragraph(summary_text, v_desc_style)],
+        [Paragraph(stats_html, v_stat_style)],
+        [Paragraph(fam_html, v_fam_style)],
+    ]
+    t_verdict = Table(verdict_rows, colWidths=[USABLE_WIDTH])
     t_verdict.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(badge_bg)),
-        ('BOX', (0, 0), (-1, -1), 1.0, colors.HexColor(badge_border)),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor(badge_border)),
+        ('TOPPADDING', (0, 0), (-1, 0), 5),
+        ('BOTTOMPADDING', (0, -1), (-1, -1), 5),
+        ('TOPPADDING', (0, 1), (-1, -1), 1.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -2), 1.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 10),
         ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
     ]))
     story.append(t_verdict)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 5))
 
-    # 4. In-Depth Section: Way Bride / Groom Comes From (2-3 Points)
+    # 4. In-Depth Section 1: Way Bride / Groom Comes From (2-3 Points)
     spouse_orig = report_data.spouse_origin
     if spouse_orig:
         origin_sec_title = (
@@ -241,7 +291,7 @@ def generate_love_arranged_pdf_bytes(
         chan_val = spouse_orig.source_channel_ta if is_ta else spouse_orig.source_channel_en
 
         pts = spouse_orig.points_ta if is_ta else spouse_orig.points_en
-        bullet_html = "<br/>".join([f"• <b>குறிப்பு {i+1}:</b> {pt}" if is_ta else f"• <b>Point {i+1}:</b> {pt}" for i, pt in enumerate(pts)])
+        bullet_html = "<br/>".join([f"• <b>{'குறிப்பு' if is_ta else 'Point'} {i+1}:</b> {pt}" for i, pt in enumerate(pts)])
 
         origin_box_html = f"""
         <b>{dir_lbl}</b> {dir_val} &nbsp;&nbsp;|&nbsp;&nbsp; <b>{dist_lbl}</b> {dist_val}<br/>
@@ -252,15 +302,15 @@ def generate_love_arranged_pdf_bytes(
         t_origin.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FFFDF5")),
             ('BOX', (0, 0), (-1, -1), 0.6, GOLD_PRIMARY),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         story.append(t_origin)
-        story.append(Spacer(1, 6))
+        story.append(Spacer(1, 5))
 
-    # 5. In-Depth Section: Who Will Be Their Life Partner
+    # 5. In-Depth Section 2: Who Will Be Their Life Partner (Non-Repetitive, Balanced)
     partner = report_data.life_partner
     if partner:
         partner_sec_title = (
@@ -280,24 +330,28 @@ def generate_love_arranged_pdf_bytes(
         summary_val = partner.summary_ta if is_ta else partner.summary_en
 
         partner_box_html = f"""
-        <b>{nature_lbl}</b> {nature_val}<br/>
-        <b>{features_lbl}</b> {features_val}<br/>
-        <b>{career_lbl}</b> {career_val}<br/><br/>
+        • <b>{nature_lbl}</b> {nature_val}<br/>
+        • <b>{features_lbl}</b> {features_val}<br/>
+        • <b>{career_lbl}</b> {career_val}<br/><br/>
         <font color="#475569"><i>{summary_val}</i></font>
         """
         t_partner = Table([[Paragraph(partner_box_html, bullet_style)]], colWidths=[USABLE_WIDTH])
         t_partner.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
             ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         story.append(t_partner)
-        story.append(Spacer(1, 6))
 
-    # 6. In-Depth Section: When Love Started / Romance Ignition Timing
+    # =========================================================================
+    # BALANCED PAGE BREAK: Timing, Deciding Factors & Technical Data on Page 2
+    # =========================================================================
+    story.append(PageBreak())
+
+    # 6. Page 2 Top: Courtship Genesis & When Love Started
     timing = report_data.love_timing
     if timing:
         timing_sec_title = (
@@ -324,17 +378,15 @@ def generate_love_arranged_pdf_bytes(
         t_timing.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FDF2F8")),
             ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#F472B6")),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         story.append(t_timing)
+        story.append(Spacer(1, 6))
 
-    # PAGE BREAK TO PAGE 2 FOR FACTORS & TECHNICAL SIGNATURES
-    story.append(PageBreak())
-
-    # Page 2: Primary Astrological Deciding Factors
+    # 7. Page 2: Primary Astrological Deciding Factors
     factors_sec_title = (
         "4. முக்கிய ஜோதிடக் காரணிகள் (Primary Astrological Deciding Factors)"
         if is_ta
@@ -342,17 +394,17 @@ def generate_love_arranged_pdf_bytes(
     )
     story.append(Paragraph(factors_sec_title, section_head_style))
 
-    # Factors Table
-    th_category = "காரணிப் பிரிவு" if is_ta else "Category"
-    th_factor = "கிரக அமைப்பு / விதி" if is_ta else "Astrological Factor"
+    # Factors Table with concise headers (never wrapping)
+    th_category = "ஜோதிடப் பிரிவு" if is_ta else "Category"
+    th_factor = "கிரக அமைப்பு & பலன்" if is_ta else "Astrological Factor"
     th_influence = "தாக்கம்" if is_ta else "Influence"
-    th_weight = "முக்கியத்துவம்" if is_ta else "Weight"
+    th_weight = "பலம்" if is_ta else "Strength"
 
     factor_rows = [[
-        Paragraph(f"<b>{th_category}</b>", cell_label_style),
-        Paragraph(f"<b>{th_factor}</b>", cell_label_style),
-        Paragraph(f"<b>{th_influence}</b>", cell_label_style),
-        Paragraph(f"<b>{th_weight}</b>", cell_label_style),
+        Paragraph(f"<b>{th_category}</b>", table_cell_bold),
+        Paragraph(f"<b>{th_factor}</b>", table_cell_bold),
+        Paragraph(f"<b>{th_influence}</b>", table_cell_bold),
+        Paragraph(f"<b>{th_weight}</b>", table_cell_bold),
     ]]
 
     for f in report_data.key_factors:
@@ -365,17 +417,19 @@ def generate_love_arranged_pdf_bytes(
         )
         inf_color = "#BE123C" if f.influence == "LOVE" else "#1D4ED8" if f.influence == "ARRANGED" else "#475569"
 
-        factor_content = f"<b>{title}</b><br/><font size='6.8' color='#475569'>{desc}</font>"
+        factor_content = f"<b>{title}</b><br/><font size='6.5' color='#475569'>{desc}</font>"
+        strength_str = f"<b>{f.weight} / 5</b>"
+
         factor_rows.append([
-            Paragraph(f.category, body_style),
-            Paragraph(factor_content, body_style),
-            Paragraph(f"<font color='{inf_color}'><b>{inf_txt}</b></font>", body_style),
-            Paragraph(f"{'★' * f.weight}", body_style),
+            Paragraph(f.category, table_cell_style),
+            Paragraph(factor_content, table_cell_style),
+            Paragraph(f"<font color='{inf_color}'><b>{inf_txt}</b></font>", table_cell_style),
+            Paragraph(strength_str, table_cell_style),
         ])
 
     t_factors = Table(
         factor_rows,
-        colWidths=[USABLE_WIDTH * 0.22, USABLE_WIDTH * 0.52, USABLE_WIDTH * 0.14, USABLE_WIDTH * 0.12],
+        colWidths=[USABLE_WIDTH * 0.23, USABLE_WIDTH * 0.49, USABLE_WIDTH * 0.16, USABLE_WIDTH * 0.12],
     )
     t_factors.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F1F5F9")),
@@ -386,11 +440,12 @@ def generate_love_arranged_pdf_bytes(
         ('LEFTPADDING', (0, 0), (-1, -1), 4),
         ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (2, 0), (3, -1), 'CENTER'),
     ]))
     story.append(t_factors)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 6))
 
-    # Page 2: Technical Planetary Positions & Astrological References
+    # 8. Page 2: Technical Planetary Positions & Astrological References
     tech_sec_title = (
         "5. நுட்பமான கிரக அமைப்புகள் & கே.பி உப-அதிபதி விபரங்கள்"
         if is_ta
@@ -410,15 +465,15 @@ def generate_love_arranged_pdf_bytes(
     t_tech.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
         ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 3.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
         ('RIGHTPADDING', (0, 0), (-1, -1), 8),
     ]))
     story.append(t_tech)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 6))
 
-    # Page 2: Classical Astrological Notes & Disclaimer
+    # 9. Page 2 Bottom: Classical Astrological Notes & Disclaimer
     notes_title = "சாஸ்திரக் குறிப்பு & அங்கீகாரம் (Vedic Authenticity Notes)" if is_ta else "Vedic Authenticity & Advisory Notes"
     notes_body = (
         "இந்த திருமண வகை கணிப்பு பராசர முறை, கே.பி உப-அதிபதி விதி மற்றும் சித்தயோகி சிவதாசன் ரவி நாடி விதிகளின்படி "
@@ -433,8 +488,8 @@ def generate_love_arranged_pdf_bytes(
     t_notes.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FFFDF5")),
         ('BOX', (0, 0), (-1, -1), 0.5, GOLD_PRIMARY),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 3.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
         ('RIGHTPADDING', (0, 0), (-1, -1), 8),
     ]))
