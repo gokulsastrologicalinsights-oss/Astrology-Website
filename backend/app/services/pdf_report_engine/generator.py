@@ -311,14 +311,14 @@ class HoroscopePdfReportGenerator:
             d1_chart_dict,
             title_en="D1 RASI CHART",
             title_ta="ராசி கட்டம் (D1)",
-            size=210.0,
+            size=170.0,
             language=self.lang,
         )
 
         # Overview Table side by side or placed neatly
-        elements.append(Spacer(1, 4))
+        elements.append(Spacer(1, 2))
         elements.append(d1_drawing)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Comprehensive Planet Table
         planet_rows = [
@@ -374,8 +374,8 @@ class HoroscopePdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.4),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, BG_ZEBRA]),
         ]))
         elements.append(t_planets)
@@ -427,13 +427,13 @@ class HoroscopePdfReportGenerator:
             },
             title_en="D9 NAVAMSA",
             title_ta="நவாம்ச கட்டம் (D9)",
-            size=210.0,
+            size=175.0,
             language=self.lang,
         )
 
-        elements.append(Spacer(1, 4))
+        elements.append(Spacer(1, 2))
         elements.append(d9_drawing)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Check Vargottama planets (same sign in D1 and D9)
         d1_planets = {p.name: p.sign_index for p in (self.data.horoscope.planets if self.data.horoscope else [])}
@@ -545,17 +545,17 @@ class HoroscopePdfReportGenerator:
             },
             title_en="D10 DASAMSA",
             title_ta="தசாம்சம் (D10)",
-            size=180.0,
+            size=145.0,
             language=self.lang,
         )
 
-        elements.append(Spacer(1, 4))
+        elements.append(Spacer(1, 2))
         elements.append(d10_drawing)
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 3))
 
         # 16-Varga Sign Placement Summary Matrix
         elements.append(Paragraph("<b>Comprehensive 16-Divisional Sign Matrix (ஷோடசவர்க்க ராசி பட்டியல்):</b>", self.styles["ReportBodyBold"]))
-        elements.append(Spacer(1, 4))
+        elements.append(Spacer(1, 2))
 
         varga_keys = ["D1", "D2", "D3", "D4", "D7", "D9", "D10", "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60"]
         matrix_header = [Paragraph("<b>Graha</b>", self.styles["TableHeader"])] + [
@@ -590,16 +590,16 @@ class HoroscopePdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 0.8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0.8),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, BG_ZEBRA]),
         ]))
         elements.append(t_matrix)
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 3))
 
         # D60 Shashtyamsa Highlights
         elements.append(Paragraph("<b>D60 Shashtyamsa Deities (அறுபதாம்ச தேவதைகள்):</b>", self.styles["ReportBodyBold"]))
-        elements.append(Spacer(1, 3))
+        elements.append(Spacer(1, 2))
 
         d60_rows = [
             [
@@ -627,8 +627,8 @@ class HoroscopePdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.0),
         ]))
         elements.append(t_d60)
 

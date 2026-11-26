@@ -18,28 +18,34 @@ PAGE_WIDTH: float = 210.0 * mm   # 595.2755 pt
 PAGE_HEIGHT: float = 297.0 * mm  # 841.8898 pt
 PAGE_SIZE: Tuple[float, float] = (PAGE_WIDTH, PAGE_HEIGHT)
 
-# Calibrated Safe-Area Margins:
-# - Header: Logo and portrait graphics clear at y = 49.3 mm from top edge
-# - Footer: Blue address banner and gold serrated ribbon clear at y = 16.5 mm from bottom edge
-# - Left/Right borders clear at 8.0 mm
-TOP_MARGIN_MM: float = 50.0
-BOTTOM_MARGIN_MM: float = 26.0
-LEFT_MARGIN_MM: float = 10.0
-RIGHT_MARGIN_MM: float = 10.0
+# Calibrated Safe-Area Margins for Official GAI Letterpad:
+# - Header: Blue banner, Gokul's portrait, Logo, and Tamil prayer ribbon ("ஓம் ஸ்ரீ கணேஷாய நமஹ | ஓம் குருப்யோ நமஹ")
+#   terminate at y = 53.7 mm from top edge (with flourish at y=55mm confined within 10.7mm of left border).
+#   TOP_MARGIN_MM = 55.0 mm guarantees generous clearance with 0% text overlay on branding.
+# - Footer: Golden temple gopuram with trees on the right terminates at y = 46.5 mm from bottom edge,
+#   golden wave ribbon extends up to y = 45.0 mm, and blue address banner sits at y = 0 to 27.3 mm.
+#   BOTTOM_MARGIN_MM = 46.0 mm guarantees report flowables never overlap temple or address graphics.
+# - Left/Right margins: 12.0 mm ensures ample breathing room inside borders.
+TOP_MARGIN_MM: float = 55.0
+BOTTOM_MARGIN_MM: float = 46.0
+LEFT_MARGIN_MM: float = 12.0
+RIGHT_MARGIN_MM: float = 12.0
 
-TOP_MARGIN: float = TOP_MARGIN_MM * mm        # 141.73 pt (distance from top edge)
-BOTTOM_MARGIN: float = BOTTOM_MARGIN_MM * mm  # 73.70 pt (distance from bottom edge)
-LEFT_MARGIN: float = LEFT_MARGIN_MM * mm      # 28.35 pt
-RIGHT_MARGIN: float = RIGHT_MARGIN_MM * mm    # 28.35 pt
+TOP_MARGIN: float = TOP_MARGIN_MM * mm        # 155.91 pt (distance from top edge)
+BOTTOM_MARGIN: float = BOTTOM_MARGIN_MM * mm  # 130.39 pt (distance from bottom edge)
+LEFT_MARGIN: float = LEFT_MARGIN_MM * mm      # 34.02 pt
+RIGHT_MARGIN: float = RIGHT_MARGIN_MM * mm    # 34.02 pt
 
-USABLE_WIDTH: float = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN    # 190.0 mm = 538.58 pt
-USABLE_HEIGHT: float = PAGE_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN  # 221.0 mm = 626.46 pt
+USABLE_WIDTH: float = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN    # 186.0 mm = 527.24 pt
+USABLE_HEIGHT: float = PAGE_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN  # 196.0 mm = 555.59 pt
 
 # Running Page Number Position:
-# Placed at y = 19.5 mm (~55.3 pt), safely in the white margin:
-# - 3.5 mm above the gold letterhead ribbon (which terminates at y = 16.0 mm)
-# - 6.5 mm below the lowest story flowable (which terminates at y >= 26.0 mm)
-PAGE_NUMBER_Y_MM: float = 19.5
+# Placed at y = 42.0 mm (~119.0 pt), safely in the clean white horizontal central zone:
+# - In the horizontal gap between the blue address banner on the left (which clears at x=65mm)
+#   and the temple structure on the right (which starts at x=172mm).
+# - 4.0 mm below the story flowables (which terminate at y >= 46.0 mm)
+# - Centered or inset from right edge to stay 100% clear of graphics
+PAGE_NUMBER_Y_MM: float = 42.0
 PAGE_NUMBER_Y: float = PAGE_NUMBER_Y_MM * mm
 
 # =============================================================================

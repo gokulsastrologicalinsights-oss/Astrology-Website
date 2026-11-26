@@ -128,14 +128,14 @@ PAGE_SIZE: Tuple[float, float] = (PAGE_WIDTH, PAGE_HEIGHT)
 # Protected Regions (never overlap with content)
 PROTECTED_ZONES: Dict[str, Dict[str, float]] = {
     "header": {
-        "y_min": PAGE_HEIGHT - (49.5 * mm),
+        "y_min": PAGE_HEIGHT - (54.5 * mm),
         "y_max": PAGE_HEIGHT,
         "x_min": 0.0,
         "x_max": PAGE_WIDTH,
     },
     "footer": {
         "y_min": 0.0,
-        "y_max": 17.5 * mm,
+        "y_max": 42.0 * mm,
         "x_min": 0.0,
         "x_max": PAGE_WIDTH,
     },
@@ -143,12 +143,12 @@ PROTECTED_ZONES: Dict[str, Dict[str, float]] = {
         "y_min": 0.0,
         "y_max": PAGE_HEIGHT,
         "x_min": 0.0,
-        "x_max": 8.0 * mm,
+        "x_max": 10.0 * mm,
     },
     "right_border": {
         "y_min": 0.0,
         "y_max": PAGE_HEIGHT,
-        "x_min": PAGE_WIDTH - (8.0 * mm),
+        "x_min": PAGE_WIDTH - (10.0 * mm),
         "x_max": PAGE_WIDTH,
     },
     "watermark": {
@@ -240,7 +240,7 @@ class GAILetterheadCanvas(canvas.Canvas):
                     note_txt = reorder_tamil_for_pdf(note_txt, font_regular)
                 self.drawString(LEFT_MARGIN, y_pos, note_txt)
 
-            # Page numbering on the right (target font size 8.0 pt)
+            # Page numbering in the clean white horizontal band above temple and gold ribbon
             self.setFont(font_regular, TYPO_FOOTER["fontSize"])
             self.setFillColor(NAVY_PRIMARY)
             if is_ta:
@@ -249,7 +249,13 @@ class GAILetterheadCanvas(canvas.Canvas):
             else:
                 page_str = f"Page {self._pageNumber} of {total_pages}"
 
-            self.drawRightString(PAGE_WIDTH - RIGHT_MARGIN, y_pos, page_str)
+            if self.footer_note:
+                # Inset right-aligned page string to remain completely clear of temple spire / birds
+                safe_right_x = min(PAGE_WIDTH - RIGHT_MARGIN, PAGE_WIDTH - (24.0 * mm))
+                self.drawRightString(safe_right_x, y_pos, page_str)
+            else:
+                # Centered page numbering in the clean central white zone
+                self.drawCentredString(PAGE_WIDTH / 2.0, y_pos, page_str)
 
         except Exception as exc:
             logger.warning("Error drawing page decorations: %s", exc)

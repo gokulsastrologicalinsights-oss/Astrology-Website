@@ -283,7 +283,6 @@ def generate_pancha_pakshi_pdf_bytes(
         else "Classical Siddha Bio-Rhythms for Action & Auspicious Timing (Ruling, Eating, Walking, Sleeping, Dying)"
     )
 
-    story.append(Paragraph("<b>GOKUL'S ASTROLOGICAL INSIGHTS</b>", brand_title))
     story.append(Paragraph(f"<b>{doc_title}</b>", doc_title_style))
     story.append(Paragraph(doc_sub, doc_sub_style))
 
@@ -295,7 +294,7 @@ def generate_pancha_pakshi_pdf_bytes(
         ('TOPPADDING', (0, 0), (-1, -1), 0),
     ]))
     story.append(divider_table)
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 2))
 
     # Native & Janma Pakshi Summary Table (Balanced 2-column card)
     paksha_label = ("வளர்பிறை (சுக்ல)" if is_ta else "Shukla (Waxing)") if "shukla" in req.paksha.lower() else ("தேய்பிறை (கிருஷ்ண)" if is_ta else "Krishna (Waning)")
@@ -333,13 +332,13 @@ def generate_pancha_pakshi_pdf_bytes(
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.0),
-        ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 1.0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.0),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(t_native)
-    story.append(Spacer(1, 5))
+    story.append(Spacer(1, 3))
 
     # Golden Windows & Padupakshi Highlights Box
     golden_windows = res.get("golden_windows", [])
@@ -388,13 +387,13 @@ def generate_pancha_pakshi_pdf_bytes(
         ('BACKGROUND', (1, 1), (1, 1), colors.HexColor("#FEF2F2")),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 1.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(t_windows)
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 2))
 
     # Daytime 25 Antara Table (Sunrise to Sunset)
     day_sec_title = (
@@ -405,9 +404,8 @@ def generate_pancha_pakshi_pdf_bytes(
     story.append(Paragraph(f"<b>{day_sec_title}</b>", section_head_style))
     story.append(Spacer(1, 1))
 
-    # Table Column Widths: Exactly 531.27 pt (USABLE_WIDTH)
-    # [Time: 110pt, Major: 100pt, Sub: 100pt, Power: 75pt, Guidance: 146.27pt]
-    col_w = [110.0, 100.0, 100.0, 75.0, 146.27]
+    # Table Column Widths: Exactly USABLE_WIDTH
+    col_w = [USABLE_WIDTH * 0.20, USABLE_WIDTH * 0.20, USABLE_WIDTH * 0.20, USABLE_WIDTH * 0.15, USABLE_WIDTH * 0.25]
 
     day_antara_head = [
         Paragraph(f"<b>{'நேரம்' if is_ta else 'Time Window'}</b>", th_white_center),
@@ -447,8 +445,8 @@ def generate_pancha_pakshi_pdf_bytes(
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('TOPPADDING', (0, 0), (-1, -1), 1.6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.6),
+        ('TOPPADDING', (0, 0), (-1, -1), 0.7),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0.7),
         ('LEFTPADDING', (0, 0), (-1, -1), 2),
         ('RIGHTPADDING', (0, 0), (-1, -1), 2),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -467,7 +465,7 @@ def generate_pancha_pakshi_pdf_bytes(
         else "NIGHTTIME BIO-RHYTHM SCHEDULE (Sunset to Next Sunrise - 25 Sub-periods)"
     )
     story.append(Paragraph(f"<b>{night_sec_title}</b>", section_head_style))
-    story.append(Spacer(1, 2))
+    story.append(Spacer(1, 1))
 
     night_antara_head = [
         Paragraph(f"<b>{'நேரம்' if is_ta else 'Time Window'}</b>", th_white_center),
@@ -503,15 +501,15 @@ def generate_pancha_pakshi_pdf_bytes(
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
-        ('TOPPADDING', (0, 0), (-1, -1), 1.6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.6),
+        ('TOPPADDING', (0, 0), (-1, -1), 0.7),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0.7),
         ('LEFTPADDING', (0, 0), (-1, -1), 2),
         ('RIGHTPADDING', (0, 0), (-1, -1), 2),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     story.append(t_night)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 4))
 
     # Agastya Siddha Lore & Practical Action Guide
     lore_text = (
@@ -533,10 +531,10 @@ def generate_pancha_pakshi_pdf_bytes(
     t_lore.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FFFDF5")),
         ('BOX', (0, 0), (-1, -1), 0.5, GOLD_PRIMARY),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('LEFTPADDING', (0, 0), (-1, -1), 7),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 7),
+        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(t_lore)
 

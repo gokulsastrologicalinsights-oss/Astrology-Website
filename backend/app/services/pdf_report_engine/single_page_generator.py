@@ -1180,10 +1180,9 @@ class SinglePageHoroscopePdfGenerator:
 
     def _build_header(self, story: List[Any]):
         """Builds distinguished report heading inside the safe area below the official letterhead."""
-        title_text = "வேத ஜோதிட ஜாதகக் குறிப்பு (Vedic Horoscope Chart)"
-        story.append(Paragraph(title_text, self.styles["BrandHeader"]))
-        story.append(Paragraph("<font size='7' color='#475569'>Gokul's Astrological Insights</font>", self.styles["TableCellCenter"]))
-        story.append(HRFlowable(width="100%", thickness=0.75, color=BORDER_GOLD, spaceBefore=1, spaceAfter=3))
+        title_text = "வேத ஜோதிட ஜாதகக் குறிப்பு • Gokul's Astrological Insights"
+        story.append(Paragraph(f"<b>{title_text}</b>", self.styles["SectionTitle"]))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER_GOLD, spaceBefore=1, spaceAfter=2))
 
     def _build_personal_and_panchang_table(self, story: List[Any], data: Dict[str, Any]):
         """Builds the 2-column Native & Panchang details block."""
@@ -1394,18 +1393,18 @@ class SinglePageHoroscopePdfGenerator:
         t = Table(table_paragraphs, colWidths=col_widths)
         t.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 1.6),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 1.6),
-            ("LEFTPADDING", (0, 0), (-1, -1), 2),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-            ("LINEABOVE", (0, 0), (-1, 0), 1.0, colors.black),
-            ("LINEBELOW", (0, 0), (-1, 0), 0.75, colors.black),
-            ("LINEBELOW", (0, -1), (-1, -1), 0.75, colors.black),
+            ("TOPPADDING", (0, 0), (-1, -1), 0.6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0.6),
+            ("LEFTPADDING", (0, 0), (-1, -1), 1.5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 1.5),
+            ("LINEABOVE", (0, 0), (-1, 0), 0.8, colors.black),
+            ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.black),
+            ("LINEBELOW", (0, -1), (-1, -1), 0.5, colors.black),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
         ]))
 
         story.append(t)
-        story.append(Spacer(1, 6))
+        story.append(Spacer(1, 3))
 
     def _build_charts_section(self, story: List[Any], data: Dict[str, Any]):
         """Renders side-by-side Rasi & Navamsha charts."""
@@ -1448,7 +1447,7 @@ class SinglePageHoroscopePdfGenerator:
         # Mandi in D9
         navamsha_occupants[mandi["navamsha_sign_index"]].append("மா")
 
-        chart_size = 195.0
+        chart_size = 142.0
         d1_drawing = create_minimalist_chart_drawing(
             "ராசி (1)", rasi_occupants, size=chart_size,
             font_regular=self.font_regular, font_bold=self.font_bold
@@ -1470,7 +1469,7 @@ class SinglePageHoroscopePdfGenerator:
         ]))
 
         story.append(charts_table)
-        story.append(Spacer(1, 6))
+        story.append(Spacer(1, 3))
 
     def _build_dasa_bukthi_section(self, story: List[Any], data: Dict[str, Any]):
         """Renders the 2x2 Dasa & Bukthi balance and current period section."""
@@ -1518,14 +1517,14 @@ class SinglePageHoroscopePdfGenerator:
         t = Table(table_data, colWidths=[USABLE_WIDTH * 0.5, USABLE_WIDTH * 0.5])
         t.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 2),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ("TOPPADDING", (0, 0), (-1, -1), 1.0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 1.0),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ]))
 
         story.append(t)
-        story.append(Spacer(1, 8))
+        story.append(Spacer(1, 2))
 
     def _build_footer(self, story: List[Any]):
         """Footer footnote matching uploaded document."""

@@ -209,7 +209,7 @@ class KpPdfReportGenerator:
         )
         elements.append(Paragraph(title_ta, self.styles["BrandHeader"]))
         elements.append(Paragraph(sub_title, self.styles["BrandSubHeader"]))
-        elements.append(HRFlowable(width="100%", thickness=1.0, color=BORDER_GOLD, spaceBefore=2, spaceAfter=8))
+        elements.append(HRFlowable(width="100%", thickness=0.8, color=BORDER_GOLD, spaceBefore=1, spaceAfter=4))
 
         # Particulars Section Header
         is_horary = self.data.chart_type == "horary"
@@ -301,13 +301,13 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, -1), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 4.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 2.2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.2),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         elements.append(t_info)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Horary Division Card (if Horary)
         if is_horary and self.data.horary_division:
@@ -331,13 +331,13 @@ class KpPdfReportGenerator:
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FEF9C3")),
                 ('BOX', (0, 0), (-1, -1), 1.0, GOLD_ACCENT),
                 ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#FDE68A")),
-                ('TOPPADDING', (0, 0), (-1, -1), 4),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('TOPPADDING', (0, 0), (-1, -1), 2.0),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2.0),
                 ('LEFTPADDING', (0, 0), (-1, -1), 8),
                 ('RIGHTPADDING', (0, 0), (-1, -1), 8),
             ]))
             elements.append(t_hcard)
-            elements.append(Spacer(1, 10))
+            elements.append(Spacer(1, 4))
 
         # Astronomical & KP Calibration Table
         elements.append(Paragraph("Astronomical & Ephemeris Calibration — வானியல் கணித அளவீடுகள்", self.styles["SectionTitle"]))
@@ -366,11 +366,11 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, -1), 2.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.0),
         ]))
         elements.append(t_astro)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Panchang Table (5 Limbs)
         elements.append(Paragraph("Birth / Query Panchang — பஞ்சாங்க விவரங்கள் (Five Limbs of Time)", self.styles["SectionTitle"]))
@@ -424,11 +424,11 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 3.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.8),
         ]))
         elements.append(t_panch)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # KP Core Aphorism Box
         kp_axiom_text = (
@@ -440,8 +440,8 @@ class KpPdfReportGenerator:
         t_axiom.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FEF9C3")),
             ('BOX', (0, 0), (-1, -1), 1.0, GOLD_ACCENT),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 3.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3.0),
             ('LEFTPADDING', (0, 0), (-1, -1), 10),
             ('RIGHTPADDING', (0, 0), (-1, -1), 10),
         ]))
@@ -614,13 +614,13 @@ class KpPdfReportGenerator:
 
             if promise == "Positive":
                 p_color = "#15803D"
-                p_text = "Positive / நற்பலன்" if self.lang == "ta" else "Positive"
+                p_text = "நற்பலன்" if self.lang == "ta" else "Positive"
             elif promise == "Negative":
                 p_color = "#991B1B"
-                p_text = "Negative / தடை" if self.lang == "ta" else "Negative"
+                p_text = "தடை" if self.lang == "ta" else "Negative"
             else:
                 p_color = "#475569"
-                p_text = "Mixed / கலவை" if self.lang == "ta" else "Mixed"
+                p_text = "கலவை" if self.lang == "ta" else "Mixed"
 
             cusp_rows.append([
                 Paragraph(f"<b>Cusp {h_num}</b>", self.styles["TableCellCenter"]),
@@ -633,16 +633,18 @@ class KpPdfReportGenerator:
                 Paragraph(f"<font color='{p_color}'><b>{p_text}</b></font>", self.styles["TableCellCenter"]),
             ])
 
-        t_cusps = Table(cusp_rows, colWidths=[60, 75, 65, 60, 60, 80, 60, 60])
+        t_cusps = Table(cusp_rows, colWidths=[55, 75, 65, 60, 60, 80, 65, 60])
         t_cusps.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 1.4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.4),
+            ('TOPPADDING', (0, 0), (-1, -1), 0.8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0.8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2.0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2.0),
         ]))
         elements.append(t_cusps)
-        elements.append(Spacer(1, 4))
+        elements.append(Spacer(1, 3))
 
         # CSL 12-Bhava Promise Arbiter Table
         elements.append(Paragraph("12 Bhavas Cuspal Sub-Lord (CSL) Promise Arbiter — பாவ காரக பலன் உறுதி", self.styles["SectionTitle"]))
@@ -676,11 +678,11 @@ class KpPdfReportGenerator:
             promise = c.get("promise", "Mixed")
 
             if promise == "Positive":
-                v_badge = "<font color='#15803D'><b>Auspicious / சாதகமானது</b></font>"
+                v_badge = "<font color='#15803D'><b>சாதகமானது</b></font>" if self.lang == "ta" else "<font color='#15803D'><b>Auspicious</b></font>"
             elif promise == "Negative":
-                v_badge = "<font color='#991B1B'><b>Challenging / கவனிக்கத்தக்கது</b></font>"
+                v_badge = "<font color='#991B1B'><b>கவனிக்கத்தக்கது</b></font>" if self.lang == "ta" else "<font color='#991B1B'><b>Challenging</b></font>"
             else:
-                v_badge = "<font color='#475569'><b>Neutral / மிதமான பலன்</b></font>"
+                v_badge = "<font color='#475569'><b>மிதமான பலன்</b></font>" if self.lang == "ta" else "<font color='#475569'><b>Neutral</b></font>"
 
             csl_arbiter_rows.append([
                 Paragraph(f"<b>House {h}</b>", self.styles["TableCellCenter"]),
@@ -690,13 +692,15 @@ class KpPdfReportGenerator:
                 Paragraph(v_badge, self.styles["TableCellCenter"]),
             ])
 
-        t_arbiter = Table(csl_arbiter_rows, colWidths=[55, 175, 55, 115, 120])
+        t_arbiter = Table(csl_arbiter_rows, colWidths=[50, 185, 50, 115, 120])
         t_arbiter.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 1.4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.4),
+            ('TOPPADDING', (0, 0), (-1, -1), 0.8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0.8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3.0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3.0),
         ]))
         elements.append(t_arbiter)
 
@@ -753,11 +757,11 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 2.8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.8),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.2),
         ]))
         elements.append(t_abcd)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Planet-wise Significators Table
         elements.append(Paragraph("Planet-wise Significators — கிரக காரகத்துவ அட்டவணை", self.styles["SectionTitle"]))
@@ -795,8 +799,8 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 3.2),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3.2),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.2),
             ('LEFTPADDING', (0, 0), (-1, -1), 6),
             ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         ]))
@@ -993,13 +997,13 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, 0), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ('TOPPADDING', (0, 0), (-1, -1), 3.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
             ('LEFTPADDING', (0, 0), (-1, -1), 6),
             ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         ]))
         elements.append(t_matrix)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Remedial Directives Box
         elements.append(Paragraph("KP Astrological Remedial Directives — பரிகார ஆலோசனைகள்", self.styles["SectionTitle"]))
@@ -1015,13 +1019,13 @@ class KpPdfReportGenerator:
         t_remedy.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), BG_HEADER),
             ('BOX', (0, 0), (-1, -1), 1.0, BORDER_COLOR),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 3.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3.0),
             ('LEFTPADDING', (0, 0), (-1, -1), 10),
             ('RIGHTPADDING', (0, 0), (-1, -1), 10),
         ]))
         elements.append(t_remedy)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 4))
 
         # Verification Seal & Security Hash Block
         elements.append(Paragraph("Official Verification & Security Seal — சரிபார்ப்பு & பாதுகாப்பு முத்திரை", self.styles["SectionTitle"]))
@@ -1058,13 +1062,13 @@ class KpPdfReportGenerator:
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FEF9C3")),
             ('BOX', (0, 0), (-1, -1), 1.2, GOLD_PRIMARY),
             ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#FDE68A")),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, -1), 2.0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2.0),
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ]))
         elements.append(t_cert)
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 4))
 
         # Legal Disclaimer
         disclaimer = (

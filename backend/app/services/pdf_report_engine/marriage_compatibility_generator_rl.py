@@ -147,7 +147,7 @@ def _make_chart_drawing(chart: Dict[str, Any], font_reg: str, font_bold: str, wi
     return d
 
 
-def _make_dasa_timeline_drawing(tl: Dict[str, Any], font_reg: str, font_bold: str, draw_w: float = 528.0, draw_h: float = 540.0) -> Drawing:
+def _make_dasa_timeline_drawing(tl: Dict[str, Any], font_reg: str, font_bold: str, draw_w: float = 528.0, draw_h: float = 430.0) -> Drawing:
     d = Drawing(draw_w, draw_h)
     sx, sy = draw_w / tl["svg_width"], draw_h / tl["svg_height"]
     y_for_year = tl["y_for_year"]
@@ -457,7 +457,7 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
     story.append(PageBreak())
     story.append(_sec_banner(f"8. {'தசா புக்தி காலவரிசை (Dasa Bhukti Sequence) & தசா சந்தி' if is_ta else 'Dasa Bhukti Sequence Timeline & Dasa Sandhi'}"))
     story.append(Spacer(1, 5))
-    story.append(_make_dasa_timeline_drawing(base["timeline"], font_reg, font_bold, draw_w=CONTENT_WIDTH, draw_h=540.0))
+    story.append(_make_dasa_timeline_drawing(base["timeline"], font_reg, font_bold, draw_w=CONTENT_WIDTH, draw_h=430.0))
     story.append(Spacer(1, 6))
     ds = base["dasa_sandhi"]
     story.append(_p(f"<b>Dasa Sandhi ({'இருக்கிறது' if ds.get('has_sandhi') else 'இல்லை'}):</b> {_esc(ds.get('summary_ta'))}", s_body))
