@@ -111,35 +111,95 @@ const NAKSHATRAS = [
  */
 function extractNakshatraAndPaksha(horo: any): { nakshatra: number; paksha: "shukla" | "krishna" } | null {
   if (!horo) return null;
-  const snap = horo.calculation_result?.horoscope || horo.horoscope || horo;
-  const planets = snap?.planets || [];
-  const moon = Array.isArray(planets) ? planets.find((p: any) => p?.name?.toLowerCase() === "moon") : null;
-  const sun = Array.isArray(planets) ? planets.find((p: any) => p?.name?.toLowerCase() === "sun") : null;
+  const calc = horo.calculation_result || {};
+  const snap = calc.horoscope || horo.horoscope || calc || horo;
+
+  const planets: any[] = Array.isArray(snap?.planets)
+    ? snap.planets
+    : Array.isArray(calc?.planets)
+    ? calc.planets
+    : Array.isArray(horo?.planets)
+    ? horo.planets
+    : [];
+
+  const moon = planets.find((p: any) => p?.name?.toLowerCase() === "moon");
+  const sun = planets.find((p: any) => p?.name?.toLowerCase() === "sun");
 
   let nakshatraIdx: number | null = null;
-  if (moon?.nakshatra?.index && moon.nakshatra.index >= 1 && moon.nakshatra.index <= 27) {
-    nakshatraIdx = moon.nakshatra.index;
-  } else if (typeof moon?.longitude === "number") {
-    nakshatraIdx = Math.floor((((moon.longitude % 360) + 360) % 360) / (360 / 27)) + 1;
-  } else if (snap?.panchang?.nakshatra) {
-    const rawNak = String(snap.panchang.nakshatra).toLowerCase().trim();
-    const found = NAKSHATRAS.find((n) => n.name_en.toLowerCase() === rawNak || n.name_ta === rawNak);
+
+  // 1. By canonical Moon Nakshatra Name (En or Ta) - Most reliable classical identifier
+  if (moon?.nakshatra?.name) {
+    const rawName = String(moon.nakshatra.name).toLowerCase().trim();
+    const found = NAKSHATRAS.find(
+      (n) => n.name_en.toLowerCase() === rawName || n.name_ta.toLowerCase() === rawName
+    );
     if (found) nakshatraIdx = found.index;
   }
 
+  // 2. By astronomical Moon Longitude (360 deg / 27 segments = 13.333333 deg each)
+  if (!nakshatraIdx && typeof moon?.longitude === "number" && !isNaN(moon.longitude)) {
+    nakshatraIdx = Math.floor((((moon.longitude % 360) + 360) % 360) / (360 / 27)) + 1;
+  }
+
+  // 3. By Panchang Nakshatra Name
+  const panchangNak = snap?.panchang?.nakshatra || calc?.panchang?.nakshatra || horo?.panchang?.nakshatra;
+  if (!nakshatraIdx && panchangNak) {
+    const rawNak = String(panchangNak).toLowerCase().trim();
+    const found = NAKSHATRAS.find(
+      (n) => n.name_en.toLowerCase() === rawNak || n.name_ta.toLowerCase() === rawNak
+    );
+    if (found) nakshatraIdx = found.index;
+  }
+
+  // 4. By explicit record fields (nakshatra / birth_nakshatra / moon_nakshatra)
+  const explicitNak = horo.birth_nakshatra || horo.nakshatra || horo.moon_nakshatra || snap?.birth_nakshatra;
+  if (!nakshatraIdx && explicitNak) {
+    if (typeof explicitNak === "number" && explicitNak >= 1 && explicitNak <= 27) {
+      nakshatraIdx = explicitNak;
+    } else if (typeof explicitNak === "string") {
+      const clean = explicitNak.toLowerCase().trim();
+      const found = NAKSHATRAS.find(
+        (n) => n.name_en.toLowerCase() === clean || n.name_ta.toLowerCase() === clean
+      );
+      if (found) nakshatraIdx = found.index;
+    }
+  }
+
+  // 5. By numeric index on Moon's nakshatra object
+  if (!nakshatraIdx && typeof moon?.nakshatra?.index === "number") {
+    const idx = moon.nakshatra.index;
+    // In xalen ephemeris, index is 0..26 (0=Ashwini, 17=Jyeshtha, 26=Revati)
+    if (idx >= 0 && idx <= 26) {
+      nakshatraIdx = idx + 1;
+    } else if (idx >= 1 && idx <= 27) {
+      nakshatraIdx = idx;
+    }
+  }
+
+  // Resolve Paksha ("shukla" | "krishna")
   let paksha: "shukla" | "krishna" = "shukla";
-  const rawPaksha = snap?.panchang?.tithi?.paksha || "";
+  const rawPaksha = String(
+    snap?.panchang?.tithi?.paksha ||
+    calc?.panchang?.tithi?.paksha ||
+    horo?.panchang?.tithi?.paksha ||
+    horo?.birth_paksha ||
+    horo?.paksha ||
+    ""
+  ).toLowerCase();
+
   if (rawPaksha) {
     if (
-      rawPaksha.toLowerCase().includes("krishna") ||
+      rawPaksha.includes("krishna") ||
       rawPaksha.includes("தேய்") ||
-      rawPaksha.toLowerCase().includes("waning")
+      rawPaksha.includes("thei") ||
+      rawPaksha.includes("waning")
     ) {
       paksha = "krishna";
     } else {
       paksha = "shukla";
     }
   } else if (typeof moon?.longitude === "number" && typeof sun?.longitude === "number") {
+    // Angular distance from Sun to Moon: 0..180 = Shukla, 180..360 = Krishna
     const diff = ((moon.longitude - sun.longitude) % 360 + 360) % 360;
     paksha = diff >= 180 ? "krishna" : "shukla";
   }
@@ -291,14 +351,15 @@ function PanchaPakshiStudioInner() {
 
   // Fetch saved horoscopes list
   const fetchSavedHoroscopes = useCallback(async () => {
-    if (!session?.access_token) return [];
     setLoadingSavedList(true);
     try {
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
       const resp = await fetch("/api/horoscopes?page=1&limit=1000", {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers,
+        credentials: "include",
         cache: "no-store",
       });
       if (resp.ok) {
@@ -324,16 +385,33 @@ function PanchaPakshiStudioInner() {
     setNativeName(resolvedName);
     setShowSearchModal(false);
 
+    // Synchronize URL and storage so refreshing or retrying does not reset to Rohini
+    try {
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("saved_id", chart.id);
+        window.history.replaceState(null, "", url.toString());
+        if (window.localStorage) {
+          window.localStorage.setItem("gai_pancha_pakshi_last_chart_id", chart.id);
+        }
+      }
+    } catch {
+      // Ignore URL/storage issues in sandboxed or SSR environments
+    }
+
     try {
       let fullRecord: any = chart;
-      // If calculation_result is missing from the list item, fetch the full horoscope record
-      if (!chart.calculation_result && session?.access_token) {
+      // Always fetch the full horoscope record if calculation_result/planets are missing from the list item
+      const hasPlanets = !!(chart.calculation_result?.horoscope?.planets || (chart as any).horoscope?.planets);
+      if (!hasPlanets) {
         try {
+          const headers: Record<string, string> = { Accept: "application/json" };
+          if (session?.access_token) {
+            headers["Authorization"] = `Bearer ${session.access_token}`;
+          }
           const resp = await fetch(`/api/horoscopes/${chart.id}`, {
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
+            headers,
+            credentials: "include",
           });
           if (resp.ok) {
             const json = await resp.json();
@@ -346,22 +424,25 @@ function PanchaPakshiStudioInner() {
         }
       }
 
-      // Try extracting nakshatra and paksha
+      // Extract nakshatra and paksha accurately
       let extracted = extractNakshatraAndPaksha(fullRecord);
 
-      // If not present in snapshot, calculate on the fly
+      // If not present in snapshot, calculate on the fly with accurate parameters
       if (!extracted && fullRecord.birth_date && fullRecord.latitude && fullRecord.longitude) {
         try {
           let bTime = fullRecord.birth_time || "12:00:00";
           if (bTime.trim().length === 5) bTime += ":00";
+          const ayanVal = typeof fullRecord.ayanamsa_id === "number" ? fullRecord.ayanamsa_id : 0;
+          const houseVal = typeof fullRecord.house_system_id === "number" ? fullRecord.house_system_id : 0;
+          const tzVal = fullRecord.timezone || "Asia/Kolkata";
           const calcRes = await calculateHoroscope({
             birth_date: fullRecord.birth_date,
             birth_time: bTime,
             latitude: Number(fullRecord.latitude),
             longitude: Number(fullRecord.longitude),
-            timezone: fullRecord.timezone || "Asia/Kolkata",
-            ayanamsa: fullRecord.ayanamsa_id || 1,
-            house_system: fullRecord.house_system_id || 1,
+            timezone: tzVal,
+            ayanamsa: ayanVal,
+            house_system: houseVal,
             include_panchang: true,
             include_outer_planets: false,
           });
@@ -374,6 +455,7 @@ function PanchaPakshiStudioInner() {
       if (extracted) {
         setBirthNakshatra(extracted.nakshatra);
         setBirthPaksha(extracted.paksha);
+        setChartLoadError(null);
       } else {
         setChartLoadError(
           language === "ta"
@@ -382,10 +464,15 @@ function PanchaPakshiStudioInner() {
         );
       }
 
-      // Match city preset if close, or adopt latitude/longitude
+      // Adopt birth location
       if (typeof fullRecord.latitude === "number" && typeof fullRecord.longitude === "number") {
+        const fullLat = Number(fullRecord.latitude);
+        const fullLon = Number(fullRecord.longitude);
+        const fullTz = fullRecord.timezone || "Asia/Kolkata";
+        const locationTitle = fullRecord.birthplace || fullRecord.location_name || `${fullLat.toFixed(2)}, ${fullLon.toFixed(2)}`;
+
         const matchCity = CITY_PRESETS.find(
-          (c) => Math.abs(c.lat - fullRecord.latitude) < 0.25 && Math.abs(c.lon - fullRecord.longitude) < 0.25
+          (c) => Math.abs(c.lat - fullLat) < 0.25 && Math.abs(c.lon - fullLon) < 0.25
         );
         if (matchCity) {
           setSelectedCity(matchCity);
@@ -393,9 +480,17 @@ function PanchaPakshiStudioInner() {
           setLongitude(matchCity.lon);
           setTimezoneStr(matchCity.tz);
         } else {
-          setLatitude(fullRecord.latitude);
-          setLongitude(fullRecord.longitude);
-          if (fullRecord.timezone) setTimezoneStr(fullRecord.timezone);
+          const customCity: CityPreset = {
+            name_en: locationTitle,
+            name_ta: locationTitle,
+            lat: fullLat,
+            lon: fullLon,
+            tz: fullTz,
+          };
+          setSelectedCity(customCity);
+          setLatitude(fullLat);
+          setLongitude(fullLon);
+          setTimezoneStr(fullTz);
         }
       }
     } catch (err: any) {
@@ -406,13 +501,18 @@ function PanchaPakshiStudioInner() {
     }
   };
 
-  // Initial load of saved horoscopes & auto-open if ?saved_id=... is in URL
+  // Initial load of saved horoscopes & auto-open if ?saved_id=... is in URL or localStorage
   useEffect(() => {
     if (isAuthenticated) {
       fetchSavedHoroscopes().then((items) => {
-        const savedIdParam = searchParams?.get("saved_id") || searchParams?.get("id");
-        if (savedIdParam && items && items.length > 0) {
-          const found = items.find((h) => h.id === savedIdParam);
+        const urlSavedId = searchParams?.get("saved_id") || searchParams?.get("id");
+        const storedSavedId = typeof window !== "undefined" ? window.localStorage?.getItem("gai_pancha_pakshi_last_chart_id") : null;
+        const targetId = urlSavedId || storedSavedId;
+
+        if (targetId && items && items.length > 0) {
+          const found = items.find(
+            (h) => h.id === targetId || String(h.display_number) === targetId
+          );
           if (found) {
             setInputMode("saved");
             handleSelectSavedChart(found);
@@ -875,6 +975,17 @@ function PanchaPakshiStudioInner() {
                         onClick={() => {
                           setSelectedChart(null);
                           setInputMode("manual");
+                          try {
+                            if (typeof window !== "undefined") {
+                              const url = new URL(window.location.href);
+                              url.searchParams.delete("saved_id");
+                              url.searchParams.delete("id");
+                              window.history.replaceState(null, "", url.toString());
+                              if (window.localStorage) {
+                                window.localStorage.removeItem("gai_pancha_pakshi_last_chart_id");
+                              }
+                            }
+                          } catch {}
                         }}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 text-xs transition-colors cursor-pointer"
                         title="Clear"
@@ -1118,7 +1229,11 @@ function PanchaPakshiStudioInner() {
                 value={selectedCity.name_en}
                 onChange={(e) => {
                   const found = CITY_PRESETS.find((c) => c.name_en === e.target.value);
-                  if (found) handleSelectCity(found);
+                  if (found) {
+                    handleSelectCity(found);
+                  } else if (e.target.value === selectedCity.name_en) {
+                    handleSelectCity(selectedCity);
+                  }
                 }}
                 className="w-full px-3 py-2 rounded-xl border border-[#DDE5F0] bg-white font-medium text-[#102A4C]"
               >
@@ -1127,6 +1242,11 @@ function PanchaPakshiStudioInner() {
                     {language === "ta" ? c.name_ta : c.name_en} ({c.name_en})
                   </option>
                 ))}
+                {CITY_PRESETS.every((c) => c.name_en !== selectedCity.name_en) && (
+                  <option key={selectedCity.name_en} value={selectedCity.name_en}>
+                    📍 {language === "ta" ? selectedCity.name_ta : selectedCity.name_en}
+                  </option>
+                )}
               </select>
             </div>
           </div>
@@ -1146,7 +1266,13 @@ function PanchaPakshiStudioInner() {
             </div>
             <button
               type="button"
-              onClick={fetchBioRhythms}
+              onClick={() => {
+                if (selectedChart) {
+                  handleSelectSavedChart(selectedChart);
+                } else {
+                  fetchBioRhythms();
+                }
+              }}
               disabled={loading}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
             >

@@ -1162,6 +1162,15 @@ function HoroscopeResultsContent() {
             </Link>
 
             <Link
+              href={`/tools/pancha-pakshi?saved_id=${encodeURIComponent(result.savedId || idParam || "")}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-xs font-bold text-amber-900 hover:bg-amber-100 shadow-2xs transition-colors"
+              title={language === "ta" ? "பஞ்ச பட்சி சாஸ்திரம் & பயோ-ரிதம் அரங்கம்" : "Pancha Pakshi Bio-Rhythms Studio"}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>{language === "ta" ? "பஞ்ச பட்சி" : "Pancha Pakshi"}</span>
+            </Link>
+
+            <Link
               href={`/horoscope?edit_id=${result.savedId || idParam || ""}`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D9DEE7] bg-white text-xs font-semibold text-[#183047] hover:bg-[#F2F3F5] shadow-2xs transition-colors"
             >

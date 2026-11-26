@@ -626,6 +626,14 @@ export function HoroscopeFactsPanel({
                           ? getNakshatraTamil(panchang.nakshatra)
                           : "கிடைக்கவில்லை"}
                       </span>
+                      {result.savedId && (
+                        <Link
+                          href={`/tools/pancha-pakshi?saved_id=${encodeURIComponent(result.savedId)}`}
+                          className="block text-[10px] text-amber-700 hover:text-amber-900 font-semibold hover:underline mt-0.5"
+                        >
+                          {language === "ta" ? "பஞ்ச பட்சி அரங்கம் →" : "Open Pancha Pakshi →"}
+                        </Link>
+                      )}
                     </div>
                     <span className="p-2 rounded-full bg-purple-50 text-purple-600">
                       <Sparkles className="w-4 h-4" />
