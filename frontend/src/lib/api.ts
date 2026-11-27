@@ -1520,6 +1520,8 @@ export interface ClientHoroscopeFormData {
 
   maritalStatus?: string;
 
+  phoneNumber?: string;
+
 }
 
 
@@ -1683,6 +1685,8 @@ export async function calculateFullHoroscopeSuite(
       gender: form.gender,
 
       maritalStatus: form.maritalStatus,
+
+      phoneNumber: form.phoneNumber,
 
     },
 

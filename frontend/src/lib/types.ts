@@ -907,6 +907,7 @@ export interface FullHoroscopeResult {
     houseSystemId: number;
     gender?: string;
     maritalStatus?: string;
+    phoneNumber?: string;
   };
 }
 

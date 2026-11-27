@@ -30,6 +30,7 @@ function HoroscopeFormContent() {
   const [locationQuery, setLocationQuery] = useState("");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [maritalStatus, setMaritalStatus] = useState<string>("unmarried");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedAyanamsa, setSelectedAyanamsa] = useState<number>(0);
 
   // Internally resolved location coordinates & timezone
@@ -143,6 +144,7 @@ function HoroscopeFormContent() {
         includeOuterPlanets: false,
         gender,
         maritalStatus,
+        phoneNumber: phoneNumber.trim() || undefined,
       });
 
       saveActiveCalculation(fullResult);
@@ -213,6 +215,23 @@ function HoroscopeFormContent() {
             }`}
           />
           {errors.fullName && <p className="mt-1 text-xs text-rose-600">{errors.fullName}</p>}
+        </div>
+
+        {/* 1b. Phone Number */}
+        <div>
+          <label htmlFor="phoneNumber" className="block text-xs font-semibold text-[#334155] mb-1">
+            {language === "ta" ? "தொலைபேசி எண்" : "Phone Number"}
+          </label>
+          <input
+            id="phoneNumber"
+            name="phone_number_clean"
+            type="tel"
+            autoComplete="off"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder={language === "ta" ? "+91 98765 43210" : "+91 98765 43210"}
+            className="w-full h-11 px-3.5 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+          />
         </div>
 
         {/* 2. DOB & 3. TOB */}
