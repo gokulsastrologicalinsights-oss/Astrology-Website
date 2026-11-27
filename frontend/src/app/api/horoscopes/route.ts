@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { normalizeGender, resolveSavedHoroscopeGender } from "@/lib/gender";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { compactDasaTree } from "@/lib/horoscope-storage-utils";
@@ -253,7 +254,7 @@ export async function GET(request: NextRequest) {
         ...cleanHoro,
         is_pinned: isPinned,
         pinned_at: pinnedAt,
-        gender: calc.clientInputs?.gender || (h as any).gender || "male",
+        gender: resolveSavedHoroscopeGender({ ...h, calculation_result: calc }),
         birth_time: resolvedBirthTime,
         customer_id: matchedCust?.id || savedCust?.id || null,
         customer: hasPhone ? matchedCust : null,
@@ -476,7 +477,32 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    const effectiveGender = (body.gender || calculation_result?.clientInputs?.gender || "male").toLowerCase();
+    const rawBodyGender = body.gender;
+    const rawCalcGender = calculation_result?.clientInputs?.gender;
+    if (
+      rawBodyGender !== undefined &&
+      rawBodyGender !== null &&
+      String(rawBodyGender).trim() !== "" &&
+      !normalizeGender(rawBodyGender)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid gender value. Must be 'male' or 'female'." },
+        { status: 400 }
+      );
+    }
+    if (
+      rawCalcGender !== undefined &&
+      rawCalcGender !== null &&
+      String(rawCalcGender).trim() !== "" &&
+      !normalizeGender(rawCalcGender)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid gender value in calculation_result.clientInputs. Must be 'male' or 'female'." },
+        { status: 400 }
+      );
+    }
+    const effectiveGender =
+      normalizeGender(rawBodyGender) ?? normalizeGender(rawCalcGender) ?? null;
     const structuredSnapshot = {
       schema_version: "1.0.0",
       idempotency_key: effectiveIdempotencyKey,

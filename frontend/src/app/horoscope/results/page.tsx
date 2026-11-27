@@ -367,7 +367,7 @@ function HoroscopeResultsContent() {
         },
         saved_horoscope_id: idParam || (result as any)?.savedId || undefined,
         native_name: clientInputs?.fullName || (result as any)?.clientInputs?.fullName || "Native",
-        gender: clientInputs?.gender || "male",
+        gender: clientInputs?.gender || undefined,
         language: langToUse,
         ayanamsa: clientInputs?.ayanamsaId ?? 0,
         house_system: clientInputs?.houseSystemId ?? 0,
@@ -413,7 +413,7 @@ function HoroscopeResultsContent() {
         native_name: clientInputs?.fullName || (result as any)?.clientInputs?.fullName || "Native",
         father_name: (clientInputs as any)?.fatherName || "-",
         mother_name: (clientInputs as any)?.motherName || "-",
-        gender: clientInputs?.gender || "male",
+        gender: clientInputs?.gender || undefined,
         birth_place: (clientInputs as any)?.birthPlace || clientInputs?.locationName || "Chennai, Tamil Nadu",
         native_id: (result as any)?.displayNumber
           ? `#${formatSerialNumber((result as any).displayNumber)}`
@@ -2180,7 +2180,7 @@ function HoroscopeResultsContent() {
                 <div className="space-y-5">
                   <BrighuNaadiSection
                     horoscope={horoscope}
-                    gender={clientInputs?.gender || "male"}
+                    gender={clientInputs?.gender || ""}
                     language={language as "en" | "ta"}
                   />
                 </div>

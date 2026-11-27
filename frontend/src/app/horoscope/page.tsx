@@ -231,8 +231,10 @@ function HoroscopeFormContent() {
           item.calculation_result?.clientInputs?.gender ||
           item.calculation_result?.customer?.gender ||
           item.calculation_result?.horoscope?.request?.gender ||
-          "male";
-        setGender(savedGender === "female" ? "female" : "male");
+          null;
+        if (savedGender === "female" || savedGender === "male") {
+          setGender(savedGender);
+        }
         setBirthDate(item.birth_date || "");
         setCountryCode(item.customer_country_code || item.country_code || "+91");
         setCustomerPhone(

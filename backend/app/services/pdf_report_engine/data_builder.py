@@ -103,7 +103,7 @@ def build_report_data(
             include_ashtakavarga=True,
             include_vedic_yogas=True,
             include_varga=True,
-            gender=gender or "male",
+            gender=gender or "Not Specified",
         )
 
     horo_dict = horoscope_response.model_dump()
@@ -163,7 +163,7 @@ def build_report_data(
 
     return ReportData(
         native_name=name,
-        gender=gender or "male",
+        gender=gender or "Not Specified",
         birth_date=str(birth_input.birth_date),
         birth_time=str(birth_input.birth_time),
         birth_place=place_str,

@@ -1574,7 +1574,7 @@ export async function calculateFullHoroscopeSuite(
 
     include_doshas: true,
 
-    gender: form.gender || "male",
+    gender: form.gender,
 
   });
 
@@ -1678,7 +1678,7 @@ export async function calculateFullHoroscopeSuite(
 
       houseSystemId: form.houseSystemId,
 
-      gender: form.gender || "male",
+      gender: form.gender,
 
     },
 

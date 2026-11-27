@@ -4,6 +4,7 @@ import uuid
 import logging
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Security, status
+from app.utils.gender import normalize_gender
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from datetime import datetime, timezone
@@ -84,7 +85,7 @@ def calculate_horoscope(request: HoroscopeRequest) -> HoroscopeResponse:
             include_vedic_yogas=request.include_vedic_yogas,
             include_varga=request.include_varga,
             include_doshas=request.include_doshas,
-            gender=request.gender or "male",
+            gender=normalize_gender(request.gender),
         )
         return response
     except ValueError as val_err:

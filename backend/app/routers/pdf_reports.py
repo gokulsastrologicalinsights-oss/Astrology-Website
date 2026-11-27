@@ -11,6 +11,7 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Security, Response, status, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.concurrency import run_in_threadpool
+from app.utils.gender import normalize_gender
 
 from app.schemas.pdf_report import (
     SinglePageHoroscopePdfRequest,
@@ -144,7 +145,7 @@ async def generate_pdf_report_endpoint(
             report_data = build_report_data(
                 birth_input=birth_input,
                 native_name=native_name,
-                gender=request.gender or horoscope_row.get("gender", "male"),
+                gender=normalize_gender(request.gender) or normalize_gender(horoscope_row.get("gender")),
                 ayanamsa_id=request.ayanamsa or horoscope_row.get("ayanamsa_id", 0),
                 house_system_id=request.house_system or horoscope_row.get("house_system_id", 0),
                 language=request.language,
@@ -241,7 +242,7 @@ async def generate_single_page_pdf_endpoint(
     try:
         birth_input: Optional[BirthInput] = None
         native_name = request.native_name or "Native"
-        gender = request.gender or "male"
+        gender = normalize_gender(request.gender)
         clean_id = "001"
 
         if request.saved_horoscope_id:
@@ -399,7 +400,7 @@ async def generate_kp_pdf_endpoint(
             report_data = build_kp_report_data(
                 saved_chart_dict=saved_chart,
                 native_name=request.native_name if request.native_name != "Native" else saved_chart.get("title", "Querent"),
-                gender=request.gender or "male",
+                gender=normalize_gender(request.gender),
                 language=request.language,
                 report_id=clean_id[:8].upper(),
                 is_verified=True,

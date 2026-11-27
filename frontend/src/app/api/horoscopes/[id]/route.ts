@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { normalizeGender, resolveSavedHoroscopeGender } from "@/lib/gender";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { compactDasaTree } from "@/lib/horoscope-storage-utils";
@@ -99,7 +100,7 @@ export async function GET(
     const hasPhone = !!customerInfo?.normalized_phone;
     const isPinned = await isHoroscopePinned(user.id, id);
 
-    const resolvedGender = record.calculation_result?.clientInputs?.gender || (record as any).gender || "male";
+    const resolvedGender = resolveSavedHoroscopeGender(record);
     return NextResponse.json({
       success: true,
       horoscope: {
@@ -272,7 +273,36 @@ export async function PUT(
       updatedCustomer = customer;
     }
 
-    const effectiveGender = (body.gender || body.calculation_result?.clientInputs?.gender || existing.calculation_result?.clientInputs?.gender || "male").toLowerCase();
+    const rawBodyGender = body.gender;
+    const rawCalcGender = body.calculation_result?.clientInputs?.gender;
+    if (
+      rawBodyGender !== undefined &&
+      rawBodyGender !== null &&
+      String(rawBodyGender).trim() !== "" &&
+      !normalizeGender(rawBodyGender)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid gender value. Must be 'male' or 'female'." },
+        { status: 400 }
+      );
+    }
+    if (
+      rawCalcGender !== undefined &&
+      rawCalcGender !== null &&
+      String(rawCalcGender).trim() !== "" &&
+      !normalizeGender(rawCalcGender)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid gender value in calculation_result.clientInputs. Must be 'male' or 'female'." },
+        { status: 400 }
+      );
+    }
+    const existingGender = resolveSavedHoroscopeGender(existing);
+    const effectiveGender =
+      normalizeGender(rawBodyGender) ??
+      normalizeGender(rawCalcGender) ??
+      existingGender ??
+      null;
     // Reconstruct calculation snapshot with fresh calculations or synchronized clientInputs
     let updatedCalculationResult = existing.calculation_result || {};
 
@@ -297,18 +327,24 @@ export async function PUT(
           existing.calculation_result?.idempotency_key ||
           `calc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         calculatedAt: body.calculation_result.calculatedAt || new Date().toISOString(),
-        clientInputs: body.calculation_result.clientInputs || {
-          fullName: person_name.trim(),
-          birthDate: effectiveBirthDate,
-          birthTime: birth_time,
-          isTimeConfirmed: true,
-          locationName: (birthplace || "Unknown Location").trim(),
-          latitude,
-          longitude,
-          timezone: (timezone || "UTC").trim(),
-          ayanamsaId: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
-          houseSystemId: typeof house_system_id === "number" ? house_system_id : 2,
-        },
+        clientInputs: body.calculation_result.clientInputs
+          ? {
+              ...body.calculation_result.clientInputs,
+              ...(effectiveGender ? { gender: effectiveGender } : {}),
+            }
+          : {
+              fullName: person_name.trim(),
+              birthDate: effectiveBirthDate,
+              birthTime: birth_time,
+              ...(effectiveGender ? { gender: effectiveGender } : {}),
+              isTimeConfirmed: true,
+              locationName: (birthplace || "Unknown Location").trim(),
+              latitude,
+              longitude,
+              timezone: (timezone || "UTC").trim(),
+              ayanamsaId: typeof ayanamsa_id === "number" ? ayanamsa_id : 0,
+              houseSystemId: typeof house_system_id === "number" ? house_system_id : 2,
+            },
         horoscope: body.calculation_result.horoscope,
         dasa: dasaPayload !== undefined ? dasaPayload : body.calculation_result.dasa,
         kp: body.calculation_result.kp,
@@ -330,8 +366,8 @@ export async function PUT(
       updatedCalculationResult = {
         ...existing.calculation_result,
         clientInputs: {
-          gender: effectiveGender,
           ...(existing.calculation_result?.clientInputs || {}),
+          ...(effectiveGender ? { gender: effectiveGender } : {}),
           fullName: person_name.trim(),
           birthDate: effectiveBirthDate,
           birthTime: birth_time,

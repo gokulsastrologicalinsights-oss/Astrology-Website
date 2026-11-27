@@ -513,7 +513,7 @@ class SinglePageHoroscopePdfGenerator:
         self.native_name = native_name or "Native"
         self.father_name = father_name or "-"
         self.mother_name = mother_name or "-"
-        self.gender = gender or "male"
+        self.gender = gender or ""
         self.birth_place = birth_place or "Chennai, Tamil Nadu"
         clean_native_id = (native_id or "").strip()
         if clean_native_id and not clean_native_id.startswith("#"):
