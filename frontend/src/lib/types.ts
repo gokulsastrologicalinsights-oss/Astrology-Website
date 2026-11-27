@@ -906,6 +906,7 @@ export interface FullHoroscopeResult {
     ayanamsaId: number;
     houseSystemId: number;
     gender?: string;
+    maritalStatus?: string;
   };
 }
 

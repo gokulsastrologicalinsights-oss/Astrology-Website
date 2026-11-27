@@ -28,6 +28,8 @@ function HoroscopeFormContent() {
   const [birthTime12, setBirthTime12] = useState("");
   const [birthPeriod, setBirthPeriod] = useState<"AM" | "PM">("AM");
   const [locationQuery, setLocationQuery] = useState("");
+  const [gender, setGender] = useState<"male" | "female">("male");
+  const [maritalStatus, setMaritalStatus] = useState<string>("unmarried");
   const [selectedAyanamsa, setSelectedAyanamsa] = useState<number>(0);
 
   // Internally resolved location coordinates & timezone
@@ -139,6 +141,8 @@ function HoroscopeFormContent() {
         houseSystemId: 2,
         includePanchang: true,
         includeOuterPlanets: false,
+        gender,
+        maritalStatus,
       });
 
       saveActiveCalculation(fullResult);
@@ -338,7 +342,46 @@ function HoroscopeFormContent() {
           )}
         </div>
 
-        {/* 5. Ayanamsa System */}
+        {/* 5. Gender & Marital Status */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="gender" className="block text-xs font-semibold text-[#334155] mb-1">
+              {language === "ta" ? "பாலினம்" : "Gender"}
+            </label>
+            <select
+              id="gender"
+              name="gender_clean"
+              autoComplete="off"
+              value={gender}
+              onChange={(e) => setGender(e.target.value as "male" | "female")}
+              className="w-full h-11 px-3 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-sm text-[#0F172A] focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+            >
+              <option value="male">{language === "ta" ? "ஆண்" : "Male"}</option>
+              <option value="female">{language === "ta" ? "பெண்" : "Female"}</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="maritalStatus" className="block text-xs font-semibold text-[#334155] mb-1">
+              {language === "ta" ? "திருமண நிலை" : "Marital Status"}
+            </label>
+            <select
+              id="maritalStatus"
+              name="marital_status_clean"
+              autoComplete="off"
+              value={maritalStatus}
+              onChange={(e) => setMaritalStatus(e.target.value)}
+              className="w-full h-11 px-3 rounded-lg border border-[#D8BD80]/80 bg-[#FFFDF9] text-sm text-[#0F172A] focus:border-[#B8860B] focus:ring-1 focus:ring-[#B8860B]"
+            >
+              <option value="unmarried">{language === "ta" ? "திருமணமாகாதவர்" : "Unmarried"}</option>
+              <option value="married">{language === "ta" ? "திருமணமானவர்" : "Married"}</option>
+              <option value="divorced">{language === "ta" ? "விவாகரத்தானவர்" : "Divorced"}</option>
+              <option value="widowed">{language === "ta" ? "விதவை / விதவர்" : "Widowed"}</option>
+            </select>
+          </div>
+        </div>
+
+        {/* 6. Ayanamsa System */}
         <div>
           <label htmlFor="ayanamsa" className="block text-xs font-semibold text-[#334155] mb-1">
             {language === "ta" ? "அயனாம்ச முறை" : "Ayanamsa System"}

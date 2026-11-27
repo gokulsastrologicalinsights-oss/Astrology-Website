@@ -1518,6 +1518,8 @@ export interface ClientHoroscopeFormData {
 
   gender?: "male" | "female" | string;
 
+  maritalStatus?: string;
+
 }
 
 
@@ -1679,6 +1681,8 @@ export async function calculateFullHoroscopeSuite(
       houseSystemId: form.houseSystemId,
 
       gender: form.gender,
+
+      maritalStatus: form.maritalStatus,
 
     },
 
