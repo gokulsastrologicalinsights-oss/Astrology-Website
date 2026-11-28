@@ -434,7 +434,7 @@ def refine_marriage_dates(
     longitude: float,
     timezone_str: str,
     ayanamsa_id: int,
-    max_scan_days: int = 120,
+    max_scan_days: int = 75,
     max_results: int = 15,
 ) -> List[KpMarriageCandidateDate]:
     """Engine D: Scan top Antara windows with Panchangam Muhurta + 7th Cusp Star/Sub/Sub-Sub alignment."""
@@ -457,7 +457,8 @@ def refine_marriage_dates(
         cur = w_start
         while cur <= w_end and scanned_days < max_scan_days:
             d_iso = cur.isoformat()
-            if d_iso in seen_dates:
+            # Fast pre-filter: skip Tuesday (1) and Saturday (5) before running Panchangam ephemeris
+            if d_iso in seen_dates or cur.weekday() in (1, 5):
                 cur += timedelta(days=1)
                 continue
             seen_dates.add(d_iso)

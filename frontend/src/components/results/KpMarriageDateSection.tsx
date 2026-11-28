@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   HoroscopeResponse,
   KpMarriageDateResponse,
@@ -39,6 +39,7 @@ export function KpMarriageDateSection({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<KpMarriageDateResponse | null>(null);
+  const hasAutoFetchedRef = useRef<boolean>(false);
 
   const buildBirthInput = useCallback((): BirthInput | undefined => {
     const meta = horoscope?.metadata;
@@ -70,14 +71,30 @@ export function KpMarriageDateSection({
 
     setLoading(true);
     setError(null);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              isTa
+                ? "கணக்கீடு நேரம் முடிந்தது (30 வினாடிகள்). பின்தள சர்வர் இயங்குகிறதா என சரிபார்க்கவும்."
+                : "Request timed out after 30s. Please ensure the backend server is running and updated."
+            )
+          ),
+        30000
+      )
+    );
     try {
-      const data = await findKpMarriageDate({
-        birth,
-        saved_horoscope_id: birth ? undefined : savedHoroscopeId,
-        start_date: startDate,
-        years_ahead: yearsAhead,
-        ayanamsa_id: 1,
-      });
+      const data = await Promise.race([
+        findKpMarriageDate({
+          birth,
+          saved_horoscope_id: birth ? undefined : savedHoroscopeId,
+          start_date: startDate,
+          years_ahead: yearsAhead,
+          ayanamsa_id: 1,
+        }),
+        timeoutPromise,
+      ]);
       setResult(data);
     } catch (err: unknown) {
       const msg =
@@ -93,10 +110,12 @@ export function KpMarriageDateSection({
   }, [buildBirthInput, savedHoroscopeId, startDate, yearsAhead, isTa]);
 
   useEffect(() => {
-    if ((horoscope?.metadata?.birth_utc_iso || savedHoroscopeId) && !result && !loading) {
+    if (hasAutoFetchedRef.current) return;
+    if (horoscope?.metadata?.birth_utc_iso || savedHoroscopeId) {
+      hasAutoFetchedRef.current = true;
       handleCalculate();
     }
-  }, [horoscope?.metadata?.birth_utc_iso, savedHoroscopeId, result, loading, handleCalculate]);
+  }, [horoscope?.metadata?.birth_utc_iso, savedHoroscopeId, handleCalculate]);
 
   const verdictBadgeClass = (verdict: string) => {
     if (verdict === "Strong") return "bg-emerald-100 text-emerald-800 border-emerald-300";
