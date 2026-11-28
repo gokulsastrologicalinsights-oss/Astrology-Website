@@ -23,10 +23,18 @@ from __future__ import annotations
 
 import os
 import html
+import base64
 import logging
 from typing import Any, Dict, List
 
 from app.services.pdf_report_engine.browser_renderer import render_html_to_pdf
+from app.services.pdf_report_engine.letterhead_renderer import OFFICIAL_LETTERHEAD_PATH
+from app.services.pdf_report_engine.pdf_design_tokens import (
+    TOP_MARGIN_MM,
+    BOTTOM_MARGIN_MM,
+    LEFT_MARGIN_MM,
+    RIGHT_MARGIN_MM,
+)
 
 from app.services.pdf_report_engine.marriage_dossier_viewmodel import build_marriage_dossier_view_model
 from app.services.pdf_report_engine.marriage_print_viewmodel import (
@@ -365,6 +373,11 @@ def generate_html_report(data: Dict[str, Any], lang: str = "en") -> str:
         else ""
     )
 
+    letterhead_bg_img = ""
+    if OFFICIAL_LETTERHEAD_PATH.exists():
+        lh_b64 = base64.b64encode(OFFICIAL_LETTERHEAD_PATH.read_bytes()).decode("ascii")
+        letterhead_bg_img = f'<img src="data:image/png;base64,{lh_b64}" alt="" class="letterhead-bg" />'
+
     cat_cards_html = "".join(
         f"""
         <div class="cat-card">
@@ -484,7 +497,7 @@ def generate_html_report(data: Dict[str, Any], lang: str = "en") -> str:
   {font_face_css}
   @page {{
     size: A4 portrait;
-    margin: 16mm 12mm 16mm 12mm;
+    margin: {TOP_MARGIN_MM}mm {RIGHT_MARGIN_MM}mm {BOTTOM_MARGIN_MM}mm {LEFT_MARGIN_MM}mm;
   }}
   * {{
     box-sizing: border-box;
@@ -496,28 +509,22 @@ def generate_html_report(data: Dict[str, Any], lang: str = "en") -> str:
     padding: 0;
     font-family: 'Noto Sans Tamil', 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
     color: #0F172A;
-    background: #FFFFFF;
+    background: transparent;
     font-size: 9.8px;
     line-height: 1.42;
   }}
-  /* Fixed Navy & Gold studio double-border frame drawn cleanly on every A4 page */
-  .page-frame-outer {{
+  /* Fixed Official GAI Letterhead background drawn cleanly on every A4 page */
+  .letterhead-bg {{
     position: fixed;
-    top: 0mm; left: -3.5mm; right: -3.5mm; bottom: 0mm;
-    border: 1.6px solid #153F6B;
-    border-radius: 3px;
+    top: -{TOP_MARGIN_MM}mm;
+    left: -{LEFT_MARGIN_MM}mm;
+    width: 210mm;
+    height: 297mm;
+    object-fit: fill;
     pointer-events: none;
-    z-index: 9999;
+    z-index: -1;
   }}
-  .page-frame-inner {{
-    position: fixed;
-    top: 1.4mm; left: -2.1mm; right: -2.1mm; bottom: 1.4mm;
-    border: 0.7px solid #D8BD80;
-    border-radius: 2px;
-    pointer-events: none;
-    z-index: 9999;
-  }}
-  .content-root {{ width: 100%; padding: 4.5mm 1.5mm 4.5mm 1.5mm; }}
+  .content-root {{ width: 100%; padding: 1mm 0 1mm 0; }}
   .new-page {{ break-before: page; page-break-before: always; }}
   .avoid-break {{ break-inside: avoid; page-break-inside: avoid; }}
 
@@ -662,8 +669,7 @@ def generate_html_report(data: Dict[str, Any], lang: str = "en") -> str:
 </style>
 </head>
 <body>
-  <div class="page-frame-outer"></div>
-  <div class="page-frame-inner"></div>
+  {letterhead_bg_img}
   <div class="content-root">
 
     <!-- PAGE 1: COVER, PROFILES & MASTER COMPOSITE ASSESSMENT -->
@@ -1010,9 +1016,7 @@ def generate_marriage_compatibility_pdf_bytes(data: Dict[str, Any], language: st
             pdf_format="A4",
             print_background=True,
             prefer_css_page_size=True,
-            display_header_footer=True,
-            header_template=header_tpl,
-            footer_template=footer_tpl,
+            display_header_footer=False,
         )
     except Exception as exc:
         logger.warning("Chromium PDF generation unavailable, falling back to ReportLab: %s", exc)

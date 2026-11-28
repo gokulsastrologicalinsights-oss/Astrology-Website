@@ -184,7 +184,7 @@ function MarriageCompatibilityContent() {
   const [downloadLanguage, setDownloadLanguage] = useState<"en" | "ta">("ta");
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const [exportMode, setExportMode] = useState<"print_selected" | "full_pdf">("print_selected");
+  const [exportMode, setExportMode] = useState<"print_selected" | "full_pdf">("full_pdf");
   const [selectedSections, setSelectedSections] = useState<MarriagePrintSectionKey[]>([
     "porutham",
     "charts",
@@ -284,7 +284,7 @@ function MarriageCompatibilityContent() {
     if (!response) return;
     setDownloadError(null);
     setDownloadLanguage(language === "ta" ? "ta" : "en");
-    setExportMode("print_selected");
+    setExportMode("full_pdf");
     // Ensure default selection has all sections checked initially
     if (!selectedSections || selectedSections.length === 0) {
       setSelectedSections([
