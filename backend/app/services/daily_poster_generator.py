@@ -170,7 +170,7 @@ def build_rashi_square_html(
     width: 1080px;
     height: 1080px;
     background-color: #080c16;
-    font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Nirmala UI', sans-serif;
+    font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Nirmala UI', 'Noto Color Emoji', 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
     color: #e2e8f0;
     overflow: hidden;
     position: relative;
@@ -258,6 +258,7 @@ def build_rashi_square_html(
   }}
 
   .zodiac-glyph {{
+    font-family: 'Noto Sans Symbols', 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'DejaVu Sans', sans-serif;
     font-size: 68px;
     color: #fbbf24;
     line-height: 1;
@@ -497,7 +498,7 @@ def build_rashi_square_html(
 
   <div class="sign-hero">
     <div class="sign-left">
-      <div class="zodiac-glyph">{glyph}</div>
+      <div class="zodiac-glyph">{glyph}&#xFE0E;</div>
       <div>
         <div class="sign-name">{prediction.rashi_name_ta}</div>
         <div class="sign-english">{prediction.rashi_name_en} • {ruler}</div>
