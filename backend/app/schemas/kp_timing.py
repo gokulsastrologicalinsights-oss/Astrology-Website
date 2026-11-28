@@ -89,3 +89,128 @@ class KpMonthlyPredictionResponse(BaseModel):
     all_events: List[KpMonthlyEventItem]
     overall_month_summary_ta: str
     generated_at: str
+
+
+# ---------------------------------------------------------------------------
+# KP Marriage Promise, Timing & Date Finder Schemas
+# ---------------------------------------------------------------------------
+
+class KpMarriageDateRequest(BaseModel):
+    """Request model for KP Marriage Date Finder."""
+    birth: Optional[BirthInput] = None
+    saved_horoscope_id: Optional[str] = None
+    native_name: Optional[str] = None
+    start_date: Optional[str] = Field(default=None, description="YYYY-MM-DD search start (defaults to today)")
+    years_ahead: int = Field(default=2, ge=1, le=5, description="Years ahead to scan Dasha-Bhukti-Antara (1-5)")
+    ayanamsa_id: int = Field(default=1, description="0=Lahiri, 1=KP (default)")
+
+
+class KpMarriagePromiseFactor(BaseModel):
+    factor_key: str
+    title_en: str
+    title_ta: str
+    score: float
+    max_score: float
+    lord: str
+    lord_ta: str
+    supporting_houses: List[int]
+    obstacle_houses: List[int]
+    detail_en: str
+    detail_ta: str
+
+
+class KpMarriagePromiseBreakdown(BaseModel):
+    total_score: float
+    verdict: str
+    verdict_ta: str
+    confidence: str
+    confidence_ta: str
+    summary_en: str
+    summary_ta: str
+    factors: List[KpMarriagePromiseFactor]
+
+
+class KpMarriageTargetLord(BaseModel):
+    priority: int
+    role_en: str
+    role_ta: str
+    planet: str
+    planet_ta: str
+    stars_en: List[str]
+    stars_ta: List[str]
+    is_duplicate_role: bool = False
+
+
+class KpMarriageCuspAnalysis(BaseModel):
+    sign: str
+    sign_ta: str
+    degree_dms: str
+    longitude: float
+    sign_lord: str
+    sign_lord_ta: str
+    star: str
+    star_ta: str
+    star_lord: str
+    star_lord_ta: str
+    sub_lord: str
+    sub_lord_ta: str
+    sub_sub_lord: str
+    sub_sub_lord_ta: str
+    target_lords: List[KpMarriageTargetLord]
+
+
+class KpMarriageDashaWindow(BaseModel):
+    dasha_lord: str
+    dasha_lord_ta: str
+    bhukti_lord: str
+    bhukti_lord_ta: str
+    antara_lord: str
+    antara_lord_ta: str
+    start_date: str
+    end_date: str
+    dasha_score: float
+    bhukti_score: float
+    antara_score: float
+    total_score: float
+    rating: str
+    rating_ta: str
+    supporting_houses: List[int]
+    obstacle_houses: List[int]
+    is_current: bool = False
+
+
+class KpMarriageCandidateDate(BaseModel):
+    date: str
+    weekday_en: str
+    weekday_ta: str
+    paksha: str
+    paksha_ta: str
+    tithi_en: str
+    tithi_ta: str
+    nakshatra_en: str
+    nakshatra_ta: str
+    nakshatra_lord: str
+    nakshatra_lord_ta: str
+    dasha_bhukti_antara: str
+    dasha_bhukti_antara_ta: str
+    abhijit_window: str
+    rahu_kalam_avoid: str
+    score: float
+    match_tier: str
+    match_tier_ta: str
+    reasons_en: List[str]
+    reasons_ta: List[str]
+
+
+class KpMarriageDateResponse(BaseModel):
+    native_name: str
+    search_start_date: str
+    search_end_date: str
+    promise: KpMarriagePromiseBreakdown
+    seventh_cusp: KpMarriageCuspAnalysis
+    dasha_windows: List[KpMarriageDashaWindow]
+    candidate_dates: List[KpMarriageCandidateDate]
+    composite_weights: Dict[str, float]
+    disclaimer_en: str
+    disclaimer_ta: str
+    generated_at: str

@@ -7800,6 +7800,126 @@ export interface AvailableMonthItem {
   tag_ta: string;
 }
 
+export interface KpMarriageDateRequest {
+  birth?: BirthInput;
+  saved_horoscope_id?: string;
+  native_name?: string;
+  start_date?: string;
+  years_ahead?: number;
+  ayanamsa_id?: number;
+}
+
+export interface KpMarriagePromiseFactor {
+  factor_key: string;
+  title_en: string;
+  title_ta: string;
+  score: number;
+  max_score: number;
+  lord: string;
+  lord_ta: string;
+  supporting_houses: number[];
+  obstacle_houses: number[];
+  detail_en: string;
+  detail_ta: string;
+}
+
+export interface KpMarriagePromiseBreakdown {
+  total_score: number;
+  verdict: string;
+  verdict_ta: string;
+  confidence: string;
+  confidence_ta: string;
+  summary_en: string;
+  summary_ta: string;
+  factors: KpMarriagePromiseFactor[];
+}
+
+export interface KpMarriageTargetLord {
+  priority: number;
+  role_en: string;
+  role_ta: string;
+  planet: string;
+  planet_ta: string;
+  stars_en: string[];
+  stars_ta: string[];
+  is_duplicate_role: boolean;
+}
+
+export interface KpMarriageCuspAnalysis {
+  sign: string;
+  sign_ta: string;
+  degree_dms: string;
+  longitude: number;
+  sign_lord: string;
+  sign_lord_ta: string;
+  star: string;
+  star_ta: string;
+  star_lord: string;
+  star_lord_ta: string;
+  sub_lord: string;
+  sub_lord_ta: string;
+  sub_sub_lord: string;
+  sub_sub_lord_ta: string;
+  target_lords: KpMarriageTargetLord[];
+}
+
+export interface KpMarriageDashaWindow {
+  dasha_lord: string;
+  dasha_lord_ta: string;
+  bhukti_lord: string;
+  bhukti_lord_ta: string;
+  antara_lord: string;
+  antara_lord_ta: string;
+  start_date: string;
+  end_date: string;
+  dasha_score: number;
+  bhukti_score: number;
+  antara_score: number;
+  total_score: number;
+  rating: string;
+  rating_ta: string;
+  supporting_houses: number[];
+  obstacle_houses: number[];
+  is_current: boolean;
+}
+
+export interface KpMarriageCandidateDate {
+  date: string;
+  weekday_en: string;
+  weekday_ta: string;
+  paksha: string;
+  paksha_ta: string;
+  tithi_en: string;
+  tithi_ta: string;
+  nakshatra_en: string;
+  nakshatra_ta: string;
+  nakshatra_lord: string;
+  nakshatra_lord_ta: string;
+  dasha_bhukti_antara: string;
+  dasha_bhukti_antara_ta: string;
+  abhijit_window: string;
+  rahu_kalam_avoid: string;
+  score: number;
+  match_tier: string;
+  match_tier_ta: string;
+  reasons_en: string[];
+  reasons_ta: string[];
+}
+
+export interface KpMarriageDateResponse {
+  native_name: string;
+  search_start_date: string;
+  search_end_date: string;
+  promise: KpMarriagePromiseBreakdown;
+  seventh_cusp: KpMarriageCuspAnalysis;
+  dasha_windows: KpMarriageDashaWindow[];
+  candidate_dates: KpMarriageCandidateDate[];
+  composite_weights: Record<string, number>;
+  disclaimer_en: string;
+  disclaimer_ta: string;
+  generated_at: string;
+}
+
 // =========================================================================
 // Love vs Arranged Marriage Predictor Interfaces
 // =========================================================================

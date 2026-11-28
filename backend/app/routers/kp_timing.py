@@ -13,11 +13,14 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.schemas.common import BirthInput
 from app.schemas.kp_timing import (
+    KpMarriageDateRequest,
+    KpMarriageDateResponse,
     KpMonthlyPredictionRequest,
     KpMonthlyPredictionResponse,
 )
 from app.services.auth_service import get_current_user
 from app.services.horoscope_cache import get_cached_saved_horoscope
+from app.services.kp_marriage_finder import calculate_kp_marriage_date
 from app.services.kp_timing_service import (
     calculate_kp_monthly_prediction,
     MONTH_NAMES_EN,
@@ -81,20 +84,16 @@ def get_available_months():
     return {"months": results}
 
 
-@router.post("/monthly-prediction", response_model=KpMonthlyPredictionResponse, summary="Calculate KP Monthly Prediction")
-async def get_kp_monthly_prediction(
-    request: KpMonthlyPredictionRequest,
-    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
-) -> KpMonthlyPredictionResponse:
-    """Calculates KP 4-pillar monthly event predictions with guaranteed fructification timing."""
-    birth = request.birth
-
-    native_name = request.native_name
-
-    # If saved_horoscope_id provided, load from cache/db
-    if not birth and request.saved_horoscope_id:
+async def _resolve_birth_and_name(
+    birth: Optional[BirthInput],
+    saved_horoscope_id: Optional[str],
+    native_name: Optional[str],
+    current_user: Optional[Dict[str, Any]],
+) -> tuple[BirthInput, str]:
+    """Resolve BirthInput and native_name from direct payload or saved_horoscope_id."""
+    if not birth and saved_horoscope_id:
         try:
-            clean_id = _validate_uuid(request.saved_horoscope_id)
+            clean_id = _validate_uuid(saved_horoscope_id)
             user_id = str(current_user["id"]) if current_user and "id" in current_user else ""
             is_admin = bool(current_user and current_user.get("role") == "admin")
             saved = get_cached_saved_horoscope(
@@ -106,9 +105,8 @@ async def get_kp_monthly_prediction(
             if not saved:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Saved horoscope {request.saved_horoscope_id} not found",
+                    detail=f"Saved horoscope {saved_horoscope_id} not found",
                 )
-            # Construct BirthInput
             b_data = saved.get("birth_data") or saved
             birth_time_raw = b_data.get("birth_time") or b_data.get("time") or "12:00:00"
             if isinstance(birth_time_raw, str) and len(birth_time_raw.split(":")) == 2:
@@ -121,7 +119,13 @@ async def get_kp_monthly_prediction(
                 timezone=b_data.get("timezone", "Asia/Kolkata"),
             )
             if not native_name:
-                native_name = saved.get("person_name") or saved.get("name") or b_data.get("person_name") or b_data.get("name") or "ஜாதகர்"
+                native_name = (
+                    saved.get("person_name")
+                    or saved.get("name")
+                    or b_data.get("person_name")
+                    or b_data.get("name")
+                    or "ஜாதகர்"
+                )
         except HTTPException:
             raise
         except Exception as e:
@@ -135,6 +139,18 @@ async def get_kp_monthly_prediction(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Either 'birth' input or 'saved_horoscope_id' must be provided.",
         )
+    return birth, native_name or "ஜாதகர்"
+
+
+@router.post("/monthly-prediction", response_model=KpMonthlyPredictionResponse, summary="Calculate KP Monthly Prediction")
+async def get_kp_monthly_prediction(
+    request: KpMonthlyPredictionRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> KpMonthlyPredictionResponse:
+    """Calculates KP 4-pillar monthly event predictions with guaranteed fructification timing."""
+    birth, resolved_name = await _resolve_birth_and_name(
+        request.birth, request.saved_horoscope_id, request.native_name, current_user
+    )
 
     try:
         response = calculate_kp_monthly_prediction(
@@ -142,11 +158,46 @@ async def get_kp_monthly_prediction(
             year=request.year,
             month=request.month,
             ayanamsa_id=request.ayanamsa_id,
-            native_name=native_name or "ஜாதகர்",
+            native_name=resolved_name,
         )
         return response
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"KP Monthly calculation error: {str(exc)}",
+        )
+
+
+@router.post("/marriage-date", response_model=KpMarriageDateResponse, summary="Find KP Marriage Promise, Timing & Candidate Dates")
+async def get_kp_marriage_date(
+    request: KpMarriageDateRequest,
+    current_user: Optional[Dict[str, Any]] = Depends(get_optional_current_user),
+) -> KpMarriageDateResponse:
+    """Calculates 4-stage KP marriage promise (40/40/15/5), Dasha-Bhukti-Antara windows, 7th cusp targets & Muhurta dates."""
+    birth, resolved_name = await _resolve_birth_and_name(
+        request.birth, request.saved_horoscope_id, request.native_name, current_user
+    )
+
+    parsed_start: Optional[date] = None
+    if request.start_date:
+        try:
+            parsed_start = date.fromisoformat(request.start_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_date must be in YYYY-MM-DD format.",
+            )
+
+    try:
+        return calculate_kp_marriage_date(
+            birth=birth,
+            start_date=parsed_start,
+            years_ahead=request.years_ahead,
+            ayanamsa_id=request.ayanamsa_id,
+            native_name=resolved_name,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"KP Marriage Date calculation error: {str(exc)}",
         )

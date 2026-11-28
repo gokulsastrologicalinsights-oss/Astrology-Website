@@ -55,6 +55,8 @@ import {
   ConsolidatedKakshyaResponse,
   KpMonthlyPredictionRequest,
   KpMonthlyPredictionResponse,
+  KpMarriageDateRequest,
+  KpMarriageDateResponse,
   AvailableMonthItem,
 
   BirthInput,
@@ -5595,6 +5597,21 @@ export async function getKpMonthlyPrediction(
 ): Promise<KpMonthlyPredictionResponse> {
   const authHeaders = await resolveAuthHeaders(token);
   return request<KpMonthlyPredictionResponse>(`/api/v1/kp/timing/monthly-prediction`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(req),
+  });
+}
+
+export async function findKpMarriageDate(
+  req: KpMarriageDateRequest,
+  token?: string
+): Promise<KpMarriageDateResponse> {
+  const authHeaders = await resolveAuthHeaders(token);
+  return request<KpMarriageDateResponse>(`/api/v1/kp/timing/marriage-date`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

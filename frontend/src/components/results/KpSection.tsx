@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n";
 import { getGrahaName, getRasiName, getLordName } from "@/lib/translations";
 import { formatDms, formatDate } from "@/lib/formatters";
 import { KpEventAnalysisSection } from "./KpEventAnalysisSection";
+import { KpMarriageDateSection } from "./KpMarriageDateSection";
 
 interface KpSectionProps {
   kp?: KpResponse;
@@ -29,7 +30,7 @@ function formatDays(days?: number): string {
 export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionProps) {
   const { language, t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<
-    "planets" | "cusps" | "significators" | "house_significators" | "ruling_planets" | "dasa" | "events"
+    "planets" | "cusps" | "significators" | "house_significators" | "ruling_planets" | "dasa" | "events" | "marriage_date"
   >(() => {
     if (typeof window !== "undefined" && window.location.hash === "#kp-events") {
       return "events";
@@ -164,6 +165,18 @@ export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionPr
         >
           <span>✨</span>
           <span>{language === "ta" ? "KP நிகழ்வு பகுப்பாய்வு" : "KP Event Analysis"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("marriage_date")}
+          className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-md transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === "marriage_date"
+              ? "bg-rose-600 text-white shadow-xs"
+              : "text-[#475569] hover:bg-[#FAF6EC] hover:text-[#0F172A]"
+          }`}
+        >
+          <span>💍</span>
+          <span>{language === "ta" ? "திருமண தேதி கணிப்பு" : "Find Marriage Date"}</span>
         </button>
         <Link
           href={`/remedies${savedHoroscopeId ? `?horoscope_id=${encodeURIComponent(savedHoroscopeId)}` : ""}`}
@@ -697,6 +710,16 @@ export function KpSection({ kp, dasa, horoscope, savedHoroscopeId }: KpSectionPr
           <KpEventAnalysisSection
             kp={kp}
             dasa={dasa}
+            horoscope={horoscope}
+            savedHoroscopeId={savedHoroscopeId}
+          />
+        </div>
+      )}
+
+      {/* 8. KP Marriage Date Finder */}
+      {activeSubTab === "marriage_date" && (
+        <div id="kp-marriage-date" className="scroll-mt-6">
+          <KpMarriageDateSection
             horoscope={horoscope}
             savedHoroscopeId={savedHoroscopeId}
           />
