@@ -136,6 +136,11 @@ def _resolve_partner_chart(
 
         calc_result = horoscope_row.get("calculation_result") or {}
         horo_part = calc_result.get("horoscope")
+        resolved_birth_place = (
+            (partner_input.birth_place or "").strip()
+            or str(horoscope_row.get("birthplace") or horoscope_row.get("location_name") or "").strip()
+            or None
+        )
 
         if horo_part and isinstance(horo_part, dict):
             chart_ctx = build_chart_context_from_horoscope_response(
@@ -148,6 +153,7 @@ def _resolve_partner_chart(
                 timezone_str=str(horoscope_row.get("timezone", "Asia/Kolkata")),
                 latitude=float(horoscope_row.get("latitude", 13.0827)),
                 longitude=float(horoscope_row.get("longitude", 80.2707)),
+                birth_place=resolved_birth_place,
             )
             return chart_ctx, is_approximate
 
@@ -179,6 +185,7 @@ def _resolve_partner_chart(
             timezone_str=str(stored_tz),
             latitude=float(horoscope_row["latitude"]),
             longitude=float(horoscope_row["longitude"]),
+            birth_place=resolved_birth_place,
         )
         return chart_ctx, is_approximate
 
@@ -210,6 +217,7 @@ def _resolve_partner_chart(
         gender=gender_enum,
         ayanamsa_id=ayanamsa_id,
         house_system_id=house_system_id,
+        birth_place=(partner_input.birth_place or "").strip() or None,
     )
     return chart_ctx, is_approximate
 
@@ -231,6 +239,7 @@ def _build_profile_summary(ctx: MarriageChartContext) -> PersonProfileSummary:
         timezone=ctx.timezone,
         latitude=ctx.latitude,
         longitude=ctx.longitude,
+        birth_place=ctx.birth_place,
         ascendant_sign=ctx.ascendant_sign_name,
         ascendant_sign_tamil=ctx.ascendant_sign_name_tamil,
         ascendant_degree=round(ctx.ascendant_degree, 4),

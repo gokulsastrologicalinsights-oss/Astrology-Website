@@ -57,7 +57,7 @@ ASHTAKOOTA_META_TA: List[Tuple[str, str, float, str]] = [
     ("yoni", "யோனி (Yoni)", 4.0, "தாம்பத்திய இணக்கம்"),
     ("graha_maitri", "கிரக மைத்ரி (Maitri)", 5.0, "ராசிநாதர்களின் நட்பு"),
     ("gana", "கணம் (Gana)", 6.0, "குண நலன் & கருத்துப் பரிமாற்றம்"),
-    ("bhakoot", "பகுட் (Bhakoot)", 7.0, "வம்ச விருத்தி & பொருள் நலம்"),
+    ("bhakoot", "பகூட் (Bhakoot)", 7.0, "வம்ச விருத்தி & பொருள் நலம்"),
     ("nadi", "நாடி (Nadi)", 8.0, "மரபணு & சந்ததி ஆரோக்கியம்"),
 ]
 
@@ -250,10 +250,10 @@ def format_birth_date_with_age(dob_str: Optional[str]) -> str:
 
 def format_points(val: Any) -> str:
     try:
-        num = float(val or 0.0)
+        num = round(float(val or 0.0), 2)
     except (TypeError, ValueError):
         return "0"
-    return str(int(num)) if num.is_integer() else f"{num:.1f}".rstrip("0").rstrip(".")
+    return str(int(num)) if num.is_integer() else f"{num:.2f}".rstrip("0").rstrip(".")
 
 
 def _normalize_poruthams_map(raw: Any) -> Dict[str, Dict[str, Any]]:
@@ -454,7 +454,7 @@ def build_marriage_print_view_model(data: Dict[str, Any]) -> Dict[str, Any]:
         {"label": "ராசி அதிபதி", "desc": "வாரிசுகளின் வளர்ச்சி", "groom_val": SIGN_LORD_TA.get(g_moon_sign_idx, "-"), "bride_val": SIGN_LORD_TA.get(b_moon_sign_idx, "-"), "pass": bool(safe_dict(poruthams.get("rasi_adhipathi")).get("is_favorable"))},
         {"label": "வசியம்", "desc": "பரஸ்பர நட்பு", "groom_val": g_rasi_ta, "bride_val": b_rasi_ta, "pass": bool(safe_dict(poruthams.get("vasya")).get("is_favorable"))},
         {"label": "ரஜ்ஜு", "desc": "திருமண அதிர்ஷ்டமும் மங்களமும் வளர்வது", "groom_val": g_rajju_ta, "bride_val": b_rajju_ta, "pass": bool(safe_dict(poruthams.get("rajju")).get("is_favorable"))},
-        {"label": "நாடி", "desc": "நல்ல ஆரோக்கியம்", "groom_val": g_nadi_ta, "bride_val": b_nadi_ta, "pass": nadi_passed},
+        {"label": "நாடி கூடம் (அஷ்டகூடம்)", "desc": "நல்ல ஆரோக்கியம் (வட இந்திய அஷ்டகூட முறை)", "groom_val": g_nadi_ta, "bride_val": b_nadi_ta, "pass": nadi_passed},
         {"label": "வேதை", "desc": "நட்பும் ஒற்றுமையும்", "groom_val": g_nak_ta, "bride_val": b_nak_ta, "pass": bool(safe_dict(poruthams.get("vedha")).get("is_favorable"))},
     ]
 
@@ -508,7 +508,7 @@ def build_marriage_print_view_model(data: Dict[str, Any]) -> Dict[str, Any]:
                 if m["start_year"] <= yr <= m["end_year"]:
                     bh_list = m.get("bhuktis") or []
                     found = next((b for b in bh_list if b["start_year"] <= yr <= b["end_year"]), bh_list[0] if bh_list else None)
-                    return f"{found['short_ta']} Bukthi" if found else ""
+                    return f"{found['short_ta']} Bhukti" if found else ""
             return ""
 
         w_min = current_year_num - 16
@@ -595,8 +595,9 @@ def build_marriage_print_view_model(data: Dict[str, Any]) -> Dict[str, Any]:
     sage_verdict_ta = str(
         sv.get("summary_ta")
         or (
-            f"பொருத்தம் மதிப்பெண் {passed_count_11}/11 ஆகும். அஷ்டகூட மதிப்பெண்: {ashtakoota_str}/36. "
-            f"{kuja_summary_ta}. மேலும் மதிப்பாய்வு மற்றும் முடிவெடுப்பதற்கு விரிவான தோஷ பகுப்பாய்வு அட்டவணையை தயவுசெய்து சரிபார்க்கவும்."
+            f"11-அம்ச பாரம்பரியச் சுருக்கப் பட்டியலில் {passed_count_11}/11 பொருத்தங்கள் தேர்ச்சி பெற்றுள்ளன. "
+            f"அஷ்டகூட மதிப்பெண்: {ashtakoota_str}/36. "
+            f"{kuja_summary_ta}. மேலும் மதிப்பாய்வு மற்றும் முடிவெடுப்பதற்கு விரிவான தோஷ பகுப்பாய்வு அட்டவணையைத் தயவுசெய்து சரிபார்க்கவும்."
         )
     )
 

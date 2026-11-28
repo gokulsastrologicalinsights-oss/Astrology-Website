@@ -46,6 +46,44 @@ ASHTAKOOTA_LABELS_EN: Dict[str, tuple[str, str]] = {
 }
 VEDIC_HOUSE_KEYS: List[str] = ["2", "4", "5", "7", "8", "12"]
 
+STATUS_PALETTE: Dict[str, Dict[str, str]] = {
+    "GREEN": {"text": "#14532D", "bg": "#DCFCE7", "border": "#16A34A", "icon": "✓"},
+    "ORANGE": {"text": "#9A3412", "bg": "#FFEDD5", "border": "#EA580C", "icon": "!"},
+    "RED": {"text": "#7F1D1D", "bg": "#FEE2E2", "border": "#DC2626", "icon": "✕"},
+    "NEUTRAL": {"text": "#334155", "bg": "#F1F5F9", "border": "#94A3B8", "icon": "?"},
+}
+
+
+def get_status_style(tone: str) -> Dict[str, str]:
+    """Returns consistent GREEN/ORANGE/RED/NEUTRAL colours and icon for UI/PDF rendering."""
+    return STATUS_PALETTE.get(str(tone or "NEUTRAL").upper(), STATUS_PALETTE["NEUTRAL"])
+
+
+def _fmt_dob_long(dob_str: Any, is_ta: bool) -> tuple[str, str]:
+    """Formats ISO birth_date into readable date and dynamic age as of report generation."""
+    from datetime import date
+    raw = str(dob_str or "").strip()
+    if not raw or raw == "-":
+        return ("-", "-")
+    try:
+        dob = date.fromisoformat(raw[:10])
+    except ValueError:
+        return (raw, "-")
+    months_en = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    today = date.today()
+    age = max(0, today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)))
+    date_txt = f"{dob.day:02d} {months_en[dob.month - 1]} {dob.year}"
+    age_txt = f"{age} {'வயது' if is_ta else 'Years'}"
+    return (date_txt, age_txt)
+
+
+def _fmt_tob_short(tob_str: Any) -> str:
+    raw = str(tob_str or "").strip()
+    if not raw or raw == "-":
+        return "-"
+    parts = raw.split(":")
+    return f"{parts[0]}:{parts[1]}" if len(parts) >= 2 else raw
+
 
 def _fmt_deg(deg: Any) -> str:
     if deg is None:
@@ -137,7 +175,8 @@ def _extract_kp_partner(partner_kp: Dict[str, Any], fallback_planet: Any, fallba
     star_lord = str(csl.get("star_lord") or "-")
     sign_lord = str(csl.get("sign_lord") or "-")
     sub_sub_lord = str(csl.get("sub_sub_lord") or "-")
-    verdict = str(csl.get("verdict") or partner_kp.get("overall_promise_verdict") or fallback_promise or "-")
+    verdict_raw = csl.get("verdict") or partner_kp.get("overall_promise_verdict") or fallback_promise or "-"
+    verdict = str(getattr(verdict_raw, "value", verdict_raw)).split(".")[-1]
     signified = csl.get("signified_houses") or []
     supp = csl.get("supporting_houses_signified") or []
     deny = csl.get("denying_houses_signified") or []
@@ -190,7 +229,7 @@ def _extract_vedic_partner(vedic_dict: Dict[str, Any], is_ta: bool) -> Dict[str,
             "lord": f"{_planet_label(h.get('lord_name'), is_ta)} (H{h.get('lord_house', '-')}, {h.get('lord_dignity', '-')})",
             "occupants": ", ".join(occ) or ("-" if is_ta else "None"),
             "aspects": ", ".join(asp) or ("-" if is_ta else "None"),
-            "status": str(h.get("status") or "PASS"),
+            "status": str(getattr(h.get("status"), "value", h.get("status")) or "PASS").split(".")[-1],
             "summary": str(h.get("summary_ta" if is_ta else "summary_en") or ""),
         })
 
@@ -279,15 +318,45 @@ def build_marriage_dossier_view_model(data: Dict[str, Any], language: str = "en"
     bp = safe_dict(d.get("bride_profile"))
 
     def _partner_ext(prof: Dict[str, Any], base_p: Dict[str, Any]) -> Dict[str, Any]:
+        dob_fmt, age_str = _fmt_dob_long(prof.get("birth_date"), is_ta)
+        raw_place = prof.get("birth_place") or prof.get("place_of_birth") or prof.get("city") or ""
+        place_str = str(raw_place).strip() if str(raw_place).strip() else ("குறிப்பிடப்படவில்லை" if is_ta else "Not Provided")
+        rasi_ta = base_p["rasi_ta"]
+        rasi_en = str(prof.get("moon_sign") or "-")
+        rasi_disp = f"{rasi_ta} / {rasi_en}" if (rasi_ta and rasi_en and rasi_ta != rasi_en) else (rasi_ta if is_ta else rasi_en)
+        nak_ta = str(prof.get("moon_nakshatra_tamil") or base_p.get("nakshatra_ta") or "-")
+        nak_en = str(prof.get("moon_nakshatra") or "-")
+        nak_disp = f"{nak_ta} / {nak_en}" if (is_ta and nak_ta != "-" and nak_en != "-" and nak_ta != nak_en) else (nak_ta if is_ta else nak_en)
+        pada_val = str(prof.get("moon_pada") or 1)
+        lagna_ta = _sign_label(prof.get("ascendant_sign"), prof.get('ascendant_sign_tamil'), True)
+        lagna_en = str(prof.get("ascendant_sign") or "-")
+        lagna_disp = f"{lagna_ta} / {lagna_en}" if (lagna_ta != "-" and lagna_en != "-" and lagna_ta != lagna_en) else (lagna_ta if is_ta else lagna_en)
+        raw_name = str(prof.get("name") or base_p.get("name") or "").strip()
+        if not raw_name or raw_name == "<PRIVATE_PERSON>":
+            raw_name = str(base_p.get("name") or "-")
+        has_coords = (
+            prof.get("latitude") is not None
+            and prof.get("longitude") is not None
+            and bool(str(prof.get("timezone") or "").strip())
+        )
         return {
-            "name": base_p["name"],
+            "name": raw_name,
             "dob": str(prof.get("birth_date") or "-"),
-            "tob": str(prof.get("birth_time") or "-"),
+            "dob_fmt": dob_fmt,
+            "age_str": age_str,
+            "tob": _fmt_tob_short(prof.get("birth_time")),
+            "birth_place": place_str,
+            "has_place_name": bool(str(raw_place).strip()),
+            "has_valid_coords": has_coords,
             "dob_age": base_p["dob_age"],
-            "timezone": str(prof.get("timezone") or "Asia/Kolkata"),
-            "coords": f"{prof.get('latitude', 13.0827)}°, {prof.get('longitude', 80.2707)}°" if prof.get("latitude") is not None else "-",
+            "timezone": str(prof.get("timezone") or ""),
+            "coords": f"{prof.get('latitude')}°, {prof.get('longitude')}°" if prof.get("latitude") is not None else "-",
             "lagna": f"{_sign_label(prof.get('ascendant_sign'), prof.get('ascendant_sign_tamil'), is_ta)} ({_fmt_deg(prof.get('ascendant_degree'))})",
-            "rasi": base_p["rasi_ta"] if is_ta else str(prof.get("moon_sign") or "-"),
+            "lagna_clean": lagna_disp,
+            "rasi": base_p["rasi_ta"] if is_ta else rasi_en,
+            "rasi_bilingual": rasi_disp,
+            "nakshatra_only": nak_disp,
+            "pada_str": pada_val,
             "nakshatra_pada": base_p["nakshatra_pada_ta"] if is_ta else f"{prof.get('moon_nakshatra', '-')} (Pada {prof.get('moon_pada', 1)})",
             "d9_lagna": _sign_label(prof.get("ascendant_navamsa_sign"), None, is_ta),
             "venus": _sign_label(prof.get("venus_sign"), None, is_ta),
@@ -299,23 +368,61 @@ def build_marriage_dossier_view_model(data: Dict[str, Any], language: str = "en"
     comp = safe_dict(d.get("composite_assessment"))
     final_a = safe_dict(d.get("final_assessment"))
     outcome = str(comp.get("overall_outcome") or final_a.get("verdict") or "MIXED_OR_CONDITIONAL")
+    _OUTCOME_MAP_EN = {
+        "FAVOURABLE_UNDER_SELECTED_RULES": "Favourable Compatibility",
+        "MIXED_OR_CONDITIONAL": "Moderate / Conditional Compatibility",
+        "UNFAVOURABLE_UNDER_SELECTED_RULES": "Unfavourable Compatibility",
+        "INDETERMINATE": "Requires Further Astrological Review",
+    }
+    _OUTCOME_MAP_TA = {
+        "FAVOURABLE_UNDER_SELECTED_RULES": "சிறந்த பொருத்தம்",
+        "MIXED_OR_CONDITIONAL": "மிதமான அல்லது நிபந்தனைக்குட்பட்ட பொருத்தம்",
+        "UNFAVOURABLE_UNDER_SELECTED_RULES": "பொருத்தம் குறைவானது",
+        "INDETERMINATE": "மேலும் ஜோதிட ஆய்வு தேவை",
+    }
+    _STATUS_MAP_TA = {
+        "FAVORABLE": "சாதகம்",
+        "MIXED": "மிதமானது",
+        "UNFAVORABLE": "சாதகமற்றது",
+        "INDETERMINATE": "ஆய்வு தேவை",
+    }
+    _STATUS_MAP_EN = {
+        "FAVORABLE": "Favorable",
+        "MIXED": "Moderate",
+        "UNFAVORABLE": "Unfavorable",
+        "INDETERMINATE": "Review Needed",
+    }
     outcome_label = str(
         comp.get("overall_outcome_label_ta" if is_ta else "overall_outcome_label_en")
         or final_a.get("verdict_label_ta" if is_ta else "verdict_label_en")
-        or outcome.replace("_", " ")
+        or (_OUTCOME_MAP_TA if is_ta else _OUTCOME_MAP_EN).get(outcome, outcome.replace("_", " ").title())
     )
     outcome_expl = str(comp.get("explanation_ta" if is_ta else "explanation_en") or "")
+    for raw_code, clean_lbl in (_OUTCOME_MAP_TA if is_ta else _OUTCOME_MAP_EN).items():
+        outcome_expl = outcome_expl.replace(raw_code, clean_lbl)
+    for raw_st, clean_st in (_STATUS_MAP_TA if is_ta else _STATUS_MAP_EN).items():
+        outcome_expl = outcome_expl.replace(f": {raw_st}", f": {clean_st}")
     cat_raw = safe_dict(comp.get("category_verdicts"))
     categories: List[Dict[str, str]] = []
     for cv_raw in cat_raw.values():
         cv = safe_dict(cv_raw)
         if not cv:
             continue
+        raw_cat_st = str(cv.get("status") or "INDETERMINATE")
+        disp_cat_st = (_STATUS_MAP_TA if is_ta else _STATUS_MAP_EN).get(raw_cat_st, raw_cat_st)
+        raw_sum = str(cv.get("score_summary") or "")
+        if cv.get("category_id") == "kuja_samadosham":
+            up_sum = raw_sum.upper()
+            if "CANCELLED" in up_sum:
+                raw_sum = "தோஷ நிவர்த்தி (0% • சமநிலை)" if is_ta else "Cancelled (0% • Balanced)"
+            elif "MUTUALLY_MATCHED" in up_sum or "BALANCED" in up_sum:
+                raw_sum = "சமதோஷம் (சமநிலை)" if is_ta else "Balanced (Samadosham)"
         categories.append({
+            "id": str(cv.get("category_id") or ""),
             "name": str(cv.get("category_name_ta" if is_ta else "category_name_en") or cv.get("category_id") or ""),
             "tradition": str(cv.get("tradition") or ""),
-            "status": str(cv.get("status") or "INDETERMINATE"),
-            "summary": str(cv.get("score_summary") or ""),
+            "status": disp_cat_st,
+            "summary": raw_sum,
         })
 
     conflicts: List[Dict[str, str]] = []
@@ -373,7 +480,7 @@ def build_marriage_dossier_view_model(data: Dict[str, Any], language: str = "en"
         })
     if not porutham_rows:
         for mr in base_vm["matching_rows"]:
-            if mr["label"] == "நாடி":
+            if mr["label"].startswith("நாடி"):
                 continue
             porutham_rows.append({
                 "name": mr["label"],
@@ -482,12 +589,270 @@ def build_marriage_dossier_view_model(data: Dict[str, Any], language: str = "en"
                 "verse": str(h_obj.get("hymn_ta") or ""),
             })
 
+    # ==================== PAGE 1 FAMILY DECISION SUMMARY ====================
+    tp_score_num = float(tp.get("total_score", 0) or 0)
+    tp_max_num = float(tp.get("max_score", 10) or 10)
+    rajju_st = str(tp.get("rajju_status") or "PASS").upper()
+    vedha_st = str(tp.get("vedha_status") or "PASS").upper()
+    if rajju_st == "FAIL" or vedha_st == "FAIL" or tp_score_num < 5.0:
+        por_tone = "RED"
+        por_status_txt = "சாதகமற்ற பொருத்தம்" if is_ta else "Unfavourable Match"
+    elif tp_score_num >= 6.0:
+        por_tone = "GREEN"
+        por_status_txt = "சாதகமான பொருத்தம்" if is_ta else "Favourable Match"
+    else:
+        por_tone = "ORANGE"
+        por_status_txt = "மிதமான பொருத்தம்" if is_ta else "Moderate Match"
+
+    ash_pts_num = float(ash.get("total_points", 0) or 0)
+    ash_max_num = float(ash.get("max_points", 36) or 36)
+    ash_thresh_num = float(ash.get("minimum_threshold", 18) or 18)
+    nadi_active_dosha = bool(ash.get("nadi_dosha_present")) and not bool(ash.get("nadi_dosha_cancelled"))
+    bhakoot_active_dosha = bool(ash.get("bhakoot_dosha_present")) and not bool(ash.get("bhakoot_dosha_cancelled"))
+    if nadi_active_dosha or bhakoot_active_dosha or ash_pts_num < ash_thresh_num:
+        ash_tone = "RED"
+        ash_status_txt = "சாதகமற்ற பொருத்தம்" if is_ta else "Unfavourable Match"
+    elif ash_pts_num >= 24.0:
+        ash_tone = "GREEN"
+        ash_status_txt = "சாதகமான பொருத்தம்" if is_ta else "Favourable Match"
+    else:
+        ash_tone = "ORANGE"
+        ash_status_txt = "மிதமான பொருத்தம்" if is_ta else "Moderate Match"
+
+    outcome_upper = outcome.upper()
+    if "FAVOUR" in outcome_upper or "FAVOR" in outcome_upper:
+        verdict_tone = "GREEN"
+        verdict_title_ta = "சாதகமான பொருத்தம்"
+        verdict_title_en = "FAVOURABLE MATCH"
+        verdict_sub = (
+            "முக்கிய ஜாதக மற்றும் பாரம்பரியப் பொருத்த அம்சங்கள் திருமணத்திற்குச் சாதகமாக அமைந்துள்ளன."
+            if is_ta
+            else "Core traditional and Vedic compatibility indicators are favourable for proceeding."
+        )
+        rec_txt = (
+            "இந்த ஜாதகப் பொருத்தம் நல்ல நிலையில் உள்ளது. இரு குடும்பங்களும் பரஸ்பர விருப்பம் மற்றும் சுப முகூர்த்தம் குறித்துப் பேசி திருமண ஏற்பாடுகளைத் தொடரலாம்."
+            if is_ta
+            else "This horoscope compatibility is favourable. Both families may proceed with mutual discussions and auspicious Muhurta planning."
+        )
+    elif "UNFAVOUR" in outcome_upper or "UNFAVOR" in outcome_upper:
+        verdict_tone = "RED"
+        verdict_title_ta = "கூடுதல் பரிசீலனை தேவை"
+        verdict_title_en = "FURTHER REVIEW RECOMMENDED"
+        verdict_sub = (
+            "முக்கிய ஜோதிட அம்சங்களில் சாதகமற்ற நிலை காணப்படுகிறது; அனுபவமிக்க ஜோதிடரின் ஆலோசனை அவசியம்."
+            if is_ta
+            else "Significant astrological concerns were identified; careful consultation with a senior astrologer is advised."
+        )
+        rec_txt = (
+            "இந்த ஜாதகப் பொருத்தத்தில் சில முக்கியக் குறைபாடுகள் காணப்படுகின்றன. எனவே, உடனடி முடிவெடுப்பதைத் தவிர்த்து, அனுபவமிக்க ஜோதிடருடன் விரிவாக ஆலோசித்து முடிவெடுப்பது நலம்."
+            if is_ta
+            else "Significant astrological concerns are present. We recommend consulting an experienced astrologer and reviewing the detailed analysis before proceeding."
+        )
+    elif "INDETERMINATE" in outcome_upper:
+        verdict_tone = "NEUTRAL"
+        verdict_title_ta = "சரிபார்ப்பு தேவை"
+        verdict_title_en = "VERIFICATION REQUIRED"
+        verdict_sub = (
+            "சில ஜாதகத் தகவல்கள் முழுமையாக இல்லாததால் கூடுதல் சரிபார்ப்பு தேவைப்படுகிறது."
+            if is_ta
+            else "Some birth or chart details are incomplete and require verification."
+        )
+        rec_txt = (
+            "துல்லியமான பிறப்பு விவரங்களைச் சரிபார்த்த பிறகு ஜோதிடரின் ஆலோசனையுடன் அடுத்தகட்ட முடிவெடுக்கவும்."
+            if is_ta
+            else "Please verify complete birth details and consult an astrologer before making a final decision."
+        )
+    else:
+        verdict_tone = "ORANGE"
+        verdict_title_ta = "நிபந்தனையுடன் தொடரலாம்"
+        verdict_title_en = "PROCEED WITH FURTHER DISCUSSION"
+        verdict_sub = (
+            "இந்த அறிக்கை மிதமான மற்றும் நிபந்தனைக்குட்பட்ட பொருத்தத்தைக் காட்டுகிறது; சில அம்சங்களில் கூடுதல் கவனம் தேவை."
+            if is_ta
+            else "This report indicates a mixed/conditional compatibility assessment where some factors require additional attention."
+        )
+        rec_txt = (
+            "இந்த ஜாதகப் பொருத்தம் மிதமான நிலையில் உள்ளது. சில சாதகமான அம்சங்கள் இருந்தாலும், சில ஜோதிடக் காரணிகள் கூடுதல் கவனத்தைக் கோருகின்றன. எனவே, இரு குடும்பங்களும் பரஸ்பர விருப்பம், எதிர்பார்ப்புகள் மற்றும் வாழ்க்கை ஒற்றுமையைப் பற்றி பேசி, விரிவான அறிக்கையையும் புரிந்துகொண்டு திருமணப் பேச்சைத் தொடர்வது பொருத்தமானது."
+            if is_ta
+            else "This horoscope compatibility is at a moderate level. While there are supportive indicators, certain astrological factors require additional attention. Therefore, both families should discuss mutual expectations and life harmony, understand the detailed report, and proceed thoughtfully with marriage discussions."
+        )
+
+    pos_factors: List[Dict[str, str]] = []
+    if rajju_st == "PASS":
+        pos_factors.append({"tone": "GREEN", "text": "ரஜ்ஜுப் பொருத்தம் சாதகமாக உள்ளது (மாங்கல்ய பலம் நன்று)." if is_ta else "Rajju Porutham is favourable (supports longevity and marital stability)."})
+    if vedha_st == "PASS":
+        pos_factors.append({"tone": "GREEN", "text": "வேதைப் பொருத்தம் சாதகமாக உள்ளது (நட்சத்திரப் பகை இல்லை)." if is_ta else "Vedha Porutham is favourable (no mutual star repulsion)."})
+    if not nadi_active_dosha and not bhakoot_active_dosha:
+        pos_factors.append({"tone": "GREEN", "text": "அஷ்டகூட நாடி மற்றும் பகூட் பொருத்தங்கள் சாதகமாக உள்ளன." if is_ta else "Ashtakoota Nadi & Bhakoot Kootas are favourable."})
+    elif not nadi_active_dosha:
+        pos_factors.append({"tone": "GREEN", "text": "அஷ்டகூட முறையில் நாடிப் பொருத்தம் சாதகமாக உள்ளது." if is_ta else "Ashtakoota Nadi Koota is clear (supports health and progeny harmony)."})
+    elif not bhakoot_active_dosha:
+        pos_factors.append({"tone": "GREEN", "text": "பகூட் பொருத்தம் சாதகமாக உள்ளது (குடும்ப வளர்ச்சி நன்று)." if is_ta else "Bhakoot Koota is favourable (supports family prosperity)."})
+    papa_v_upper = str(getattr(da.get("papasamya_verdict"), "value", da.get("papasamya_verdict")) or "").upper()
+    if "FAVOR" in papa_v_upper or "FAVOUR" in papa_v_upper:
+        pos_factors.append({"tone": "GREEN", "text": "பாபசாம்ய மதிப்பீடு சாதகமாக உள்ளது (தோஷ சமநிலை நன்று)." if is_ta else "Papasamya balance is favourable between both charts."})
+    if (not groom_kuja["is_present"] or groom_kuja["is_cancelled"]) and (not bride_kuja["is_present"] or bride_kuja["is_cancelled"]):
+        if groom_kuja["is_cancelled"] or bride_kuja["is_cancelled"]:
+            pos_factors.append({"tone": "GREEN", "text": "செவ்வாய் தோஷம்: இருவருக்கும் சாஸ்திர விதிப்படி தோஷ நிவர்த்தி (0%)." if is_ta else "Kuja Dosha: Cancelled by classical rules for both (0%)."})
+        else:
+            pos_factors.append({"tone": "GREEN", "text": "செவ்வாய் தோஷம் இல்லை (இருவருக்கும் 0%)." if is_ta else "No Kuja Dosha in either chart (0%)."})
+
+    attn_factors: List[Dict[str, str]] = []
+    if rajju_st == "FAIL" or vedha_st == "FAIL":
+        attn_factors.append({"tone": "RED", "text": "முக்கிய மகா பொருத்தமான ரஜ்ஜு / வேதை பொருந்தவில்லை." if is_ta else "Critical Maha Porutham (Rajju / Vedha) is unfavourable."})
+    elif tp_score_num < 6.0:
+        attn_factors.append({"tone": "ORANGE", "text": "சில பாரம்பரிய நட்சத்திரப் பொருத்தங்கள் அமையவில்லை." if is_ta else "Some traditional birth-star Poruthams are not matched."})
+    if nadi_active_dosha or bhakoot_active_dosha or ash_pts_num < ash_thresh_num:
+        attn_factors.append({"tone": "RED", "text": "அஷ்டகூடப் பொருத்தத்தில் கூடுதல் கவனம் தேவைப்படும் அமைப்பு உள்ளது." if is_ta else "Ashtakoota analysis shows an active Dosha or low score."})
+
+    kp_g_v = str(kp_section["groom"]["verdict"]).upper()
+    kp_b_v = str(kp_section["bride"]["verdict"]).upper()
+    if "UNFAVOR" in kp_g_v or "UNFAVOR" in kp_b_v or "NEGATIVE" in kp_g_v or "NEGATIVE" in kp_b_v:
+        attn_factors.append({"tone": "RED", "text": "கே.பி. திருமண வாக்குறுதி ஆய்வில் சாதகமற்ற அம்சங்கள் உள்ளன." if is_ta else "KP marriage promise analysis indicates unfavourable factors."})
+    elif "MIXED" in kp_g_v or "MIXED" in kp_b_v:
+        attn_factors.append({"tone": "ORANGE", "text": "கே.பி. திருமண வாக்குறுதி ஆய்வில் மிதமான நிலை உள்ளது." if is_ta else "KP marriage promise analysis shows mixed indicators."})
+
+    vedic_cv_st = str(safe_dict(cat_raw.get("vedic_individual")).get("status") or "").upper()
+    if vedic_cv_st in ("MIXED", "UNFAVORABLE") or (groom_kuja["is_present"] and not groom_kuja["is_cancelled"]) or (bride_kuja["is_present"] and not bride_kuja["is_cancelled"]):
+        t_v = "RED" if vedic_cv_st == "UNFAVORABLE" else "ORANGE"
+        attn_factors.append({"tone": t_v, "text": "திருமண வாழ்க்கை தொடர்பான சில ஜோதிட அம்சங்களில் கூடுதல் கவனம் தேவை." if is_ta else "Certain astrological factors related to married life require additional attention."})
+    if "INDETERMINATE" in papa_v_upper:
+        attn_factors.append({"tone": "NEUTRAL", "text": "பாபசாம்ய மதிப்பீட்டில் கூடுதல் சரிபார்ப்பு தேவை." if is_ta else "Papasamya evaluation requires further verification."})
+
+    if not pos_factors:
+        pos_factors.append({"tone": "NEUTRAL", "text": "சாதகமான அம்சங்கள் விவரப் பக்கங்களில் கொடுக்கப்பட்டுள்ளன." if is_ta else "Supporting indicators are detailed in the technical pages."})
+    if not attn_factors:
+        attn_factors.append({"tone": "GREEN", "text": "குறிப்பிடத்தக்க எதிர்மறை அமைப்புகள் எதுவும் கண்டறியப்படவில்லை." if is_ta else "No significant adverse astrological factors were detected."})
+
+    decision_summary = {
+        "verdict": {
+            "tone": verdict_tone,
+            "title_ta": verdict_title_ta,
+            "title_en": verdict_title_en,
+            "subtitle": verdict_sub,
+        },
+        "porutham_card": {
+            "tone": por_tone,
+            "title": "தமிழ் 10 பொருத்தங்கள்" if is_ta else "Tamil 10 Poruthams",
+            "score_text": f"{format_points(tp_score_num)} / {format_points(tp_max_num)}",
+            "status_text": por_status_txt,
+        },
+        "ashtakoota_card": {
+            "tone": ash_tone,
+            "title": "வட இந்திய அஷ்டகூடப் பொருத்தம்" if is_ta else "North Indian Ashtakoota",
+            "score_text": f"{format_points(ash_pts_num)} / {format_points(ash_max_num)}",
+            "status_text": ash_status_txt,
+        },
+        "positive_factors": pos_factors[:5],
+        "attention_factors": attn_factors[:5],
+        "recommendation": rec_txt,
+        "disclaimer": (
+            "இந்த அறிக்கை ஜோதிடக் கணக்கீடுகளின் அடிப்படையிலான வழிகாட்டுதல் மட்டுமே. திருமண முடிவில் இருவரின் விருப்பம், பரஸ்பர புரிதல் மற்றும் குடும்பங்களின் ஆலோசனை முக்கியமானவை."
+            if is_ta
+            else "This report provides astrological guidance based on traditional calculations. Mutual consent, understanding, and family consultation remain paramount in marriage decisions."
+        ),
+    }
+
+    groom_ext = _partner_ext(gp, base_vm["groom"])
+    bride_ext = _partner_ext(bp, base_vm["bride"])
+
+    birthplace_note = ""
+    if not groom_ext["has_place_name"] or not bride_ext["has_place_name"]:
+        if groom_ext["has_valid_coords"] and bride_ext["has_valid_coords"]:
+            birthplace_note = (
+                "குறிப்பு: பிறந்த ஊர் பெயர் வழங்கப்படவில்லை; எனினும் வழங்கப்பட்ட அட்சரேகை, தீர்க்கரேகை மற்றும் நேர மண்டலத்தின் அடிப்படையில் லக்னம் மற்றும் பாவங்கள் துல்லியமாகக் கணக்கிடப்பட்டுள்ளன."
+                if is_ta
+                else "Note: Birthplace name was not provided; Lagna and house positions are computed from the verified coordinates and timezone."
+            )
+        else:
+            birthplace_note = (
+                "சரிபார்ப்பு எச்சரிக்கை: பிறந்த இடம் மற்றும் ஆயத்தொலைவுகள்/நேர மண்டலம் முழுமையாக இல்லை; லக்னம் மற்றும் பாவம் சார்ந்த பலன்களைச் சரிபார்க்கவும்."
+                if is_ta
+                else "Verification Flag: Birthplace coordinates or timezone are unavailable; please verify Lagna and house-based results."
+            )
+
+    # Hierarchical Page 9 Final Verdict (concise, non-repetitive)
+    if (not groom_kuja["is_present"] or groom_kuja["is_cancelled"]) and (not bride_kuja["is_present"] or bride_kuja["is_cancelled"]):
+        if groom_kuja["is_cancelled"] or bride_kuja["is_cancelled"]:
+            dosha_summary_p9 = (
+                f"செவ்வாய் தோஷம்: இருவருக்கும் சாஸ்திர விதிப்படி தோஷ நிவர்த்தி (0% — சமநிலை). பாபசாம்யம்: மணமகன் {format_points(g_papa.get('total_papam'))} vs மணமகள் {format_points(b_papa.get('total_papam'))} ({base_vm['page6']['papasamya']['verdict_ta']})."
+                if is_ta
+                else f"Kuja Dosha: Cancelled by classical rules for both (0% — Balanced). Papasamya: Groom {format_points(g_papa.get('total_papam'))} vs Bride {format_points(b_papa.get('total_papam'))} ({str(getattr(da.get('papasamya_verdict'), 'value', da.get('papasamya_verdict')) or 'FAVORABLE').split('.')[-1]})."
+            )
+        else:
+            dosha_summary_p9 = (
+                f"செவ்வாய் தோஷம் இல்லை (0%). பாபசாம்யம்: மணமகன் {format_points(g_papa.get('total_papam'))} vs மணமகள் {format_points(b_papa.get('total_papam'))} ({base_vm['page6']['papasamya']['verdict_ta']})."
+                if is_ta
+                else f"Kuja Dosha: Absent in both charts (0%). Papasamya: Groom {format_points(g_papa.get('total_papam'))} vs Bride {format_points(b_papa.get('total_papam'))}."
+            )
+    else:
+        dosha_summary_p9 = (
+            f"செவ்வாய் தோஷம்: மணமகன் ({groom_kuja['severity']} • {groom_kuja['intensity']}%), மணமகள் ({bride_kuja['severity']} • {bride_kuja['intensity']}%). பாபசாம்யம்: {base_vm['page6']['papasamya']['verdict_ta']}."
+            if is_ta
+            else f"Kuja Dosha: Groom ({groom_kuja['severity']} • {groom_kuja['intensity']}%), Bride ({bride_kuja['severity']} • {bride_kuja['intensity']}%)."
+        )
+
+    kp_g_v_disp = kp_section["groom"]["verdict"]
+    kp_b_v_disp = kp_section["bride"]["verdict"]
+    if "UNFAVOR" in kp_g_v or "UNFAVOR" in kp_b_v or "MIXED" in kp_g_v or "MIXED" in kp_b_v:
+        kp_summary_p9 = (
+            f"கே.பி. 7-ம் பாவ உப அதிபதி ஆய்வில் மணமகனுக்கு {kp_g_v_disp} நிலையும், மணமகளுக்கு {kp_b_v_disp} நிலையும் காணப்படுகிறது. இது திருமணம் தோல்வியடையும் என்பதைக் குறிக்காது; மாறாக எதிர்பார்ப்புகள், காலதாமதம் அல்லது பரஸ்பர அனுசரிப்பில் கூடுதல் புரிதலும் பொறுமையும் தேவை என்பதை மட்டுமே உணர்த்துகிறது."
+            if is_ta
+            else f"KP 7th Cuspal Sub-Lord analysis shows {kp_g_v_disp} promise for the Groom and {kp_b_v_disp} promise for the Bride. This does not mean the marriage will fail; rather, it indicates potential timing delays or differing expectations that benefit from open communication and mutual adjustment."
+        )
+    else:
+        kp_summary_p9 = (
+            f"கே.பி. 7-ம் பாவ உப அதிபதி ஆய்வு இருவருக்கும் சாதகமாக ({kp_g_v_disp} / {kp_b_v_disp}) அமைந்துள்ளது."
+            if is_ta
+            else f"KP 7th Cuspal Sub-Lord analysis is supportive for both partners ({kp_g_v_disp} / {kp_b_v_disp})."
+        )
+
+    ds_info = base_vm["dasa_sandhi"]
+    if ds_info.get("has_sandhi") and ds_info.get("is_imminent"):
+        timing_p9 = (
+            "தற்போது அருகாமையில் தசா சந்தி உள்ளதால் தகுந்த முகூர்த்தத் தேர்வு பரிந்துரைக்கப்படுகிறது. "
+            if is_ta
+            else "An imminent Dasa Sandhi is present; careful Muhurta selection is recommended. "
+        )
+    elif ds_info.get("has_sandhi"):
+        yrs = int(round(ds_info.get("years_away", 0)))
+        timing_p9 = (
+            f"தற்போதைய திருமண காலத்திற்குத் தசா சந்தித் தடை இல்லை (அடுத்த தசா சந்தி சுமார் {yrs} ஆண்டுகளுக்குப் பிறகு). "
+            if is_ta
+            else f"No imminent Dasa Sandhi obstacle (next Dasa Sandhi is ~{yrs} years away). "
+        )
+    else:
+        timing_p9 = (
+            "இருவரின் தசா காலங்களும் சுமுகமாக அமைந்துள்ளன. "
+            if is_ta
+            else "Both partners' Dasa periods are well-synchronized. "
+        )
+    timing_p9 += (
+        f"கோட்சார குரு பலம் (சந்திர ராசியிலிருந்து): {sr_gb.get('label_ta', '')}."
+        if is_ta
+        else f"Gochara Guru Balam (from Moon Sign): {sr_gb.get('label_en', '')}."
+    )
+
+    final_verdict_p9 = {
+        "overall_title": outcome_label,
+        "overall_line": verdict_sub,
+        "positive_line": " • ".join(x["text"] for x in pos_factors[:4]),
+        "concerns_line": " • ".join(x["text"] for x in attn_factors[:4]),
+        "dosha_line": dosha_summary_p9,
+        "kp_line": kp_summary_p9,
+        "timing_line": timing_p9,
+        "recommendation_line": rec_txt,
+    }
+
     return {
         "lang": lang,
         "is_ta": is_ta,
         "base": base_vm,
-        "groom_ext": _partner_ext(gp, base_vm["groom"]),
-        "bride_ext": _partner_ext(bp, base_vm["bride"]),
+        "birthplace_note": birthplace_note,
+        "final_verdict_p9": final_verdict_p9,
+        "decision_summary": decision_summary,
+        "groom_ext": groom_ext,
+        "bride_ext": bride_ext,
         "groom_planets": _planet_rows_from_chart(d.get("groom_chart"), d.get("groom_d9_chart"), is_ta),
         "bride_planets": _planet_rows_from_chart(d.get("bride_chart"), d.get("bride_d9_chart"), is_ta),
         "composite": {
@@ -545,7 +910,7 @@ def build_marriage_dossier_view_model(data: Dict[str, Any], language: str = "en"
             "bride": bride_kuja,
         },
         "papasamya_full": {
-            "verdict": str(da.get("papasamya_verdict") or "TOLERABLE"),
+            "verdict": str(getattr(da.get("papasamya_verdict"), "value", da.get("papasamya_verdict")) or "TOLERABLE").split(".")[-1],
             "verdict_ta": base_vm["page6"]["papasamya"]["verdict_ta"],
             "diff_str": base_vm["page6"]["papasamya"]["diff_str"],
             "expl": str(da.get("papasamya_explanation_ta" if is_ta else "papasamya_explanation_en") or da.get("papasamya_explanation_en") or ""),

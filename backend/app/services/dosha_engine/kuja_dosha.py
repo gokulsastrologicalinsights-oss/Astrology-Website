@@ -53,7 +53,7 @@ def evaluate_kuja_reference(
 
         # 3. Mars in Debilitation (Cancer) in 7th or 8th house
         elif mars_sign == 4 and mars_house in (7, 8):
-            cancellations.append("Mars debilitated in Cancer in 7th/8th house lacks malefic strength to disrupt marital alliance")
+            cancellations.append(f"Mars debilitated in Cancer in {mars_house}th house from {ref_name} lacks malefic strength to disrupt marital alliance")
 
         # 4. Classical Sign-House Specific Placements
         # Mars in 2nd house in Gemini (3) or Virgo (6)

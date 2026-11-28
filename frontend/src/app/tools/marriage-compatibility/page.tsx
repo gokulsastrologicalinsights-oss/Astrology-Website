@@ -615,7 +615,16 @@ function MarriageCompatibilityContent() {
 
     const groomInput: MarriagePartnerInput =
       groomMode === "saved"
-        ? { name: groomName, gender: "male", saved_horoscope_id: groomSavedId }
+        ? {
+            name: groomName,
+            gender: "male",
+            saved_horoscope_id: groomSavedId,
+            birth_place:
+              selectedGroomHoroscope?.birthplace ||
+              selectedGroomHoroscope?.location_name ||
+              groomCity?.trim() ||
+              undefined,
+          }
         : {
             name: groomName || "Groom",
             gender: "male",
@@ -625,11 +634,21 @@ function MarriageCompatibilityContent() {
             timezone: groomTz,
             latitude: parseFloat(groomLat),
             longitude: parseFloat(groomLon),
+            birth_place: groomCity?.trim() || undefined,
           };
 
     const brideInput: MarriagePartnerInput =
       brideMode === "saved"
-        ? { name: brideName, gender: "female", saved_horoscope_id: brideSavedId }
+        ? {
+            name: brideName,
+            gender: "female",
+            saved_horoscope_id: brideSavedId,
+            birth_place:
+              selectedBrideHoroscope?.birthplace ||
+              selectedBrideHoroscope?.location_name ||
+              brideCity?.trim() ||
+              undefined,
+          }
         : {
             name: brideName || "Bride",
             gender: "female",
@@ -639,6 +658,7 @@ function MarriageCompatibilityContent() {
             timezone: brideTz,
             latitude: parseFloat(brideLat),
             longitude: parseFloat(brideLon),
+            birth_place: brideCity?.trim() || undefined,
           };
 
     const payload: MarriageCompatibilityRequest = {

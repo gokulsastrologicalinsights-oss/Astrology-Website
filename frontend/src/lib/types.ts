@@ -4234,6 +4234,7 @@ export interface MarriagePartnerInput {
   timezone?: string;
   latitude?: number;
   longitude?: number;
+  birth_place?: string | null;
   birth_input?: BirthInput;
   saved_horoscope_id?: string;
 }
@@ -4256,6 +4257,7 @@ export interface PersonProfileSummary {
   timezone: string;
   latitude: number;
   longitude: number;
+  birth_place?: string | null;
   ascendant_sign: string;
   ascendant_sign_tamil: string;
   ascendant_degree: number;

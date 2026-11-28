@@ -52,6 +52,7 @@ def build_chart_context_from_horoscope_response(
     timezone_str: Optional[str] = None,
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
+    birth_place: Optional[str] = None,
 ) -> MarriageChartContext:
     """Transform a HoroscopeResponse (or saved horoscope calculation snapshot) into MarriageChartContext."""
     gender_enum = validate_gender(gender if isinstance(gender, str) else gender.value, Gender.MALE)
@@ -226,6 +227,7 @@ def build_chart_context_from_horoscope_response(
         moon_navamsa_sign_idx=moon_planet_found.navamsa_sign_index,
         grahas=grahas,
         houses=houses,
+        birth_place=birth_place,
     )
 
     validate_chart_context(ctx)
@@ -239,6 +241,7 @@ def build_chart_context_from_birth_input(
     gender: Union[Gender, str],
     ayanamsa_id: int = 0,
     house_system_id: int = 0,
+    birth_place: Optional[str] = None,
 ) -> MarriageChartContext:
     """Compute astronomical chart using verified XALEN ephemeris and return MarriageChartContext."""
     lat, lon = validate_coordinates(birth.latitude, birth.longitude)
@@ -273,4 +276,5 @@ def build_chart_context_from_birth_input(
         timezone_str=tz_str,
         latitude=lat,
         longitude=lon,
+        birth_place=birth_place,
     )

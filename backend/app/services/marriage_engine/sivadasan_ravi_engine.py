@@ -192,6 +192,12 @@ def evaluate_dasa_porutham(
 # 2. GOCHARA GURU BALAM (கோட்சார குரு பலம்)
 # ---------------------------------------------------------------------------
 
+def _ordinal(n: int) -> str:
+    if 11 <= (n % 100) <= 13:
+        return f"{n}th"
+    return f"{n}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th') }"
+
+
 def evaluate_gochara_guru_balam(
     groom_chart: MarriageChartContext,
     bride_chart: MarriageChartContext,
@@ -222,12 +228,14 @@ def evaluate_gochara_guru_balam(
         label_en = "Both Groom & Bride possess Guru Balam"
         label_ta = "இருவருக்கும் பூரண குரு பலம் உள்ளது"
         desc_en = (
-            f"Current transit Jupiter is in {jupiter_sign_en} (Groom's {g_house}th house, Bride's {b_house}th house). "
+            f"Calculated from Janma Rasi (Moon Sign): Current transit Jupiter is in {jupiter_sign_en} "
+            f"(Groom's {_ordinal(g_house)} house from Moon Sign, Bride's {_ordinal(b_house)} house from Moon Sign). "
             f"Both enjoy direct Guru Balam. According to classical astrological canon, divine grace (Daiva Anugraha) "
             f"is abundant, dissolving impediments and blessing the matrimonial alliance."
         )
         desc_ta = (
-            f"தற்போது கோட்சார குரு {jupiter_sign_ta} ராசியில் சஞ்சரிக்கிறார் (மணமகனுக்கு {g_house}-ம் இடம், மணமகளுக்கு {b_house}-ம் இடம்). "
+            f"ஜென்ம ராசியிலிருந்து (சந்திர ராசி) கணக்கீடு: தற்போது கோட்சார குரு {jupiter_sign_ta} ராசியில் சஞ்சரிக்கிறார் "
+            f"(மணமகன் ராசிக்கு {g_house}-ம் இடம், மணமகள் ராசிக்கு {b_house}-ம் இடம்). "
             f"இருவருக்கும் குரு பலம் பரிபூரணமாக இருப்பதால் தெய்வ அனுகூலத்தால் தடைகள் அனைத்தும் நீங்கி திருமண வாழ்க்கை இனிதே அமையும்."
         )
     elif g_has_guru_balam or b_has_guru_balam:
@@ -235,28 +243,30 @@ def evaluate_gochara_guru_balam(
         score = 0.7
         benefitted = "Groom" if g_has_guru_balam else "Bride"
         benefitted_ta = "மணமகனுக்கு" if g_has_guru_balam else "மணமகளுக்கு"
-        label_en = f"Guru Balam active for {benefitted}"
-        label_ta = f"{benefitted_ta} மட்டும் குரு பலம் உள்ளது"
+        label_en = f"Guru Balam active for {benefitted} (from Moon Sign)"
+        label_ta = f"{benefitted_ta} மட்டும் குரு பலம் உள்ளது (சந்திர ராசியிலிருந்து)"
         desc_en = (
-            f"Current transit Jupiter is in {jupiter_sign_en}. {benefitted} possesses Guru Balam "
-            f"(Groom: {g_house}th, Bride: {b_house}th). Marriage can proceed favorably."
+            f"Calculated from Janma Rasi (Moon Sign): Current transit Jupiter is in {jupiter_sign_en}. {benefitted} possesses Guru Balam "
+            f"(Groom: {_ordinal(g_house)} from Moon Sign, Bride: {_ordinal(b_house)} from Moon Sign). Marriage can proceed favorably."
         )
         desc_ta = (
-            f"தற்போது கோட்சார குரு {jupiter_sign_ta} ராசியில் உள்ளதால் {benefitted_ta} குரு பலம் உள்ளது. "
-            f"திருமணம் செய்ய உகந்த காலமாகும்."
+            f"ஜென்ம ராசியிலிருந்து (சந்திர ராசி) கணக்கீடு: தற்போது கோட்சார குரு {jupiter_sign_ta} ராசியில் உள்ளதால் {benefitted_ta} குரு பலம் உள்ளது "
+            f"(மணமகன் ராசிக்கு {g_house}-ம் இடம், மணமகள் ராசிக்கு {b_house}-ம் இடம்). திருமணம் செய்ய உகந்த காலமாகும்."
         )
     else:
         status = "NO_CURRENT_GURU_BALAM"
         score = 0.4
-        label_en = "Neither possesses direct Gochara Guru Balam"
-        label_ta = "இருவருக்கும் தற்போது நேரடி குரு பலம் அமையவில்லை"
+        label_en = "Neither possesses direct Gochara Guru Balam (from Moon Sign)"
+        label_ta = "இருவருக்கும் தற்போது நேரடி குரு பலம் அமையவில்லை (சந்திர ராசியிலிருந்து)"
         desc_en = (
-            f"Transit Jupiter is in {jupiter_sign_en} (Groom: {g_house}th, Bride: {b_house}th). "
+            f"Calculated from Janma Rasi (Moon Sign, not Lagna): Transit Jupiter is in {jupiter_sign_en} "
+            f"(Groom: {_ordinal(g_house)} house from Moon Sign, Bride: {_ordinal(b_house)} house from Moon Sign). "
             f"Classical principles note: Even without direct Guru Balam, marriages take place favorably under supportive Dasa-Bhukti, "
             f"though seeking divine blessings prior to wedding is recommended."
         )
         desc_ta = (
-            f"தற்போது கோட்சார குரு மணமகனுக்கு {g_house}-லும், மணமகளுக்கு {b_house}-லும் சஞ்சரிப்பதால் "
+            f"ஜென்ம ராசியிலிருந்து (சந்திர ராசி — லக்னத்திலிருந்து அல்ல) கணக்கீடு: தற்போது கோட்சார குரு {jupiter_sign_ta} ராசியில், "
+            f"மணமகன் ராசிக்கு {g_house}-ம் இடத்திலும், மணமகள் ராசிக்கு {b_house}-ம் இடத்திலும் சஞ்சரிப்பதால் "
             f"நேரடி குரு பலம் அமையவில்லை. இருப்பினும் அனுகூலமான தசா-புக்தி காலத்தில் திருமணம் நடைபெறும்; "
             f"குரு பகவான் மற்றும் குலதெய்வ வழிபாடு செய்து தொடங்கலாம்."
         )

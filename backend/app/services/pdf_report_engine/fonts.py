@@ -121,7 +121,7 @@ def normalize_tamil_text(text: Any) -> Any:
         return f"{prefix}{cons}{vowel}{post}"
 
     norm_text = re.sub(
-        r"(^|[\s\S])([\u0bc6\u0bc7\u0bc8])([\u0b95-\u0bb9\u0bd0])([\u0bcd\u0bbe-\u0bcd]|$)",
+        r"(^|[^\u0b95-\u0bb9\u0bd0])([\u0bc6\u0bc7\u0bc8])([\u0b95-\u0bb9\u0bd0])([\u0bcd\u0bbe-\u0bcd]|$)",
         _swap_left_vowel,
         norm_text,
     )

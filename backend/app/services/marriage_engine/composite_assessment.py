@@ -114,20 +114,22 @@ def _evaluate_porutham_category(
     else:
         supportive.append("Vedha Porutham satisfied (No mutual repulsion detected).")
 
+    score_r = round(score, 2)
+    score_str = f"{score_r:.1f}" if round(score_r * 100) % 10 == 0 else f"{score_r:.2f}".rstrip("0").rstrip(".")
     if vetoes:
         status = "UNFAVORABLE"
         challenging.append(f"Critical Porutham veto detected ({'; '.join(vetoes)}).")
     elif score >= 6.0:
         status = "FAVORABLE"
-        supportive.append(f"High Porutham match score: {score:.1f}/10.0.")
+        supportive.append(f"High Porutham match score: {score_str}/10.0.")
     elif score >= 5.0:
         status = "MIXED"
-        supportive.append(f"Acceptable Porutham match score: {score:.1f}/10.0.")
+        supportive.append(f"Acceptable Porutham match score: {score_str}/10.0.")
     else:
         status = "UNFAVORABLE"
-        challenging.append(f"Low or afflicted Porutham match score: {score:.1f}/10.0.")
+        challenging.append(f"Low or afflicted Porutham match score: {score_str}/10.0.")
 
-    summary_str = f"{score:.1f}/10.0 matches (Rajju: {rajju}, Vedha: {vedha})"
+    summary_str = f"{score_str}/10.0 matches (Rajju: {rajju}, Vedha: {vedha})"
 
     return (
         CategoryVerdict(
@@ -137,7 +139,7 @@ def _evaluate_porutham_category(
             status=status,
             tradition="Tamil Traditional (South Indian)",
             score_summary=summary_str,
-            key_factors=porutham.summary_notes or [f"Score: {score:.1f}/10.0"],
+            key_factors=porutham.summary_notes or [f"Score: {score_str}/10.0"],
             vetoes_applied=vetoes,
         ),
         supportive,
@@ -236,7 +238,21 @@ def _evaluate_mutual_dosha_category(
             score_summary="Data Unavailable",
         )
     else:
-        outcome = getattr(mk, "mutual_balance", None) or getattr(mk, "samadosham_outcome", None)
+        outcome = (
+            getattr(mk, "samadosham_outcome", None)
+            or getattr(mk, "status", None)
+            or getattr(mk, "mutual_balance", None)
+        )
+        if isinstance(outcome, str):
+            out_up = outcome.upper()
+            if out_up == "CANCELLED_BY_RULE":
+                outcome = SamadoshamOutcome.CANCELLED_BY_RULE
+            elif out_up in ("BALANCED", "MUTUALLY_MATCHED", "NEITHER_AFFLICTED"):
+                outcome = SamadoshamOutcome.MUTUALLY_MATCHED
+            elif out_up == "MITIGATED":
+                outcome = SamadoshamOutcome.MITIGATED
+            elif out_up in ("NOT_MUTUALLY_MATCHED", "GROOM_EXCESS", "BRIDE_EXCESS"):
+                outcome = SamadoshamOutcome.NOT_MUTUALLY_MATCHED
         vetoes = []
 
         if outcome in (SamadoshamOutcome.MUTUALLY_MATCHED, SamadoshamOutcome.CANCELLED_BY_RULE):
@@ -364,6 +380,15 @@ def _evaluate_vedic_individual_category(
     if bride_vedic.kuja_dosha and bride_vedic.kuja_dosha.is_present:
         challenging.append(f"Bride natal chart carries Kuja Dosha ({bride_vedic.kuja_dosha.severity}).")
 
+    def _seventh_label(h_obj: Any, is_aff: bool) -> str:
+        if not is_aff:
+            return "Clear"
+        if h_obj and h_obj.status.value == "PASS" and not h_obj.occupants:
+            return "Aspectual Influence (Lord Supported)"
+        if h_obj and h_obj.status.value == "PASS":
+            return "Mixed (Supported)"
+        return "Afflicted"
+
     return (
         CategoryVerdict(
             category_id="vedic_individual",
@@ -371,7 +396,7 @@ def _evaluate_vedic_individual_category(
             category_name_ta="தனிநபர் களத்திர பாவ ஆய்வு (D1 & D9)",
             status=status,
             tradition="Brihat Parashara Hora Shastra",
-            score_summary=f"Groom 7th: {'Afflicted' if g_afflicted else 'Clear'}, Bride 7th: {'Afflicted' if b_afflicted else 'Clear'}",
+            score_summary=f"Groom 7th: {_seventh_label(g_7th, g_afflicted)}, Bride 7th: {_seventh_label(b_7th, b_afflicted)}",
             key_factors=groom_vedic.supporting_indicators[:2] + bride_vedic.supporting_indicators[:2],
         ),
         supportive,

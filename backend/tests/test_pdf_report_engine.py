@@ -498,7 +498,7 @@ def test_marriage_compatibility_pdf_generation():
     assert "Ashtakoota" in en_all
     assert "Papasamya" in en_all
     assert "Dasa Bhukti Sequence" in en_all
-    assert "sikiram kalyanam nadakanum" in en_all
+    assert "auspicious, harmonious, and blessed marriage" in en_all
 
     pdf_bytes_ta = generate_marriage_compatibility_pdf_bytes(sample_payload, language="ta")
     assert len(pdf_bytes_ta) > 10000
@@ -516,7 +516,7 @@ def test_marriage_compatibility_pdf_generation():
     ta_all = "\n".join(pg.extract_text() or "" for pg in reader.pages)
     assert "Dasa Bhukti Sequence" in ta_all
     assert "Papasamya" in ta_all
-    assert "sikiram kalyanam nadakanum" in ta_all
+    assert "auspicious, harmonious, and blessed marriage" in ta_all
 
     # Also verify pure-Python ReportLab dossier fallback renders cleanly across multiple bordered pages
     pdf_bytes_rl = generate_marriage_compatibility_pdf_bytes_rl(sample_payload, language="ta")
@@ -527,7 +527,7 @@ def test_marriage_compatibility_pdf_generation():
     assert "Gokul's Astrological Insights" in (reader_rl.pages[0].extract_text() or "")
     assert "Dasa Bhukti Sequence" in rl_all
     assert "Papasamya" in rl_all
-    assert "sikiram kalyanam nadakanum" in rl_all
+    assert "auspicious, harmonious, and blessed marriage" in rl_all
 
     # Test Endpoint
     res = client.post(

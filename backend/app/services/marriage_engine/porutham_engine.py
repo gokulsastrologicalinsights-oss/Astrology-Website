@@ -112,8 +112,9 @@ def evaluate_tamil_10_poruthams(
     if rajju_status == "PASS" and vedha_status == "PASS":
         summary_notes.append("Foundational Maha Poruthams (Rajju and Vedha) are both satisfied.")
 
+    score_disp = f"{round(total_score, 2):.2f}".rstrip("0").rstrip(".")
     summary_notes.append(
-        f"Tamil 10 Porutham score: {total_score:.1f} / 10.0 (Grade: {aggregate_verdict}). "
+        f"Tamil 10 Porutham score: {score_disp} / 10.0 (Grade: {aggregate_verdict}). "
         "Astrological compatibility analysis highlights traditional harmony indicators; it is an interpretive advisory tool rather than a fatalistic certainty."
     )
 

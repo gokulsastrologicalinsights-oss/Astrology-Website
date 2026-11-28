@@ -20,6 +20,7 @@ class MarriagePartnerInput(BaseModel):
     timezone: Optional[str] = Field(None, description="IANA timezone (e.g. 'Asia/Kolkata') or UTC offset string", examples=["Asia/Kolkata"])
     latitude: Optional[float] = Field(None, ge=-90.0, le=90.0, description="Geographic latitude in decimal degrees (-90 to +90)", examples=[13.0827])
     longitude: Optional[float] = Field(None, ge=-180.0, le=180.0, description="Geographic longitude in decimal degrees (-180 to +180)", examples=[80.2707])
+    birth_place: Optional[str] = Field(None, description="Birth place or city name", examples=["Chennai, India"])
     birth_input: Optional[BirthInput] = Field(None, description="Direct birth coordinates and time alternative")
     saved_horoscope_id: Optional[str] = Field(None, description="UUID of a saved horoscope in Supabase")
 
@@ -93,6 +94,7 @@ class PersonProfileSummary(BaseModel):
     timezone: str
     latitude: float
     longitude: float
+    birth_place: Optional[str] = None
     ascendant_sign: str
     ascendant_sign_tamil: str
     ascendant_degree: float

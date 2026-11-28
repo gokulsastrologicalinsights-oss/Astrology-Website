@@ -104,9 +104,25 @@ def _has_neecha_bhanga(ctx: MarriageChartContext, planet_name: str) -> Optional[
         if other_name != planet_name and other_p.sign_index == p.sign_index:
             if EXALTATION_SIGNS.get(other_name) == other_p.sign_index:
                 o_ta = PLANET_NAMES_TA.get(other_name, other_name)
-                return f"பாதுகாப்பு (நீச்ச பங்கம்): உச்சம் பெற்ற {o_ta}-உடன் இணைந்துள்ளார்."
+                return f"பாதுகாப்பு (நீச்ச பங்கம்): உச்சம் பெற்ற {_with_udan_ta(o_ta)} இணைந்துள்ளார்."
 
     return None
+
+
+def _with_udan_ta(planet_ta: str) -> str:
+    """Proper Tamil sandhi for '<planet> + உடன்'."""
+    sandhi_map = {
+        "சூரியன்": "சூரியனுடன்",
+        "சந்திரன்": "சந்திரனுடன்",
+        "செவ்வாய்": "செவ்வாயுடன்",
+        "புதன்": "புதனுடன்",
+        "குரு": "குருவுடன்",
+        "சுக்கிரன்": "சுக்கிரனுடன்",
+        "சனி": "சனியுடன்",
+        "ராகு": "ராகுவுடன்",
+        "கேது": "கேதுவுடன்",
+    }
+    return sandhi_map.get(planet_ta, f"{planet_ta}-உடன்")
 
 
 def _evaluate_single_chart_dosha_audit(
@@ -342,7 +358,7 @@ def _evaluate_single_chart_dosha_audit(
                     m_p = ctx.grahas.get(m_name)
                     if m_p and m_p.sign_index == lord7_p.sign_index:
                         h7_lord_afflictions.append(
-                            f"7-ஆம் அதிபதி தோஷம்: 7-ஆம் அதிபதி {PLANET_NAMES_TA[m_name]}-உடன் இணைந்துள்ளார்."
+                            f"7-ஆம் அதிபதி தோஷம்: 7-ஆம் அதிபதி {_with_udan_ta(PLANET_NAMES_TA[m_name])} இணைந்துள்ளார்."
                         )
 
     if not h7_lord_afflictions:
@@ -367,14 +383,14 @@ def _evaluate_single_chart_dosha_audit(
                 m_p = ctx.grahas.get(m_name)
                 if m_p and m_name != h7.lord_name and m_p.sign_index == lord7_p.sign_index:
                     mal_conj.append(
-                        f"பாப கிரக சேர்க்கை: 7-ஆம் அதிபதி பாவியான {PLANET_NAMES_TA[m_name]}-உடன் இணைந்துள்ளார்."
+                        f"பாப கிரக சேர்க்கை: 7-ஆம் அதிபதி பாவியான {_with_udan_ta(PLANET_NAMES_TA[m_name])} இணைந்துள்ளார்."
                     )
     if venus_p:
         for m_name in ("Saturn", "Rahu", "Ketu"):
             m_p = ctx.grahas.get(m_name)
             if m_p and m_p.sign_index == venus_p.sign_index:
                 mal_conj.append(
-                    f"பாப கிரக சேர்க்கை: சுக்கிரன் பாவியான {PLANET_NAMES_TA[m_name]}-உடன் இணைந்துள்ளார்."
+                    f"பாப கிரக சேர்க்கை: சுக்கிரன் பாவியான {_with_udan_ta(PLANET_NAMES_TA[m_name])} இணைந்துள்ளார்."
                 )
 
     if not mal_conj:
@@ -513,21 +529,28 @@ def _evaluate_dasa_sandhi_overlaps(
     if has_sandhi:
         first = overlaps[0]
         sev_label = "கடுமையானது" if first["diff_months"] <= 6.0 else "மிதமானது"
+        years_away = round(first["year"] - current_year, 1)
+        is_imminent = years_away <= 2.0
         summary_ta = (
-            f"{sev_label} தசா சந்தி: {first['groom_transition']} ஆனது "
-            f"{first['bride_transition']}-உடன் மேற்பொடிகிறது."
+            f"{sev_label} தசா சந்தி: மணமகன் {first['groom_transition']} மற்றும் "
+            f"மணமகள் {first['bride_transition']} மாற்றங்கள் சுமார் {first['diff_months']:.0f} மாத இடைவெளியில் "
+            f"ஒரே காலகட்டத்தில் அமைகின்றன."
         )
     else:
         sev_label = "இல்லை"
-        summary_ta = "அடுத்த 45 ஆண்டுகளில் இருவரின் மகா தசை மாற்றங்களும் ஒரே ஆண்டிற்குள் மேற்பொடியவில்லை."
+        years_away = 0.0
+        is_imminent = False
+        summary_ta = "அடுத்த 45 ஆண்டுகளில் இருவரின் மகா தசை மாற்றங்களும் ஒரே ஆண்டிற்குள் மேற்பொருந்தவில்லை."
 
     return {
         "has_sandhi": has_sandhi,
+        "is_imminent": is_imminent,
+        "years_away": years_away,
         "severity_label_ta": sev_label,
         "summary_ta": summary_ta,
         "note_ta": (
-            "குறிப்பு: தசா சந்தி என்பது, தம்பதியர் இருவரும் ஒரு வருட காலத்திற்குள் புதிய மகா தசைக்குள் நுழைவதைக் "
-            "குறிக்கிறது. பாரம்பரியமாக, இது தம்பதியருக்கு ஒரு நிலையற்ற காலமாகக் கருதப்படுகிறது."
+            "குறிப்பு: தசா சந்தி என்பது, தம்பதியர் இருவரும் சுமார் 12–14 மாத இடைவெளியில் புதிய மகா தசைக்குள் நுழைவதைக் "
+            "குறிக்கிறது. பாரம்பரியமாக, இது தம்பதியருக்கு ஒரு கவனமான மாற்றக் காலமாகக் கருதப்படுகிறது."
         ),
         "overlaps": overlaps,
     }
@@ -705,7 +728,7 @@ def build_print_report_data(
                 transitions.append({
                     "year": ey,
                     "side": "groom",
-                    "label_ta": f"{b_bhukti['short_ta']} Bukthi",
+                    "label_ta": f"{b_bhukti['short_ta']} Bhukti",
                 })
 
     for md in bride_mds[:-1]:
@@ -716,7 +739,7 @@ def build_print_report_data(
                 transitions.append({
                     "year": ey,
                     "side": "bride",
-                    "label_ta": f"{g_bhukti['short_ta']} Bukthi",
+                    "label_ta": f"{g_bhukti['short_ta']} Bhukti",
                 })
 
     transitions.sort(key=lambda t: t["year"])
@@ -744,9 +767,11 @@ def build_print_report_data(
         if hasattr(mutual_doshas.samadosham.status, "value")
         else str(mutual_doshas.samadosham.status)
     )
-    if g_kuja_int == 0.0 and b_kuja_int == 0.0:
+    if samadosham_status_str == "CANCELLED_BY_RULE":
+        kuja_label_ta = "சாஸ்திர விதிப்படி செவ்வாய் தோஷ நிவர்த்தி (0%)"
+    elif g_kuja_int == 0.0 and b_kuja_int == 0.0:
         kuja_label_ta = "செவ்வாய் தோஷம் இல்லை"
-    elif samadosham_status_str in ("MUTUALLY_MATCHED", "CANCELLED_BY_RULE", "MITIGATED"):
+    elif samadosham_status_str in ("MUTUALLY_MATCHED", "MITIGATED"):
         kuja_label_ta = "செவ்வாய் தோஷ சமநிலை உள்ளது"
     else:
         kuja_label_ta = "செவ்வாய் தோஷம் கவனிக்கப்பட வேண்டும்"
@@ -758,22 +783,28 @@ def build_print_report_data(
         if porutham_passed_count_11 >= 6
         else "மேலும் கவனமான ஆய்வு தேவைப்படுவதைக் குறிக்கிறது"
     )
-    sandhi_sentence = (
-        "தசா சந்தி உள்ளது, இதற்கு கூடுதல் கவனம் தேவைப்படலாம். திருமணம் தசா சந்தி காலத்திற்குப் பிறகு செய்யப்பட வேண்டும்."
-        if dasa_sandhi["has_sandhi"]
-        else "முக்கிய தசா சந்தி தடைகள் எதுவும் இல்லை; இருவரின் தசா காலங்களும் சுமுகமாக அமைந்துள்ளன."
-    )
-    remedy_note = (
-        "குறிப்பு: தசா சந்தி காலத்தினால் தீர்ப்பு குறைக்கப்பட்டுள்ளது. பரிகார பூஜைகளை செய்யவும்."
-        if dasa_sandhi["has_sandhi"]
-        else "குறிப்பு: குலதெய்வ வழிபாடு மற்றும் சுப முகூர்த்த தேர்வில் திருமணத்தை மேற்கொள்ளவும்."
-    )
+    if dasa_sandhi.get("has_sandhi") and dasa_sandhi.get("is_imminent"):
+        sandhi_sentence = (
+            "தற்போது அருகாமையில் தசா சந்தி உள்ளதால் கூடுதல் கவனம் தேவைப்படலாம். "
+            "தசா சந்தி காலம் முடிந்த பிறகு திருமண முகூர்த்தம் அமைப்பது நலம்."
+        )
+        remedy_note = "குறிப்பு: தசா சந்தி காலத்தினால் கவனமான முகூர்த்தத் தேர்வு மற்றும் பரிகார பூஜைகள் பரிந்துரைக்கப்படுகின்றன."
+    elif dasa_sandhi.get("has_sandhi"):
+        yrs = dasa_sandhi.get("years_away", 0)
+        sandhi_sentence = (
+            f"எதிர்காலத்தில் (சுமார் {int(round(yrs))} ஆண்டுகளுக்குப் பிறகு) தசா சந்தி அமைப்பு காணப்படுகிறது; "
+            "இது தற்போதைய திருமண காலத்தைத் தடுக்காது."
+        )
+        remedy_note = "குறிப்பு: எதிர்கால தசா மாற்றக் காலத்தில் வழக்கமான குலதெய்வ வழிபாடு மற்றும் பரிகாரப் பிரார்த்தனைகள் மேற்கொள்ளலாம்."
+    else:
+        sandhi_sentence = "முக்கிய தசா சந்தி தடைகள் எதுவும் இல்லை; இருவரின் தசா காலங்களும் சுமுகமாக அமைந்துள்ளன."
+        remedy_note = "குறிப்பு: குலதெய்வ வழிபாடு மற்றும் சுப முகூர்த்த தேர்வில் திருமணத்தை மேற்கொள்ளவும்."
 
     sage_verdict_ta = (
-        f"{sandhi_sentence} பொருத்தம் மதிப்பெண் {porutham_passed_count_11}/11 ஆகும், இது ஒட்டுமொத்தப் பொருத்தத்தன்மை "
-        f"{porutham_desc_ta}. அஷ்டகூட மதிப்பெண்: {ashtakoota_points:g}/36. "
+        f"{sandhi_sentence} 11-அம்ச பாரம்பரியச் சுருக்கப் பட்டியலில் {porutham_passed_count_11}/11 பொருத்தங்கள் தேர்ச்சி பெற்றுள்ளன, "
+        f"இது ஒட்டுமொத்தப் பொருத்தத்தன்மை {porutham_desc_ta}. அஷ்டகூட மதிப்பெண்: {ashtakoota_points:g}/36. "
         f"மணமக்களின் செவ்வாய் தோஷ வலிமை வித்தியாசம் {kuja_diff_pct}% ஆகும், இது {kuja_label_ta} என வகைப்படுத்தப்பட்டுள்ளது. "
-        f"மேலும் மதிப்பாய்வு மற்றும் முடிவெடுப்பதற்கு விரிவான தோஷ பகுப்பாய்வு அட்டவணையை தயவுசெய்து சரிபார்க்கவும். {remedy_note}"
+        f"மேலும் மதிப்பாய்வு மற்றும் முடிவெடுப்பதற்கு விரிவான தோஷ பகுப்பாய்வு அட்டவணையைத் தயவுசெய்து சரிபார்க்கவும். {remedy_note}"
     )
 
     return {

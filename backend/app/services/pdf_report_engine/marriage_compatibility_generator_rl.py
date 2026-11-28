@@ -36,7 +36,10 @@ from app.services.pdf_report_engine.fonts import (
     Paragraph as _RLParagraph,
     String as _RLString,
 )
-from app.services.pdf_report_engine.marriage_dossier_viewmodel import build_marriage_dossier_view_model
+from app.services.pdf_report_engine.marriage_dossier_viewmodel import (
+    build_marriage_dossier_view_model,
+    get_status_style,
+)
 from app.services.pdf_report_engine.marriage_print_viewmodel import DASA_COLORS
 from app.services.pdf_report_engine.letterhead_renderer import (
     GAILetterheadCanvas,
@@ -255,6 +258,9 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
     s_td = ParagraphStyle("RLTd", fontName=font_reg, fontSize=7.8, leading=10.2, textColor=colors.HexColor("#0F172A"))
     s_tdb = ParagraphStyle("RLTdB", fontName=font_bold, fontSize=7.8, leading=10.2, textColor=colors.HexColor("#0F172A"))
     s_tdc = ParagraphStyle("RLTdC", fontName=font_bold, fontSize=7.8, leading=10.2, alignment=1, textColor=colors.HexColor("#0F172A"))
+    s_td_sm = ParagraphStyle("RLTdSm", fontName=font_reg, fontSize=7.0, leading=8.8, textColor=colors.HexColor("#0F172A"))
+    s_tdb_sm = ParagraphStyle("RLTdBSm", fontName=font_bold, fontSize=7.0, leading=8.8, textColor=colors.HexColor("#0F172A"))
+    s_tdc_sm = ParagraphStyle("RLTdCSm", fontName=font_bold, fontSize=7.0, leading=8.8, alignment=1, textColor=colors.HexColor("#0F172A"))
     s_body = ParagraphStyle("RLBo", fontName=font_reg, fontSize=8.2, leading=11.2, textColor=colors.HexColor("#1E293B"))
     s_ctr = ParagraphStyle("RLCtr", fontName=font_reg, fontSize=8.2, leading=11.2, alignment=1, textColor=NAVY)
 
@@ -269,8 +275,8 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
         ]))
         return t
 
-    def _styled_tbl(rows: List[List[Any]], widths: List[float], pad_v: float = 3.2) -> Table:
-        t = Table(rows, colWidths=widths)
+    def _styled_tbl(rows: List[List[Any]], widths: List[float], pad_v: float = 3.2, repeat_rows: int = 1) -> Table:
+        t = Table(rows, colWidths=widths, repeatRows=repeat_rows)
         t.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), NAVY),
             ("GRID", (0, 0), (-1, -1), 0.5, SLATE_BORDER),
@@ -285,105 +291,251 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
 
     story: List[Any] = []
 
-    # ==================== PAGE 1: COVER, PROFILES & COMPOSITE ASSESSMENT ====================
-    doc_brand = "Gokul's Astrological Insights"
-    doc_title = "திருமணப் பொருத்த முழு ஆய்வு அறிக்கை" if is_ta else "COMPREHENSIVE MARRIAGE COMPATIBILITY DOSSIER"
-    doc_sub = "வேத ஜோதிடம், நவாம்சம் & கேபி உன்னத பொருத்தம்" if is_ta else "Confidential Vedic, Navamsa & KP Astrological Synthesis"
-    story.append(_p(f"<font color='{GOLD.hexval()}'><b>{doc_brand} • {doc_title}</b></font>", s_brand))
-    story.append(_p(f"<font color='{NAVY.hexval()}'>{doc_sub}</font>", s_doc_sub))
-    story.append(Spacer(1, 4))
-    story.append(HRFlowable(width="100%", thickness=1.0, color=GOLD_LIGHT, spaceBefore=2, spaceAfter=6))
+    # ==================== PAGE 1: FAMILY DECISION SUMMARY ====================
+    ds_vm = vm["decision_summary"]
+    doc_title = (
+        "திருமணப் பொருத்த அறிக்கை — குடும்ப முடிவுச் சுருக்கம்"
+        if is_ta
+        else "MARRIAGE COMPATIBILITY – FAMILY DECISION SUMMARY"
+    )
+    doc_sub = (
+        "Gokul's Astrological Insights • எளிய குடும்ப முடிவுச் சுருக்கம்"
+        if is_ta
+        else "Gokul's Astrological Insights • Clear Family Decision Summary"
+    )
+    story.append(_p(f"<font color='{NAVY.hexval()}'><b>{doc_title}</b></font>", s_brand))
+    story.append(_p(f"<font color='{GOLD.hexval()}'>{doc_sub}</font>", s_doc_sub))
+    story.append(Spacer(1, 2))
+    story.append(HRFlowable(width="100%", thickness=1.0, color=GOLD_LIGHT, spaceBefore=1, spaceAfter=4))
 
-    def _profile_card(title: str, p: Dict[str, Any], top_col: Any) -> Table:
+    def _birth_card_p1(title: str, p: Dict[str, Any]) -> Table:
+        s_p1_name = ParagraphStyle("RLP1N", fontName=font_bold, fontSize=9.0, leading=11.5, textColor=NAVY)
+        s_p1_lbl = ParagraphStyle("RLP1L", fontName=font_reg, fontSize=7.7, leading=10.0, textColor=colors.HexColor("#475569"))
+        s_p1_val = ParagraphStyle("RLP1V", fontName=font_reg, fontSize=7.7, leading=10.0, textColor=colors.HexColor("#0F172A"))
+        lbl_name = "பெயர்" if is_ta else "Full Name"
+        lbl_dob = "பிறந்த தேதி" if is_ta else "Date of Birth"
+        lbl_age = "வயது" if is_ta else "Age"
+        lbl_tob = "பிறந்த நேரம்" if is_ta else "Time of Birth"
+        lbl_pob = "பிறந்த இடம்" if is_ta else "Place of Birth"
+        lbl_rasi = "ராசி" if is_ta else "Rasi / Moon Sign"
+        lbl_star = "நட்சத்திரம்" if is_ta else "Birth Star"
+        lbl_pada = "பாதம்" if is_ta else "Pada"
+        lbl_lagna = "லக்னம்" if is_ta else "Lagna / Ascendant"
         rows = [
-            [_p(f"<b>{_esc(title)}: {_esc(p['name'])}</b>", s_th), ""],
-            [_p("DOB / Time", s_td), _p(f"<b>{_esc(p['dob_age'])} • {_esc(p['tob'])}</b>", s_tdb)],
-            [_p("Coords / TZ", s_td), _p(_esc(f"{p['coords']} ({p['timezone']})"), s_td)],
-            [_p("Ascendant", s_td), _p(f"<b>{_esc(p['lagna'])}</b>", s_tdb)],
-            [_p("Moon / Star", s_td), _p(f"<b>{_esc(p['rasi'])} — {_esc(p['nakshatra_pada'])}</b>", s_tdb)],
-            [_p("Navamsa Lagna", s_td), _p(f"<b>{_esc(p['d9_lagna'])}</b>", s_tdb)],
-            [_p("Venus / Jup / Mars", s_td), _p(_esc(f"{p['venus']} / {p['jupiter']} / {p['mars']}"), s_td)],
+            [_p(f"<b>{_esc(title)}</b>", s_th), ""],
+            [_p(lbl_name, s_p1_lbl), _p(f"<b>{_esc(p['name'])}</b>", s_p1_name)],
+            [_p(lbl_dob, s_p1_lbl), _p(_esc(p["dob_fmt"]), s_p1_val)],
+            [_p(lbl_age, s_p1_lbl), _p(_esc(p["age_str"]), s_p1_val)],
+            [_p(lbl_tob, s_p1_lbl), _p(_esc(p["tob"]), s_p1_val)],
+            [_p(lbl_pob, s_p1_lbl), _p(_esc(p["birth_place"]), s_p1_val)],
+            [_p(lbl_rasi, s_p1_lbl), _p(_esc(p["rasi_bilingual"]), s_p1_val)],
+            [_p(lbl_star, s_p1_lbl), _p(_esc(p["nakshatra_only"]), s_p1_val)],
+            [_p(lbl_pada, s_p1_lbl), _p(_esc(p["pada_str"]), s_p1_val)],
+            [_p(lbl_lagna, s_p1_lbl), _p(_esc(p["lagna_clean"]), s_p1_val)],
         ]
-        pt = Table(rows, colWidths=[85, (CONTENT_WIDTH - 10) / 2.0 - 85])
+        pt = Table(rows, colWidths=[76, (CONTENT_WIDTH - 10) / 2.0 - 76])
         pt.setStyle(TableStyle([
             ("SPAN", (0, 0), (1, 0)),
-            ("BACKGROUND", (0, 0), (1, 0), top_col),
-            ("BOX", (0, 0), (-1, -1), 0.7, SLATE_BORDER),
-            ("LINEBELOW", (0, 1), (-1, -2), 0.4, colors.HexColor("#F1F5F9")),
-            ("TOPPADDING", (0, 0), (-1, -1), 2.5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+            ("BACKGROUND", (0, 0), (1, 0), NAVY),
+            ("LINEBELOW", (0, 0), (1, 0), 1.5, GOLD_LIGHT),
+            ("BOX", (0, 0), (-1, -1), 0.9, GOLD),
+            ("LINEBELOW", (0, 1), (-1, -2), 0.35, colors.HexColor("#E2E8F0")),
+            ("TOPPADDING", (0, 0), (-1, -1), 1.6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 1.6),
             ("LEFTPADDING", (0, 0), (-1, -1), 5),
             ("RIGHTPADDING", (0, 0), (-1, -1), 5),
         ]))
         return pt
 
     half_w = (CONTENT_WIDTH - 10) / 2.0
-    p_grid = Table([[_profile_card("மணமகன்" if is_ta else "GROOM", ge, NAVY), "", _profile_card("மணமகள்" if is_ta else "BRIDE", be, GOLD)]], colWidths=[half_w, 10, half_w])
+    p_grid = Table(
+        [[_birth_card_p1("மணமகன் / GROOM", ge), "", _birth_card_p1("மணமகள் / BRIDE", be)]],
+        colWidths=[half_w, 10, half_w],
+    )
     p_grid.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
     story.append(p_grid)
-    story.append(Spacer(1, 8))
+    if vm.get("birthplace_note"):
+        story.append(Spacer(1, 2))
+        s_bp_note = ParagraphStyle("RLBpNote", fontName=font_reg, fontSize=6.8, leading=8.5, alignment=1, textColor=colors.HexColor("#475569"))
+        story.append(_p(_esc(vm["birthplace_note"]), s_bp_note))
+    story.append(Spacer(1, 4))
 
-    story.append(_sec_banner(f"1. {'ஒருங்கிணைந்த இறுதி மதிப்பீடு' if is_ta else 'Master Composite Assessment'} — {comp['outcome_label']}"))
-    story.append(Spacer(1, 5))
-    v_box = Table([[_p(f"<b>{_esc(comp['outcome_label'])}</b> ({_esc(comp['outcome'])})<br/>{_esc(comp['explanation'])}", s_body)]], colWidths=[CONTENT_WIDTH])
-    v_box.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PARCHMENT), ("BOX", (0, 0), (-1, -1), 1.0, GOLD), ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8)]))
-    story.append(v_box)
-    story.append(Spacer(1, 6))
+    # 3. Large Overall Compatibility Verdict
+    vd = ds_vm["verdict"]
+    vd_st = get_status_style(vd["tone"])
+    s_vd_title = ParagraphStyle("RLVdT", fontName=font_bold, fontSize=12.0, leading=15.0, alignment=1, textColor=colors.HexColor(vd_st["text"]))
+    s_vd_sub = ParagraphStyle("RLVdS", fontName=font_reg, fontSize=8.0, leading=10.5, alignment=1, textColor=colors.HexColor(vd_st["text"]))
+    vd_box = Table(
+        [[_p(f"<b>{vd_st['icon']}  {_esc(vd['title_ta'])}  |  {_esc(vd['title_en'])}</b>", s_vd_title)], [_p(_esc(vd["subtitle"]), s_vd_sub)]],
+        colWidths=[CONTENT_WIDTH],
+    )
+    vd_box.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(vd_st["bg"])),
+        ("BOX", (0, 0), (-1, -1), 1.5, colors.HexColor(vd_st["border"])),
+        ("TOPPADDING", (0, 0), (-1, 0), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 1),
+        ("TOPPADDING", (0, 1), (-1, 1), 1),
+        ("BOTTOMPADDING", (0, 1), (-1, 1), 5),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.append(vd_box)
+    story.append(Spacer(1, 4))
 
-    if comp["categories"]:
-        cat_rows: List[List[Any]] = [[_p("Layer", s_th), _p("Tradition", s_th), _p("Status", s_th_c), _p("Summary", s_th)]]
-        for c in comp["categories"]:
-            cat_rows.append([_p(f"<b>{_esc(c['name'])}</b>", s_tdb), _p(_esc(c["tradition"]), s_td), _p(f"<b>{_esc(c['status'])}</b>", s_tdc), _p(_esc(c["summary"]), s_td)])
-        story.append(_styled_tbl(cat_rows, [120, 115, 76, CONTENT_WIDTH - 311], pad_v=2.5))
-        story.append(Spacer(1, 5))
+    # 4 & 5. Two Prominent Score Cards
+    def _score_card(card: Dict[str, Any]) -> Table:
+        cst = get_status_style(card["tone"])
+        s_sc_hdr = ParagraphStyle("RLScH", fontName=font_bold, fontSize=8.5, leading=11.0, alignment=1, textColor=NAVY)
+        s_sc_val = ParagraphStyle("RLScV", fontName=font_bold, fontSize=13.5, leading=16.0, alignment=1, textColor=colors.HexColor(cst["text"]))
+        s_sc_st = ParagraphStyle("RLScS", fontName=font_bold, fontSize=8.0, leading=10.5, alignment=1, textColor=colors.HexColor(cst["text"]))
+        ct = Table(
+            [
+                [_p(f"<b>{_esc(card['title'])}</b>", s_sc_hdr)],
+                [_p(f"<b>{_esc(card['score_text'])}</b>", s_sc_val)],
+                [_p(f"<b>{cst['icon']} {_esc(card['status_text'])}</b>", s_sc_st)],
+            ],
+            colWidths=[half_w],
+        )
+        ct.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(cst["bg"])),
+            ("BOX", (0, 0), (-1, -1), 1.1, colors.HexColor(cst["border"])),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        return ct
 
-    supp_txt = "<br/>".join(f"• {_esc(x)}" for x in comp["supportive"][:5]) or "• -"
-    chal_txt = "<br/>".join(f"• {_esc(x)}" for x in comp["challenging"][:5]) or "• None"
-    sc_tbl = Table([
-        [_p("<b>Key Supportive Factors</b>", s_th), _p("<b>Considerations & Mitigations</b>", s_th)],
-        [_p(supp_txt, s_td), _p(chal_txt, s_td)],
-    ], colWidths=[half_w + 5, half_w + 5])
-    sc_tbl.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), NAVY), ("GRID", (0, 0), (-1, -1), 0.5, SLATE_BORDER), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4), ("LEFTPADDING", (0, 0), (-1, -1), 6), ("RIGHTPADDING", (0, 0), (-1, -1), 6)]))
-    story.append(sc_tbl)
+    score_grid = Table(
+        [[_score_card(ds_vm["porutham_card"]), "", _score_card(ds_vm["ashtakoota_card"])]],
+        colWidths=[half_w, 10, half_w],
+    )
+    score_grid.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    story.append(score_grid)
+    story.append(Spacer(1, 4))
+
+    # 6 & 7. Positive Factors (GREEN) & Areas Requiring Attention (ORANGE / RED)
+    def _factor_box(title: str, hdr_tone: str, items: List[Dict[str, str]]) -> Table:
+        hst = get_status_style(hdr_tone)
+        s_fh = ParagraphStyle("RLFH", fontName=font_bold, fontSize=8.5, leading=11.0, textColor=colors.white)
+        rows: List[List[Any]] = [[_p(f"<b>{hst['icon']} {_esc(title)}</b>", s_fh)]]
+        for it in items:
+            ist = get_status_style(it["tone"])
+            s_fi = ParagraphStyle("RLFI", fontName=font_reg, fontSize=7.6, leading=9.8, textColor=colors.HexColor(ist["text"]))
+            rows.append([_p(f"<b>{ist['icon']}</b> {_esc(it['text'])}", s_fi)])
+        ft = Table(rows, colWidths=[half_w])
+        ts_cmds = [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(hst["border"])),
+            ("BOX", (0, 0), (-1, -1), 0.9, colors.HexColor(hst["border"])),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.0),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ]
+        for idx, it in enumerate(items, start=1):
+            ist = get_status_style(it["tone"])
+            ts_cmds.append(("BACKGROUND", (0, idx), (0, idx), colors.HexColor(ist["bg"])))
+            if idx < len(items):
+                ts_cmds.append(("LINEBELOW", (0, idx), (0, idx), 0.4, colors.white))
+        ft.setStyle(TableStyle(ts_cmds))
+        return ft
+
+    pos_title = "நல்ல அம்சங்கள் (Positive Factors)" if is_ta else "Positive Factors"
+    attn_title = "கவனிக்க வேண்டிய அம்சங்கள் (Areas Requiring Attention)" if is_ta else "Areas Requiring Attention"
+    attn_hdr_tone = "RED" if any(x["tone"] == "RED" for x in ds_vm["attention_factors"]) else "ORANGE"
+    fac_grid = Table(
+        [[_factor_box(pos_title, "GREEN", ds_vm["positive_factors"]), "", _factor_box(attn_title, attn_hdr_tone, ds_vm["attention_factors"])]],
+        colWidths=[half_w, 10, half_w],
+    )
+    fac_grid.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    story.append(fac_grid)
+    story.append(Spacer(1, 4))
+
+    # 8. Family-Friendly Final Recommendation
+    rec_title = "எங்களின் பரிந்துரை (Our Recommendation)" if is_ta else "Our Recommendation"
+    s_p1_rec = ParagraphStyle("RLP1Rec", fontName=font_reg, fontSize=8.0, leading=11.0, textColor=colors.HexColor("#0F172A"))
+    rec_box = Table(
+        [[_p(f"<b>{_esc(rec_title)}:</b><br/>{_esc(ds_vm['recommendation'])}", s_p1_rec)]],
+        colWidths=[CONTENT_WIDTH],
+    )
+    rec_box.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), PARCHMENT),
+        ("BOX", (0, 0), (-1, -1), 1.0, GOLD),
+        ("TOPPADDING", (0, 0), (-1, -1), 4.0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4.0),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+    ]))
+    story.append(rec_box)
+    story.append(Spacer(1, 3))
+
+    # 9. Short First-Page Disclaimer
+    s_disc_p1 = ParagraphStyle("RLDiscP1", fontName=font_reg, fontSize=7.0, leading=9.0, alignment=1, textColor=colors.HexColor("#475569"))
+    story.append(_p(_esc(ds_vm["disclaimer"]), s_disc_p1))
 
     # ==================== PAGE 2: CHARTS & PLANETARY POSITIONS ====================
     story.append(PageBreak())
     story.append(_sec_banner(f"2. {'ஜாதகக் கட்டங்கள் (D1 & D9) மற்றும் கிரக நிலைகள்' if is_ta else 'Dual Kundli Charts (D1 Rasi & D9 Navamsa) & Planetary Degrees'}"))
-    story.append(Spacer(1, 6))
-    c_drawings = [_make_chart_drawing(ch, font_reg, font_bold, width=190.0) for ch in base["charts"]]
+    story.append(Spacer(1, 3))
+    c_drawings = [_make_chart_drawing(ch, font_reg, font_bold, width=124.0) for ch in base["charts"]]
     ct_tbl = Table([[c_drawings[0], c_drawings[1]], [c_drawings[2], c_drawings[3]]], colWidths=[CONTENT_WIDTH / 2.0, CONTENT_WIDTH / 2.0])
-    ct_tbl.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 6)]))
+    ct_tbl.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("TOPPADDING", (0, 0), (-1, -1), 1), ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
     story.append(ct_tbl)
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 2))
 
     def _p_tbl(p_rows: List[Dict[str, str]], title: str) -> Table:
-        rows: List[List[Any]] = [[_p(f"<b>{_esc(title)}</b>", s_th), "", "", ""], [_p("Planet", s_th), _p("Rasi", s_th), _p("Deg", s_th), _p("D9", s_th)]]
+        c1 = "கிரகம்" if is_ta else "Planet"
+        c2 = "ராசி" if is_ta else "Rasi"
+        c3 = "பாகை" if is_ta else "Deg"
+        c4 = "நவாம்சம்" if is_ta else "D9"
+        rows: List[List[Any]] = [[_p(f"<b>{_esc(title)}</b>", s_th), "", "", ""], [_p(c1, s_th), _p(c2, s_th), _p(c3, s_th), _p(c4, s_th)]]
         for r in (p_rows[:10] if p_rows else []):
             mot = f" ({r['retro']})" if r["retro"] != "-" else ""
-            rows.append([_p(f"<b>{_esc(r['planet'])}{_esc(mot)}</b>", s_tdb), _p(_esc(r["sign"]), s_td), _p(_esc(r["degree"]), s_td), _p(_esc(r["d9_sign"]), s_td)])
+            rows.append([_p(f"<b>{_esc(r['planet'])}{_esc(mot)}</b>", s_tdb_sm), _p(_esc(r["sign"]), s_td_sm), _p(_esc(r["degree"]), s_td_sm), _p(_esc(r["d9_sign"]), s_td_sm)])
         if len(rows) == 2:
-            rows.append([_p("-", s_td), _p("-", s_td), _p("-", s_td), _p("-", s_td)])
-        t = Table(rows, colWidths=[68, 72, 48, half_w - 188])
-        t.setStyle(TableStyle([("SPAN", (0, 0), (3, 0)), ("BACKGROUND", (0, 0), (-1, 1), NAVY), ("GRID", (0, 0), (-1, -1), 0.5, SLATE_BORDER), ("ROWBACKGROUNDS", (0, 2), (-1, -1), [colors.white, ZEBRA]), ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2), ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3)]))
+            rows.append([_p("-", s_td_sm), _p("-", s_td_sm), _p("-", s_td_sm), _p("-", s_td_sm)])
+        t = Table(rows, colWidths=[76, 66, 46, half_w - 188], repeatRows=2)
+        t.setStyle(TableStyle([("SPAN", (0, 0), (3, 0)), ("BACKGROUND", (0, 0), (-1, 1), NAVY), ("GRID", (0, 0), (-1, -1), 0.5, SLATE_BORDER), ("ROWBACKGROUNDS", (0, 2), (-1, -1), [colors.white, ZEBRA]), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3)]))
         return t
 
-    pt_side = Table([[_p_tbl(vm["groom_planets"], f"Groom Planets ({ge['name']})"), "", _p_tbl(vm["bride_planets"], f"Bride Planets ({be['name']})")]], colWidths=[half_w, 10, half_w])
+    g_pl_hdr = f"மணமகன் கிரக நிலைகள் ({ge['name']})" if is_ta else f"Groom Planets ({ge['name']})"
+    b_pl_hdr = f"மணமகள் கிரக நிலைகள் ({be['name']})" if is_ta else f"Bride Planets ({be['name']})"
+    pt_side = Table([[_p_tbl(vm["groom_planets"], g_pl_hdr), "", _p_tbl(vm["bride_planets"], b_pl_hdr)]], colWidths=[half_w, 10, half_w])
     pt_side.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
     story.append(pt_side)
 
     # ==================== PAGE 3: TAMIL 10 PORUTHAMS ====================
     story.append(PageBreak())
     story.append(_sec_banner(f"3. {'தமிழ் 10 பொருத்தங்கள்' if is_ta else 'Tamil 10 Poruthams Analysis'} ({pf['total_score']} / {pf['max_score']} • Rajju: {pf['rajju_status']} • Vedha: {pf['vedha_status']})"))
-    story.append(Spacer(1, 6))
-    por_rows: List[List[Any]] = [[_p("Porutham", s_th), _p("Score", s_th_c), _p("Grade", s_th_c), _p("Pair", s_th), _p("Evaluation & Meaning", s_th)]]
+    story.append(Spacer(1, 2))
+    p_c1 = "பொருத்தம்" if is_ta else "Porutham"
+    p_c2 = "மதிப்." if is_ta else "Score"
+    p_c3 = "தரம்" if is_ta else "Grade"
+    p_c4 = "நட்சத்திர இணை" if is_ta else "Pair"
+    p_c5 = "விளக்கம் & பலன்" if is_ta else "Evaluation & Meaning"
+    por_rows: List[List[Any]] = [[_p(p_c1, s_th), _p(p_c2, s_th_c), _p(p_c3, s_th_c), _p(p_c4, s_th), _p(p_c5, s_th)]]
     for r in pf["rows"]:
-        por_rows.append([_p(f"<b>{_esc(r['name'])}</b>", s_tdb), _p(f"<b>{_esc(r['score'])}</b>", s_tdc), _p(_esc(r["grade"]), s_tdc), _p(_esc(r["pair"]), s_td), _p(_esc(r["desc"]), s_td)])
-    story.append(_styled_tbl(por_rows, [104, 46, 56, 86, CONTENT_WIDTH - 292], pad_v=3.0))
-    story.append(Spacer(1, 6))
-    chk_rows: List[List[Any]] = [[_p("11-Point Checklist", s_th), _p("Groom", s_th), _p("Bride", s_th), _p("Status", s_th_c)]]
+        por_rows.append([_p(f"<b>{_esc(r['name'])}</b>", s_tdb_sm), _p(f"<b>{_esc(r['score'])}</b>", s_tdc_sm), _p(_esc(r["grade"]), s_tdc_sm), _p(_esc(r["pair"]), s_td_sm), _p(_esc(r["desc"]), s_td_sm)])
+    story.append(_styled_tbl(por_rows, [86, 40, 58, 72, CONTENT_WIDTH - 256], pad_v=1.1))
+    story.append(Spacer(1, 2))
+
+    passed_11 = sum(1 for mr in pf["checklist_11"] if mr.get("pass"))
+    chk_note = (
+        f"குறிப்பு: மேலே உள்ள 10 பொருத்தங்கள் எடை மதிப்பெண் முறையில் ({pf['total_score']}/{pf['max_score']}); "
+        f"கீழே உள்ள 11-அம்ச சுருக்கப் பட்டியல் 10 பொருத்தங்கள் + அஷ்டகூட நாடி ஆகியவற்றை தேர்ச்சி/தோல்வி அடிப்படையில் ({passed_11}/11) காட்டுகிறது."
+        if is_ta
+        else f"Note: The 10 Poruthams above use weighted scoring ({pf['total_score']}/{pf['max_score']}); the 11-point checklist below evaluates the 10 Poruthams plus Ashtakoota Nadi as binary Pass/Fail ({passed_11}/11)."
+    )
+    story.append(_p(f"<i>{_esc(chk_note)}</i>", s_td_sm))
+    story.append(Spacer(1, 2))
+    chk_h1 = f"11-அம்ச பாரம்பரியச் சுருக்கப் பட்டியல் ({passed_11}/11)" if is_ta else f"11-Point Summary Checklist ({passed_11}/11)"
+    chk_h2 = "மணமகன்" if is_ta else "Groom"
+    chk_h3 = "மணமகள்" if is_ta else "Bride"
+    chk_h4 = "நிலை" if is_ta else "Status"
+    chk_rows: List[List[Any]] = [[_p(chk_h1, s_th), _p(chk_h2, s_th), _p(chk_h3, s_th), _p(chk_h4, s_th_c)]]
     for mr in pf["checklist_11"]:
-        chk_rows.append([_p(f"<b>{_esc(mr['label'])}</b>", s_tdb), _p(_esc(mr["groom_val"]), s_td), _p(_esc(mr["bride_val"]), s_td), _make_tick_drawing(bool(mr["pass"]))])
-    story.append(_styled_tbl(chk_rows, [130, 150, 150, CONTENT_WIDTH - 430], pad_v=2.0))
+        chk_rows.append([_p(f"<b>{_esc(mr['label'])}</b>", s_tdb_sm), _p(_esc(mr["groom_val"]), s_td_sm), _p(_esc(mr["bride_val"]), s_td_sm), _make_tick_drawing(bool(mr["pass"]))])
+    story.append(_styled_tbl(chk_rows, [145, 142, 142, CONTENT_WIDTH - 429], pad_v=1.0))
 
     # ==================== PAGE 4: ASHTAKOOTA 36 + KUJA + PAPASAMYA ====================
     story.append(PageBreak())
@@ -460,38 +612,82 @@ def generate_marriage_compatibility_pdf_bytes_rl(data: Dict[str, Any], language:
     story.append(_make_dasa_timeline_drawing(base["timeline"], font_reg, font_bold, draw_w=CONTENT_WIDTH, draw_h=430.0))
     story.append(Spacer(1, 6))
     ds = base["dasa_sandhi"]
-    story.append(_p(f"<b>Dasa Sandhi ({'இருக்கிறது' if ds.get('has_sandhi') else 'இல்லை'}):</b> {_esc(ds.get('summary_ta'))}", s_body))
+    ds_lbl = "தசா சந்தி" if is_ta else "Dasa Sandhi"
+    ds_st = ("உள்ளது" if ds.get("has_sandhi") else "இல்லை") if is_ta else ("Present" if ds.get("has_sandhi") else "None")
+    story.append(_p(f"<b>{ds_lbl} ({ds_st}):</b> {_esc(ds.get('summary_ta'))}", s_body))
 
-    # ==================== PAGE 8: SIVADASAN RAVI REMEDIES, VERDICT & BLESSING ====================
+    # ==================== PAGE 8: GOCHARA & REMEDIES ====================
     story.append(PageBreak())
-    story.append(_sec_banner(f"9. {'சிவதாசன் ரவி ஆய்வு, பரிகார ஸ்தலம், முனிவரின் வாக்கு & வாழ்த்து' if is_ta else 'Sivadasan Ravi Synthesis, Parikara Remedies, Verdict & Blessings'}"))
+    story.append(_sec_banner(f"9. {'கோட்சார குரு பலம், நாடி ஆய்வு & பரிகார ஸ்தலம்' if is_ta else 'Gochara Guru Balam, Nadi Porutham & Parikara Remedies'}"))
     story.append(Spacer(1, 6))
-    story.append(_p(f"<b>Gochara Guru Balam:</b> {_esc(sr['guru_balam']['label'])} ({_esc(sr['guru_balam']['transit_sign'])}) — {_esc(sr['guru_balam']['desc'])}", s_body))
-    if sr["nadi_porutham"]["summary"]:
-        story.append(_p(f"<b>Nadi Porutham:</b> {_esc(sr['nadi_porutham']['verdict'])} — {_esc(sr['nadi_porutham']['summary'])}", s_body))
-    story.append(Spacer(1, 5))
-    story.append(_p(f"<b>Parikara Sthalam:</b> {_esc(sr['temple_name'])} — {_esc(sr['temple_sig'])}", s_body))
-    for h_item in sr["hymns"][:2]:
-        story.append(Spacer(1, 3))
-        story.append(_p(f"<b>{_esc(h_item['title'])}</b> ({_esc(h_item['purpose'])})<br/>{_esc(h_item['verse']).replace(chr(10), '<br/>')}", s_body))
-    story.append(Spacer(1, 6))
-    story.append(_p(f"<b>முனிவரின் வாக்கு (Sage Verdict):</b> {_esc(base['sage_verdict_ta'])}", s_body))
+    gb_hdr = "கோட்சார குரு பலம் (Gochara Guru Balam)" if is_ta else "Gochara Guru Balam"
+    story.append(_p(f"<b>{gb_hdr}:</b> {_esc(sr['guru_balam']['label'])} ({_esc(sr['guru_balam']['transit_sign'])}) — {_esc(sr['guru_balam']['desc'])}", s_body))
     story.append(Spacer(1, 4))
-    story.append(_p(f"<b>Disclaimer:</b> {_esc(comp['disclaimer'])}", s_td))
-    story.append(Spacer(1, 8))
+    if sr["nadi_porutham"]["summary"]:
+        nd_hdr = "நாடி ஜோதிட முறை பொருத்தம் (Sivadasan Ravi Nadi Porutham)" if is_ta else "Nadi Astrology Porutham (Sivadasan Ravi)"
+        story.append(_p(f"<b>{nd_hdr}:</b> {_esc(sr['nadi_porutham']['verdict'])} — {_esc(sr['nadi_porutham']['summary'])}", s_body))
+        story.append(Spacer(1, 4))
+    ps_hdr = "பரிகார ஸ்தலம் (Parikara Sthalam)" if is_ta else "Parikara Sthalam"
+    story.append(_p(f"<b>{ps_hdr}:</b> {_esc(sr['temple_name'])} — {_esc(sr['temple_sig'])}", s_body))
+    for h_item in sr["hymns"][:2]:
+        story.append(Spacer(1, 5))
+        story.append(_p(f"<b>{_esc(h_item['title'])}</b> ({_esc(h_item['purpose'])})<br/>{_esc(h_item['verse']).replace(chr(10), '<br/>')}", s_body))
+
+    # ==================== PAGE 9: FINAL VERDICT, TIMING & BLESSINGS ====================
+    story.append(PageBreak())
+    story.append(_sec_banner(f"10. {'இறுதித் தீர்ப்பு, திருமண காலம் & மங்கள வாழ்த்து' if is_ta else 'Final Verdict, Marriage Timing & Auspicious Blessings'}"))
+    story.append(Spacer(1, 5))
+    fv = vm["final_verdict_p9"]
+    story.append(_p(f"<b>{'ஒட்டுமொத்தப் பொருத்த முடிவு' if is_ta else 'Overall Compatibility'}:</b> {_esc(fv['overall_title'])}", s_sub))
+    story.append(_p(_esc(fv["overall_line"]), s_body))
+    story.append(Spacer(1, 4))
+    if comp["categories"]:
+        h_layer = "பிரிவு" if is_ta else "Layer"
+        h_trad = "மரபு" if is_ta else "Tradition"
+        h_stat = "நிலை" if is_ta else "Status"
+        h_sum = "சுருக்கம்" if is_ta else "Summary"
+        cat_rows_p9: List[List[Any]] = [[_p(h_layer, s_th), _p(h_trad, s_th), _p(h_stat, s_th_c), _p(h_sum, s_th)]]
+        for c in comp["categories"]:
+            cat_rows_p9.append([_p(f"<b>{_esc(c['name'])}</b>", s_tdb_sm), _p(_esc(c["tradition"]), s_td_sm), _p(f"<b>{_esc(c['status'])}</b>", s_tdc_sm), _p(_esc(c["summary"]), s_td_sm)])
+        story.append(_styled_tbl(cat_rows_p9, [118, 112, 68, CONTENT_WIDTH - 298], pad_v=1.1))
+        story.append(Spacer(1, 3))
+
+    hier_rows: List[List[Any]] = [
+        [_p(f"<b>{'நல்ல அம்சங்கள்' if is_ta else 'Positive Factors'}</b>", s_tdb_sm), _p(_esc(fv["positive_line"]), s_td_sm)],
+        [_p(f"<b>{'கவனிக்க வேண்டியவை' if is_ta else 'Concerns'}</b>", s_tdb_sm), _p(_esc(fv["concerns_line"]), s_td_sm)],
+        [_p(f"<b>{'தோஷ நிலை' if is_ta else 'Dosha Status'}</b>", s_tdb_sm), _p(_esc(fv["dosha_line"]), s_td_sm)],
+        [_p(f"<b>{'கே.பி. ஆய்வு' if is_ta else 'KP Assessment'}</b>", s_tdb_sm), _p(_esc(fv["kp_line"]), s_td_sm)],
+        [_p(f"<b>{'திருமண காலம்' if is_ta else 'Timing Assessment'}</b>", s_tdb_sm), _p(_esc(fv["timing_line"]), s_td_sm)],
+        [_p(f"<b>{'இறுதிப் பரிந்துரை' if is_ta else 'Final Recommendation'}</b>", s_tdb_sm), _p(_esc(fv["recommendation_line"]), s_td_sm)],
+    ]
+    hier_tbl = Table(hier_rows, colWidths=[112, CONTENT_WIDTH - 112])
+    hier_tbl.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.45, SLATE_BORDER),
+        ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, ZEBRA]),
+        ("BACKGROUND", (0, 0), (0, -1), PARCHMENT),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 1.8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(hier_tbl)
+    story.append(Spacer(1, 3))
+    story.append(_p(f"<b>{'பொறுப்புத் துறப்பு (Disclaimer)' if is_ta else 'Disclaimer'}:</b> {_esc(comp['disclaimer'])}", s_td_sm))
+    story.append(Spacer(1, 4))
 
     w_card = Table(
         [[
             _p(
-                "<b>மங்கள வாழ்த்துச் செய்தி / Auspicious Blessings</b><br/><br/>"
-                "<b>சீக்கிரம் திருமணம் நடைபெற இறைவனை நாங்கள் எங்கள் Gokul's Astrological Insights சார்பாக மனதார வேண்டிக்கொள்கிறோம்... வாழ்த்துக்கள்!</b><br/><br/>"
-                "<i>\"sikiram kalyanam nadakanum nu aandavana nanga enga Gokul's Astrological Insights side la irundhu vendikurom..vaazhthukkal\"</i>",
+                "<b>மங்கள வாழ்த்துச் செய்தி / Auspicious Blessings</b><br/>"
+                "<b>சீக்கிரம் திருமணம் நடைபெற இறைவனை நாங்கள் எங்கள் Gokul's Astrological Insights சார்பாக மனதார வேண்டிக்கொள்கிறோம்... வாழ்த்துகள்!</b><br/>"
+                "<i>We sincerely pray to the Almighty on behalf of Gokul's Astrological Insights for an auspicious, harmonious, and blessed marriage at the earliest.</i>",
                 s_ctr,
             )
         ]],
         colWidths=[CONTENT_WIDTH],
     )
-    w_card.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PARCHMENT), ("BOX", (0, 0), (-1, -1), 1.4, GOLD), ("TOPPADDING", (0, 0), (-1, -1), 10), ("BOTTOMPADDING", (0, 0), (-1, -1), 10), ("LEFTPADDING", (0, 0), (-1, -1), 12), ("RIGHTPADDING", (0, 0), (-1, -1), 12)]))
+    w_card.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PARCHMENT), ("BOX", (0, 0), (-1, -1), 1.4, GOLD), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10)]))
     story.append(w_card)
 
     doc.build(story, canvasmaker=MarriageDossierCanvas)

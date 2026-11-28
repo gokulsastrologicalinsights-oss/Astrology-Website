@@ -706,6 +706,7 @@ class MarriageChartContext:
     # Planets and Houses
     grahas: Dict[str, MarriagePlanet] = field(default_factory=dict)
     houses: Dict[int, MarriageHouse] = field(default_factory=dict)
+    birth_place: Optional[str] = None
 
     # Convenience shortcuts
     @property

@@ -972,8 +972,8 @@ def generate_html_report(data: Dict[str, Any], lang: str = "en") -> str:
 
       <div class="blessing-box avoid-break">
         <div style="font-weight:800; font-size:10.5px; color:#8B6914; margin-bottom:4px;">✦ {'மங்கள வாழ்த்துச் செய்தி' if is_ta else 'Auspicious Blessings'} ✦</div>
-        <div><b>சீக்கிரம் திருமணம் நடைபெற இறைவனை நாங்கள் எங்கள் Gokul&apos;s Astrological Insights சார்பாக மனதார வேண்டிக்கொள்கிறோம்... வாழ்த்துக்கள்!</b></div>
-        <div style="font-style:italic; color:#475569; margin-top:3px;">&ldquo;sikiram kalyanam nadakanum nu aandavana nanga enga Gokul&apos;s Astrological Insights side la irundhu vendikurom..vaazhthukkal&rdquo;</div>
+        <div><b>சீக்கிரம் திருமணம் நடைபெற இறைவனை நாங்கள் எங்கள் Gokul&apos;s Astrological Insights சார்பாக மனதார வேண்டிக்கொள்கிறோம்... வாழ்த்துகள்!</b></div>
+        <div style="font-style:italic; color:#475569; margin-top:3px;">We sincerely pray to the Almighty on behalf of Gokul&apos;s Astrological Insights for an auspicious, harmonious, and blessed marriage at the earliest.</div>
         <div style="margin-top:4px; font-size:8.4px; color:#475569;">Gokul&apos;s Astrological Insights • Thiruverkadu, Chennai - 600077 • Ph: 9444 55 9071</div>
       </div>
     </section>

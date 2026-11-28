@@ -483,7 +483,7 @@ def calculate_mahendra_core(
         score = 1.0
         is_favorable = True
         desc_en = (
-            f"Groom star {NAKSHATRA_NAMES_EN[groom_star_idx]} is the {distance}th star from Bride star "
+            f"Groom star {NAKSHATRA_NAMES_EN[groom_star_idx]} is the {_ordinal(distance)} star from Bride star "
             f"{NAKSHATRA_NAMES_EN[bride_star_idx]}. Mahendra Porutham is fully present, conferring progeny, "
             f"lineage prosperity, and family well-being (Putra Pautra Vriddhi)."
         )
@@ -497,7 +497,7 @@ def calculate_mahendra_core(
         score = 0.0
         is_favorable = False
         desc_en = (
-            f"Groom star {NAKSHATRA_NAMES_EN[groom_star_idx]} is the {distance}th star from Bride star "
+            f"Groom star {NAKSHATRA_NAMES_EN[groom_star_idx]} is the {_ordinal(distance)} star from Bride star "
             f"{NAKSHATRA_NAMES_EN[bride_star_idx]} (not in the auspicious set [4, 7, 10, 13, 16, 19, 22, 25]). "
             f"Mahendra Porutham is absent. Note: Mahendra is a secondary Porutham; its absence does not veto marriage."
         )
@@ -516,6 +516,12 @@ def calculate_mahendra_core(
         "description_en": desc_en,
         "description_ta": desc_ta,
     }
+
+
+def _ordinal(n: int) -> str:
+    if 11 <= (n % 100) <= 13:
+        return f"{n}th"
+    return f"{n}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th') }"
 
 
 def evaluate_mahendra_porutham(
@@ -894,7 +900,7 @@ def calculate_rasi_core(
             f"Highly auspicious for family prosperity, wealth, and mutual happiness."
         )
         desc_ta = (
-            f"ராசித் தொடர்பு 3/11 அக்ஷத்தில் (உபசய ஸ்தானம்: {groom_sign_ta} - {bride_sign_ta}) அமைந்துள்ளதால் "
+            f"ராசித் தொடர்பு 3/11 அச்சில் (உபசய ஸ்தானம்: {groom_sign_ta} - {bride_sign_ta}) அமைந்துள்ளதால் "
             f"ராசிப் பொருத்தம் உத்தமம். செல்வ விருத்தியும் குடும்ப மேன்மையும் தரும்."
         )
     elif distance in (4, 10):
@@ -908,7 +914,7 @@ def calculate_rasi_core(
             f"Promotes domestic foundation and steady marital alignment."
         )
         desc_ta = (
-            f"ராசித் தொடர்பு 4/10 அக்ஷத்தில் (கேந்திர ஸ்தானம்: {groom_sign_ta} - {bride_sign_ta}) அமைந்துள்ளதால் "
+            f"ராசித் தொடர்பு 4/10 அச்சில் (கேந்திர ஸ்தானம்: {groom_sign_ta} - {bride_sign_ta}) அமைந்துள்ளதால் "
             f"ராசிப் பொருத்தம் மத்திமம். நிலையான குடும்ப வாழ்க்கையை அளிக்கும்."
         )
     elif distance == 1:
